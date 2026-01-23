@@ -1,0 +1,47 @@
+{
+  "name": "rolexjs",
+  "version": "0.0.1",
+  "description": "RoleX - AI Agent Role Management Framework",
+  "keywords": [
+    "rolex",
+    "role",
+    "agent",
+    "ai",
+    "framework",
+    "management"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Deepractice/RoleX.git"
+  },
+  "homepage": "https://github.com/Deepractice/RoleX",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "bun run build.ts",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@rolexjs/core": "workspace:*"
+  },
+  "devDependencies": {},
+  "publishConfig": {
+    "access": "public"
+  }
+}

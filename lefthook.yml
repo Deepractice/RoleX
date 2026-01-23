@@ -1,0 +1,29 @@
+# Lefthook configuration for RoleX
+# https://lefthook.dev/configuration/
+
+commit-msg:
+  commands:
+    commitlint:
+      run: npx commitlint --edit {1}
+
+pre-commit:
+  commands:
+    format-fix:
+      glob: "*.{js,ts,json,md,yml,yaml}"
+      run: bun prettier --write {staged_files} && git add {staged_files}
+
+    lint-fix:
+      glob: "*.{js,ts}"
+      run: bun eslint --fix {staged_files} && git add {staged_files}
+
+pre-push:
+  parallel: true
+  commands:
+    format:
+      run: bun format:check
+
+    lint:
+      run: bun lint
+
+    # typecheck and test are handled by CI
+    # install-check removed for faster local push
