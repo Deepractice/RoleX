@@ -4,7 +4,7 @@
  * @rolexjs/core
  */
 
-import { defineTransformer } from "dpml";
+import { defineTransformer, type Transformer } from "dpml";
 import type { RenderedRole, ParsedThought, ParsedExecution } from "~/types.js";
 
 /**
@@ -155,73 +155,74 @@ function renderExecution(execution: ParsedExecution): string {
  * Role Transformer
  * Transforms DPML role document into RenderedRole
  */
-export const roleTransformer = defineTransformer({
-  name: "role-transformer",
-  description: "Transform DPML role document to RenderedRole",
+export const roleTransformer: Transformer<{ document: { rootNode: unknown } }, RenderedRole> =
+  defineTransformer({
+    name: "role-transformer",
+    description: "Transform DPML role document to RenderedRole",
 
-  transform(input): RenderedRole {
-    const doc = input.document;
-    const rootNode = doc.rootNode as DPMLNode;
+    transform(input: { document: { rootNode: unknown } }): RenderedRole {
+      const doc = input.document;
+      const rootNode = doc.rootNode as DPMLNode;
 
-    if (!rootNode || rootNode.tagName !== "role") {
-      throw new Error("Invalid role document: root element must be <role>");
-    }
-
-    // 1. Parse personality section
-    const personalityNode = findChildByTagName(rootNode, "personality");
-    let personalityContent = "";
-    const thoughts: ParsedThought[] = [];
-
-    if (personalityNode) {
-      personalityContent = extractTextContent(personalityNode);
-      const thoughtNodes = findAllChildrenByTagName(personalityNode, "thought");
-      for (const thoughtNode of thoughtNodes) {
-        thoughts.push(parseThought(thoughtNode));
+      if (!rootNode || rootNode.tagName !== "role") {
+        throw new Error("Invalid role document: root element must be <role>");
       }
-    }
 
-    // 2. Parse principle section
-    const principleNode = findChildByTagName(rootNode, "principle");
-    let principleContent = "";
-    const executions: ParsedExecution[] = [];
+      // 1. Parse personality section
+      const personalityNode = findChildByTagName(rootNode, "personality");
+      let personalityContent = "";
+      const thoughts: ParsedThought[] = [];
 
-    if (principleNode) {
-      principleContent = extractTextContent(principleNode);
-      const executionNodes = findAllChildrenByTagName(principleNode, "execution");
-      for (const executionNode of executionNodes) {
-        executions.push(parseExecution(executionNode));
+      if (personalityNode) {
+        personalityContent = extractTextContent(personalityNode);
+        const thoughtNodes = findAllChildrenByTagName(personalityNode, "thought");
+        for (const thoughtNode of thoughtNodes) {
+          thoughts.push(parseThought(thoughtNode));
+        }
       }
-    }
 
-    // 3. Parse knowledge section
-    const knowledgeNode = findChildByTagName(rootNode, "knowledge");
-    const knowledgeContent = knowledgeNode ? extractTextContent(knowledgeNode) : "";
+      // 2. Parse principle section
+      const principleNode = findChildByTagName(rootNode, "principle");
+      let principleContent = "";
+      const executions: ParsedExecution[] = [];
 
-    // 4. Render each section
-    const personalityParts = [personalityContent];
-    for (const thought of thoughts) {
-      const rendered = renderThought(thought);
-      if (rendered) personalityParts.push(rendered);
-    }
-    const personality = personalityParts.filter(Boolean).join("\n\n");
+      if (principleNode) {
+        principleContent = extractTextContent(principleNode);
+        const executionNodes = findAllChildrenByTagName(principleNode, "execution");
+        for (const executionNode of executionNodes) {
+          executions.push(parseExecution(executionNode));
+        }
+      }
 
-    const principleParts = [principleContent];
-    for (const execution of executions) {
-      const rendered = renderExecution(execution);
-      if (rendered) principleParts.push(rendered);
-    }
-    const principle = principleParts.filter(Boolean).join("\n\n");
+      // 3. Parse knowledge section
+      const knowledgeNode = findChildByTagName(rootNode, "knowledge");
+      const knowledgeContent = knowledgeNode ? extractTextContent(knowledgeNode) : "";
 
-    const knowledge = knowledgeContent;
+      // 4. Render each section
+      const personalityParts = [personalityContent];
+      for (const thought of thoughts) {
+        const rendered = renderThought(thought);
+        if (rendered) personalityParts.push(rendered);
+      }
+      const personality = personalityParts.filter(Boolean).join("\n\n");
 
-    // 5. Assemble final prompt
-    const promptParts: string[] = [];
-    if (personality) promptParts.push(personality);
-    if (principle) promptParts.push(principle);
-    if (knowledge) promptParts.push(knowledge);
+      const principleParts = [principleContent];
+      for (const execution of executions) {
+        const rendered = renderExecution(execution);
+        if (rendered) principleParts.push(rendered);
+      }
+      const principle = principleParts.filter(Boolean).join("\n\n");
 
-    const prompt = promptParts.join("\n\n---\n\n");
+      const knowledge = knowledgeContent;
 
-    return { prompt, personality, principle, knowledge };
-  },
-});
+      // 5. Assemble final prompt
+      const promptParts: string[] = [];
+      if (personality) promptParts.push(personality);
+      if (principle) promptParts.push(principle);
+      if (knowledge) promptParts.push(knowledge);
+
+      const prompt = promptParts.join("\n\n---\n\n");
+
+      return { prompt, personality, principle, knowledge };
+    },
+  });

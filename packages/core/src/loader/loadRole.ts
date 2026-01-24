@@ -66,11 +66,17 @@ async function processResourceTags(content: string, resolver: ResourceResolver):
 export async function loadRole(rxr: RXR, registry: Registry): Promise<RenderedRole> {
   const files = await rxr.content.files();
 
-  // 1. Find main file (*.role.md)
-  const mainFileName = Array.from(files.keys()).find((f) => f.endsWith(".role.md"));
+  // 1. Find main file (*.role.pml or *.role.md for backward compatibility)
+  let mainFileName = Array.from(files.keys()).find((f) => f.endsWith(".role.pml"));
+  if (!mainFileName) {
+    mainFileName = Array.from(files.keys()).find((f) => f.endsWith(".role.md"));
+  }
 
   if (!mainFileName) {
-    throw new RoleLoadError("No .role.md file found in role resource", rxr.locator.toString());
+    throw new RoleLoadError(
+      "No .role.pml or .role.md file found in role resource",
+      rxr.locator.toString()
+    );
   }
 
   const mainFileBuffer = files.get(mainFileName);

@@ -3,4 +3,4 @@
  * @rolexjs/core
  */
 
-export { roleType, createRoleType } from "./roleType.js";
+export { roleType } from "./roleType.js";

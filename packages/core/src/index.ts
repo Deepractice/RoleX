@@ -9,7 +9,7 @@
 // ========== Core API ==========
 
 export { loadRole } from "./loader/index.js";
-export { roleType, createRoleType } from "./resource-type/index.js";
+export { roleType } from "./resource-type/index.js";
 
 // ========== Types ==========
 

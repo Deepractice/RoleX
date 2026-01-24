@@ -20,11 +20,7 @@ export function defineRoleSchemas(): RoleSchemas {
   const role = defineSchema({
     element: "role",
     children: {
-      elements: [
-        { element: "personality", required: true },
-        { element: "principle", required: false },
-        { element: "knowledge", required: false },
-      ],
+      elements: [{ element: "personality" }, { element: "principle" }, { element: "knowledge" }],
     },
   });
 

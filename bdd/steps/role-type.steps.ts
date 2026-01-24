@@ -16,15 +16,9 @@ import type { RoleXWorld } from "../support/world.js";
 
 Given("a registry with role type registered", async function (this: RoleXWorld) {
   const { createRegistry } = await import("resourcexjs");
-  const { createRoleType } = await import("rolexjs");
+  const { roleType } = await import("rolexjs");
 
-  // Create registry first (needed for createRoleType)
-  const tempRegistry = createRegistry({ path: this.testDir });
-
-  // Create role type with bound registry
-  const roleType = createRoleType(tempRegistry);
-
-  // Recreate registry with role type registered
+  // Create registry with role type registered
   this.registry = createRegistry({
     path: this.testDir,
     types: [roleType],

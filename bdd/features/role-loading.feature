@@ -105,7 +105,7 @@ Feature: Role Loading
       This is not a role file.
       """
     When I try to load the role
-    Then it should fail with error "No .role.md file found"
+    Then it should fail with error "No .role.pml or .role.md file found"
 
   @error
   Scenario: 引用不存在的资源应该报错
