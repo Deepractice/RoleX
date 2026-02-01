@@ -5,24 +5,24 @@
  */
 
 import { createARP } from "resourcexjs/arp";
-import { RxrTransport } from "resourcexjs/arp";
-import type { Registry } from "resourcexjs";
 import type { ResourceResolver } from "~/types.js";
 import { ResourceResolveError } from "~/errors.js";
 
 /**
  * Create a resource resolver function
  *
- * @param registry - Registry instance (required for RxrTransport)
+ * Uses ARP with RxrTransport to resolve resource references.
+ * RxrTransport automatically accesses local/cached resources.
+ *
  * @returns Resource resolver function that accepts ARP URLs
  *
  * @example
  * ```typescript
- * const resolver = createResourceResolver(registry);
+ * const resolver = createResourceResolver();
  * const content = await resolver('arp:text:rxr://localhost/my.role@1.0.0/thought/first.thought.md');
  * ```
  */
-export function createResourceResolver(registry: Registry): ResourceResolver {
+export function createResourceResolver(): ResourceResolver {
   return async (src: string): Promise<string> => {
     // 1. Validate ARP format
     if (!src.startsWith("arp:")) {
@@ -32,9 +32,8 @@ export function createResourceResolver(registry: Registry): ResourceResolver {
       );
     }
 
-    // 2. Create ARP instance with RxrTransport
+    // 2. Create ARP instance (RxrTransport is auto-registered)
     const arp = createARP();
-    arp.registerTransport(new RxrTransport(registry));
 
     // 3. Parse and resolve
     try {

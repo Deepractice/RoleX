@@ -5,7 +5,8 @@
  */
 
 import { createDPML } from "dpml";
-import type { RXR, Registry } from "resourcexjs";
+import type { RXR } from "resourcexjs";
+import { extract, format } from "resourcexjs";
 import { roleSchema } from "~/schema/index.js";
 import { roleTransformer } from "~/transformer/index.js";
 import { createResourceResolver } from "~/resolver/index.js";
@@ -51,43 +52,44 @@ async function processResourceTags(content: string, resolver: ResourceResolver):
 /**
  * Load and render a Role from RXR
  *
- * @param rxr - Role resource (RXL + RXM + RXC)
- * @param registry - Registry instance (for resolving ARP rxr:// references)
+ * @param rxr - Role resource (RXL + RXM + RXA)
  * @returns Rendered Role object
  *
  * @example
  * ```typescript
- * const registry = createRegistry();
- * const rxr = await registry.get('localhost/my.role@1.0.0');
- * const role = await loadRole(rxr, registry);
+ * const rx = createResourceX();
+ * const executable = await rx.use('nuwa.role@1.0.0');
+ * // Or use loadRole directly with RXR
+ * const role = await loadRole(rxr);
  * console.log(role.prompt);
  * ```
  */
-export async function loadRole(rxr: RXR, registry: Registry): Promise<RenderedRole> {
-  const files = await rxr.content.files();
+export async function loadRole(rxr: RXR): Promise<RenderedRole> {
+  const files = await extract(rxr.archive);
+  const fileNames = Object.keys(files);
 
   // 1. Find main file (*.role.pml or *.role.md for backward compatibility)
-  let mainFileName = Array.from(files.keys()).find((f) => f.endsWith(".role.pml"));
+  let mainFileName = fileNames.find((f) => f.endsWith(".role.pml"));
   if (!mainFileName) {
-    mainFileName = Array.from(files.keys()).find((f) => f.endsWith(".role.md"));
+    mainFileName = fileNames.find((f) => f.endsWith(".role.md"));
   }
 
   if (!mainFileName) {
     throw new RoleLoadError(
       "No .role.pml or .role.md file found in role resource",
-      rxr.locator.toString()
+      format(rxr.locator)
     );
   }
 
-  const mainFileBuffer = files.get(mainFileName);
+  const mainFileBuffer = files[mainFileName];
   if (!mainFileBuffer) {
-    throw new RoleLoadError(`Failed to read main file: ${mainFileName}`, rxr.locator.toString());
+    throw new RoleLoadError(`Failed to read main file: ${mainFileName}`, format(rxr.locator));
   }
 
   const mainContent = mainFileBuffer.toString("utf-8");
 
-  // 2. Create resource resolver
-  const resourceResolver = createResourceResolver(registry);
+  // 2. Create resource resolver (uses ARP with auto-registered RxrTransport)
+  const resourceResolver = createResourceResolver();
 
   // 3. Process resource tags
   const processedContent = await processResourceTags(mainContent, resourceResolver);

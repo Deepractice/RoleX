@@ -1,50 +1,52 @@
 /**
  * Simple Role Loader
- * 简单的角色加载器，不使用 DPML，直接文本替换
- * 使用 ARP 无状态解析资源引用
+ * Simple role loader without DPML, uses direct text replacement
+ * Uses ARP stateless resource reference resolution
  */
 
 import type { RXR } from "resourcexjs";
+import { extract, format } from "resourcexjs";
 import type { RenderedRole } from "~/types.js";
 import { RoleLoadError } from "~/errors.js";
 
 /**
- * 简单加载角色（不使用 DPML）
- * 1. 从 RXR 读取文件
- * 2. 解析 @!protocol://path 引用（从 RXR 内部文件读取）
- * 3. 简单文本拼接
+ * Simple role loading (without DPML)
+ * 1. Read files from RXR
+ * 2. Parse @!protocol://path references (from internal files)
+ * 3. Simple text concatenation
  */
 export async function loadRoleSimple(rxr: RXR): Promise<RenderedRole> {
-  const files = await rxr.content.files();
+  const files = await extract(rxr.archive);
+  const fileNames = Object.keys(files);
 
-  // 1. 找主文件
-  let mainFileName = Array.from(files.keys()).find((f) => f.endsWith(".role.pml"));
+  // 1. Find main file
+  let mainFileName = fileNames.find((f) => f.endsWith(".role.pml"));
   if (!mainFileName) {
-    mainFileName = Array.from(files.keys()).find((f) => f.endsWith(".role.md"));
+    mainFileName = fileNames.find((f) => f.endsWith(".role.md"));
   }
 
   if (!mainFileName) {
-    throw new RoleLoadError("No .role.pml or .role.md file found", rxr.locator.toString());
+    throw new RoleLoadError("No .role.pml or .role.md file found", format(rxr.locator));
   }
 
-  const mainFileBuffer = files.get(mainFileName);
+  const mainFileBuffer = files[mainFileName];
   if (!mainFileBuffer) {
-    throw new RoleLoadError(`Failed to read main file: ${mainFileName}`, rxr.locator.toString());
+    throw new RoleLoadError(`Failed to read main file: ${mainFileName}`, format(rxr.locator));
   }
 
   const mainContent = mainFileBuffer.toString("utf-8");
 
-  // 2. 提取三个部分
+  // 2. Extract three sections
   const personality = extractSection(mainContent, "personality");
   const principle = extractSection(mainContent, "principle");
   const knowledge = extractSection(mainContent, "knowledge");
 
-  // 3. 处理引用（从 RXR 读取）
-  const resolvedPersonality = await resolveReferences(personality, files);
-  const resolvedPrinciple = await resolveReferences(principle, files);
-  const resolvedKnowledge = await resolveReferences(knowledge, files);
+  // 3. Resolve references (from internal files)
+  const resolvedPersonality = resolveReferences(personality, files);
+  const resolvedPrinciple = resolveReferences(principle, files);
+  const resolvedKnowledge = resolveReferences(knowledge, files);
 
-  // 4. 拼接最终 prompt
+  // 4. Build final prompt
   const prompt = `Personality:\n${resolvedPersonality}\n\nPrinciple:\n${resolvedPrinciple}\n\nKnowledge:\n${resolvedKnowledge}`;
 
   return {
@@ -56,7 +58,7 @@ export async function loadRoleSimple(rxr: RXR): Promise<RenderedRole> {
 }
 
 /**
- * 提取标签内容
+ * Extract section content
  */
 function extractSection(content: string, tag: string): string {
   const regex = new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, "i");
@@ -65,20 +67,20 @@ function extractSection(content: string, tag: string): string {
 }
 
 /**
- * 从 files 中获取文件，支持带 ./ 前缀和不带前缀的路径
+ * Get file from files, supporting with/without ./ prefix
  */
-function getFile(files: Map<string, Buffer>, path: string): Buffer | undefined {
-  // 先尝试原始路径
-  let buffer = files.get(path);
+function getFile(files: Record<string, Buffer>, path: string): Buffer | undefined {
+  // Try original path
+  let buffer = files[path];
   if (buffer) return buffer;
 
-  // 尝试带 ./ 前缀
-  buffer = files.get(`./${path}`);
+  // Try with ./ prefix
+  buffer = files[`./${path}`];
   if (buffer) return buffer;
 
-  // 尝试去掉 ./ 前缀
+  // Try without ./ prefix
   if (path.startsWith("./")) {
-    buffer = files.get(path.slice(2));
+    buffer = files[path.slice(2)];
     if (buffer) return buffer;
   }
 
@@ -86,25 +88,25 @@ function getFile(files: Map<string, Buffer>, path: string): Buffer | undefined {
 }
 
 /**
- * 解析引用并替换
- * 支持：
+ * Resolve references and replace
+ * Supports:
  * - @!thought://xxx
  * - <resource src="arp:text:rxr://domain/name@version/path/file.pml"/>
  */
-async function resolveReferences(content: string, files: Map<string, Buffer>): Promise<string> {
+function resolveReferences(content: string, files: Record<string, Buffer>): string {
   let resolved = content;
 
-  // 1. 处理 @!protocol://path 格式
+  // 1. Handle @!protocol://path format
   const oldStyleRegex = /@!([a-z]+):\/\/([a-zA-Z0-9_-]+)/g;
   resolved = resolved.replace(oldStyleRegex, (_match, protocol, name) => {
-    // 尝试 .pml 后缀
+    // Try .pml suffix
     const pmlPath = `${protocol}/${name}.${protocol}.pml`;
     let fileBuffer = getFile(files, pmlPath);
     if (fileBuffer) {
       return fileBuffer.toString("utf-8");
     }
 
-    // 尝试 .md 后缀
+    // Try .md suffix
     const mdPath = `${protocol}/${name}.${protocol}.md`;
     fileBuffer = getFile(files, mdPath);
     if (fileBuffer) {
@@ -115,7 +117,7 @@ async function resolveReferences(content: string, files: Map<string, Buffer>): P
     return "";
   });
 
-  // 2. 处理 <resource src="..."/> 格式
+  // 2. Handle <resource src="..."/> format
   const resourceRegex = /<resource\s+src="arp:text:rxr:\/\/[^/]+\/[^/]+@[^/]+\/([^"]+)"\s*\/>/g;
   resolved = resolved.replace(resourceRegex, (_match, filePath) => {
     const fileBuffer = getFile(files, filePath);

@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "dpml": "^0.3.0",
-    "resourcexjs": "^2.2.0"
+    "resourcexjs": "^2.5.3"
   },
   "devDependencies": {},
   "publishConfig": {

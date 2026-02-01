@@ -9,7 +9,9 @@
 // ========== Core API ==========
 
 export { loadRole } from "./loader/index.js";
-export { roleType } from "./resource-type/index.js";
+
+// BundledType for ResourceX integration (auto-generated)
+export { roleType } from "./roleType.js";
 
 // ========== Types ==========
 
