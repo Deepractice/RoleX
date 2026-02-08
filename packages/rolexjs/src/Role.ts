@@ -10,7 +10,7 @@ import type { Platform, Feature, Goal, Plan, Task } from "@rolexjs/core";
 export class Role {
   constructor(
     private readonly platform: Platform,
-    private readonly name: string,
+    private readonly name: string
   ) {}
 
   /** Who am I? Load my identity — my personality, knowledge, and principles. */

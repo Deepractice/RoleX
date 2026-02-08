@@ -61,7 +61,12 @@ export interface Platform {
   identity(roleId: string): Feature[];
 
   /** Add a growth dimension to a role's identity */
-  growup(roleId: string, type: "knowledge" | "experience" | "voice", name: string, source: string): Feature;
+  growup(
+    roleId: string,
+    type: "knowledge" | "experience" | "voice",
+    name: string,
+    source: string
+  ): Feature;
 
   /** Find the current active goal for a role (with plan + tasks context) */
   activeGoal(roleId: string): (Goal & { plan: Plan | null; tasks: Task[] }) | null;

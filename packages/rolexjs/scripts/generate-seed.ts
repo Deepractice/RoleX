@@ -120,7 +120,7 @@ const lines: string[] = [
   "",
   "export const SEED: SeedData = {",
   `  organization: ${JSON.stringify(config.name)},`,
-  `  teams: ${JSON.stringify(config.teams)},`,
+  `  teams: ${JSON.stringify(config.teams, null, 2).replace(/\n/g, "\n  ")},`,
   "  roles: [",
 ];
 

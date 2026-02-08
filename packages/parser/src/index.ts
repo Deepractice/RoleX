@@ -7,11 +7,7 @@
  * Own the interface, delegate the implementation.
  */
 
-import {
-  Parser,
-  AstBuilder,
-  GherkinClassicTokenMatcher,
-} from "@cucumber/gherkin";
+import { Parser, AstBuilder, GherkinClassicTokenMatcher } from "@cucumber/gherkin";
 import { IdGenerator } from "@cucumber/messages";
 import type { GherkinDocument } from "@cucumber/messages";
 
