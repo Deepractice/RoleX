@@ -1,53 +1,30 @@
 /**
  * @rolexjs/core
- * RoleX Core - AI Agent Role Management Framework
  *
- * RoleX is a DPML domain implementation for AI Agent Role resources.
- * It provides parsing, rendering, and ResourceX integration.
+ * RDD (Role-Driven Development) Five-Dimension Model.
+ *
+ * Every role operates through five dimensions:
+ *
+ *   Identity → Goal → Plan → Task/Skill
+ *   (I am)     (I want) (I plan) (I do)
+ *
+ * Goal, Plan, Task extend Feature (IS-A).
+ * Identity wraps Features (HAS-A).
+ * Feature and Scenario extend Gherkin types with RDD semantics.
+ * Verification is embedded — Scenario.verifiable determines testability.
  */
 
-// ========== Core API ==========
+// ========== RDD Types (extend Gherkin) ==========
 
-export { loadRole } from "./loader/index.js";
+export type { Feature } from "./Feature.js";
+export type { Scenario } from "./Scenario.js";
 
-// BundledType for ResourceX integration (auto-generated)
-export { roleType } from "./roleType.js";
+// ========== Core Model ==========
 
-// ========== Types ==========
-
-export type {
-  RenderedRole,
-  ParsedThought,
-  ParsedExecution,
-  ThoughtSubTag,
-  ExecutionSubTag,
-  ResourceResolver,
-} from "./types.js";
-
-// ========== Errors ==========
-
-export { RoleXError, RoleLoadError, ResourceResolveError, DPMLParseError } from "./errors.js";
-
-// ========== Schema ==========
-
-export type { RoleSchemas } from "./schema/index.js";
-export {
-  defineRoleSchemas,
-  roleSchema,
-  thoughtSchema,
-  executionSchema,
-  knowledgeSchema,
-} from "./schema/index.js";
-
-// ========== Transformer ==========
-
-export type { RoleTransformer } from "./transformer/index.js";
-export { roleTransformer } from "./transformer/index.js";
-
-// ========== Resolver ==========
-
-export { createResourceResolver } from "./resolver/index.js";
-
-// ========== Version ==========
-
-export const VERSION: string = "__VERSION__";
+export type { Role } from "./Role.js";
+export type { Identity } from "./Identity.js";
+export type { Goal } from "./Goal.js";
+export type { Plan } from "./Plan.js";
+export type { Task } from "./Task.js";
+export type { Skill } from "./Skill.js";
+export type { Platform, Organization, RoleEntry, Directory } from "./Platform.js";

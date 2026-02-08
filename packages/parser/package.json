@@ -1,20 +1,18 @@
 {
-  "name": "rolexjs",
-  "version": "0.2.0",
-  "description": "RoleX - AI Agent Role Management Framework",
+  "name": "@rolexjs/parser",
+  "version": "0.1.0",
+  "description": "Gherkin parser for Rolex — wraps @cucumber/gherkin",
   "keywords": [
     "rolex",
-    "role",
-    "agent",
-    "ai",
-    "framework",
-    "management"
+    "gherkin",
+    "parser",
+    "bdd"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Deepractice/RoleX.git"
+    "url": "git+https://github.com/Deepractice/RoleX.git",
+    "directory": "packages/parser"
   },
-  "homepage": "https://github.com/Deepractice/RoleX",
   "license": "MIT",
   "engines": {
     "node": ">=22.0.0"
@@ -33,13 +31,14 @@
   ],
   "scripts": {
     "build": "tsup",
+    "test": "bun test",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@rolexjs/core": "workspace:*",
-    "@rolexjs/parser": "workspace:*"
+    "@cucumber/gherkin": "^38.0.0",
+    "@cucumber/messages": "^32.0.0"
   },
   "devDependencies": {},
   "publishConfig": {

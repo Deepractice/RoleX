@@ -1,0 +1,19 @@
+{
+  "name": "@rolexjs/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "rolex": "./dist/index.js"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "bun src/index.ts",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "citty": "^0.1.6",
+    "consola": "^3.4.2",
+    "rolexjs": "workspace:*"
+  }
+}

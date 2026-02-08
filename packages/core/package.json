@@ -31,17 +31,16 @@
     "README.md"
   ],
   "scripts": {
-    "build": "bun run build.ts",
+    "build": "tsup",
     "test": "bun test || true",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
-  "dependencies": {
-    "dpml": "^0.3.0",
-    "resourcexjs": "^2.5.3"
+  "dependencies": {},
+  "devDependencies": {
+    "@cucumber/messages": "^32.0.1"
   },
-  "devDependencies": {},
   "publishConfig": {
     "access": "public"
   }

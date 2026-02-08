@@ -1,20 +1,19 @@
 {
-  "name": "rolexjs",
-  "version": "0.2.0",
-  "description": "RoleX - AI Agent Role Management Framework",
+  "name": "@rolexjs/mcp-server",
+  "version": "0.1.0",
+  "description": "MCP server for Rolex — expose RDD role management as MCP tools",
   "keywords": [
     "rolex",
+    "mcp",
+    "rdd",
     "role",
-    "agent",
-    "ai",
-    "framework",
-    "management"
+    "agent"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Deepractice/RoleX.git"
+    "url": "git+https://github.com/Deepractice/RoleX.git",
+    "directory": "packages/mcp-server"
   },
-  "homepage": "https://github.com/Deepractice/RoleX",
   "license": "MIT",
   "engines": {
     "node": ">=22.0.0"
@@ -22,6 +21,9 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "rolex-mcp": "./dist/index.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -33,13 +35,15 @@
   ],
   "scripts": {
     "build": "tsup",
+    "dev": "bun run src/index.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@rolexjs/core": "workspace:*",
-    "@rolexjs/parser": "workspace:*"
+    "rolexjs": "workspace:*",
+    "fastmcp": "^3.0.0",
+    "zod": "^3.25.0"
   },
   "devDependencies": {},
   "publishConfig": {

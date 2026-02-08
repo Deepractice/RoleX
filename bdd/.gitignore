@@ -1,5 +1,0 @@
-# Reports
-reports/*.html
-
-# Environment
-.env.local
