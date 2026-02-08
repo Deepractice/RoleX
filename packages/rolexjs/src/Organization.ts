@@ -27,12 +27,12 @@ export class Organization {
   }
 
   /** Teach a role — add knowledge, experience, or voice from the outside. */
-  teach(roleId: string, type: "knowledge" | "experience" | "voice", name: string, source: string): Feature {
-    return this.platform.growup(roleId, type, name, source);
+  teach(name: string, type: "knowledge" | "experience" | "voice", dimensionName: string, source: string): Feature {
+    return this.platform.growup(name, type, dimensionName, source);
   }
 
-  /** Get a Role instance by roleId (team/role format). */
-  role(roleId: string): Role {
-    return new Role(this.platform, roleId);
+  /** Get a Role instance by name. */
+  role(name: string): Role {
+    return new Role(this.platform, name);
   }
 }

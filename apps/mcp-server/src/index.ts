@@ -54,7 +54,7 @@ server.addTool({
   parameters: z.object({
     roleId: z
       .string()
-      .describe("Role ID in team/role format (e.g. 'default/owner')"),
+      .describe("Role name (e.g. 'alex')"),
   }),
   execute: async ({ roleId }) => {
     const dir = rolex.directory();

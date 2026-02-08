@@ -1,15 +1,15 @@
 /**
  * LocalPlatform — Local filesystem implementation of Platform.
  *
- * Reads rolex.json for organization structure.
- * Resolves roleId (team/role) to filesystem directories.
+ * Everything lives under a single .rolex/ directory.
+ * rolex.json manages organization relationships (including teams).
  *
  * Directory convention:
- *   <rolexDir>/rolex.json                     ← Organization config
- *   <teamPath>/<role>/cognition/*.cognition.feature
- *   <teamPath>/<role>/goals/<name>/<name>.goal.feature
- *   <teamPath>/<role>/goals/<name>/<name>.plan.feature
- *   <teamPath>/<role>/goals/<name>/tasks/<name>.task.feature
+ *   <rootDir>/rolex.json                          ← Organization config
+ *   <rootDir>/<role>/identity/*.identity.feature   ← Identity features
+ *   <rootDir>/<role>/goals/<name>/<name>.goal.feature
+ *   <rootDir>/<role>/goals/<name>/<name>.plan.feature
+ *   <rootDir>/<role>/goals/<name>/tasks/<name>.task.feature
  */
 
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from "node:fs";
@@ -29,7 +29,7 @@ import type {
 
 interface RolexConfig {
   name: string;
-  teams: Record<string, string>;
+  teams: Record<string, string[]>;
 }
 
 export class LocalPlatform implements Platform {
@@ -45,18 +45,12 @@ export class LocalPlatform implements Platform {
   found(name: string): void {
     mkdirSync(this.rootDir, { recursive: true });
 
-    const config = {
+    const config: RolexConfig = {
       name,
-      teams: { default: basename(this.rootDir) },
+      teams: { default: [] },
     };
 
-    writeFileSync(
-      join(this.rootDir, "rolex.json"),
-      JSON.stringify(config, null, 2),
-      "utf-8",
-    );
-
-    this.config = null;
+    this.saveConfig(config);
   }
 
   // ========== Organization ==========
@@ -65,19 +59,11 @@ export class LocalPlatform implements Platform {
     const config = this.loadConfig();
     const roles: RoleEntry[] = [];
 
-    for (const [teamName, teamPath] of Object.entries(config.teams)) {
-      const absPath = join(this.rootDir, "..", teamPath);
-      if (!existsSync(absPath)) continue;
-
-      const roleDirs = readdirSync(absPath, { withFileTypes: true })
-        .filter((d) => d.isDirectory())
-        .map((d) => d.name);
-
-      for (const roleName of roleDirs) {
+    for (const [teamName, roleNames] of Object.entries(config.teams)) {
+      for (const roleName of roleNames) {
         roles.push({
-          id: `${teamName}/${roleName}`,
+          name: roleName,
           team: teamName,
-          role: roleName,
         });
       }
     }
@@ -88,11 +74,7 @@ export class LocalPlatform implements Platform {
   // ========== Born ==========
 
   born(name: string, source: string): Feature {
-    const config = this.loadConfig();
-    const [, teamPath] = Object.entries(config.teams)[0];
-    const absPath = join(this.rootDir, "..", teamPath);
-    const roleDir = join(absPath, name);
-
+    const roleDir = join(this.rootDir, name);
     const identityDir = join(roleDir, "identity");
     mkdirSync(identityDir, { recursive: true });
 
@@ -104,23 +86,25 @@ export class LocalPlatform implements Platform {
   }
 
   hire(name: string): void {
-    const config = this.loadConfig();
-    const [, teamPath] = Object.entries(config.teams)[0];
-    const absPath = join(this.rootDir, "..", teamPath);
-    const roleDir = join(absPath, name);
+    const roleDir = join(this.rootDir, name);
 
     if (!existsSync(join(roleDir, "identity", "persona.identity.feature"))) {
       throw new Error(`Role not found: ${name}. Call born() first.`);
     }
 
     mkdirSync(join(roleDir, "goals"), { recursive: true });
+
+    // Update rolex.json — add role to default team
+    const config = this.loadConfig();
+    const [firstTeam] = Object.keys(config.teams);
+    if (!config.teams[firstTeam].includes(name)) {
+      config.teams[firstTeam].push(name);
+      this.saveConfig(config);
+    }
   }
 
   fire(name: string): void {
-    const config = this.loadConfig();
-    const [, teamPath] = Object.entries(config.teams)[0];
-    const absPath = join(this.rootDir, "..", teamPath);
-    const roleDir = join(absPath, name);
+    const roleDir = join(this.rootDir, name);
     const goalsDir = join(roleDir, "goals");
 
     if (!existsSync(goalsDir)) {
@@ -128,6 +112,17 @@ export class LocalPlatform implements Platform {
     }
 
     rmSync(goalsDir, { recursive: true, force: true });
+
+    // Update rolex.json — remove role from team
+    const config = this.loadConfig();
+    for (const teamName of Object.keys(config.teams)) {
+      const idx = config.teams[teamName].indexOf(name);
+      if (idx !== -1) {
+        config.teams[teamName].splice(idx, 1);
+        break;
+      }
+    }
+    this.saveConfig(config);
   }
 
   // ========== Growup ==========
@@ -290,35 +285,29 @@ export class LocalPlatform implements Platform {
       return this.config!;
     }
 
-    // Fallback: no config, treat rootDir itself as a single-team setup
+    // Fallback: no config
     const name = basename(this.rootDir);
     this.config = {
       name,
-      teams: { default: this.rootDir },
+      teams: { default: [] },
     };
     return this.config;
   }
 
+  private saveConfig(config: RolexConfig): void {
+    writeFileSync(
+      join(this.rootDir, "rolex.json"),
+      JSON.stringify(config, null, 2),
+      "utf-8",
+    );
+    this.config = config;
+  }
+
   private resolveRoleDir(roleId: string): string {
-    const parts = roleId.split("/");
-    if (parts.length !== 2) {
-      throw new Error(`Invalid roleId: ${roleId}. Expected format: team/role`);
-    }
-
-    const [teamName, roleName] = parts;
-    const config = this.loadConfig();
-    const teamPath = config.teams[teamName];
-
-    if (!teamPath) {
-      throw new Error(`Team not found: ${teamName}`);
-    }
-
-    // Resolve relative to rootDir's parent (project root)
-    const roleDir = join(this.rootDir, "..", teamPath, roleName);
+    const roleDir = join(this.rootDir, roleId);
     if (!existsSync(roleDir)) {
       throw new Error(`Role directory not found: ${roleDir}`);
     }
-
     return roleDir;
   }
 

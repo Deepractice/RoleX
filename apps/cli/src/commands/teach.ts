@@ -12,7 +12,7 @@ export const teach = defineCommand({
   args: {
     roleId: {
       type: "positional",
-      description: "Role ID (e.g. 'default/alex')",
+      description: "Role name (e.g. 'alex')",
       required: true,
     },
     type: {

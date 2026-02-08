@@ -111,7 +111,7 @@ export const DESC_HIRE = `Hire a role into the organization — establish the CA
 
 The role must already exist (created via born). Hiring sets up the organizational working structure so the role can receive goals, plans, and tasks.
 
-Flow: born(name, source) → hire(name) → identity(roleId) → focus/want/plan/todo`;
+Flow: born(name, source) → hire(name) → identity(name) → focus/want/plan/todo`;
 
 export const DESC_FIRE = `Fire a role from the organization — remove the CAS link.
 

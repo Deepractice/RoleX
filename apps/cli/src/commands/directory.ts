@@ -23,7 +23,7 @@ export const directory = defineCommand({
       if (dir.roles.length > 0) {
         consola.info("Roles:");
         for (const role of dir.roles) {
-          console.log(`  ${role.role} (${role.id})`);
+          console.log(`  ${role.name} (${role.team})`);
         }
       }
 

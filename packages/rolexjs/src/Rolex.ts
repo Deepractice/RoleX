@@ -39,9 +39,9 @@ export class Rolex {
       return new Organization(this.platform);
     }
 
-    const role = org.roles.find((r) => r.role === name);
+    const role = org.roles.find((r) => r.name === name);
     if (role) {
-      return new Role(this.platform, role.id);
+      return new Role(this.platform, role.name);
     }
 
     throw new Error(`Not found in society: ${name}`);

@@ -5,7 +5,7 @@
  * LocalPlatform uses the filesystem (.rolex/ directories).
  * Future platforms could use databases, cloud storage, etc.
  *
- * All methods are stateless — roleId (team/role) is passed per call.
+ * All methods are stateless — role name is passed per call.
  */
 
 import type { Feature } from "./Feature.js";
@@ -17,9 +17,8 @@ import type { Task } from "./Task.js";
  * Role entry in the organization.
  */
 export interface RoleEntry {
-  readonly id: string;
+  readonly name: string;
   readonly team: string;
-  readonly role: string;
 }
 
 /**
@@ -40,7 +39,7 @@ export interface Directory {
 
 /**
  * Platform interface — abstracts role storage and retrieval.
- * All methods are stateless — roleId identifies the target role.
+ * All methods are stateless — role name identifies the target role.
  */
 export interface Platform {
   /** Found an organization */

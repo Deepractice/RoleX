@@ -12,7 +12,7 @@ export const want = defineCommand({
   args: {
     roleId: {
       type: "positional",
-      description: "Role ID (e.g. 'default/owner')",
+      description: "Role name (e.g. 'alex')",
       required: true,
     },
     name: {

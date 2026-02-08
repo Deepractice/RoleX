@@ -25,7 +25,7 @@ export const find = defineCommand({
         consola.success(`Organization: ${info.name}`);
         console.log(`  Roles: ${info.roles.length}`);
         for (const role of info.roles) {
-          console.log(`    ${role.role} (${role.id})`);
+          console.log(`    ${role.name} (${role.team})`);
         }
       } else {
         const features = result.identity();

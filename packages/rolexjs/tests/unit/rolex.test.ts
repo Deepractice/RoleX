@@ -8,7 +8,7 @@ import { LocalPlatform } from "../../src/LocalPlatform.js";
 
 const TEST_ROOT = join(import.meta.dir, "../.test-rolex");
 const ROLEX_DIR = join(TEST_ROOT, ".rolex");
-const ROLE_ID = "default/owner";
+const ROLE_NAME = "owner";
 
 function setupTestOrg() {
   const roleDir = join(ROLEX_DIR, "owner");
@@ -20,7 +20,7 @@ function setupTestOrg() {
     join(ROLEX_DIR, "rolex.json"),
     JSON.stringify({
       name: "Test Org",
-      teams: { default: ".rolex" },
+      teams: { default: ["owner"] },
     }),
   );
 
@@ -130,7 +130,7 @@ describe("Rolex (society)", () => {
     expect(dir.organizations).toHaveLength(1);
     expect(dir.organizations[0].name).toBe("Test Org");
     expect(dir.roles.length).toBeGreaterThan(0);
-    expect(dir.roles.find((r) => r.id === "default/owner")).toBeDefined();
+    expect(dir.roles.find((r) => r.name === "owner")).toBeDefined();
   });
 
   // ========== find() ==========
@@ -234,7 +234,7 @@ describe("Organization", () => {
     const org = rolex.find("Test Org") as Organization;
 
     const feature = org.teach(
-      ROLE_ID,
+      ROLE_NAME,
       "knowledge",
       "company-policy",
       `Feature: Company Policy
