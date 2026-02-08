@@ -53,9 +53,8 @@ const platform = new LocalPlatform(rolexDir);
 bootstrap(platform);
 const rolex = new Rolex(platform);
 
-// Auto-activate waiter as default role
-let currentRole: Role | null = rolex.role("waiter");
-let currentRoleName: string = "waiter";
+let currentRole: Role | null = null;
+let currentRoleName: string = "";
 
 const server = new FastMCP({
   name: "Rolex MCP Server",
