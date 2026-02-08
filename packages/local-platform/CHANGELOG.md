@@ -1,5 +1,21 @@
 # @rolexjs/local-platform
 
+## 0.6.0
+
+### Minor Changes
+
+- e537147: feat: add reflect() — distill experiences into knowledge
+
+  Kantian Reflective Judgment: multiple concrete experiences are consumed
+  and a transferable knowledge principle is created. Experience files are
+  deleted, knowledge file is added to identity.
+
+### Patch Changes
+
+- Updated dependencies [e537147]
+  - @rolexjs/core@0.6.0
+  - @rolexjs/parser@0.6.0
+
 ## 0.5.0
 
 ### Minor Changes
