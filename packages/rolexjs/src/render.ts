@@ -123,7 +123,7 @@ const HINTS: Array<[RegExp, string]> = [
     /Not found in society/,
     'Check the name. Use `society(operation: "directory")` to list all roles and organizations.',
   ],
-  [/No rolex\.json/, 'Initialize the organization first with `society(operation: "found")`.'],
+  [/No organization found/, 'Found an organization first with `society(operation: "found")`.'],
   [/requires:/, "Check the required parameters for this operation."],
 ];
 

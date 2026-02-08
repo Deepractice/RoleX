@@ -4,8 +4,8 @@
  * Run before tsup build:
  *   bun scripts/generate-seed.ts
  *
- * Produces a TypeScript module with all seed data inlined as string constants,
- * so bootstrap.ts needs zero filesystem access at runtime.
+ * Scans ALL role directories (any dir with identity/persona.identity.feature).
+ * System roles (nuwa, waiter) have no organization — they are born at society level.
  */
 
 import { readdirSync, readFileSync, existsSync } from "node:fs";
@@ -23,11 +23,6 @@ interface SeedRole {
     name: string;
     source: string;
   }>;
-}
-
-interface SeedConfig {
-  name: string;
-  teams: Record<string, string[]>;
 }
 
 function detectType(filename: string): "knowledge" | "experience" | "voice" {
@@ -55,42 +50,39 @@ if (!existsSync(SEED_DIR)) {
   process.exit(1);
 }
 
-const configPath = join(SEED_DIR, "rolex.json");
-if (!existsSync(configPath)) {
-  console.error("rolex.json not found in seed directory");
-  process.exit(1);
-}
-
-const config: SeedConfig = JSON.parse(readFileSync(configPath, "utf-8"));
 const roles: SeedRole[] = [];
 
-for (const [, roleNames] of Object.entries(config.teams)) {
-  for (const roleName of roleNames) {
-    const identityDir = join(SEED_DIR, roleName, "identity");
-    if (!existsSync(identityDir)) continue;
+// Scan all subdirectories for roles with persona
+const dirs = readdirSync(SEED_DIR, { withFileTypes: true })
+  .filter((d) => d.isDirectory())
+  .map((d) => d.name)
+  .sort();
 
-    const files = readdirSync(identityDir)
-      .filter((f) => f.endsWith(".identity.feature"))
-      .sort();
+for (const roleName of dirs) {
+  const identityDir = join(SEED_DIR, roleName, "identity");
+  if (!existsSync(identityDir)) continue;
 
-    const personaFile = files.find((f) => f === "persona.identity.feature");
-    if (!personaFile) continue;
+  const files = readdirSync(identityDir)
+    .filter((f) => f.endsWith(".identity.feature"))
+    .sort();
 
-    const persona = readFileSync(join(identityDir, personaFile), "utf-8");
-    const dimensions: SeedRole["dimensions"] = [];
+  const personaFile = files.find((f) => f === "persona.identity.feature");
+  if (!personaFile) continue;
 
-    for (const file of files) {
-      if (file === "persona.identity.feature") continue;
-      const source = readFileSync(join(identityDir, file), "utf-8");
-      dimensions.push({
-        type: detectType(file),
-        name: detectName(file),
-        source,
-      });
-    }
+  const persona = readFileSync(join(identityDir, personaFile), "utf-8");
+  const dimensions: SeedRole["dimensions"] = [];
 
-    roles.push({ name: roleName, persona, dimensions });
+  for (const file of files) {
+    if (file === "persona.identity.feature") continue;
+    const source = readFileSync(join(identityDir, file), "utf-8");
+    dimensions.push({
+      type: detectType(file),
+      name: detectName(file),
+      source,
+    });
   }
+
+  roles.push({ name: roleName, persona, dimensions });
 }
 
 // Generate TypeScript source
@@ -113,14 +105,10 @@ const lines: string[] = [
   "}",
   "",
   "export interface SeedData {",
-  "  organization: string;",
-  "  teams: Record<string, string[]>;",
   "  roles: SeedRole[];",
   "}",
   "",
   "export const SEED: SeedData = {",
-  `  organization: ${JSON.stringify(config.name)},`,
-  `  teams: ${JSON.stringify(config.teams, null, 2).replace(/\n/g, "\n  ")},`,
   "  roles: [",
 ];
 

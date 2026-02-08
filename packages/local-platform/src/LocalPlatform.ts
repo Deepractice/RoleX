@@ -2,11 +2,13 @@
  * LocalPlatform — Local filesystem implementation of Platform.
  *
  * Everything lives under a single .rolex/ directory.
- * rolex.json manages organization relationships (including teams).
+ * rolex.json is the single source of truth (CAS):
+ *   - roles: all born role names
+ *   - organization: optional org with teams
  *
  * Directory convention:
- *   <rootDir>/rolex.json                          ← Organization config
- *   <rootDir>/<role>/identity/*.identity.feature   ← Identity features
+ *   <rootDir>/rolex.json                          <- Society config (always exists)
+ *   <rootDir>/<role>/identity/*.identity.feature   <- Identity features
  *   <rootDir>/<role>/goals/<name>/<name>.goal.feature
  *   <rootDir>/<role>/goals/<name>/<name>.plan.feature
  *   <rootDir>/<role>/goals/<name>/tasks/<name>.task.feature
@@ -18,6 +20,7 @@ import { parse } from "@rolexjs/parser";
 import type { Feature as GherkinFeature } from "@rolexjs/parser";
 import type {
   Platform,
+  RolexConfig,
   Organization,
   RoleEntry,
   Feature,
@@ -26,11 +29,6 @@ import type {
   Plan,
   Task,
 } from "@rolexjs/core";
-
-interface RolexConfig {
-  name: string;
-  teams: Record<string, string[]>;
-}
 
 export class LocalPlatform implements Platform {
   private readonly rootDir: string;
@@ -43,23 +41,23 @@ export class LocalPlatform implements Platform {
   // ========== Found ==========
 
   found(name: string): void {
-    mkdirSync(this.rootDir, { recursive: true });
-
-    const config: RolexConfig = {
+    const config = this.loadConfig();
+    config.organization = {
       name,
       teams: { default: [] },
     };
-
     this.saveConfig(config);
   }
 
   // ========== Organization ==========
 
-  organization(): Organization {
+  organization(): Organization | null {
     const config = this.loadConfig();
+    if (!config.organization) return null;
+
     const roles: RoleEntry[] = [];
 
-    for (const [teamName, roleNames] of Object.entries(config.teams)) {
+    for (const [teamName, roleNames] of Object.entries(config.organization.teams)) {
       for (const roleName of roleNames) {
         roles.push({
           name: roleName,
@@ -68,18 +66,13 @@ export class LocalPlatform implements Platform {
       }
     }
 
-    return { name: config.name, roles };
+    return { name: config.organization.name, roles };
   }
 
   // ========== Society ==========
 
   allBornRoles(): string[] {
-    if (!existsSync(this.rootDir)) return [];
-
-    return readdirSync(this.rootDir, { withFileTypes: true })
-      .filter((d) => d.isDirectory())
-      .filter((d) => existsSync(join(this.rootDir, d.name, "identity", "persona.identity.feature")))
-      .map((d) => d.name);
+    return this.loadConfig().roles;
   }
 
   // ========== Born ==========
@@ -92,29 +85,40 @@ export class LocalPlatform implements Platform {
     const filePath = join(identityDir, "persona.identity.feature");
     writeFileSync(filePath, source, "utf-8");
 
+    // Register in config (CAS)
+    const config = this.loadConfig();
+    if (!config.roles.includes(name)) {
+      config.roles.push(name);
+      this.saveConfig(config);
+    }
+
     const doc = parse(source);
     return this.toFeature(doc.feature!, "persona");
   }
 
   hire(name: string): void {
-    const roleDir = join(this.rootDir, name);
+    const config = this.loadConfig();
+    if (!config.organization) throw new Error("No organization found. Call found() first.");
 
-    if (!existsSync(join(roleDir, "identity", "persona.identity.feature"))) {
+    if (!config.roles.includes(name)) {
       throw new Error(`Role not found: ${name}. Call born() first.`);
     }
 
+    const roleDir = join(this.rootDir, name);
     mkdirSync(join(roleDir, "goals"), { recursive: true });
 
-    // Update rolex.json — add role to default team
-    const config = this.loadConfig();
-    const [firstTeam] = Object.keys(config.teams);
-    if (!config.teams[firstTeam].includes(name)) {
-      config.teams[firstTeam].push(name);
+    // Add role to default team
+    const [firstTeam] = Object.keys(config.organization.teams);
+    if (!config.organization.teams[firstTeam].includes(name)) {
+      config.organization.teams[firstTeam].push(name);
       this.saveConfig(config);
     }
   }
 
   fire(name: string): void {
+    const config = this.loadConfig();
+    if (!config.organization) throw new Error("No organization found. Call found() first.");
+
     const roleDir = join(this.rootDir, name);
     const goalsDir = join(roleDir, "goals");
 
@@ -124,12 +128,11 @@ export class LocalPlatform implements Platform {
 
     rmSync(goalsDir, { recursive: true, force: true });
 
-    // Update rolex.json — remove role from team
-    const config = this.loadConfig();
-    for (const teamName of Object.keys(config.teams)) {
-      const idx = config.teams[teamName].indexOf(name);
+    // Remove role from team
+    for (const teamName of Object.keys(config.organization.teams)) {
+      const idx = config.organization.teams[teamName].indexOf(name);
       if (idx !== -1) {
-        config.teams[teamName].splice(idx, 1);
+        config.organization.teams[teamName].splice(idx, 1);
         break;
       }
     }
@@ -359,6 +362,10 @@ export class LocalPlatform implements Platform {
 
   // ========== Internal ==========
 
+  /**
+   * Load config — always returns a valid RolexConfig.
+   * Creates default config if rolex.json doesn't exist yet.
+   */
   private loadConfig(): RolexConfig {
     if (this.config) return this.config;
 
@@ -368,10 +375,15 @@ export class LocalPlatform implements Platform {
       return this.config!;
     }
 
-    throw new Error(`No rolex.json found in ${this.rootDir}. Call found() first.`);
+    // Create default config
+    mkdirSync(this.rootDir, { recursive: true });
+    const config: RolexConfig = { roles: [], organization: null };
+    this.saveConfig(config);
+    return config;
   }
 
   private saveConfig(config: RolexConfig): void {
+    mkdirSync(this.rootDir, { recursive: true });
     writeFileSync(join(this.rootDir, "rolex.json"), JSON.stringify(config, null, 2), "utf-8");
     this.config = config;
   }

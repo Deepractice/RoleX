@@ -22,7 +22,30 @@ export interface RoleEntry {
 }
 
 /**
- * Organization structure.
+ * Organization config within RolexConfig.
+ */
+export interface OrganizationConfig {
+  readonly name: string;
+  readonly teams: Readonly<Record<string, readonly string[]>>;
+}
+
+/**
+ * RolexConfig — The single source of truth for society state.
+ *
+ * Always exists. Defined in core, persisted by Platform.
+ * - roles: all born role names (CAS — no scanning needed)
+ * - organization: optional org with teams (null if no org founded)
+ */
+export interface RolexConfig {
+  roles: string[];
+  organization: {
+    name: string;
+    teams: Record<string, string[]>;
+  } | null;
+}
+
+/**
+ * Organization structure (runtime view).
  */
 export interface Organization {
   readonly name: string;
@@ -45,8 +68,8 @@ export interface Platform {
   /** Found an organization */
   found(name: string): void;
 
-  /** Get the organization structure (teams + roles) */
-  organization(): Organization;
+  /** Get the organization structure (teams + roles), or null if no org exists */
+  organization(): Organization | null;
 
   /** List all born roles in society (regardless of organization membership) */
   allBornRoles(): string[];

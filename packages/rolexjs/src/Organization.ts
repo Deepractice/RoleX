@@ -13,7 +13,9 @@ export class Organization {
 
   /** View organization info (name + roles). */
   info(): OrgInfo {
-    return this.platform.organization();
+    const org = this.platform.organization();
+    if (!org) throw new Error("No organization found. Call found() first.");
+    return org;
   }
 
   /** Hire a role into the organization — establish CAS link. */

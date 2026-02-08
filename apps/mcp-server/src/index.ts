@@ -52,8 +52,10 @@ const rolexDir = process.argv[2] || process.env.ROLEX_DIR || DEFAULT_ROLEX_DIR;
 const platform = new LocalPlatform(rolexDir);
 bootstrap(platform);
 const rolex = new Rolex(platform);
-let currentRole: Role | null = null;
-let currentRoleName: string = "";
+
+// Auto-activate waiter as default role
+let currentRole: Role | null = rolex.role("waiter");
+let currentRoleName: string = "waiter";
 
 const server = new FastMCP({
   name: "Rolex MCP Server",
@@ -131,20 +133,22 @@ server.addTool({
         const lines: string[] = [];
 
         // Organizations and their hired roles
-        for (const entry of dir.organizations) {
-          const orgInstance = rolex.find(entry.name) as Organization;
-          const info = orgInstance.info();
-          lines.push(`Organization: ${info.name}`);
-          for (const role of info.roles) {
-            lines.push(`  - ${role.name} (team: ${role.team})`);
+        if (dir.organizations.length > 0) {
+          for (const entry of dir.organizations) {
+            const orgInstance = rolex.find(entry.name) as Organization;
+            const info = orgInstance.info();
+            lines.push(`Organization: ${info.name}`);
+            for (const role of info.roles) {
+              lines.push(`  - ${role.name} (team: ${role.team})`);
+            }
           }
         }
 
         // Unaffiliated roles (born but not hired)
         const unaffiliated = dir.roles.filter((r) => !r.team);
         if (unaffiliated.length > 0) {
-          lines.push("");
-          lines.push("Unaffiliated:");
+          if (lines.length > 0) lines.push("");
+          lines.push("Roles:");
           for (const role of unaffiliated) {
             lines.push(`  - ${role.name}`);
           }
@@ -185,6 +189,9 @@ server.addTool({
   }),
   execute: safeTool("organization", async ({ operation, name }) => {
     const dir = rolex.directory();
+    if (dir.organizations.length === 0) {
+      throw new Error("No organization found. Call found() first.");
+    }
     const org = rolex.find(dir.organizations[0].name) as Organization;
 
     switch (operation) {

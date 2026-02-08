@@ -13,12 +13,15 @@ function setupTestOrg() {
   mkdirSync(join(roleDir, "identity"), { recursive: true });
   mkdirSync(join(roleDir, "goals"), { recursive: true });
 
-  // rolex.json — organization config
+  // rolex.json — society config (new RolexConfig format)
   writeFileSync(
     join(ROLEX_DIR, "rolex.json"),
     JSON.stringify({
-      name: "Test Org",
-      teams: { default: ["owner"] },
+      roles: ["owner"],
+      organization: {
+        name: "Test Org",
+        teams: { default: ["owner"] },
+      },
     })
   );
 
@@ -341,34 +344,37 @@ describe("Role (embodied perspective)", () => {
 
   // ========== focus() ==========
 
-  test("focus() returns null when no goals", () => {
+  test("focus() returns null current when no goals", () => {
     const role = getRole();
-    expect(role.focus()).toBeNull();
+    const { current, otherGoals } = role.focus();
+    expect(current).toBeNull();
+    expect(otherGoals).toEqual([]);
   });
 
   test("focus() returns first active goal", () => {
     setupGoal();
     const role = getRole();
-    const goal = role.focus();
+    const { current } = role.focus();
 
-    expect(goal).not.toBeNull();
-    expect(goal!.type).toBe("goal");
-    expect(goal!.name).toBe("Test Goal");
+    expect(current).not.toBeNull();
+    expect(current!.type).toBe("goal");
+    expect(current!.name).toBe("Test Goal");
   });
 
   test("focus() skips @done goals", () => {
     setupDoneGoal();
     const role = getRole();
-    expect(role.focus()).toBeNull();
+    const { current } = role.focus();
+    expect(current).toBeNull();
   });
 
   test("focus() includes plan and tasks context", () => {
     setupGoal();
     const role = getRole();
-    const goal = role.focus();
+    const { current } = role.focus();
 
-    expect(goal!.plan).toBeNull();
-    expect(goal!.tasks).toEqual([]);
+    expect(current!.plan).toBeNull();
+    expect(current!.tasks).toEqual([]);
   });
 
   // ========== want() ==========
@@ -387,7 +393,7 @@ describe("Role (embodied perspective)", () => {
     expect(goal.type).toBe("goal");
     expect(goal.name).toBe("New Feature");
 
-    const active = role.focus();
+    const { current: active } = role.focus();
     expect(active!.name).toBe("New Feature");
   });
 
@@ -408,7 +414,7 @@ describe("Role (embodied perspective)", () => {
     expect(plan.type).toBe("plan");
     expect(plan.name).toBe("Implementation Plan");
 
-    const goal = role.focus();
+    const { current: goal } = role.focus();
     expect(goal!.plan).not.toBeNull();
     expect(goal!.plan!.name).toBe("Implementation Plan");
   });
@@ -436,7 +442,7 @@ describe("Role (embodied perspective)", () => {
     expect(task.type).toBe("task");
     expect(task.name).toBe("Implement Loader");
 
-    const goal = role.focus();
+    const { current: goal } = role.focus();
     expect(goal!.tasks).toHaveLength(1);
   });
 
@@ -446,9 +452,9 @@ describe("Role (embodied perspective)", () => {
     setupGoal();
     const role = getRole();
 
-    expect(role.focus()).not.toBeNull();
+    expect(role.focus().current).not.toBeNull();
     role.achieve();
-    expect(role.focus()).toBeNull();
+    expect(role.focus().current).toBeNull();
   });
 
   test("achieve() with experience auto-growup", () => {
@@ -461,7 +467,7 @@ describe("Role (embodied perspective)", () => {
     Then I learned to keep it simple
 `);
 
-    expect(role.focus()).toBeNull();
+    expect(role.focus().current).toBeNull();
 
     const features = role.identity();
     const exp = features.find((f) => f.type === "experience");
@@ -475,9 +481,9 @@ describe("Role (embodied perspective)", () => {
     setupGoal();
     const role = getRole();
 
-    expect(role.focus()).not.toBeNull();
+    expect(role.focus().current).not.toBeNull();
     role.abandon();
-    expect(role.focus()).toBeNull();
+    expect(role.focus().current).toBeNull();
   });
 
   test("abandon() with experience auto-growup", () => {
@@ -511,10 +517,10 @@ describe("Role (embodied perspective)", () => {
 `
     );
 
-    expect(role.focus()!.tasks).toHaveLength(1);
+    expect(role.focus().current!.tasks).toHaveLength(1);
     role.finish("my-task");
 
-    const goal = role.focus();
+    const { current: goal } = role.focus();
     expect(goal!.tasks).toHaveLength(1);
   });
 
@@ -537,7 +543,7 @@ describe("Role (embodied perspective)", () => {
       true
     );
 
-    const goal = role.focus();
+    const { current: goal } = role.focus();
     expect(goal!.scenarios).toHaveLength(2);
     expect(goal!.scenarios[0].verifiable).toBe(true);
     expect(goal!.scenarios[1].verifiable).toBe(true);
@@ -555,7 +561,7 @@ describe("Role (embodied perspective)", () => {
 `
     );
 
-    const goal = role.focus();
+    const { current: goal } = role.focus();
     expect(goal!.scenarios).toHaveLength(1);
     expect(goal!.scenarios[0].verifiable).toBe(false);
   });

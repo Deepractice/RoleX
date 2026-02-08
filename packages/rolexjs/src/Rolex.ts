@@ -31,8 +31,10 @@ export class Rolex {
     const org = this.platform.organization();
 
     const hiredMap = new Map<string, string>();
-    for (const r of org.roles) {
-      hiredMap.set(r.name, r.team);
+    if (org) {
+      for (const r of org.roles) {
+        hiredMap.set(r.name, r.team);
+      }
     }
 
     const roles = allNames.map((name) => ({
@@ -42,7 +44,7 @@ export class Rolex {
 
     return {
       roles,
-      organizations: [{ name: org.name }],
+      organizations: org ? [{ name: org.name }] : [],
     };
   }
 
@@ -65,7 +67,7 @@ export class Rolex {
   find(name: string): Role | Organization {
     const org = this.platform.organization();
 
-    if (org.name === name) {
+    if (org && org.name === name) {
       return new Organization(this.platform);
     }
 

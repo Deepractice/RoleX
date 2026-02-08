@@ -27,4 +27,11 @@ export type { Goal } from "./Goal.js";
 export type { Plan } from "./Plan.js";
 export type { Task } from "./Task.js";
 export type { Skill } from "./Skill.js";
-export type { Platform, Organization, RoleEntry, Directory } from "./Platform.js";
+export type {
+  Platform,
+  Organization,
+  OrganizationConfig,
+  RolexConfig,
+  RoleEntry,
+  Directory,
+} from "./Platform.js";

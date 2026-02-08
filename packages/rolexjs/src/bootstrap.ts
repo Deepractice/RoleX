@@ -1,32 +1,26 @@
 /**
- * bootstrap.ts — Seed a fresh Platform with 女娲 (the genesis role).
+ * bootstrap.ts — Seed a fresh Platform with system roles (女娲 + 小二).
  *
  * All seed data is inlined at build time via generate-seed.ts.
  * This module has zero filesystem dependencies — pure Platform API.
  *
- * 女娲 is born at society level — she is NOT hired into any organization.
- * She exists above organizations, creating and managing them.
+ * System roles are born at society level — they are NOT hired into any organization.
+ * Organizations are created by users via found().
  */
 
 import type { Platform } from "@rolexjs/core";
 import { SEED } from "./seed.js";
 
 /**
- * Bootstrap a Platform with seed data (女娲 + default org).
+ * Bootstrap a Platform with seed data (system roles only).
  *
- * Idempotent: skips if organization already exists.
+ * Idempotent: skips roles that already exist.
  */
 export function bootstrap(platform: Platform): void {
-  try {
-    platform.organization();
-    return; // Already initialized
-  } catch {
-    // Fresh environment — seed it
-  }
-
-  platform.found(SEED.organization);
-
   for (const role of SEED.roles) {
+    // Skip if already born
+    if (platform.allBornRoles().includes(role.name)) continue;
+
     platform.born(role.name, role.persona);
 
     for (const dim of role.dimensions) {
