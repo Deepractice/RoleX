@@ -1,5 +1,30 @@
 # @rolexjs/mcp-server
 
+## 0.9.0
+
+### Minor Changes
+
+- 99bcce5: feat: three-entity architecture (Role, Organization, Position)
+  - Role (WHO), Organization (WHERE), Position (WHAT) as independent entities
+  - State machines: free → member → on_duty, vacant → filled
+  - New API: establish(), appoint(), dismiss() for position management
+  - Gherkin-defined duties inject into identity at runtime
+  - New directory structure: roles/<name>/, orgs/<org>/positions/<pos>/
+  - Auto-dismiss on fire, one-to-one constraints
+  - Updated nuwa seed with three-entity knowledge
+
+### Patch Changes
+
+- 59a8320: feat: enforce nuwa-only permission on society and organization tools
+  - Add requireNuwa() guard that checks active role is nuwa
+  - Society and organization tools return friendly denial message for non-nuwa roles
+  - Add cognitive priority section to MCP server instructions
+
+- Updated dependencies [59a8320]
+- Updated dependencies [99bcce5]
+  - rolexjs@0.9.0
+  - @rolexjs/local-platform@0.9.0
+
 ## 0.8.0
 
 ### Minor Changes
