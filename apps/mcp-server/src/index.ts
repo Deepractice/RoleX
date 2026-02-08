@@ -77,6 +77,14 @@ function requireRole(): Role {
   return currentRole;
 }
 
+function requireNuwa(): string | null {
+  if (!currentRole || currentRoleName !== "nuwa") {
+    const who = currentRoleName || "none";
+    return `Permission denied. Only nuwa can use this tool. Current role: ${who}`;
+  }
+  return null;
+}
+
 /**
  * Wrap a tool execute function with unified error handling.
  * Catches errors and renders them as formatted markdown.
@@ -130,6 +138,8 @@ server.addTool({
   execute: safeTool(
     "society",
     async ({ operation, name, source, parent, orgName, roleId, type, dimensionName }) => {
+      const denied = requireNuwa();
+      if (denied) return denied;
       switch (operation) {
         case "born": {
           if (!name || !source) throw new Error("born requires: name, source");
@@ -231,6 +241,8 @@ server.addTool({
     position: z.string().optional().describe("Position name (for appoint)"),
   }),
   execute: safeTool("organization", async ({ operation, name, position }) => {
+    const denied = requireNuwa();
+    if (denied) return denied;
     // Find the first org, or the org the role belongs to
     const dir = rolex.directory();
     if (dir.organizations.length === 0) {
