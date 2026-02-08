@@ -1,5 +1,15 @@
 # @rolexjs/local-platform
 
+## 0.9.1
+
+### Patch Changes
+
+- 3bb910b: fix(local-platform): make reflect() transactional — write before erase
+
+  Previously, `reflect()` deleted experience files before creating the knowledge file. If knowledge creation failed, experiences would be permanently lost. Now the operation order is: validate all experiences exist → create knowledge → delete experiences. Also adds input validation for empty arrays and path traversal protection.
+  - @rolexjs/core@0.9.1
+  - @rolexjs/parser@0.9.1
+
 ## 0.9.0
 
 ### Minor Changes

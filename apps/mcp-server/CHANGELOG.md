@@ -1,5 +1,17 @@
 # @rolexjs/mcp-server
 
+## 0.9.1
+
+### Patch Changes
+
+- 54c96f6: fix(mcp-server): support orgName parameter in hire operation
+
+  Previously, the `hire` operation always used the first organization, making it impossible to hire a role into a specific organization when multiple organizations exist. Now `hire` accepts an optional `orgName` parameter, and requires it when multiple organizations are present.
+
+- Updated dependencies [3bb910b]
+  - @rolexjs/local-platform@0.9.1
+  - rolexjs@0.9.1
+
 ## 0.9.0
 
 ### Minor Changes

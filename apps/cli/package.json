@@ -1,6 +1,6 @@
 {
   "name": "@rolexjs/cli",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "type": "module",
   "bin": {
     "rolex": "./dist/index.js"
