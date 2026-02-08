@@ -1,5 +1,21 @@
 # @rolexjs/local-platform
 
+## 0.5.0
+
+### Minor Changes
+
+- 28b8b97: feat: enhance focus() to support multiple active goals and goal switching
+  - Platform: add allActiveGoals(), getFocusedGoal(), setFocusedGoal()
+  - LocalPlatform: implement goal listing, .focus file for persistence
+  - Role: focus(name?) returns current goal + other active goals
+  - MCP server: focus tool accepts optional name param to switch goals
+
+### Patch Changes
+
+- Updated dependencies [28b8b97]
+  - @rolexjs/core@0.5.0
+  - @rolexjs/parser@0.5.0
+
 ## 0.4.1
 
 ### Patch Changes
