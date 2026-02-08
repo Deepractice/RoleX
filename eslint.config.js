@@ -19,6 +19,7 @@ export default [
       "**/*.config.ts",
       "**/.bun-dts-*/**",
       "**/build.ts",
+      "packages/rolexjs/src/seed.ts",
     ],
   },
   js.configs.recommended,
