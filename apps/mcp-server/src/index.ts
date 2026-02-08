@@ -34,6 +34,7 @@ import {
   DESC_FINISH,
   renderFeatures,
   renderFeature,
+  renderStatusBar,
   bootstrap,
 } from "rolexjs";
 import { LocalPlatform } from "@rolexjs/local-platform";
@@ -47,6 +48,7 @@ const platform = new LocalPlatform(rolexDir);
 bootstrap(platform);
 const rolex = new Rolex(platform);
 let currentRole: Role | null = null;
+let currentRoleName: string = "";
 
 const server = new FastMCP({
   name: "Rolex MCP Server",
@@ -175,8 +177,11 @@ server.addTool({
   }),
   execute: async ({ roleId }) => {
     currentRole = rolex.role(roleId);
+    currentRoleName = roleId;
     const features = currentRole.identity();
-    return renderFeatures(features);
+    const { current } = currentRole.focus();
+    const statusBar = renderStatusBar(roleId, current);
+    return `${statusBar}\n\n${renderFeatures(features)}`;
   },
 });
 
@@ -212,9 +217,13 @@ server.addTool({
   execute: async ({ name }) => {
     const role = requireRole();
     const { current, otherGoals } = role.focus(name);
-    if (!current && otherGoals.length === 0) return "No active goal. Use want() to set a new goal.";
 
-    const parts: string[] = [];
+    const statusBar = renderStatusBar(currentRoleName, current);
+
+    if (!current && otherGoals.length === 0)
+      return `${statusBar}\n\nNo active goal. Use want() to set a new goal.`;
+
+    const parts: string[] = [statusBar];
 
     if (current) {
       parts.push(renderFeature(current));

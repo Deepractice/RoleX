@@ -5,7 +5,7 @@
  * Used by both MCP server and CLI for consistent output.
  */
 
-import type { Feature } from "@rolexjs/core";
+import type { Feature, Goal } from "@rolexjs/core";
 
 /**
  * Render a single Feature as Gherkin text.
@@ -57,4 +57,13 @@ export function renderFeature(feature: Feature): string {
  */
 export function renderFeatures(features: Feature[]): string {
   return features.map(renderFeature).join("\n\n");
+}
+
+/**
+ * Render a status bar showing current role, goal, and time.
+ */
+export function renderStatusBar(roleName: string, currentGoal: Goal | null): string {
+  const now = new Date().toISOString().replace("T", " ").slice(0, 19);
+  const goal = currentGoal ? currentGoal.name : "none";
+  return `[${roleName}] goal: ${goal} | ${now}`;
 }
