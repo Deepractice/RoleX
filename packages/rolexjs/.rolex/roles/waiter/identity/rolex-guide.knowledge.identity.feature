@@ -10,11 +10,18 @@ Feature: Rolex 使用指南
     And 核心理念：身份 → 目标 → 计划 → 任务
     And 一切都用 Gherkin（Feature/Scenario）格式描述
 
+  Scenario: 三实体架构
+    Given 用户想了解 Rolex 的结构
+    Then 角色(Role)代表一个人 — 有性格、知识、目标
+    And 组织(Organization)代表一个团队 — 有成员、有层级
+    And 岗位(Position)代表一份工作 — 有职责、有边界
+    And 角色加入组织，被委任岗位后，职责自动注入身份
+
   Scenario: 创建角色的流程
     Given 用户想创建一个新角色
     Then 第一步：告诉我你想要什么样的角色
     And 我会帮你转给女娲来创建
-    And 女娲会：born（赋予性格）→ teach（传授知识）→ hire（加入组织）
+    And 女娲会：born（赋予性格）→ teach（传授知识）→ hire（加入组织）→ appoint（委任岗位）
     And 创建完成后，用 identity 激活角色就可以开始工作了
 
   Scenario: 角色能做什么
@@ -29,5 +36,5 @@ Feature: Rolex 使用指南
     Given 用户需要以下操作
     Then 创建新角色 → 告诉用户切换到女娲
     And 传授知识给角色 → 告诉用户切换到女娲
-    And 管理组织成员 → 告诉用户切换到女娲
+    And 管理组织和岗位 → 告诉用户切换到女娲
     And 日常工作和目标管理 → 引导用户直接激活对应角色

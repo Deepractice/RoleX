@@ -3,9 +3,14 @@
  *
  * MCP server for Rolex — Role-Driven Development.
  *
+ * Three-entity architecture:
+ *   Role         = WHO  (identity, goals)
+ *   Organization = WHERE (structure, nesting)
+ *   Position     = WHAT  (duties, boundaries)
+ *
  * Tools:
- *   society      — Admin: born, found, directory, find, teach
- *   organization — Admin: hire, fire
+ *   society      — Admin: born, found, establish, directory, find, teach
+ *   organization — Admin: hire, fire, appoint, dismiss
  *   identity     — Activate a role
  *   growup/focus/want/plan/todo/achieve/abandon/finish — Role lifecycle
  *
@@ -19,6 +24,7 @@ import {
   Rolex,
   Organization,
   Role,
+  Position,
   INSTRUCTIONS,
   DESC_SOCIETY,
   DESC_ORGANIZATION,
@@ -58,7 +64,7 @@ let currentRoleName: string = "";
 
 const server = new FastMCP({
   name: "Rolex MCP Server",
-  version: "0.1.0",
+  version: "0.2.0",
   instructions: INSTRUCTIONS,
 });
 
@@ -95,16 +101,22 @@ server.addTool({
   description: DESC_SOCIETY,
   parameters: z.object({
     operation: z
-      .enum(["born", "found", "directory", "find", "teach"])
+      .enum(["born", "found", "establish", "directory", "find", "teach"])
       .describe("The society operation to perform"),
     name: z
       .string()
       .optional()
-      .describe("Role name (born/find/teach) or organization name (found)"),
+      .describe(
+        "Role name (born/find/teach), organization name (found), or position name (establish)"
+      ),
     source: z
       .string()
       .optional()
-      .describe("Gherkin feature source (born: persona, teach: knowledge)"),
+      .describe(
+        "Gherkin feature source (born: persona, teach: knowledge, found: org description, establish: position duties)"
+      ),
+    parent: z.string().optional().describe("Parent organization name (for found with nesting)"),
+    orgName: z.string().optional().describe("Organization name (for establish)"),
     roleId: z.string().optional().describe("Target role name for teach operation"),
     type: z
       .enum(["knowledge", "experience", "voice"])
@@ -115,66 +127,95 @@ server.addTool({
       .optional()
       .describe("Name for the knowledge being taught (e.g. 'distributed-systems')"),
   }),
-  execute: safeTool("society", async ({ operation, name, source, roleId, type, dimensionName }) => {
-    switch (operation) {
-      case "born": {
-        if (!name || !source) throw new Error("born requires: name, source");
-        const feature = rolex.born(name, source);
-        return next(`Role born: ${feature.name}`, NEXT.born);
-      }
-      case "found": {
-        if (!name) throw new Error("found requires: name");
-        rolex.found(name);
-        return next(`Organization founded: ${name}`, NEXT.found);
-      }
-      case "directory": {
-        const dir = rolex.directory();
-        const lines: string[] = [];
+  execute: safeTool(
+    "society",
+    async ({ operation, name, source, parent, orgName, roleId, type, dimensionName }) => {
+      switch (operation) {
+        case "born": {
+          if (!name || !source) throw new Error("born requires: name, source");
+          const feature = rolex.born(name, source);
+          return next(`Role born: ${feature.name}`, NEXT.born);
+        }
+        case "found": {
+          if (!name) throw new Error("found requires: name");
+          rolex.found(name, source, parent);
+          return next(`Organization founded: ${name}`, NEXT.found);
+        }
+        case "establish": {
+          if (!name || !source || !orgName)
+            throw new Error("establish requires: name, source, orgName");
+          rolex.establish(name, source, orgName);
+          return next(`Position established: ${name} in ${orgName}`, NEXT.establish);
+        }
+        case "directory": {
+          const dir = rolex.directory();
+          const lines: string[] = [];
 
-        // Organizations and their hired roles
-        if (dir.organizations.length > 0) {
-          for (const entry of dir.organizations) {
-            const orgInstance = rolex.find(entry.name) as Organization;
-            const info = orgInstance.info();
-            lines.push(`Organization: ${info.name}`);
-            for (const role of info.roles) {
-              lines.push(`  - ${role.name} (team: ${role.team})`);
+          // Organizations with positions and members
+          if (dir.organizations.length > 0) {
+            for (const org of dir.organizations) {
+              const parentStr = org.parent ? ` (parent: ${org.parent})` : "";
+              lines.push(`Organization: ${org.name}${parentStr}`);
+
+              if (org.positions.length > 0) {
+                lines.push("  Positions:");
+                for (const pos of org.positions) {
+                  const posInfo = platform.getPosition(pos, org.name);
+                  const holder = posInfo?.assignedRole ? ` ← ${posInfo.assignedRole}` : " (vacant)";
+                  lines.push(`    - ${pos}${holder}`);
+                }
+              }
+
+              if (org.members.length > 0) {
+                lines.push("  Members:");
+                for (const member of org.members) {
+                  const role = dir.roles.find((r) => r.name === member);
+                  const state = role ? ` [${role.state}]` : "";
+                  const pos = role?.position ? ` → ${role.position}` : "";
+                  lines.push(`    - ${member}${state}${pos}`);
+                }
+              }
             }
           }
-        }
 
-        // Unaffiliated roles (born but not hired)
-        const unaffiliated = dir.roles.filter((r) => !r.team);
-        if (unaffiliated.length > 0) {
-          if (lines.length > 0) lines.push("");
-          lines.push("Roles:");
-          for (const role of unaffiliated) {
-            lines.push(`  - ${role.name}`);
+          // Free roles (not in any org)
+          const freeRoles = dir.roles.filter((r) => r.state === "free");
+          if (freeRoles.length > 0) {
+            if (lines.length > 0) lines.push("");
+            lines.push("Free Roles:");
+            for (const role of freeRoles) {
+              lines.push(`  - ${role.name}`);
+            }
           }
-        }
 
-        return lines.join("\n") || "No roles or organizations found.";
-      }
-      case "find": {
-        if (!name) throw new Error("find requires: name");
-        const result = rolex.find(name);
-        if (result instanceof Organization) {
-          const info = result.info();
-          return `Organization: ${info.name} (${info.roles.length} roles)`;
+          return lines.join("\n") || "No roles or organizations found.";
         }
-        const features = (result as Role).identity();
-        return renderFeatures(features);
+        case "find": {
+          if (!name) throw new Error("find requires: name");
+          const result = rolex.find(name);
+          if (result instanceof Organization) {
+            const info = result.info();
+            const parentStr = info.parent ? ` (parent: ${info.parent})` : "";
+            return `Organization: ${info.name}${parentStr}\nMembers: ${info.members.length}\nPositions: ${info.positions.join(", ") || "none"}`;
+          }
+          if (result instanceof Position) {
+            const info = result.info();
+            return `Position: ${info.name} in ${info.org}\nState: ${info.state}\nAssigned: ${info.assignedRole || "none"}\nDuties: ${info.duties.length}`;
+          }
+          const features = (result as Role).identity();
+          return renderFeatures(features);
+        }
+        case "teach": {
+          if (!roleId || !type || !dimensionName || !source)
+            throw new Error("teach requires: roleId, type, dimensionName, source");
+          const feature = rolex.teach(roleId, type, dimensionName, source);
+          return next(`Taught ${type}: ${feature.name}`, NEXT.teach);
+        }
+        default:
+          throw new Error(`Unknown society operation: ${operation}`);
       }
-      case "teach": {
-        if (!roleId || !type || !dimensionName || !source)
-          throw new Error("teach requires: roleId, type, dimensionName, source");
-        const feature = rolex.teach(roleId, type, dimensionName, source);
-        return next(`Taught ${type}: ${feature.name}`, NEXT.teach);
-      }
-      default:
-        throw new Error(`Unknown society operation: ${operation}`);
     }
-  }),
+  ),
 });
 
 // ========== Organization (folded) ==========
@@ -183,24 +224,47 @@ server.addTool({
   name: "organization",
   description: DESC_ORGANIZATION,
   parameters: z.object({
-    operation: z.enum(["hire", "fire"]).describe("The organization operation to perform"),
-    name: z.string().describe("Role name to hire or fire"),
+    operation: z
+      .enum(["hire", "fire", "appoint", "dismiss"])
+      .describe("The organization operation to perform"),
+    name: z.string().describe("Role name to hire, fire, appoint, or dismiss"),
+    position: z.string().optional().describe("Position name (for appoint)"),
   }),
-  execute: safeTool("organization", async ({ operation, name }) => {
+  execute: safeTool("organization", async ({ operation, name, position }) => {
+    // Find the first org, or the org the role belongs to
     const dir = rolex.directory();
     if (dir.organizations.length === 0) {
       throw new Error("No organization found. Call found() first.");
     }
-    const org = rolex.find(dir.organizations[0].name) as Organization;
+
+    // For hire: use first org. For others: find by role assignment or first org.
+    let orgName: string;
+    if (operation === "hire") {
+      orgName = dir.organizations[0].name;
+    } else {
+      const assignment = platform.getAssignment(name);
+      orgName = assignment?.org ?? dir.organizations[0].name;
+    }
+
+    const org = rolex.find(orgName) as Organization;
 
     switch (operation) {
       case "hire": {
         org.hire(name);
-        return next(`Role hired: ${name}`, nextHire(name));
+        return next(`Role hired: ${name} → ${orgName}`, nextHire(name));
       }
       case "fire": {
         org.fire(name);
         return next(`Role fired: ${name}`, NEXT.fire);
+      }
+      case "appoint": {
+        if (!position) throw new Error("appoint requires: name, position");
+        org.appoint(name, position);
+        return next(`Role appointed: ${name} → ${position}`, NEXT.appoint);
+      }
+      case "dismiss": {
+        org.dismiss(name);
+        return next(`Role dismissed: ${name}`, NEXT.dismiss);
       }
       default:
         throw new Error(`Unknown organization operation: ${operation}`);
@@ -221,7 +285,8 @@ server.addTool({
     currentRoleName = roleId;
     const features = currentRole.identity();
     const { current } = currentRole.focus();
-    const statusBar = renderStatusBar(roleId, current);
+    const assignment = platform.getAssignment(roleId);
+    const statusBar = renderStatusBar(roleId, current, assignment?.org, assignment?.position);
     return `${statusBar}\n\n${renderFeatures(features)}`;
   }),
 });
@@ -259,7 +324,13 @@ server.addTool({
     const role = requireRole();
     const { current, otherGoals } = role.focus(name);
 
-    const statusBar = renderStatusBar(currentRoleName, current);
+    const assignment = platform.getAssignment(currentRoleName);
+    const statusBar = renderStatusBar(
+      currentRoleName,
+      current,
+      assignment?.org,
+      assignment?.position
+    );
 
     if (!current && otherGoals.length === 0)
       return `${statusBar}\n\nNo active goal. Use want() to set a new goal.`;

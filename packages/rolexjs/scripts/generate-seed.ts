@@ -12,7 +12,7 @@ import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-const SEED_DIR = resolve(import.meta.dirname!, "..", ".rolex");
+const SEED_DIR = resolve(import.meta.dirname!, "..", ".rolex", "roles");
 const OUTPUT = resolve(import.meta.dirname!, "..", "src", "seed.ts");
 
 interface SeedRole {

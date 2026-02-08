@@ -1,89 +1,145 @@
 /**
  * Platform — The abstraction layer for role storage.
  *
- * Defines how roles are loaded and persisted.
+ * Defines how roles, organizations, and positions are stored and managed.
  * LocalPlatform uses the filesystem (.rolex/ directories).
  * Future platforms could use databases, cloud storage, etc.
  *
- * All methods are stateless — role name is passed per call.
+ * Three-entity architecture:
+ *   Role         = WHO  (identity, goals)
+ *   Organization = WHERE (structure, nesting)
+ *   Position     = WHAT  (duties, boundaries)
+ *
+ * All methods are stateless — entity names are passed per call.
  */
 
 import type { Feature } from "./Feature.js";
 import type { Goal } from "./Goal.js";
 import type { Plan } from "./Plan.js";
 import type { Task } from "./Task.js";
+import type { Duty } from "./Duty.js";
+import type { RoleState, PositionState } from "./model/states.js";
+
+// ========== Config ==========
 
 /**
- * Role entry in the organization.
+ * Assignment — tracks which org/position a role is assigned to.
  */
-export interface RoleEntry {
-  readonly name: string;
-  readonly team: string;
+export interface Assignment {
+  readonly org: string;
+  readonly position?: string;
 }
 
 /**
- * Organization config within RolexConfig.
+ * OrganizationConfig — stored config for an organization.
  */
 export interface OrganizationConfig {
-  readonly name: string;
-  readonly teams: Readonly<Record<string, readonly string[]>>;
+  readonly parent?: string;
+  readonly positions: string[];
 }
 
 /**
  * RolexConfig — The single source of truth for society state.
  *
  * Always exists. Defined in core, persisted by Platform.
- * - roles: all born role names (CAS — no scanning needed)
- * - organization: optional org with teams (null if no org founded)
  */
 export interface RolexConfig {
   roles: string[];
-  organization: {
-    name: string;
-    teams: Record<string, string[]>;
-  } | null;
+  organizations: Record<string, OrganizationConfig>;
+  assignments: Record<string, Assignment>;
 }
 
+// ========== Runtime Views ==========
+
 /**
- * Organization structure (runtime view).
+ * Organization info (runtime view).
  */
-export interface Organization {
+export interface OrganizationInfo {
   readonly name: string;
-  readonly roles: RoleEntry[];
+  readonly parent?: string;
+  readonly positions: string[];
+  readonly members: string[];
 }
 
 /**
- * Society directory — all known roles and organizations.
+ * Position info (runtime view).
+ */
+export interface PositionInfo {
+  readonly name: string;
+  readonly org: string;
+  readonly state: PositionState;
+  readonly assignedRole: string | null;
+  readonly duties: Duty[];
+}
+
+/**
+ * Role directory entry with state information.
+ */
+export interface RoleEntry {
+  readonly name: string;
+  readonly state: RoleState;
+  readonly org?: string;
+  readonly position?: string;
+}
+
+/**
+ * Society directory — all known roles, organizations, and positions.
  */
 export interface Directory {
   readonly roles: readonly RoleEntry[];
-  readonly organizations: readonly { readonly name: string }[];
+  readonly organizations: readonly OrganizationInfo[];
 }
 
 /**
- * Platform interface — abstracts role storage and retrieval.
- * All methods are stateless — role name identifies the target role.
+ * Platform interface — abstracts entity storage and retrieval.
  */
 export interface Platform {
-  /** Found an organization */
-  found(name: string): void;
+  // ========== Society ==========
 
-  /** Get the organization structure (teams + roles), or null if no org exists */
-  organization(): Organization | null;
-
-  /** List all born roles in society (regardless of organization membership) */
+  /** List all born roles in society */
   allBornRoles(): string[];
 
   /** Create a new role with its persona */
   born(name: string, source: string): Feature;
 
-  /** Hire a role into the organization — establish CAS link */
-  hire(name: string): void;
+  /** Found an organization, optionally with a parent org and description */
+  found(name: string, source?: string, parent?: string): void;
 
-  /** Fire a role from the organization — remove CAS link */
-  fire(name: string): void;
+  /** Get organization info by name */
+  getOrganization(name: string): OrganizationInfo | null;
 
-  /** Load all identity features for a role */
+  /** List all organizations */
+  allOrganizations(): OrganizationInfo[];
+
+  // ========== Organization ==========
+
+  /** Hire a role into an organization */
+  hire(roleId: string, orgName: string): void;
+
+  /** Fire a role from an organization (auto-dismisses if on_duty) */
+  fire(roleId: string, orgName: string): void;
+
+  /** Establish a position within an organization */
+  establish(positionName: string, source: string, orgName: string): void;
+
+  /** Appoint a role to a position */
+  appoint(roleId: string, positionName: string, orgName: string): void;
+
+  /** Dismiss a role from their position (back to member) */
+  dismiss(roleId: string): void;
+
+  /** Get duties for a position */
+  positionDuties(positionName: string, orgName: string): Duty[];
+
+  /** Get a role's current assignment */
+  getAssignment(roleId: string): Assignment | null;
+
+  /** Get position info */
+  getPosition(positionName: string, orgName: string): PositionInfo | null;
+
+  // ========== Role ==========
+
+  /** Load all identity features for a role (includes duties if on_duty) */
   identity(roleId: string): Feature[];
 
   /** Add a growth dimension to a role's identity */

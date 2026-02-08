@@ -1,7 +1,7 @@
 import { describe, expect, test, beforeEach, afterEach } from "bun:test";
 import { mkdirSync, rmSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { Rolex, Organization, Role } from "rolexjs";
+import { Rolex, Organization, Role, Position } from "rolexjs";
 import { LocalPlatform } from "../../src/LocalPlatform.js";
 
 const TEST_ROOT = join(import.meta.dir, "../.test-rolex");
@@ -9,18 +9,20 @@ const ROLEX_DIR = join(TEST_ROOT, ".rolex");
 const ROLE_NAME = "owner";
 
 function setupTestOrg() {
-  const roleDir = join(ROLEX_DIR, "owner");
+  const roleDir = join(ROLEX_DIR, "roles", "owner");
   mkdirSync(join(roleDir, "identity"), { recursive: true });
   mkdirSync(join(roleDir, "goals"), { recursive: true });
 
-  // rolex.json — society config (new RolexConfig format)
+  // rolex.json — new v2 RolexConfig format
   writeFileSync(
     join(ROLEX_DIR, "rolex.json"),
     JSON.stringify({
       roles: ["owner"],
-      organization: {
-        name: "Test Org",
-        teams: { default: ["owner"] },
+      organizations: {
+        "Test Org": { positions: [] },
+      },
+      assignments: {
+        owner: { org: "Test Org" },
       },
     })
   );
@@ -47,7 +49,7 @@ Feature: Core Principles
 }
 
 function setupGoal() {
-  const goalDir = join(ROLEX_DIR, "owner", "goals", "test-goal");
+  const goalDir = join(ROLEX_DIR, "roles", "owner", "goals", "test-goal");
   mkdirSync(goalDir, { recursive: true });
 
   writeFileSync(
@@ -63,7 +65,7 @@ Feature: Test Goal
 }
 
 function setupDoneGoal() {
-  const goalDir = join(ROLEX_DIR, "owner", "goals", "done-goal");
+  const goalDir = join(ROLEX_DIR, "roles", "owner", "goals", "done-goal");
   mkdirSync(goalDir, { recursive: true });
 
   writeFileSync(
@@ -103,35 +105,96 @@ describe("Rolex (society)", () => {
     expect(persona.type).toBe("persona");
     expect(persona.name).toBe("Alex");
 
-    expect(existsSync(join(ROLEX_DIR, "alex", "identity", "persona.identity.feature"))).toBe(true);
-    expect(existsSync(join(ROLEX_DIR, "alex", "goals"))).toBe(true);
+    expect(
+      existsSync(join(ROLEX_DIR, "roles", "alex", "identity", "persona.identity.feature"))
+    ).toBe(true);
+    expect(existsSync(join(ROLEX_DIR, "roles", "alex", "goals"))).toBe(true);
   });
 
   // ========== found() ==========
 
   test("found() creates organization config", () => {
-    rmSync(TEST_ROOT, { recursive: true, force: true });
-    mkdirSync(ROLEX_DIR, { recursive: true });
-
     const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
     rolex.found("Deepractice");
 
-    expect(existsSync(join(ROLEX_DIR, "rolex.json"))).toBe(true);
+    const dir = rolex.directory();
+    expect(dir.organizations.find((o) => o.name === "Deepractice")).toBeDefined();
+  });
+
+  test("found() with parent creates nested organization", () => {
+    const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
+    rolex.found("Engineering", undefined, "Test Org");
 
     const dir = rolex.directory();
-    expect(dir.organizations[0].name).toBe("Deepractice");
+    const eng = dir.organizations.find((o) => o.name === "Engineering");
+    expect(eng).toBeDefined();
+    expect(eng!.parent).toBe("Test Org");
+  });
+
+  test("found() throws for duplicate org name", () => {
+    const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
+    expect(() => rolex.found("Test Org")).toThrow("Organization already exists");
+  });
+
+  test("found() throws for non-existent parent", () => {
+    const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
+    expect(() => rolex.found("Sub", undefined, "NoOrg")).toThrow("Parent organization not found");
+  });
+
+  // ========== establish() ==========
+
+  test("establish() creates a position in an organization", () => {
+    const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
+    rolex.establish(
+      "architect",
+      `Feature: Backend Architect
+  Scenario: Review code
+    Given a pull request
+    Then I review for architecture consistency
+`,
+      "Test Org"
+    );
+
+    const dir = rolex.directory();
+    const org = dir.organizations.find((o) => o.name === "Test Org");
+    expect(org!.positions).toContain("architect");
+    expect(
+      existsSync(
+        join(ROLEX_DIR, "orgs", "Test Org", "positions", "architect", "architect.position.feature")
+      )
+    ).toBe(true);
+  });
+
+  test("establish() throws for duplicate position name", () => {
+    const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
+    rolex.establish(
+      "architect",
+      `Feature: Architect\n  Scenario: A\n    Given x\n    Then y\n`,
+      "Test Org"
+    );
+    expect(() =>
+      rolex.establish(
+        "architect",
+        `Feature: Architect\n  Scenario: B\n    Given x\n    Then y\n`,
+        "Test Org"
+      )
+    ).toThrow("already exists");
   });
 
   // ========== directory() ==========
 
-  test("directory() returns all roles and organizations", () => {
+  test("directory() returns all roles with states and organizations with positions", () => {
     const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
     const dir = rolex.directory();
 
     expect(dir.organizations).toHaveLength(1);
     expect(dir.organizations[0].name).toBe("Test Org");
     expect(dir.roles.length).toBeGreaterThan(0);
-    expect(dir.roles.find((r) => r.name === "owner")).toBeDefined();
+
+    const owner = dir.roles.find((r) => r.name === "owner");
+    expect(owner).toBeDefined();
+    expect(owner!.state).toBe("member");
+    expect(owner!.org).toBe("Test Org");
   });
 
   // ========== find() ==========
@@ -148,6 +211,18 @@ describe("Rolex (society)", () => {
     const result = rolex.find("owner");
 
     expect(result).toBeInstanceOf(Role);
+  });
+
+  test("find() returns Position for position name", () => {
+    const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
+    rolex.establish(
+      "architect",
+      `Feature: Architect\n  Scenario: A\n    Given x\n    Then y\n`,
+      "Test Org"
+    );
+
+    const result = rolex.find("architect");
+    expect(result).toBeInstanceOf(Position);
   });
 
   test("find() throws for unknown name", () => {
@@ -168,13 +243,13 @@ describe("Organization", () => {
 
   // ========== info() ==========
 
-  test("info() returns org structure", () => {
+  test("info() returns org structure with members", () => {
     const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
     const org = rolex.find("Test Org") as Organization;
     const info = org.info();
 
     expect(info.name).toBe("Test Org");
-    expect(info.roles.length).toBeGreaterThan(0);
+    expect(info.members).toContain("owner");
   });
 
   // ========== hire() ==========
@@ -193,18 +268,26 @@ describe("Organization", () => {
 
     org.hire("alex");
 
-    expect(existsSync(join(ROLEX_DIR, "alex", "goals"))).toBe(true);
+    const info = org.info();
+    expect(info.members).toContain("alex");
 
-    const role = rolex.find("alex") as Role;
-    const features = role.identity();
-    expect(features).toHaveLength(1);
-    expect(features[0].type).toBe("persona");
+    const dir = rolex.directory();
+    const alex = dir.roles.find((r) => r.name === "alex");
+    expect(alex!.state).toBe("member");
+    expect(alex!.org).toBe("Test Org");
   });
 
   test("hire() throws if role not born", () => {
     const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
     const org = rolex.find("Test Org") as Organization;
     expect(() => org.hire("nobody")).toThrow("Role not found");
+  });
+
+  test("hire() throws if role already hired (state machine)", () => {
+    const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
+    const org = rolex.find("Test Org") as Organization;
+    // owner is already member
+    expect(() => org.hire("owner")).toThrow("Invalid transition");
   });
 
   // ========== fire() ==========
@@ -221,12 +304,100 @@ describe("Organization", () => {
 `
     );
     org.hire("temp");
-    expect(existsSync(join(ROLEX_DIR, "temp", "goals"))).toBe(true);
 
     org.fire("temp");
-    // Goals persist — they belong to the role, not the org
-    expect(existsSync(join(ROLEX_DIR, "temp", "goals"))).toBe(true);
-    expect(existsSync(join(ROLEX_DIR, "temp", "identity", "persona.identity.feature"))).toBe(true);
+
+    const dir = rolex.directory();
+    const temp = dir.roles.find((r) => r.name === "temp");
+    expect(temp!.state).toBe("free");
+    expect(temp!.org).toBeUndefined();
+  });
+
+  test("fire() auto-dismisses on_duty role", () => {
+    const platform = new LocalPlatform(ROLEX_DIR);
+    const rolex = new Rolex(platform);
+    const org = rolex.find("Test Org") as Organization;
+
+    // Establish position and appoint owner
+    rolex.establish(
+      "lead",
+      `Feature: Lead\n  Scenario: Lead\n    Given x\n    Then y\n`,
+      "Test Org"
+    );
+    org.appoint("owner", "lead");
+
+    const dirBefore = rolex.directory();
+    expect(dirBefore.roles.find((r) => r.name === "owner")!.state).toBe("on_duty");
+
+    // Fire auto-dismisses
+    org.fire("owner");
+
+    const dirAfter = rolex.directory();
+    expect(dirAfter.roles.find((r) => r.name === "owner")!.state).toBe("free");
+  });
+
+  // ========== appoint() / dismiss() ==========
+
+  test("appoint() assigns a member to a position", () => {
+    const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
+    const org = rolex.find("Test Org") as Organization;
+
+    rolex.establish(
+      "architect",
+      `Feature: Architect\n  Scenario: A\n    Given x\n    Then y\n`,
+      "Test Org"
+    );
+    org.appoint("owner", "architect");
+
+    const dir = rolex.directory();
+    const owner = dir.roles.find((r) => r.name === "owner");
+    expect(owner!.state).toBe("on_duty");
+    expect(owner!.position).toBe("architect");
+  });
+
+  test("appoint() throws for non-member", () => {
+    const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
+    const org = rolex.find("Test Org") as Organization;
+    rolex.born("free-agent", `Feature: FA\n  Scenario: A\n    Given x\n    Then y\n`);
+    rolex.establish("pos", `Feature: Pos\n  Scenario: A\n    Given x\n    Then y\n`, "Test Org");
+
+    expect(() => org.appoint("free-agent", "pos")).toThrow("not a member");
+  });
+
+  test("appoint() throws for filled position (one-to-one)", () => {
+    const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
+    const org = rolex.find("Test Org") as Organization;
+
+    rolex.establish("pos", `Feature: Pos\n  Scenario: A\n    Given x\n    Then y\n`, "Test Org");
+    org.appoint("owner", "pos");
+
+    // Try appointing another role to same position
+    rolex.born("alex", `Feature: Alex\n  Scenario: A\n    Given x\n    Then y\n`);
+    org.hire("alex");
+    expect(() => org.appoint("alex", "pos")).toThrow("Invalid transition");
+  });
+
+  test("dismiss() returns role to member", () => {
+    const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
+    const org = rolex.find("Test Org") as Organization;
+
+    rolex.establish("pos", `Feature: Pos\n  Scenario: A\n    Given x\n    Then y\n`, "Test Org");
+    org.appoint("owner", "pos");
+
+    expect(rolex.directory().roles.find((r) => r.name === "owner")!.state).toBe("on_duty");
+
+    org.dismiss("owner");
+
+    const dir = rolex.directory();
+    expect(dir.roles.find((r) => r.name === "owner")!.state).toBe("member");
+    expect(dir.roles.find((r) => r.name === "owner")!.position).toBeUndefined();
+  });
+
+  test("dismiss() throws for non-appointed role", () => {
+    const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
+    const org = rolex.find("Test Org") as Organization;
+
+    expect(() => org.dismiss("owner")).toThrow("not appointed");
   });
 
   // ========== teach() ==========
@@ -247,6 +418,98 @@ describe("Organization", () => {
 
     expect(feature.type).toBe("knowledge");
     expect(feature.name).toBe("Company Policy");
+  });
+});
+
+describe("Identity with duties", () => {
+  beforeEach(() => {
+    rmSync(TEST_ROOT, { recursive: true, force: true });
+    setupTestOrg();
+  });
+
+  afterEach(() => {
+    rmSync(TEST_ROOT, { recursive: true, force: true });
+  });
+
+  test("on_duty role gets position duties injected into identity", () => {
+    const platform = new LocalPlatform(ROLEX_DIR);
+    const rolex = new Rolex(platform);
+    const org = rolex.find("Test Org") as Organization;
+
+    // Establish position
+    rolex.establish(
+      "architect",
+      `Feature: Architect\n  Scenario: A\n    Given x\n    Then y\n`,
+      "Test Org"
+    );
+
+    // Add duty files
+    const dutyDir = join(ROLEX_DIR, "orgs", "Test Org", "positions", "architect");
+    writeFileSync(
+      join(dutyDir, "code-review.duty.feature"),
+      `Feature: Code Review Duties
+  Scenario: Review pull requests
+    Given a PR is submitted
+    Then I review for architecture consistency
+`
+    );
+
+    // Appoint
+    org.appoint("owner", "architect");
+
+    // Identity should include personal features + duty features
+    const role = rolex.role("owner");
+    const features = role.identity();
+
+    const dutyFeatures = features.filter((f) => f.type === "duty");
+    expect(dutyFeatures).toHaveLength(1);
+    expect(dutyFeatures[0].name).toBe("Code Review Duties");
+  });
+
+  test("member role does NOT get duties", () => {
+    const platform = new LocalPlatform(ROLEX_DIR);
+    const rolex = new Rolex(platform);
+
+    // owner is member but not appointed
+    const role = rolex.role("owner");
+    const features = role.identity();
+
+    const dutyFeatures = features.filter((f) => f.type === "duty");
+    expect(dutyFeatures).toHaveLength(0);
+  });
+});
+
+describe("State machine validation", () => {
+  beforeEach(() => {
+    rmSync(TEST_ROOT, { recursive: true, force: true });
+    setupTestOrg();
+  });
+
+  afterEach(() => {
+    rmSync(TEST_ROOT, { recursive: true, force: true });
+  });
+
+  test("cannot appoint a free role (must hire first)", () => {
+    const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
+    const org = rolex.find("Test Org") as Organization;
+    rolex.born("free-guy", `Feature: Free\n  Scenario: A\n    Given x\n    Then y\n`);
+    rolex.establish("pos", `Feature: Pos\n  Scenario: A\n    Given x\n    Then y\n`, "Test Org");
+
+    expect(() => org.appoint("free-guy", "pos")).toThrow("not a member");
+  });
+
+  test("cannot hire an already-member role", () => {
+    const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
+    const org = rolex.find("Test Org") as Organization;
+
+    expect(() => org.hire("owner")).toThrow("Invalid transition");
+  });
+
+  test("cannot dismiss a member (not on_duty)", () => {
+    const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
+    const org = rolex.find("Test Org") as Organization;
+
+    expect(() => org.dismiss("owner")).toThrow("not appointed");
   });
 });
 

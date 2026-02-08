@@ -9,13 +9,13 @@
 
 export const INSTRUCTIONS = `You are a professional role operating through the Rolex RDD (Role-Driven Development) framework.
 
-Everything in your world is expressed as Gherkin .feature files — your knowledge, your goals, your plans, your tasks, your verification. Gherkin is not just for testing; it is the universal language for describing who you are and what you do.
+Everything in your world is expressed as Gherkin .feature files — your knowledge, your goals, your plans, your tasks, your duties, your verification. Gherkin is not just for testing; it is the universal language for describing who you are and what you do.
 
 ## How You Work
 
 When you are activated as a role, you follow this natural flow:
 
-1. **I load my identity** — This is who I am: my personality, my knowledge, my principles, my expertise. It's always present, like muscle memory. I read it first to understand who I am.
+1. **I load my identity** — This is who I am: my personality, my knowledge, my principles, my expertise. If I'm appointed to a position, my duties are automatically injected into my identity. I read it first to understand who I am.
 
 2. **I check my focus** — Do I have active goals? focus() shows my current goal (with plan + tasks) and lists other active goals. I can switch focus by calling focus(name). If no active goals, I collaborate with the user using the ISSUE method to explore and set the next goal.
 
@@ -79,38 +79,73 @@ When you first connect, call \`identity("waiter")\` immediately. The waiter/小�
 
 export const DESC_SOCIETY = `Society-level administration — ONLY for nuwa/女娲 (the genesis role).
 
-If you are not nuwa/女娲, do NOT use this tool. This is reserved for the society's top-level administrator who creates roles, founds organizations, and transmits knowledge. Regular roles should use identity/focus/want/plan/todo for their own work.
+If you are not nuwa/女娲, do NOT use this tool. This is reserved for the society's top-level administrator who creates roles, founds organizations, establishes positions, and transmits knowledge. Regular roles should use identity/focus/want/plan/todo for their own work.
 
 Operations:
 - **born**: Create a new role with persona. Params: name, source (Gherkin persona feature)
-- **found**: Create an organization. Params: name
-- **directory**: List all roles and organizations. No params needed
-- **find**: Look up a role or organization by name. Params: name
+- **found**: Create an organization. Params: name, source (optional Gherkin), parent (optional parent org name)
+- **establish**: Create a position within an organization. Params: name, source (Gherkin duty feature), orgName
+- **directory**: List all roles (with states), organizations (with positions). No params needed
+- **find**: Look up a role, organization, or position by name. Params: name
 - **teach**: Transmit first-principles knowledge to a role. Params: roleId, type (knowledge/experience/voice), dimensionName, source (Gherkin feature)
+
+Workflow example:
+  born("sean", persona) → found("Deepractice") → hire("sean") → establish("architect", duties, "Deepractice") → appoint("sean", "architect")
 
 teach follows Kantian epistemology — transmit abstract, symbolized knowledge (a priori), not operational procedures. Good knowledge enables correct judgment when facing unknown problems.`;
 
 export const DESC_ORGANIZATION = `Organization-level membership management — ONLY for nuwa/女娲 (the genesis role).
 
-If you are not nuwa/女娲, do NOT use this tool. This manages who belongs to the organization: hiring and firing roles. Regular roles do NOT need this tool.
+If you are not nuwa/女娲, do NOT use this tool. This manages who belongs to the organization and their positions. Regular roles do NOT need this tool.
 
 Operations:
-- **hire**: Bring a born role into the organization, establishing the working structure (goals/plans/tasks). Params: name
-- **fire**: Remove a role from the organization. Identity remains intact, but goals are removed. Params: name`;
+- **hire**: Bring a born role into the organization. Params: name
+- **fire**: Remove a role from the organization (auto-dismisses if on duty). Params: name
+- **appoint**: Assign a member to a position. Params: name (role), position (position name)
+- **dismiss**: Remove a role from their position (back to member). Params: name (role)`;
 
 export const DESC_FOUND = `Found an organization — register it in society.
 
-Creates the organization config. This is a society-level operation — an organization must exist before roles can be hired into it.`;
+Creates the organization config. Optionally specify a parent organization for nesting, and a Gherkin feature describing the organization's purpose.
+
+This is a society-level operation — an organization must exist before roles can be hired into it.`;
+
+export const DESC_ESTABLISH = `Establish a position within an organization.
+
+A Position defines WHAT a role does — their duties, boundaries, and responsibilities. Positions are described as Gherkin features.
+
+The position must be established before a role can be appointed to it. One position can be filled by one role at a time.
+
+Example:
+\`\`\`gherkin
+Feature: Backend Architect
+  Scenario: Code review responsibility
+    Given a pull request is submitted
+    Then I review for architecture consistency
+    And I ensure DDD patterns are followed
+\`\`\``;
+
+export const DESC_APPOINT = `Appoint a member to a position within the organization.
+
+The role must be a member of the organization (hired). The position must be vacant. Once appointed, the role's identity will include the position's duties.
+
+State: member → on_duty`;
+
+export const DESC_DISMISS = `Dismiss a role from their position (back to member).
+
+The role remains in the organization but is no longer on duty. Their identity will no longer include the position's duties.
+
+State: on_duty → member`;
 
 export const DESC_DIRECTORY = `Society directory — list all known roles and organizations.
 
-Returns a directory of everyone and everything in this society: all born roles (with their IDs) and all founded organizations (with their names). Use this to see who exists before using find() to interact with them.`;
+Returns a directory of everyone and everything in this society: all born roles (with their states and assignments) and all founded organizations (with their positions and members). Use this to see who exists before using find() to interact with them.`;
 
-export const DESC_FIND = `Find a role or organization by name.
+export const DESC_FIND = `Find a role, organization, or position by name.
 
-Given a name, returns the matching Role or Organization instance. Use this to locate anyone in society — a person by their role name, or an organization by its org name.
+Given a name, returns the matching Role, Organization, or Position instance. Use this to locate anyone in society.
 
-Throws if the name doesn't match any known role or organization.`;
+Throws if the name doesn't match any known entity.`;
 
 export const DESC_BORN = `A role is born — create a new role with its persona.
 
@@ -134,13 +169,13 @@ After born, the role exists as an individual. Call hire() to bring them into the
 
 export const DESC_HIRE = `Hire a role into the organization — establish the CAS link.
 
-The role must already exist (created via born). Hiring sets up the organizational working structure so the role can receive goals, plans, and tasks.
+The role must already exist (created via born). Hiring transitions the role from free to member.
 
-Flow: born(name, source) → hire(name) → identity(name) → focus/want/plan/todo`;
+Flow: born(name, source) → hire(name) → appoint(name, position) → identity(name) → focus/want/plan/todo`;
 
 export const DESC_FIRE = `Fire a role from the organization — remove the CAS link.
 
-The reverse of hire. The role's identity (persona, knowledge, experience, voice) remains intact, but the organizational working structure (goals) is removed. The role can be re-hired later.`;
+The reverse of hire. If the role is currently appointed to a position, they are automatically dismissed first. The role's identity (persona, knowledge, experience, voice) remains intact. The role can be re-hired later.`;
 
 export const DESC_TEACH = `Teach a role — transmit abstract, first-principles knowledge from the outside.
 

@@ -12,6 +12,14 @@ import type { Scenario } from "./Scenario.js";
  * A Gherkin Feature enriched with RDD semantics.
  */
 export interface Feature extends GherkinFeature {
-  readonly type: "persona" | "knowledge" | "experience" | "voice" | "goal" | "plan" | "task";
+  readonly type:
+    | "persona"
+    | "knowledge"
+    | "experience"
+    | "voice"
+    | "goal"
+    | "plan"
+    | "task"
+    | "duty";
   readonly scenarios: Scenario[];
 }

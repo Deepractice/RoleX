@@ -2,9 +2,14 @@
  * rolexjs
  * RoleX - AI Agent Role Management Framework
  *
+ * Three-entity architecture:
+ *   Role         → WHO  (identity, goals)
+ *   Organization → WHERE (structure, nesting)
+ *   Position     → WHAT  (duties, boundaries)
+ *
  * Three-layer API:
- *   Rolex        → Society (born, found, directory, find)
- *   Organization → Org management (hire, fire)
+ *   Rolex        → Society (born, found, establish, directory, find)
+ *   Organization → Org management (hire, fire, appoint, dismiss)
  *   Role         → Embodied perspective (first-person)
  *
  * Platform-agnostic — import a Platform implementation separately:
@@ -15,6 +20,7 @@ export * from "@rolexjs/core";
 export { Rolex } from "./Rolex.js";
 export { Organization } from "./Organization.js";
 export { Role } from "./Role.js";
+export { Position } from "./Position.js";
 export * from "./descriptions.js";
 export {
   renderFeature,

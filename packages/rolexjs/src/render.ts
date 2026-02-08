@@ -60,12 +60,21 @@ export function renderFeatures(features: Feature[]): string {
 }
 
 /**
- * Render a status bar showing current role, goal, and time.
+ * Render a status bar showing current role, goal, assignment, and time.
  */
-export function renderStatusBar(roleName: string, currentGoal: Goal | null): string {
+export function renderStatusBar(
+  roleName: string,
+  currentGoal: Goal | null,
+  org?: string,
+  position?: string
+): string {
   const now = new Date().toISOString().replace("T", " ").slice(0, 19);
   const goal = currentGoal ? currentGoal.name : "none";
-  return `[${roleName}] goal: ${goal} | ${now}`;
+  const parts = [`[${roleName}] goal: ${goal}`];
+  if (org) parts.push(`org: ${org}`);
+  if (position) parts.push(`position: ${position}`);
+  parts.push(now);
+  return parts.join(" | ");
 }
 
 // ========== Workflow Hints ==========
@@ -78,7 +87,10 @@ export function next(result: string, hint: string): string {
 /** Static workflow hints — keyed by operation name. */
 export const NEXT: Record<string, string> = {
   born: "`teach` to add knowledge, or `hire` to bring into organization.",
-  found: "`born` to create roles for this organization.",
+  found: "`establish` to create positions, or `born` to create roles for this organization.",
+  establish: "`appoint` to assign a role to this position.",
+  appoint: "`identity(roleId)` to activate the role with duties injected.",
+  dismiss: "Role is back to member. `appoint` to reassign, or `fire` to remove from org.",
   teach: "`teach` more knowledge, or `hire` to bring into organization.",
   fire: "Role identity remains intact. `hire` to re-hire, or `directory` to see current state.",
   growup: "`focus()` to check current goal, or continue working.",
@@ -92,7 +104,7 @@ export const NEXT: Record<string, string> = {
 
 /** Dynamic hint for hire — includes the role name. */
 export function nextHire(name: string): string {
-  return `\`identity("${name}")\` to activate the role.`;
+  return `\`identity("${name}")\` to activate the role, or \`appoint\` to assign a position.`;
 }
 
 /** Dynamic hint for finish — checks remaining task count. */
@@ -113,6 +125,7 @@ const HINTS: Array<[RegExp, string]> = [
   ],
   [/Role not found/, 'Create the role first with `society(operation: "born")`.'],
   [/not hired/, 'Hire the role first with `organization(operation: "hire")`.'],
+  [/not a member/, 'Hire the role first with `organization(operation: "hire")`.'],
   [/Goal not found/, "Check the goal name, or use `focus()` to see active goals."],
   [/Task not found/, "Check the task name. Use `focus()` to see current tasks."],
   [
@@ -123,7 +136,16 @@ const HINTS: Array<[RegExp, string]> = [
     /Not found in society/,
     'Check the name. Use `society(operation: "directory")` to list all roles and organizations.',
   ],
-  [/No organization found/, 'Found an organization first with `society(operation: "found")`.'],
+  [/Organization not found/, 'Found an organization first with `society(operation: "found")`.'],
+  [
+    /Organization already exists/,
+    "Use a different name, or use `find()` to access the existing org.",
+  ],
+  [/Position.*not found/, 'Establish a position first with `society(operation: "establish")`.'],
+  [/Position.*already exists/, "Use a different name for the position."],
+  [/not appointed/, 'Appoint the role first with `organization(operation: "appoint")`.'],
+  [/Invalid transition/, "Check the current state. Use `directory` to see role states."],
+  [/already assigned/, "The entity is already assigned. Dismiss or fire first."],
   [/requires:/, "Check the required parameters for this operation."],
 ];
 

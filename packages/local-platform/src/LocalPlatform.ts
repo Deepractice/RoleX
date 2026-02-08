@@ -4,14 +4,18 @@
  * Everything lives under a single .rolex/ directory.
  * rolex.json is the single source of truth (CAS):
  *   - roles: all born role names
- *   - organization: optional org with teams
+ *   - organizations: org configs with positions
+ *   - assignments: role → org/position mappings
  *
  * Directory convention:
- *   <rootDir>/rolex.json                          <- Society config (always exists)
- *   <rootDir>/<role>/identity/*.identity.feature   <- Identity features
- *   <rootDir>/<role>/goals/<name>/<name>.goal.feature
- *   <rootDir>/<role>/goals/<name>/<name>.plan.feature
- *   <rootDir>/<role>/goals/<name>/tasks/<name>.task.feature
+ *   <rootDir>/rolex.json
+ *   <rootDir>/roles/<role>/identity/*.identity.feature
+ *   <rootDir>/roles/<role>/goals/<name>/<name>.goal.feature
+ *   <rootDir>/roles/<role>/goals/<name>/<name>.plan.feature
+ *   <rootDir>/roles/<role>/goals/<name>/tasks/<name>.task.feature
+ *   <rootDir>/orgs/<org>/org.feature                            (optional)
+ *   <rootDir>/orgs/<org>/positions/<name>/<name>.position.feature
+ *   <rootDir>/orgs/<org>/positions/<name>/*.duty.feature
  */
 
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from "node:fs";
@@ -21,13 +25,22 @@ import type { Feature as GherkinFeature } from "@rolexjs/parser";
 import type {
   Platform,
   RolexConfig,
-  Organization,
-  RoleEntry,
+  OrganizationInfo,
+  PositionInfo,
+  Assignment,
   Feature,
   Scenario,
   Goal,
   Plan,
   Task,
+  Duty,
+} from "@rolexjs/core";
+import {
+  getRoleState,
+  getPositionState,
+  transition,
+  ROLE_MACHINE,
+  POSITION_MACHINE,
 } from "@rolexjs/core";
 
 export class LocalPlatform implements Platform {
@@ -38,47 +51,14 @@ export class LocalPlatform implements Platform {
     this.rootDir = rootDir;
   }
 
-  // ========== Found ==========
-
-  found(name: string): void {
-    const config = this.loadConfig();
-    config.organization = {
-      name,
-      teams: { default: [] },
-    };
-    this.saveConfig(config);
-  }
-
-  // ========== Organization ==========
-
-  organization(): Organization | null {
-    const config = this.loadConfig();
-    if (!config.organization) return null;
-
-    const roles: RoleEntry[] = [];
-
-    for (const [teamName, roleNames] of Object.entries(config.organization.teams)) {
-      for (const roleName of roleNames) {
-        roles.push({
-          name: roleName,
-          team: teamName,
-        });
-      }
-    }
-
-    return { name: config.organization.name, roles };
-  }
-
   // ========== Society ==========
 
   allBornRoles(): string[] {
     return this.loadConfig().roles;
   }
 
-  // ========== Born ==========
-
   born(name: string, source: string): Feature {
-    const roleDir = join(this.rootDir, name);
+    const roleDir = join(this.rootDir, "roles", name);
     mkdirSync(join(roleDir, "identity"), { recursive: true });
     mkdirSync(join(roleDir, "goals"), { recursive: true });
 
@@ -96,40 +76,236 @@ export class LocalPlatform implements Platform {
     return this.toFeature(doc.feature!, "persona");
   }
 
-  hire(name: string): void {
+  found(name: string, source?: string, parent?: string): void {
     const config = this.loadConfig();
-    if (!config.organization) throw new Error("No organization found. Call found() first.");
 
-    if (!config.roles.includes(name)) {
-      throw new Error(`Role not found: ${name}. Call born() first.`);
+    if (config.organizations[name]) {
+      throw new Error(`Organization already exists: ${name}`);
     }
 
-    // Pure config update — goals dir already exists from born()
-    const [firstTeam] = Object.keys(config.organization.teams);
-    if (!config.organization.teams[firstTeam].includes(name)) {
-      config.organization.teams[firstTeam].push(name);
-      this.saveConfig(config);
+    if (parent && !config.organizations[parent]) {
+      throw new Error(`Parent organization not found: ${parent}`);
     }
+
+    // Create org directory
+    const orgDir = join(this.rootDir, "orgs", name);
+    mkdirSync(orgDir, { recursive: true });
+
+    // Write optional org feature
+    if (source) {
+      writeFileSync(join(orgDir, "org.feature"), source, "utf-8");
+    }
+
+    // Register in config
+    config.organizations[name] = {
+      parent,
+      positions: [],
+    };
+    this.saveConfig(config);
   }
 
-  fire(name: string): void {
+  getOrganization(name: string): OrganizationInfo | null {
     const config = this.loadConfig();
-    if (!config.organization) throw new Error("No organization found. Call found() first.");
+    const orgConfig = config.organizations[name];
+    if (!orgConfig) return null;
 
-    // Check role is in org
-    let found = false;
-    for (const teamName of Object.keys(config.organization.teams)) {
-      const idx = config.organization.teams[teamName].indexOf(name);
-      if (idx !== -1) {
-        config.organization.teams[teamName].splice(idx, 1);
-        found = true;
-        break;
-      }
+    const members = Object.entries(config.assignments)
+      .filter(([, a]) => a.org === name)
+      .map(([role]) => role);
+
+    return {
+      name,
+      parent: orgConfig.parent,
+      positions: orgConfig.positions,
+      members,
+    };
+  }
+
+  allOrganizations(): OrganizationInfo[] {
+    const config = this.loadConfig();
+    return Object.keys(config.organizations).map((name) => this.getOrganization(name)!);
+  }
+
+  // ========== Organization ==========
+
+  hire(roleId: string, orgName: string): void {
+    const config = this.loadConfig();
+
+    if (!config.roles.includes(roleId)) {
+      throw new Error(`Role not found: ${roleId}. Call born() first.`);
     }
-    if (!found) throw new Error(`Role not hired: ${name}`);
+    if (!config.organizations[orgName]) {
+      throw new Error(`Organization not found: ${orgName}. Call found() first.`);
+    }
 
-    // Pure config update — goals are the role's own, not deleted
+    const assignment = config.assignments[roleId] ?? null;
+    const currentState = getRoleState(assignment);
+
+    // Validate state transition
+    transition(ROLE_MACHINE, currentState, "hire");
+
+    // One-to-one: role can only belong to one org
+    if (assignment && assignment.org !== orgName) {
+      throw new Error(`Role "${roleId}" is already hired in organization "${assignment.org}"`);
+    }
+
+    config.assignments[roleId] = { org: orgName };
     this.saveConfig(config);
+  }
+
+  fire(roleId: string, orgName: string): void {
+    const config = this.loadConfig();
+
+    const assignment = config.assignments[roleId];
+    if (!assignment || assignment.org !== orgName) {
+      throw new Error(`Role "${roleId}" is not hired in organization "${orgName}"`);
+    }
+
+    const currentState = getRoleState(assignment);
+
+    // Validate state transition (fire works from member or on_duty)
+    transition(ROLE_MACHINE, currentState, "fire");
+
+    // Auto-dismiss: if on_duty, clear position state first
+    if (assignment.position) {
+      // No need to explicitly transition position — just removing assignment
+    }
+
+    delete config.assignments[roleId];
+    this.saveConfig(config);
+  }
+
+  establish(positionName: string, source: string, orgName: string): void {
+    const config = this.loadConfig();
+
+    if (!config.organizations[orgName]) {
+      throw new Error(`Organization not found: ${orgName}. Call found() first.`);
+    }
+
+    if (config.organizations[orgName].positions.includes(positionName)) {
+      throw new Error(`Position "${positionName}" already exists in organization "${orgName}"`);
+    }
+
+    // Create position directory
+    const posDir = join(this.rootDir, "orgs", orgName, "positions", positionName);
+    mkdirSync(posDir, { recursive: true });
+
+    // Write position feature
+    writeFileSync(join(posDir, `${positionName}.position.feature`), source, "utf-8");
+
+    // Register in config
+    config.organizations[orgName].positions.push(positionName);
+    this.saveConfig(config);
+  }
+
+  appoint(roleId: string, positionName: string, orgName: string): void {
+    const config = this.loadConfig();
+
+    // Validate role is member of this org
+    const assignment = config.assignments[roleId];
+    if (!assignment || assignment.org !== orgName) {
+      throw new Error(`Role "${roleId}" is not a member of organization "${orgName}". Hire first.`);
+    }
+
+    // Validate position exists in org
+    if (!config.organizations[orgName]?.positions.includes(positionName)) {
+      throw new Error(`Position "${positionName}" not found in organization "${orgName}"`);
+    }
+
+    // Validate role state transition (member → on_duty)
+    const roleState = getRoleState(assignment);
+    transition(ROLE_MACHINE, roleState, "appoint");
+
+    // Validate position state transition (vacant → filled)
+    const currentHolder = this.findPositionHolder(config, orgName, positionName);
+    const posState = getPositionState(currentHolder);
+    transition(POSITION_MACHINE, posState, "appoint");
+
+    // Update assignment
+    config.assignments[roleId] = { org: orgName, position: positionName };
+    this.saveConfig(config);
+  }
+
+  dismiss(roleId: string): void {
+    const config = this.loadConfig();
+
+    const assignment = config.assignments[roleId];
+    if (!assignment || !assignment.position) {
+      throw new Error(`Role "${roleId}" is not appointed to any position`);
+    }
+
+    // Validate role state transition (on_duty → member)
+    const roleState = getRoleState(assignment);
+    transition(ROLE_MACHINE, roleState, "dismiss");
+
+    // Update assignment — keep org, remove position
+    config.assignments[roleId] = { org: assignment.org };
+    this.saveConfig(config);
+  }
+
+  positionDuties(positionName: string, orgName: string): Duty[] {
+    const posDir = join(this.rootDir, "orgs", orgName, "positions", positionName);
+    if (!existsSync(posDir)) return [];
+
+    return readdirSync(posDir)
+      .filter((f) => f.endsWith(".duty.feature"))
+      .sort()
+      .map((f) => {
+        const source = readFileSync(join(posDir, f), "utf-8");
+        const doc = parse(source);
+        return this.toFeature(doc.feature!, "duty") as Duty;
+      });
+  }
+
+  getAssignment(roleId: string): Assignment | null {
+    const config = this.loadConfig();
+    return config.assignments[roleId] ?? null;
+  }
+
+  getPosition(positionName: string, orgName: string): PositionInfo | null {
+    const config = this.loadConfig();
+
+    if (!config.organizations[orgName]?.positions.includes(positionName)) {
+      return null;
+    }
+
+    const holder = this.findPositionHolder(config, orgName, positionName);
+    const duties = this.positionDuties(positionName, orgName);
+
+    return {
+      name: positionName,
+      org: orgName,
+      state: getPositionState(holder),
+      assignedRole: holder,
+      duties,
+    };
+  }
+
+  // ========== Role Identity ==========
+
+  identity(roleId: string): Feature[] {
+    const roleDir = this.resolveRoleDir(roleId);
+    const dir = join(roleDir, "identity");
+    if (!existsSync(dir)) return [];
+
+    // Personal identity features
+    const features = readdirSync(dir)
+      .filter((f) => f.endsWith(".identity.feature"))
+      .sort()
+      .map((f) => {
+        const source = readFileSync(join(dir, f), "utf-8");
+        const doc = parse(source);
+        return this.toFeature(doc.feature!, this.detectIdentityType(f));
+      });
+
+    // Inject duty features if on_duty
+    const assignment = this.getAssignment(roleId);
+    if (assignment?.position) {
+      const duties = this.positionDuties(assignment.position, assignment.org);
+      features.push(...duties);
+    }
+
+    return features;
   }
 
   // ========== Growup ==========
@@ -175,22 +351,7 @@ export class LocalPlatform implements Platform {
     return this.growup(roleId, "knowledge", knowledgeName, knowledgeSource);
   }
 
-  // ========== Query ==========
-
-  identity(roleId: string): Feature[] {
-    const roleDir = this.resolveRoleDir(roleId);
-    const dir = join(roleDir, "identity");
-    if (!existsSync(dir)) return [];
-
-    return readdirSync(dir)
-      .filter((f) => f.endsWith(".identity.feature"))
-      .sort()
-      .map((f) => {
-        const source = readFileSync(join(dir, f), "utf-8");
-        const doc = parse(source);
-        return this.toFeature(doc.feature!, this.detectIdentityType(f));
-      });
-  }
+  // ========== Goals ==========
 
   activeGoal(roleId: string): (Goal & { plan: Plan | null; tasks: Task[] }) | null {
     const roleDir = this.resolveRoleDir(roleId);
@@ -370,7 +531,7 @@ export class LocalPlatform implements Platform {
 
     // Create default config
     mkdirSync(this.rootDir, { recursive: true });
-    const config: RolexConfig = { roles: [], organization: null };
+    const config: RolexConfig = { roles: [], organizations: {}, assignments: {} };
     this.saveConfig(config);
     return config;
   }
@@ -382,11 +543,24 @@ export class LocalPlatform implements Platform {
   }
 
   private resolveRoleDir(roleId: string): string {
-    const roleDir = join(this.rootDir, roleId);
+    const roleDir = join(this.rootDir, "roles", roleId);
     if (!existsSync(roleDir)) {
       throw new Error(`Role directory not found: ${roleDir}`);
     }
     return roleDir;
+  }
+
+  private findPositionHolder(
+    config: RolexConfig,
+    orgName: string,
+    positionName: string
+  ): string | null {
+    for (const [role, assignment] of Object.entries(config.assignments)) {
+      if (assignment.org === orgName && assignment.position === positionName) {
+        return role;
+      }
+    }
+    return null;
   }
 
   private loadGoalIfActive(goalDir: string): (Goal & { plan: Plan | null; tasks: Task[] }) | null {
