@@ -1,5 +1,11 @@
 # @rolexjs/core
 
+## 0.4.1
+
+### Patch Changes
+
+- eec37ca: Add bilingual README with MCP installation guide for 7 platforms
+
 ## 0.4.0
 
 ### Minor Changes
