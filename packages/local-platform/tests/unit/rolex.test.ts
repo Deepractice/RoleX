@@ -104,7 +104,7 @@ describe("Rolex (society)", () => {
     expect(persona.name).toBe("Alex");
 
     expect(existsSync(join(ROLEX_DIR, "alex", "identity", "persona.identity.feature"))).toBe(true);
-    expect(existsSync(join(ROLEX_DIR, "alex", "goals"))).toBe(false);
+    expect(existsSync(join(ROLEX_DIR, "alex", "goals"))).toBe(true);
   });
 
   // ========== found() ==========
@@ -224,7 +224,8 @@ describe("Organization", () => {
     expect(existsSync(join(ROLEX_DIR, "temp", "goals"))).toBe(true);
 
     org.fire("temp");
-    expect(existsSync(join(ROLEX_DIR, "temp", "goals"))).toBe(false);
+    // Goals persist — they belong to the role, not the org
+    expect(existsSync(join(ROLEX_DIR, "temp", "goals"))).toBe(true);
     expect(existsSync(join(ROLEX_DIR, "temp", "identity", "persona.identity.feature"))).toBe(true);
   });
 

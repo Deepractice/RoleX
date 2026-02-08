@@ -79,10 +79,10 @@ export class LocalPlatform implements Platform {
 
   born(name: string, source: string): Feature {
     const roleDir = join(this.rootDir, name);
-    const identityDir = join(roleDir, "identity");
-    mkdirSync(identityDir, { recursive: true });
+    mkdirSync(join(roleDir, "identity"), { recursive: true });
+    mkdirSync(join(roleDir, "goals"), { recursive: true });
 
-    const filePath = join(identityDir, "persona.identity.feature");
+    const filePath = join(roleDir, "identity", "persona.identity.feature");
     writeFileSync(filePath, source, "utf-8");
 
     // Register in config (CAS)
@@ -104,10 +104,7 @@ export class LocalPlatform implements Platform {
       throw new Error(`Role not found: ${name}. Call born() first.`);
     }
 
-    const roleDir = join(this.rootDir, name);
-    mkdirSync(join(roleDir, "goals"), { recursive: true });
-
-    // Add role to default team
+    // Pure config update — goals dir already exists from born()
     const [firstTeam] = Object.keys(config.organization.teams);
     if (!config.organization.teams[firstTeam].includes(name)) {
       config.organization.teams[firstTeam].push(name);
@@ -119,23 +116,19 @@ export class LocalPlatform implements Platform {
     const config = this.loadConfig();
     if (!config.organization) throw new Error("No organization found. Call found() first.");
 
-    const roleDir = join(this.rootDir, name);
-    const goalsDir = join(roleDir, "goals");
-
-    if (!existsSync(goalsDir)) {
-      throw new Error(`Role not hired: ${name}`);
-    }
-
-    rmSync(goalsDir, { recursive: true, force: true });
-
-    // Remove role from team
+    // Check role is in org
+    let found = false;
     for (const teamName of Object.keys(config.organization.teams)) {
       const idx = config.organization.teams[teamName].indexOf(name);
       if (idx !== -1) {
         config.organization.teams[teamName].splice(idx, 1);
+        found = true;
         break;
       }
     }
+    if (!found) throw new Error(`Role not hired: ${name}`);
+
+    // Pure config update — goals are the role's own, not deleted
     this.saveConfig(config);
   }
 
