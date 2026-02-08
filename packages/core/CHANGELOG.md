@@ -1,5 +1,11 @@
 # @rolexjs/core
 
+## 0.4.0
+
+### Minor Changes
+
+- 8fc5dfd: Extract LocalPlatform, pure bootstrap, fold MCP tools, unify package versions
+
 ## 0.3.0
 
 ### Minor Changes
