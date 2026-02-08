@@ -847,3 +847,144 @@ describe("Role (embodied perspective)", () => {
     expect(goal!.scenarios[0].verifiable).toBe(false);
   });
 });
+
+describe("reflect()", () => {
+  beforeEach(() => {
+    rmSync(TEST_ROOT, { recursive: true, force: true });
+    setupTestOrg();
+  });
+
+  afterEach(() => {
+    rmSync(TEST_ROOT, { recursive: true, force: true });
+  });
+
+  function getRole() {
+    const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
+    return rolex.find("owner") as Role;
+  }
+
+  function addExperience(name: string, featureName: string) {
+    const role = getRole();
+    role.growup(
+      "experience",
+      name,
+      `Feature: ${featureName}
+  Scenario: Learned something
+    Given a situation
+    Then I gained insight
+`
+    );
+  }
+
+  test("reflect() distills experiences into knowledge", () => {
+    addExperience("auth-lessons", "Auth Lessons");
+    addExperience("session-bugs", "Session Bugs");
+    const role = getRole();
+
+    const knowledge = role.reflect(
+      ["auth-lessons", "session-bugs"],
+      "authentication-principles",
+      `Feature: Authentication Principles
+  Scenario: Tokens need rotation
+    Given long-lived tokens
+    Then refresh token rotation is essential
+`
+    );
+
+    expect(knowledge.type).toBe("knowledge");
+    expect(knowledge.name).toBe("Authentication Principles");
+
+    // Experience files should be deleted
+    const identityDir = join(ROLEX_DIR, "roles", "owner", "identity");
+    expect(existsSync(join(identityDir, "auth-lessons.experience.identity.feature"))).toBe(false);
+    expect(existsSync(join(identityDir, "session-bugs.experience.identity.feature"))).toBe(false);
+
+    // Knowledge file should exist
+    expect(
+      existsSync(join(identityDir, "authentication-principles.knowledge.identity.feature"))
+    ).toBe(true);
+
+    // Identity should include new knowledge
+    const features = role.identity();
+    expect(features.find((f) => f.name === "Authentication Principles")).toBeDefined();
+    expect(features.find((f) => f.name === "Auth Lessons")).toBeUndefined();
+    expect(features.find((f) => f.name === "Session Bugs")).toBeUndefined();
+  });
+
+  test("reflect() throws for non-existent experience without deleting others", () => {
+    addExperience("real-experience", "Real Experience");
+    const role = getRole();
+
+    expect(() =>
+      role.reflect(
+        ["real-experience", "ghost-experience"],
+        "some-knowledge",
+        `Feature: Knowledge\n  Scenario: X\n    Given a\n    Then b\n`
+      )
+    ).toThrow("Experience not found: ghost-experience");
+
+    // Real experience should NOT be deleted
+    const identityDir = join(ROLEX_DIR, "roles", "owner", "identity");
+    expect(existsSync(join(identityDir, "real-experience.experience.identity.feature"))).toBe(true);
+
+    // Knowledge should NOT be created
+    expect(existsSync(join(identityDir, "some-knowledge.knowledge.identity.feature"))).toBe(false);
+  });
+
+  test("reflect() throws for empty experience names", () => {
+    const role = getRole();
+
+    expect(() =>
+      role.reflect(
+        [],
+        "empty-knowledge",
+        `Feature: Knowledge\n  Scenario: X\n    Given a\n    Then b\n`
+      )
+    ).toThrow("At least one experience required");
+  });
+
+  test("reflect() throws for path traversal in experience name", () => {
+    const role = getRole();
+
+    expect(() =>
+      role.reflect(
+        ["../etc/passwd"],
+        "evil-knowledge",
+        `Feature: Knowledge\n  Scenario: X\n    Given a\n    Then b\n`
+      )
+    ).toThrow("Invalid experience name");
+  });
+
+  test("reflect() preserves other identity files", () => {
+    addExperience("temp-experience", "Temporary Experience");
+    const role = getRole();
+
+    // Add voice
+    role.growup(
+      "voice",
+      "my-style",
+      `Feature: My Style\n  Scenario: Direct\n    Given something to say\n    Then I say it directly\n`
+    );
+
+    role.reflect(
+      ["temp-experience"],
+      "distilled-wisdom",
+      `Feature: Distilled Wisdom
+  Scenario: Core insight
+    Given accumulated experience
+    Then I know the principle
+`
+    );
+
+    const features = role.identity();
+    // Original identity files still present
+    expect(features.find((f) => f.name === "Basic Knowledge")).toBeDefined();
+    expect(features.find((f) => f.name === "Core Principles")).toBeDefined();
+    // Voice preserved
+    expect(features.find((f) => f.name === "My Style")).toBeDefined();
+    // New knowledge present
+    expect(features.find((f) => f.name === "Distilled Wisdom")).toBeDefined();
+    // Experience gone
+    expect(features.find((f) => f.name === "Temporary Experience")).toBeUndefined();
+  });
+});

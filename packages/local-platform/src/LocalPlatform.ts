@@ -335,20 +335,35 @@ export class LocalPlatform implements Platform {
     knowledgeName: string,
     knowledgeSource: string
   ): Feature {
+    if (experienceNames.length === 0) {
+      throw new Error("At least one experience required");
+    }
+
     const roleDir = this.resolveRoleDir(roleId);
     const identityDir = join(roleDir, "identity");
 
-    // Delete experience files
+    // Phase 1: Validate ALL experiences exist before any mutation
+    const expFiles: string[] = [];
     for (const expName of experienceNames) {
+      if (expName.includes("/") || expName.includes("\\") || expName.includes("..")) {
+        throw new Error(`Invalid experience name: ${expName}`);
+      }
       const expFile = join(identityDir, `${expName}.experience.identity.feature`);
       if (!existsSync(expFile)) {
         throw new Error(`Experience not found: ${expName}`);
       }
+      expFiles.push(expFile);
+    }
+
+    // Phase 2: Create knowledge FIRST (safe — if this fails, nothing is lost)
+    const feature = this.growup(roleId, "knowledge", knowledgeName, knowledgeSource);
+
+    // Phase 3: Delete experience files (only after knowledge is safely persisted)
+    for (const expFile of expFiles) {
       rmSync(expFile);
     }
 
-    // Create knowledge
-    return this.growup(roleId, "knowledge", knowledgeName, knowledgeSource);
+    return feature;
   }
 
   // ========== Goals ==========
