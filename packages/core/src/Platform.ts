@@ -97,4 +97,12 @@ export interface Platform {
 
   /** Mark a task as done */
   completeTask(roleId: string, name: string): void;
+
+  /** Reflect: distill experiences into knowledge, removing the original experiences */
+  reflect(
+    roleId: string,
+    experienceNames: string[],
+    knowledgeName: string,
+    knowledgeSource: string
+  ): Feature;
 }

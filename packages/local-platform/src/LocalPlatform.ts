@@ -144,6 +144,30 @@ export class LocalPlatform implements Platform {
     return this.toFeature(doc.feature!, type);
   }
 
+  // ========== Reflect ==========
+
+  reflect(
+    roleId: string,
+    experienceNames: string[],
+    knowledgeName: string,
+    knowledgeSource: string
+  ): Feature {
+    const roleDir = this.resolveRoleDir(roleId);
+    const identityDir = join(roleDir, "identity");
+
+    // Delete experience files
+    for (const expName of experienceNames) {
+      const expFile = join(identityDir, `${expName}.experience.identity.feature`);
+      if (!existsSync(expFile)) {
+        throw new Error(`Experience not found: ${expName}`);
+      }
+      rmSync(expFile);
+    }
+
+    // Create knowledge
+    return this.growup(roleId, "knowledge", knowledgeName, knowledgeSource);
+  }
+
   // ========== Query ==========
 
   identity(roleId: string): Feature[] {

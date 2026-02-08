@@ -30,6 +30,7 @@ import {
   DESC_TODO,
   DESC_ACHIEVE,
   DESC_ABANDON,
+  DESC_REFLECT,
   DESC_FINISH,
   renderFeatures,
   renderFeature,
@@ -320,6 +321,29 @@ server.addTool({
     const role = requireRole();
     role.abandon(experience);
     return experience ? "Goal abandoned. Experience captured." : "Goal abandoned.";
+  },
+});
+
+server.addTool({
+  name: "reflect",
+  description: DESC_REFLECT,
+  parameters: z.object({
+    experienceNames: z
+      .array(z.string())
+      .describe(
+        "Names of experience files to distill (without .experience.identity.feature suffix)"
+      ),
+    knowledgeName: z
+      .string()
+      .describe(
+        "Name for the resulting knowledge (used as filename, e.g. 'authentication-principles')"
+      ),
+    knowledgeSource: z.string().describe("Gherkin feature source text for the knowledge"),
+  }),
+  execute: async ({ experienceNames, knowledgeName, knowledgeSource }) => {
+    const role = requireRole();
+    const feature = role.reflect(experienceNames, knowledgeName, knowledgeSource);
+    return `Reflected: ${experienceNames.length} experience(s) → knowledge "${feature.name}"`;
   },
 });
 

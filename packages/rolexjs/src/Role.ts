@@ -71,4 +71,9 @@ export class Role {
   finish(name: string): void {
     this.platform.completeTask(this.name, name);
   }
+
+  /** Reflect: distill experiences into knowledge. Experiences are consumed, knowledge is created. */
+  reflect(experienceNames: string[], knowledgeName: string, knowledgeSource: string): Feature {
+    return this.platform.reflect(this.name, experienceNames, knowledgeName, knowledgeSource);
+  }
 }

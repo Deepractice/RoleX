@@ -331,6 +331,27 @@ Optionally provide an experience reflection (Gherkin source) — even failed goa
 
 Abandoning is not failure — it is learning.`;
 
+export const DESC_REFLECT = `Reflect: distill multiple experiences into knowledge.
+
+This is Kant's Reflective Judgment — from particulars to universals. Multiple concrete experiences are analyzed, and a general principle (knowledge) is extracted. The original experiences are consumed in the process.
+
+Use this when:
+- You notice patterns across multiple experiences
+- Several experiences point to the same underlying principle
+- Accumulated experiences can be abstracted into transferable knowledge
+
+The experiences are deleted (they've been "absorbed"), and the knowledge is added to identity.
+
+\`\`\`
+reflect(
+  experienceNames: ["auth-system-lessons", "session-bugs"],
+  knowledgeName: "authentication-principles",
+  knowledgeSource: "Feature: Authentication Principles\\n  Scenario: ..."
+)
+\`\`\`
+
+This is the cognitive upgrade path: experience (a posteriori) → reflect → knowledge (transferable).`;
+
 export const DESC_FINISH = `Task finished. Mark a task as completed by name.
 
 Call this when a specific task is completed — its work is done and outcomes verified.
