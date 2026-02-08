@@ -1,5 +1,12 @@
 # @rolexjs/mcp-server
 
+## 0.4.1
+
+### Patch Changes
+
+- @rolexjs/local-platform@0.4.1
+- rolexjs@0.4.1
+
 ## 0.4.0
 
 ### Patch Changes

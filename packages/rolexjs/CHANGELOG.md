@@ -1,5 +1,12 @@
 # rolexjs
 
+## 0.4.1
+
+### Patch Changes
+
+- Updated dependencies [c7889d7]
+  - @rolexjs/core@0.4.1
+
 ## 0.4.0
 
 ### Patch Changes
