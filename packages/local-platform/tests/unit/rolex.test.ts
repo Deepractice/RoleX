@@ -229,6 +229,23 @@ describe("Rolex (society)", () => {
     const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
     expect(() => rolex.find("nobody")).toThrow("Not found in society");
   });
+
+  test("loadConfig() migrates old format without roles/organizations/assignments", () => {
+    // Write an old-format rolex.json (missing required fields)
+    writeFileSync(join(ROLEX_DIR, "rolex.json"), JSON.stringify({ name: "legacy" }));
+
+    const platform = new LocalPlatform(ROLEX_DIR);
+    const roles = platform.allBornRoles();
+    expect(roles).toEqual([]);
+  });
+
+  test("loadConfig() preserves existing fields during migration", () => {
+    // Write a config with only roles (missing organizations/assignments)
+    writeFileSync(join(ROLEX_DIR, "rolex.json"), JSON.stringify({ roles: ["alice"] }));
+
+    const platform = new LocalPlatform(ROLEX_DIR);
+    expect(platform.allBornRoles()).toEqual(["alice"]);
+  });
 });
 
 describe("Organization", () => {

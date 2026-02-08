@@ -525,8 +525,14 @@ export class LocalPlatform implements Platform {
 
     const configPath = join(this.rootDir, "rolex.json");
     if (existsSync(configPath)) {
-      this.config = JSON.parse(readFileSync(configPath, "utf-8"));
-      return this.config!;
+      const raw = JSON.parse(readFileSync(configPath, "utf-8"));
+      // Migrate old format: ensure required fields exist
+      this.config = {
+        roles: raw.roles ?? [],
+        organizations: raw.organizations ?? {},
+        assignments: raw.assignments ?? {},
+      };
+      return this.config;
     }
 
     // Create default config
