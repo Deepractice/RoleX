@@ -25,11 +25,23 @@ export class Rolex {
     this.platform.found(name);
   }
 
-  /** Society directory — all roles and organizations. */
+  /** Society directory — all born roles and organizations. */
   directory(): Directory {
+    const allNames = this.platform.allBornRoles();
     const org = this.platform.organization();
+
+    const hiredMap = new Map<string, string>();
+    for (const r of org.roles) {
+      hiredMap.set(r.name, r.team);
+    }
+
+    const roles = allNames.map((name) => ({
+      name,
+      team: hiredMap.get(name) ?? "",
+    }));
+
     return {
-      roles: org.roles,
+      roles,
       organizations: [{ name: org.name }],
     };
   }
@@ -49,7 +61,7 @@ export class Rolex {
     return new Role(this.platform, name);
   }
 
-  /** Find a role or organization by name. */
+  /** Find a role or organization by name — searches all of society. */
   find(name: string): Role | Organization {
     const org = this.platform.organization();
 
@@ -57,9 +69,9 @@ export class Rolex {
       return new Organization(this.platform);
     }
 
-    const role = org.roles.find((r) => r.name === name);
-    if (role) {
-      return new Role(this.platform, role.name);
+    const allNames = this.platform.allBornRoles();
+    if (allNames.includes(name)) {
+      return new Role(this.platform, name);
     }
 
     throw new Error(`Not found in society: ${name}`);

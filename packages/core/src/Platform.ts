@@ -48,6 +48,9 @@ export interface Platform {
   /** Get the organization structure (teams + roles) */
   organization(): Organization;
 
+  /** List all born roles in society (regardless of organization membership) */
+  allBornRoles(): string[];
+
   /** Create a new role with its persona */
   born(name: string, source: string): Feature;
 

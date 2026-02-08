@@ -71,6 +71,17 @@ export class LocalPlatform implements Platform {
     return { name: config.name, roles };
   }
 
+  // ========== Society ==========
+
+  allBornRoles(): string[] {
+    if (!existsSync(this.rootDir)) return [];
+
+    return readdirSync(this.rootDir, { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .filter((d) => existsSync(join(this.rootDir, d.name, "identity", "persona.identity.feature")))
+      .map((d) => d.name);
+  }
+
   // ========== Born ==========
 
   born(name: string, source: string): Feature {

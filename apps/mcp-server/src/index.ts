@@ -35,6 +35,11 @@ import {
   renderFeatures,
   renderFeature,
   renderStatusBar,
+  renderError,
+  next,
+  NEXT,
+  nextHire,
+  nextFinish,
   bootstrap,
 } from "rolexjs";
 import { LocalPlatform } from "@rolexjs/local-platform";
@@ -65,6 +70,23 @@ function requireRole(): Role {
   return currentRole;
 }
 
+/**
+ * Wrap a tool execute function with unified error handling.
+ * Catches errors and renders them as formatted markdown.
+ */
+function safeTool<T>(
+  toolName: string,
+  fn: (args: T) => Promise<string>
+): (args: T) => Promise<string> {
+  return async (args: T) => {
+    try {
+      return await fn(args);
+    } catch (error) {
+      throw new Error(renderError(toolName, error));
+    }
+  };
+}
+
 // ========== Society (folded) ==========
 
 server.addTool({
@@ -92,21 +114,23 @@ server.addTool({
       .optional()
       .describe("Name for the knowledge being taught (e.g. 'distributed-systems')"),
   }),
-  execute: async ({ operation, name, source, roleId, type, dimensionName }) => {
+  execute: safeTool("society", async ({ operation, name, source, roleId, type, dimensionName }) => {
     switch (operation) {
       case "born": {
         if (!name || !source) throw new Error("born requires: name, source");
         const feature = rolex.born(name, source);
-        return `Role born: ${feature.name}`;
+        return next(`Role born: ${feature.name}`, NEXT.born);
       }
       case "found": {
         if (!name) throw new Error("found requires: name");
         rolex.found(name);
-        return `Organization founded: ${name}`;
+        return next(`Organization founded: ${name}`, NEXT.found);
       }
       case "directory": {
         const dir = rolex.directory();
         const lines: string[] = [];
+
+        // Organizations and their hired roles
         for (const entry of dir.organizations) {
           const orgInstance = rolex.find(entry.name) as Organization;
           const info = orgInstance.info();
@@ -115,7 +139,18 @@ server.addTool({
             lines.push(`  - ${role.name} (team: ${role.team})`);
           }
         }
-        return lines.join("\n") || "No organizations found.";
+
+        // Unaffiliated roles (born but not hired)
+        const unaffiliated = dir.roles.filter((r) => !r.team);
+        if (unaffiliated.length > 0) {
+          lines.push("");
+          lines.push("Unaffiliated:");
+          for (const role of unaffiliated) {
+            lines.push(`  - ${role.name}`);
+          }
+        }
+
+        return lines.join("\n") || "No roles or organizations found.";
       }
       case "find": {
         if (!name) throw new Error("find requires: name");
@@ -131,12 +166,12 @@ server.addTool({
         if (!roleId || !type || !dimensionName || !source)
           throw new Error("teach requires: roleId, type, dimensionName, source");
         const feature = rolex.teach(roleId, type, dimensionName, source);
-        return `Taught ${type}: ${feature.name}`;
+        return next(`Taught ${type}: ${feature.name}`, NEXT.teach);
       }
       default:
         throw new Error(`Unknown society operation: ${operation}`);
     }
-  },
+  }),
 });
 
 // ========== Organization (folded) ==========
@@ -148,23 +183,23 @@ server.addTool({
     operation: z.enum(["hire", "fire"]).describe("The organization operation to perform"),
     name: z.string().describe("Role name to hire or fire"),
   }),
-  execute: async ({ operation, name }) => {
+  execute: safeTool("organization", async ({ operation, name }) => {
     const dir = rolex.directory();
     const org = rolex.find(dir.organizations[0].name) as Organization;
 
     switch (operation) {
       case "hire": {
         org.hire(name);
-        return `Role hired: ${name}`;
+        return next(`Role hired: ${name}`, nextHire(name));
       }
       case "fire": {
         org.fire(name);
-        return `Role fired: ${name}`;
+        return next(`Role fired: ${name}`, NEXT.fire);
       }
       default:
         throw new Error(`Unknown organization operation: ${operation}`);
     }
-  },
+  }),
 });
 
 // ========== Role Activation ==========
@@ -175,14 +210,14 @@ server.addTool({
   parameters: z.object({
     roleId: z.string().describe("Role name (e.g. 'sean')"),
   }),
-  execute: async ({ roleId }) => {
+  execute: safeTool("identity", async ({ roleId }) => {
     currentRole = rolex.role(roleId);
     currentRoleName = roleId;
     const features = currentRole.identity();
     const { current } = currentRole.focus();
     const statusBar = renderStatusBar(roleId, current);
     return `${statusBar}\n\n${renderFeatures(features)}`;
-  },
+  }),
 });
 
 // ========== Role Tools ==========
@@ -201,11 +236,11 @@ server.addTool({
       .describe("Name for this growth (used as filename, e.g. 'distributed-systems')"),
     source: z.string().describe("Gherkin feature source text"),
   }),
-  execute: async ({ type, name, source }) => {
+  execute: safeTool("growup", async ({ type, name, source }) => {
     const role = requireRole();
     const feature = role.growup(type, name, source);
-    return `Growth added (${type}): ${feature.name}`;
-  },
+    return next(`Growth added (${type}): ${feature.name}`, NEXT.growup);
+  }),
 });
 
 server.addTool({
@@ -214,7 +249,7 @@ server.addTool({
   parameters: z.object({
     name: z.string().optional().describe("Optional goal name to switch focus to"),
   }),
-  execute: async ({ name }) => {
+  execute: safeTool("focus", async ({ name }) => {
     const role = requireRole();
     const { current, otherGoals } = role.focus(name);
 
@@ -243,7 +278,7 @@ server.addTool({
     }
 
     return parts.join("\n\n");
-  },
+  }),
 });
 
 server.addTool({
@@ -258,11 +293,11 @@ server.addTool({
       .default(false)
       .describe("Whether this goal's scenarios should become persistent automated verification"),
   }),
-  execute: async ({ name, source, testable }) => {
+  execute: safeTool("want", async ({ name, source, testable }) => {
     const role = requireRole();
     const goal = role.want(name, source, testable);
-    return `Goal created: ${goal.name}`;
-  },
+    return next(`Goal created: ${goal.name}`, NEXT.want);
+  }),
 });
 
 server.addTool({
@@ -271,11 +306,11 @@ server.addTool({
   parameters: z.object({
     source: z.string().describe("Gherkin feature source text for the plan"),
   }),
-  execute: async ({ source }) => {
+  execute: safeTool("plan", async ({ source }) => {
     const role = requireRole();
     const p = role.plan(source);
-    return `Plan created: ${p.name}`;
-  },
+    return next(`Plan created: ${p.name}`, NEXT.plan);
+  }),
 });
 
 server.addTool({
@@ -290,11 +325,11 @@ server.addTool({
       .default(false)
       .describe("Whether this task's scenarios should become unit or integration tests"),
   }),
-  execute: async ({ name, source, testable }) => {
+  execute: safeTool("todo", async ({ name, source, testable }) => {
     const role = requireRole();
     const task = role.todo(name, source, testable);
-    return `Task created: ${task.name}`;
-  },
+    return next(`Task created: ${task.name}`, NEXT.todo);
+  }),
 });
 
 server.addTool({
@@ -308,11 +343,12 @@ server.addTool({
         "Optional Gherkin feature source capturing what was learned — auto-saved as experience growup"
       ),
   }),
-  execute: async ({ experience }) => {
+  execute: safeTool("achieve", async ({ experience }) => {
     const role = requireRole();
     role.achieve(experience);
-    return experience ? "Goal achieved. Experience captured." : "Goal achieved.";
-  },
+    const msg = experience ? "Goal achieved. Experience captured." : "Goal achieved.";
+    return next(msg, NEXT.achieve);
+  }),
 });
 
 server.addTool({
@@ -326,11 +362,12 @@ server.addTool({
         "Optional Gherkin feature source capturing what was learned — auto-saved as experience growup"
       ),
   }),
-  execute: async ({ experience }) => {
+  execute: safeTool("abandon", async ({ experience }) => {
     const role = requireRole();
     role.abandon(experience);
-    return experience ? "Goal abandoned. Experience captured." : "Goal abandoned.";
-  },
+    const msg = experience ? "Goal abandoned. Experience captured." : "Goal abandoned.";
+    return next(msg, NEXT.abandon);
+  }),
 });
 
 server.addTool({
@@ -349,11 +386,14 @@ server.addTool({
       ),
     knowledgeSource: z.string().describe("Gherkin feature source text for the knowledge"),
   }),
-  execute: async ({ experienceNames, knowledgeName, knowledgeSource }) => {
+  execute: safeTool("reflect", async ({ experienceNames, knowledgeName, knowledgeSource }) => {
     const role = requireRole();
     const feature = role.reflect(experienceNames, knowledgeName, knowledgeSource);
-    return `Reflected: ${experienceNames.length} experience(s) → knowledge "${feature.name}"`;
-  },
+    return next(
+      `Reflected: ${experienceNames.length} experience(s) → knowledge "${feature.name}"`,
+      NEXT.reflect
+    );
+  }),
 });
 
 server.addTool({
@@ -362,11 +402,17 @@ server.addTool({
   parameters: z.object({
     name: z.string().describe("Task name to mark as done"),
   }),
-  execute: async ({ name }) => {
+  execute: safeTool("finish", async ({ name }) => {
     const role = requireRole();
     role.finish(name);
-    return `Task finished: ${name}`;
-  },
+
+    // Dynamic hint: check remaining tasks
+    const { current } = role.focus();
+    const remaining = current
+      ? current.tasks.filter((t) => !t.tags?.some((tag) => tag.name === "@done")).length
+      : -1;
+    return next(`Task finished: ${name}`, remaining >= 0 ? nextFinish(remaining) : NEXT.achieve);
+  }),
 });
 
 server.start({
