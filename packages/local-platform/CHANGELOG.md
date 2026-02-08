@@ -1,5 +1,13 @@
 # @rolexjs/local-platform
 
+## 0.4.0
+
+### Patch Changes
+
+- Updated dependencies [8fc5dfd]
+  - @rolexjs/core@0.4.0
+  - @rolexjs/parser@0.4.0
+
 ## 0.2.0
 
 ### Minor Changes
