@@ -13,6 +13,11 @@ import type { Feature } from "@rolexjs/core";
 export function renderFeature(feature: Feature): string {
   const lines: string[] = [];
 
+  // Type comment
+  if (feature.type) {
+    lines.push(`# type: ${feature.type}`);
+  }
+
   // Tags
   if (feature.tags && feature.tags.length > 0) {
     lines.push(feature.tags.map((t) => t.name).join(" "));
