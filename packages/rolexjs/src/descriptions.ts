@@ -17,7 +17,7 @@ When you are activated as a role, you follow this natural flow:
 
 1. **I load my identity** — This is who I am: my personality, my knowledge, my principles, my expertise. It's always present, like muscle memory. I read it first to understand who I am.
 
-2. **I check my focus** — Do I have an active goal? If yes, I review it along with my plan and tasks to understand where I left off. If no, I collaborate with the user using the ISSUE method to explore and set the next goal.
+2. **I check my focus** — Do I have active goals? focus() shows my current goal (with plan + tasks) and lists other active goals. I can switch focus by calling focus(name). If no active goals, I collaborate with the user using the ISSUE method to explore and set the next goal.
 
 3. **I make a plan** — For my active goal, I design how to achieve it. The plan breaks the goal into logical phases or scenarios.
 
@@ -198,10 +198,13 @@ Identity .feature files describe who you ARE and what you KNOW — not what you 
 
 export const DESC_FOCUS = `What am I focused on? Returns my current active goal with its full context.
 
-The active goal is the first uncompleted goal. It comes with:
+The active goal comes with:
 - The goal itself: what I want to achieve, with success criteria as Scenarios
 - My plan: how I intend to achieve it (phases/steps), or null if no plan yet
 - My tasks: concrete work items, each with completion status
+- Other active goals: a list of other uncompleted goals I have
+
+Without a name parameter, returns my currently focused goal. With a name parameter, switches my focus to that goal.
 
 If there is no active goal, it means I have nothing to work on. In this case, I should use the ISSUE method to collaborate with the user:
 1. Initiate: "We have no active goal. Let's explore what to work on next."

@@ -166,11 +166,40 @@ export class LocalPlatform implements Platform {
     const goalsDir = join(roleDir, "goals");
     if (!existsSync(goalsDir)) return null;
 
+    // If a focused goal is set, try to load it first
+    const focusedName = this.getFocusedGoal(roleId);
+    if (focusedName) {
+      const goalDir = join(goalsDir, focusedName);
+      const result = this.loadGoalIfActive(goalDir);
+      if (result) return result;
+    }
+
+    // Fallback: first uncompleted goal alphabetically
     const goalDirs = readdirSync(goalsDir, { withFileTypes: true })
       .filter((d) => d.isDirectory())
       .map((d) => d.name)
       .sort();
 
+    for (const goalName of goalDirs) {
+      const goalDir = join(goalsDir, goalName);
+      const result = this.loadGoalIfActive(goalDir);
+      if (result) return result;
+    }
+
+    return null;
+  }
+
+  allActiveGoals(roleId: string): Goal[] {
+    const roleDir = this.resolveRoleDir(roleId);
+    const goalsDir = join(roleDir, "goals");
+    if (!existsSync(goalsDir)) return [];
+
+    const goalDirs = readdirSync(goalsDir, { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name)
+      .sort();
+
+    const goals: Goal[] = [];
     for (const goalName of goalDirs) {
       const goalDir = join(goalsDir, goalName);
       const goalFile = this.findFeatureFile(goalDir, ".goal.feature");
@@ -182,15 +211,29 @@ export class LocalPlatform implements Platform {
 
       if (doc.feature.tags.some((t) => t.name === "@done" || t.name === "@abandoned")) continue;
 
-      const goal = this.toFeature(doc.feature, "goal") as Goal;
-      return {
-        ...goal,
-        plan: this.loadPlan(goalDir),
-        tasks: this.loadTasks(goalDir),
-      };
+      goals.push(this.toFeature(doc.feature, "goal") as Goal);
     }
 
-    return null;
+    return goals;
+  }
+
+  getFocusedGoal(roleId: string): string | null {
+    const roleDir = this.resolveRoleDir(roleId);
+    const focusFile = join(roleDir, "goals", ".focus");
+    if (!existsSync(focusFile)) return null;
+    return readFileSync(focusFile, "utf-8").trim() || null;
+  }
+
+  setFocusedGoal(roleId: string, name: string): void {
+    const roleDir = this.resolveRoleDir(roleId);
+    const goalsDir = join(roleDir, "goals");
+    const goalDir = join(goalsDir, name);
+
+    if (!existsSync(goalDir)) {
+      throw new Error(`Goal not found: ${name}`);
+    }
+
+    writeFileSync(join(goalsDir, ".focus"), name, "utf-8");
   }
 
   // ========== Write ==========
@@ -306,10 +349,41 @@ export class LocalPlatform implements Platform {
     return roleDir;
   }
 
+  private loadGoalIfActive(goalDir: string): (Goal & { plan: Plan | null; tasks: Task[] }) | null {
+    const goalFile = this.findFeatureFile(goalDir, ".goal.feature");
+    if (!goalFile) return null;
+
+    const source = readFileSync(goalFile, "utf-8");
+    const doc = parse(source);
+    if (!doc.feature) return null;
+
+    if (doc.feature.tags.some((t) => t.name === "@done" || t.name === "@abandoned")) return null;
+
+    const goal = this.toFeature(doc.feature, "goal") as Goal;
+    return {
+      ...goal,
+      plan: this.loadPlan(goalDir),
+      tasks: this.loadTasks(goalDir),
+    };
+  }
+
   private getActiveGoalDir(roleDir: string): string | null {
     const goalsDir = join(roleDir, "goals");
     if (!existsSync(goalsDir)) return null;
 
+    // Respect focused goal
+    const focusFile = join(goalsDir, ".focus");
+    if (existsSync(focusFile)) {
+      const focusedName = readFileSync(focusFile, "utf-8").trim();
+      if (focusedName) {
+        const focusedDir = join(goalsDir, focusedName);
+        if (existsSync(focusedDir) && this.loadGoalIfActive(focusedDir)) {
+          return focusedDir;
+        }
+      }
+    }
+
+    // Fallback: first uncompleted goal
     const goalDirs = readdirSync(goalsDir, { withFileTypes: true })
       .filter((d) => d.isDirectory())
       .map((d) => d.name)
@@ -317,14 +391,7 @@ export class LocalPlatform implements Platform {
 
     for (const goalName of goalDirs) {
       const goalDir = join(goalsDir, goalName);
-      const goalFile = this.findFeatureFile(goalDir, ".goal.feature");
-      if (!goalFile) continue;
-
-      const source = readFileSync(goalFile, "utf-8");
-      const doc = parse(source);
-      if (!doc.feature) continue;
-
-      if (!doc.feature.tags.some((t) => t.name === "@done" || t.name === "@abandoned")) {
+      if (this.loadGoalIfActive(goalDir)) {
         return goalDir;
       }
     }

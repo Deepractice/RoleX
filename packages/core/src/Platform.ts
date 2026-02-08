@@ -71,6 +71,15 @@ export interface Platform {
   /** Find the current active goal for a role (with plan + tasks context) */
   activeGoal(roleId: string): (Goal & { plan: Plan | null; tasks: Task[] }) | null;
 
+  /** List all active (uncompleted) goals for a role */
+  allActiveGoals(roleId: string): Goal[];
+
+  /** Get the currently focused goal name for a role */
+  getFocusedGoal(roleId: string): string | null;
+
+  /** Set the focused goal for a role by name */
+  setFocusedGoal(roleId: string, name: string): void;
+
   /** Create a new goal from Gherkin source */
   createGoal(roleId: string, name: string, source: string, testable?: boolean): Goal;
 

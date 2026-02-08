@@ -18,9 +18,23 @@ export class Role {
     return this.platform.identity(this.name);
   }
 
-  /** What am I focused on? My current active goal with plan + tasks. */
-  focus(): (Goal & { plan: Plan | null; tasks: Task[] }) | null {
-    return this.platform.activeGoal(this.name);
+  /** What am I focused on? My current active goal with plan + tasks, plus other active goals. */
+  focus(name?: string): {
+    current: (Goal & { plan: Plan | null; tasks: Task[] }) | null;
+    otherGoals: Goal[];
+  } {
+    if (name) {
+      this.platform.setFocusedGoal(this.name, name);
+    }
+
+    const current = this.platform.activeGoal(this.name);
+    const allActive = this.platform.allActiveGoals(this.name);
+
+    // Other goals = all active goals except the current one
+    const currentName = current?.name;
+    const otherGoals = allActive.filter((g) => g.name !== currentName);
+
+    return { current, otherGoals };
   }
 
   /** I want to achieve this. Set a new goal. */

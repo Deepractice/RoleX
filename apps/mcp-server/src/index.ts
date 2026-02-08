@@ -205,19 +205,33 @@ server.addTool({
 server.addTool({
   name: "focus",
   description: DESC_FOCUS,
-  parameters: z.object({}),
-  execute: async () => {
+  parameters: z.object({
+    name: z.string().optional().describe("Optional goal name to switch focus to"),
+  }),
+  execute: async ({ name }) => {
     const role = requireRole();
-    const goal = role.focus();
-    if (!goal) return "No active goal. Use want() to set a new goal.";
+    const { current, otherGoals } = role.focus(name);
+    if (!current && otherGoals.length === 0) return "No active goal. Use want() to set a new goal.";
 
-    const parts: string[] = [renderFeature(goal)];
-    if (goal.plan) {
-      parts.push(renderFeature(goal.plan));
+    const parts: string[] = [];
+
+    if (current) {
+      parts.push(renderFeature(current));
+      if (current.plan) {
+        parts.push(renderFeature(current.plan));
+      }
+      for (const task of current.tasks) {
+        parts.push(renderFeature(task));
+      }
     }
-    for (const task of goal.tasks) {
-      parts.push(renderFeature(task));
+
+    if (otherGoals.length > 0) {
+      parts.push("Other active goals:");
+      for (const g of otherGoals) {
+        parts.push(`  - ${g.name}`);
+      }
     }
+
     return parts.join("\n\n");
   },
 });
