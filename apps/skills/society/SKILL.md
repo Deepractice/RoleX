@@ -23,12 +23,12 @@ Create a new role with its persona.
 Persona is the foundational identity — who this person IS at the most essential level: character, temperament, thinking patterns. No job title, no professional skills — those come later through teach/growup.
 
 ```bash
-rolex born alex --source 'Feature: Alex
+rolex born sean --source 'Feature: Alex
   Scenario: How I communicate
     Given I prefer direct, concise language
     Then I get to the point quickly'
 
-rolex born alex -f persona.feature
+rolex born sean -f persona.feature
 ```
 
 After born, the role exists as an individual. Call `rolex hire` to bring them into the organization.
@@ -60,7 +60,7 @@ Find a role or organization by name.
 Returns details about the matched entity. Throws if the name doesn't match any known role or organization.
 
 ```bash
-rolex find alex          # finds role
+rolex find sean          # finds role
 rolex find Deepractice   # finds organization
 ```
 

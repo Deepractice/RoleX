@@ -3,9 +3,12 @@
  *
  * The broadest context: people are born, organizations are founded.
  * directory() shows who exists, find() locates anyone by name.
+ *
+ * Platform-agnostic — does not know how data is stored.
+ * Bootstrap (seeding 女娲 etc.) is each Platform's responsibility.
  */
 
-import type { Platform, Directory } from "@rolexjs/core";
+import type { Platform, Directory, Feature } from "@rolexjs/core";
 import { Organization } from "./Organization.js";
 import { Role } from "./Role.js";
 
@@ -29,6 +32,21 @@ export class Rolex {
       roles: org.roles,
       organizations: [{ name: org.name }],
     };
+  }
+
+  /** Teach a role — transmit knowledge from the outside. */
+  teach(
+    name: string,
+    type: "knowledge" | "experience" | "voice",
+    dimensionName: string,
+    source: string
+  ): Feature {
+    return this.platform.growup(name, type, dimensionName, source);
+  }
+
+  /** Access any born role directly — society-level, no org required. */
+  role(name: string): Role {
+    return new Role(this.platform, name);
   }
 
   /** Find a role or organization by name. */

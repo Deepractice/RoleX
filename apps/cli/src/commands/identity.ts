@@ -1,7 +1,7 @@
 import { defineCommand } from "citty";
 import consola from "consola";
 import { createRolex } from "../lib/client.js";
-import { Organization } from "rolexjs";
+import { Organization, renderFeatures } from "rolexjs";
 
 export const identity = defineCommand({
   meta: {
@@ -11,7 +11,7 @@ export const identity = defineCommand({
   args: {
     roleId: {
       type: "positional",
-      description: "Role name (e.g. 'alex')",
+      description: "Role name (e.g. 'sean')",
       required: true,
     },
   },
@@ -23,13 +23,7 @@ export const identity = defineCommand({
       const role = org.role(args.roleId);
       const features = role.identity();
 
-      consola.info(`Identity for ${args.roleId}:`);
-      for (const f of features) {
-        console.log(`  [${f.type}] ${f.name}`);
-        for (const s of f.scenarios) {
-          console.log(`    - ${s.name}${s.verifiable ? " (testable)" : ""}`);
-        }
-      }
+      console.log(renderFeatures(features));
     } catch (error) {
       consola.error(error instanceof Error ? error.message : "Failed to load identity");
       process.exit(1);

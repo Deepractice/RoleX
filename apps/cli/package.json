@@ -5,7 +5,9 @@
   "bin": {
     "rolex": "./dist/index.js"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "bun src/index.ts",
@@ -14,6 +16,10 @@
   "dependencies": {
     "citty": "^0.1.6",
     "consola": "^3.4.2",
-    "rolexjs": "workspace:*"
+    "rolexjs": "workspace:*",
+    "@rolexjs/local-platform": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

@@ -1,0 +1,31 @@
+{
+  "name": "@rolexjs/local-platform",
+  "version": "0.1.0",
+  "description": "Local filesystem Platform for RoleX — stores roles in .rolex/ directories",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@rolexjs/core": "workspace:*",
+    "@rolexjs/parser": "workspace:*"
+  },
+  "devDependencies": {
+    "rolexjs": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

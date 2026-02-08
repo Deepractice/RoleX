@@ -12,7 +12,7 @@ export const growup = defineCommand({
   args: {
     roleId: {
       type: "positional",
-      description: "Role name (e.g. 'alex')",
+      description: "Role name (e.g. 'sean')",
       required: true,
     },
     type: {
@@ -45,7 +45,7 @@ export const growup = defineCommand({
       const feature = role.growup(
         args.type as "knowledge" | "experience" | "voice",
         args.name,
-        src,
+        src
       );
       consola.success(`Growth added (${args.type}): ${feature.name}`);
     } catch (error) {

@@ -1,7 +1,7 @@
 import { defineCommand } from "citty";
 import consola from "consola";
 import { createRolex } from "../lib/client.js";
-import { Organization } from "rolexjs";
+import { Organization, renderFeature } from "rolexjs";
 
 export const focus = defineCommand({
   meta: {
@@ -11,7 +11,7 @@ export const focus = defineCommand({
   args: {
     roleId: {
       type: "positional",
-      description: "Role name (e.g. 'alex')",
+      description: "Role name (e.g. 'sean')",
       required: true,
     },
   },
@@ -28,22 +28,14 @@ export const focus = defineCommand({
         return;
       }
 
-      consola.info(`Goal: ${goal.name}`);
-      for (const s of goal.scenarios) {
-        console.log(`  - ${s.name}${s.verifiable ? " (testable)" : ""}`);
-      }
-
+      const parts: string[] = [renderFeature(goal)];
       if (goal.plan) {
-        console.log(`  Plan: ${goal.plan.name}`);
+        parts.push(renderFeature(goal.plan));
       }
-
-      if (goal.tasks.length > 0) {
-        console.log(`  Tasks: ${goal.tasks.length}`);
-        for (const t of goal.tasks) {
-          const done = t.tags.some((tag) => tag.name === "@done");
-          console.log(`    ${done ? "[x]" : "[ ]"} ${t.name}`);
-        }
+      for (const task of goal.tasks) {
+        parts.push(renderFeature(task));
       }
+      console.log(parts.join("\n\n"));
     } catch (error) {
       consola.error(error instanceof Error ? error.message : "Failed to load focus");
       process.exit(1);

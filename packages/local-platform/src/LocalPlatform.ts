@@ -127,7 +127,12 @@ export class LocalPlatform implements Platform {
 
   // ========== Growup ==========
 
-  growup(roleId: string, type: "knowledge" | "experience" | "voice", name: string, source: string): Feature {
+  growup(
+    roleId: string,
+    type: "knowledge" | "experience" | "voice",
+    name: string,
+    source: string
+  ): Feature {
     const roleDir = this.resolveRoleDir(roleId);
     const dir = join(roleDir, "identity");
     mkdirSync(dir, { recursive: true });
@@ -285,21 +290,11 @@ export class LocalPlatform implements Platform {
       return this.config!;
     }
 
-    // Fallback: no config
-    const name = basename(this.rootDir);
-    this.config = {
-      name,
-      teams: { default: [] },
-    };
-    return this.config;
+    throw new Error(`No rolex.json found in ${this.rootDir}. Call found() first.`);
   }
 
   private saveConfig(config: RolexConfig): void {
-    writeFileSync(
-      join(this.rootDir, "rolex.json"),
-      JSON.stringify(config, null, 2),
-      "utf-8",
-    );
+    writeFileSync(join(this.rootDir, "rolex.json"), JSON.stringify(config, null, 2), "utf-8");
     this.config = config;
   }
 

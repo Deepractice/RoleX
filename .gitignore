@@ -88,4 +88,9 @@ pnpm-lock.yaml
 .bun-dts-*
 .test-temp/
 .test-registry-manual/
-scripts/
+/scripts/
+
+# ============================================
+# Runtime data (stored at ~/.rolex)
+# ============================================
+/.rolex/

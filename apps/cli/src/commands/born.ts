@@ -11,7 +11,7 @@ export const born = defineCommand({
   args: {
     name: {
       type: "positional",
-      description: "Role name (e.g. 'alex')",
+      description: "Role name (e.g. 'sean')",
       required: true,
     },
     source: {

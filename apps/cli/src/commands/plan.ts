@@ -12,7 +12,7 @@ export const plan = defineCommand({
   args: {
     roleId: {
       type: "positional",
-      description: "Role name (e.g. 'alex')",
+      description: "Role name (e.g. 'sean')",
       required: true,
     },
     source: {

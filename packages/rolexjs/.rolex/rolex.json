@@ -1,0 +1,6 @@
+{
+  "name": "Deepractice",
+  "teams": {
+    "default": ["nuwa"]
+  }
+}

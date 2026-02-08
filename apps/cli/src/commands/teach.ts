@@ -1,18 +1,17 @@
 import { defineCommand } from "citty";
 import consola from "consola";
 import { createRolex } from "../lib/client.js";
-import { Organization } from "rolexjs";
 import { resolveSource } from "../lib/source.js";
 
 export const teach = defineCommand({
   meta: {
     name: "teach",
-    description: "Teach a role — add knowledge, experience, or voice",
+    description: "Teach a role — transmit abstract, first-principles knowledge",
   },
   args: {
     roleId: {
       type: "positional",
-      description: "Role name (e.g. 'alex')",
+      description: "Role name (e.g. 'sean')",
       required: true,
     },
     type: {
@@ -22,7 +21,7 @@ export const teach = defineCommand({
     },
     name: {
       type: "positional",
-      description: "Name for this growth (used as filename)",
+      description: "Name for this knowledge (used as filename)",
       required: true,
     },
     source: {
@@ -38,14 +37,12 @@ export const teach = defineCommand({
   async run({ args }) {
     try {
       const rolex = createRolex();
-      const dir = rolex.directory();
-      const org = rolex.find(dir.organizations[0].name) as Organization;
       const src = resolveSource(args);
-      const feature = org.teach(
+      const feature = rolex.teach(
         args.roleId,
         args.type as "knowledge" | "experience" | "voice",
         args.name,
-        src,
+        src
       );
       consola.success(`Taught ${args.type}: ${feature.name}`);
     } catch (error) {

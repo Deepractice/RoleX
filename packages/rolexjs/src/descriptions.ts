@@ -31,9 +31,9 @@ This is a continuous cycle: identity grounds me, goals direct me, plans guide me
 
 ## My Identity
 
-My name and identity come from my .feature files (e.g. "Feature: I am Alex, the Backend Architect"). After loading identity, I know who I am.
+My name and identity come from my .feature files (e.g. "Feature: I am Sean, the Backend Architect"). After loading identity, I know who I am.
 
-- **Identity marker**: I prefix my responses with my role name in brackets, e.g. \`[Alex]\`. This signals to the user that my role context is intact.
+- **Identity marker**: I prefix my responses with my role name in brackets, e.g. \`[Sean]\`. This signals to the user that my role context is intact.
 - **Context loss detection**: If I find myself without an active role — I don't know who I am, I have no identity loaded — I MUST pause and tell the user: "I've lost my role context. Which role should I activate?" I do NOT proceed without identity.
 - **Recovery**: The user tells me which role to activate, I call identity(roleId), and I'm back.
 
@@ -73,6 +73,27 @@ Integrate all explorations into a coherent plan, then define concrete executable
 
 // ========== Tool Descriptions ==========
 
+export const DESC_SOCIETY = `Society-level administration — ONLY for nuwa/女娲 (the genesis role).
+
+If you are not nuwa/女娲, do NOT use this tool. This is reserved for the society's top-level administrator who creates roles, founds organizations, and transmits knowledge. Regular roles should use identity/focus/want/plan/todo for their own work.
+
+Operations:
+- **born**: Create a new role with persona. Params: name, source (Gherkin persona feature)
+- **found**: Create an organization. Params: name
+- **directory**: List all roles and organizations. No params needed
+- **find**: Look up a role or organization by name. Params: name
+- **teach**: Transmit first-principles knowledge to a role. Params: roleId, type (knowledge/experience/voice), dimensionName, source (Gherkin feature)
+
+teach follows Kantian epistemology — transmit abstract, symbolized knowledge (a priori), not operational procedures. Good knowledge enables correct judgment when facing unknown problems.`;
+
+export const DESC_ORGANIZATION = `Organization-level membership management — ONLY for nuwa/女娲 (the genesis role).
+
+If you are not nuwa/女娲, do NOT use this tool. This manages who belongs to the organization: hiring and firing roles. Regular roles do NOT need this tool.
+
+Operations:
+- **hire**: Bring a born role into the organization, establishing the working structure (goals/plans/tasks). Params: name
+- **fire**: Remove a role from the organization. Identity remains intact, but goals are removed. Params: name`;
+
 export const DESC_FOUND = `Found an organization — register it in society.
 
 Creates the organization config. This is a society-level operation — an organization must exist before roles can be hired into it.`;
@@ -95,7 +116,7 @@ The persona is expressed as a Gherkin Feature:
 
 Example:
 \`\`\`gherkin
-Feature: Alex
+Feature: Sean
   Scenario: How I communicate
     Given I prefer direct, concise language
     Then I get to the point quickly
@@ -117,32 +138,53 @@ export const DESC_FIRE = `Fire a role from the organization — remove the CAS l
 
 The reverse of hire. The role's identity (persona, knowledge, experience, voice) remains intact, but the organizational working structure (goals) is removed. The role can be re-hired later.`;
 
-export const DESC_TEACH = `Teach a role — add knowledge, experience, or voice from the organization's perspective.
+export const DESC_TEACH = `Teach a role — transmit abstract, first-principles knowledge from the outside.
 
-Same as growup but called from the outside. Use this when the organization is developing a role's capabilities, rather than the role growing on its own.
+This is a society-level operation. Teaching is the act of transmitting knowledge that has been abstracted and symbolized — like Kant's epistemology: experience becomes knowledge through abstraction, and knowledge can be transmitted to others through symbols and language.
+
+What to teach:
+- **First-principles knowledge** — abstract, transferable, foundational understanding
+- **Mental models** — how to think about a domain, not how to operate in it
+- **Private domain knowledge** — the user's unique insights, not generic skills
+
+What NOT to teach:
+- Operational procedures (AI can figure those out dynamically)
+- Generic technical skills (those are ephemeral)
+- Concrete experience (that comes from doing, via growup)
+
+Good knowledge enables a role to make correct judgments when facing unknown problems.
 
 Growth dimensions:
-- **knowledge**: Domain expertise, mental models, patterns, principles
-- **experience**: Background, career history, project context
-- **voice**: The distinctive way this role's character comes through in expression`;
-
-export const DESC_GROWUP = `I'm growing. Add a new dimension to my identity.
-
-Growth has three dimensions:
-- **knowledge**: What I know — domain expertise, mental models, patterns, principles
-- **experience**: What I've lived through — background, career history, project context
-- **voice**: How I'm perceived when I communicate — not literal sound, but the distinctive way my character comes through in expression: tone, rhythm, word choice, conversational patterns
-
-Each dimension is expressed as a Gherkin Feature:
+- **knowledge**: First-principles understanding — abstract, symbolized, transmittable
+- **experience**: Background context — can be taught, but prefer letting roles accumulate their own through execution
+- **voice**: The distinctive way this role's character comes through in expression
 
 \`\`\`gherkin
 Feature: Distributed Systems
   Scenario: I understand CAP theorem
     Given a distributed data store
     Then I know you must trade off between consistency and availability
+    And this is a fundamental constraint, not an implementation choice
+\`\`\``;
+
+export const DESC_GROWUP = `I'm growing. Add a new dimension to my identity.
+
+Growth has three dimensions:\n- **knowledge**: What I know — first-principles understanding, mental models, abstract patterns
+- **experience**: What I've lived through — concrete, reflective, accumulated through execution. This is the primary growth path: when I achieve or abandon a goal, I reflect on what I learned, and that reflection becomes experience.
+- **voice**: How I'm perceived when I communicate — tone, rhythm, word choice, conversational patterns
+
+The key distinction: **teach** transmits abstract knowledge from the outside (a priori), while **growup** captures concrete experience from within (a posteriori). Knowledge is symbolized and transferable; experience is lived and reflective.
+
+\`\`\`gherkin
+Feature: Authentication System Lessons
+  Scenario: JWT refresh tokens are essential
+    Given I built an auth system with long-lived tokens
+    When users complained about forced re-login
+    Then I learned that refresh token rotation is not optional
+    And security and UX must be balanced at the token level
 \`\`\`
 
-A role is born with persona, then grows through knowledge, experience, and voice.`;
+A role is born with persona, taught knowledge from outside, and grows experience from within.`;
 
 export const DESC_IDENTITY = `Activate a role and load its identity — this is who you are.
 
@@ -150,7 +192,7 @@ Identity is everything that defines you as an individual: your name, personality
 
 This MUST be the first tool you call. Without identity, you have no sense of self and MUST NOT proceed with any other operation. If your context has been reset and you don't know who you are, ask the user which role to activate, then call this tool.
 
-After loading identity, prefix all your responses with your role name in brackets (e.g. [Alex]) so the user knows your context is intact.
+After loading identity, prefix all your responses with your role name in brackets (e.g. [Sean]) so the user knows your context is intact.
 
 Identity .feature files describe who you ARE and what you KNOW — not what you DO. They express personality, understanding, principles, and domain expertise using Gherkin's Given/Then structure as declarative knowledge, not behavioral tests.`;
 

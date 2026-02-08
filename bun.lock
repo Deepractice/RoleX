@@ -32,6 +32,7 @@
         "rolex": "./dist/index.js",
       },
       "dependencies": {
+        "@rolexjs/local-platform": "workspace:*",
         "citty": "^0.1.6",
         "consola": "^3.4.2",
         "rolexjs": "workspace:*",
@@ -44,6 +45,7 @@
         "rolex-mcp": "./dist/index.js",
       },
       "dependencies": {
+        "@rolexjs/local-platform": "workspace:*",
         "fastmcp": "^3.0.0",
         "rolexjs": "workspace:*",
         "zod": "^3.25.0",
@@ -54,6 +56,17 @@
       "version": "0.2.0",
       "devDependencies": {
         "@cucumber/messages": "^32.0.1",
+      },
+    },
+    "packages/local-platform": {
+      "name": "@rolexjs/local-platform",
+      "version": "0.1.0",
+      "dependencies": {
+        "@rolexjs/core": "workspace:*",
+        "@rolexjs/parser": "workspace:*",
+      },
+      "devDependencies": {
+        "rolexjs": "workspace:*",
       },
     },
     "packages/parser": {
@@ -70,6 +83,7 @@
       "dependencies": {
         "@rolexjs/core": "workspace:*",
         "@rolexjs/parser": "workspace:*",
+        "commonxjs": "^0.1.1",
       },
     },
   },
@@ -322,6 +336,8 @@
 
     "@rolexjs/core": ["@rolexjs/core@workspace:packages/core"],
 
+    "@rolexjs/local-platform": ["@rolexjs/local-platform@workspace:packages/local-platform"],
+
     "@rolexjs/mcp-server": ["@rolexjs/mcp-server@workspace:apps/mcp-server"],
 
     "@rolexjs/parser": ["@rolexjs/parser@workspace:packages/parser"],
@@ -495,6 +511,8 @@
     "combined-stream": ["combined-stream@1.0.8", "", { "dependencies": { "delayed-stream": "~1.0.0" } }, "sha512-FQN4MRfuJeHf7cBbBMJFXhKSDq+2kAArBlmRBvcvFE5BB1HZKXtSFASDhdlz9zOYwxh8lDdnvmMOe/+5cdoEdg=="],
 
     "commander": ["commander@4.1.1", "", {}, "sha512-NOKm8xhkzAjzFx8B2v5OAHT+u5pRQc2UCa2Vq9jYL/31o2wi9mxBA7LIFs3sV5VSC49z6pEhfbMULvShKj26WA=="],
+
+    "commonxjs": ["commonxjs@0.1.1", "", {}, "sha512-yGZQy8ev1Lit8mytPj9VBvDgl1xVh+HeqFMf9eRinZs2jPk4yYwQv3J1ZUeN7hk3wop+0nl3kFXKBJQ/W3v3bQ=="],
 
     "compare-func": ["compare-func@2.0.0", "", { "dependencies": { "array-ify": "^1.0.0", "dot-prop": "^5.1.0" } }, "sha512-zHig5N+tPWARooBnb0Zx1MFcdfpyJrfTJ3Y5L+IFvUm8rM74hHz66z0gw0x4tijh5CorKkKUCnW82R2vmpeCRA=="],
 

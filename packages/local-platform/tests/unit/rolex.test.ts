@@ -1,9 +1,7 @@
 import { describe, expect, test, beforeEach, afterEach } from "bun:test";
 import { mkdirSync, rmSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { Rolex } from "../../src/Rolex.js";
-import { Organization } from "../../src/Organization.js";
-import { Role } from "../../src/Role.js";
+import { Rolex, Organization, Role } from "rolexjs";
 import { LocalPlatform } from "../../src/LocalPlatform.js";
 
 const TEST_ROOT = join(import.meta.dir, "../.test-rolex");
@@ -21,7 +19,7 @@ function setupTestOrg() {
     JSON.stringify({
       name: "Test Org",
       teams: { default: ["owner"] },
-    }),
+    })
   );
 
   writeFileSync(
@@ -31,7 +29,7 @@ Feature: Basic Knowledge
   Scenario: Owner knows the basics
     Given the role model exists
     Then everything is a Feature
-`,
+`
   );
 
   writeFileSync(
@@ -41,7 +39,7 @@ Feature: Core Principles
   Scenario: Gherkin is first-class
     Given Gherkin covers all dimensions
     Then no new format needed
-`,
+`
   );
 }
 
@@ -57,7 +55,7 @@ Feature: Test Goal
     Given a requirement
     When I implement it
     Then it works
-`,
+`
   );
 }
 
@@ -72,7 +70,7 @@ Feature: Completed Goal
   Scenario: Already done
     Given it was done
     Then it is marked done
-`,
+`
   );
 }
 
@@ -96,7 +94,7 @@ describe("Rolex (society)", () => {
   Scenario: How I think
     Given a problem to solve
     Then I break it into small pieces
-`,
+`
     );
 
     expect(persona.type).toBe("persona");
@@ -187,7 +185,7 @@ describe("Organization", () => {
   Scenario: My nature
     Given I am direct
     Then I get to the point
-`,
+`
     );
 
     org.hire("alex");
@@ -217,7 +215,7 @@ describe("Organization", () => {
   Scenario: Temporary
     Given I exist briefly
     Then I'm gone
-`,
+`
     );
     org.hire("temp");
     expect(existsSync(join(ROLEX_DIR, "temp", "goals"))).toBe(true);
@@ -231,9 +229,8 @@ describe("Organization", () => {
 
   test("teach() adds knowledge to a role", () => {
     const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
-    const org = rolex.find("Test Org") as Organization;
 
-    const feature = org.teach(
+    const feature = rolex.teach(
       ROLE_NAME,
       "knowledge",
       "company-policy",
@@ -241,7 +238,7 @@ describe("Organization", () => {
   Scenario: We ship weekly
     Given a development cycle
     Then we release every Friday
-`,
+`
     );
 
     expect(feature.type).toBe("knowledge");
@@ -297,7 +294,7 @@ describe("Role (embodied perspective)", () => {
   Scenario: I understand CAP theorem
     Given a distributed data store
     Then I know the CAP trade-offs
-`,
+`
     );
 
     expect(feature.type).toBe("knowledge");
@@ -318,7 +315,7 @@ describe("Role (embodied perspective)", () => {
     Given a blank codebase
     When I shipped in 3 months
     Then I learned to prioritize ruthlessly
-`,
+`
     );
 
     expect(feature.type).toBe("experience");
@@ -335,7 +332,7 @@ describe("Role (embodied perspective)", () => {
   Scenario: I keep it concise
     Given something to explain
     Then I use the fewest words possible
-`,
+`
     );
 
     expect(feature.type).toBe("voice");
@@ -384,7 +381,7 @@ describe("Role (embodied perspective)", () => {
   Scenario: Something new
     Given a new requirement
     Then it should be created
-`,
+`
     );
 
     expect(goal.type).toBe("goal");
@@ -405,7 +402,7 @@ describe("Role (embodied perspective)", () => {
   Scenario: Step 1
     When I do the first thing
     Then it progresses
-`,
+`
     );
 
     expect(plan.type).toBe("plan");
@@ -433,7 +430,7 @@ describe("Role (embodied perspective)", () => {
   Scenario: Load files
     When I read the directory
     Then files are loaded
-`,
+`
     );
 
     expect(task.type).toBe("task");
@@ -511,7 +508,7 @@ describe("Role (embodied perspective)", () => {
   Scenario: Do something
     When I act
     Then done
-`,
+`
     );
 
     expect(role.focus()!.tasks).toHaveLength(1);
@@ -537,7 +534,7 @@ describe("Role (embodied perspective)", () => {
     Given another condition
     Then also automated
 `,
-      true,
+      true
     );
 
     const goal = role.focus();
@@ -555,7 +552,7 @@ describe("Role (embodied perspective)", () => {
   Scenario: Just a check
     Given a one-time check
     Then done manually
-`,
+`
     );
 
     const goal = role.focus();
