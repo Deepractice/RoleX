@@ -1,5 +1,14 @@
 # @rolexjs/cli
 
+## 0.9.0
+
+### Patch Changes
+
+- Updated dependencies [59a8320]
+- Updated dependencies [99bcce5]
+  - rolexjs@0.9.0
+  - @rolexjs/local-platform@0.9.0
+
 ## 0.8.0
 
 ### Patch Changes
