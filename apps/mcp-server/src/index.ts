@@ -239,8 +239,12 @@ server.addTool({
       .describe("The organization operation to perform"),
     name: z.string().describe("Role name to hire, fire, appoint, or dismiss"),
     position: z.string().optional().describe("Position name (for appoint)"),
+    orgName: z
+      .string()
+      .optional()
+      .describe("Target organization name (for hire, required when multiple organizations exist)"),
   }),
-  execute: safeTool("organization", async ({ operation, name, position }) => {
+  execute: safeTool("organization", async ({ operation, name, position, orgName: targetOrg }) => {
     const denied = requireNuwa();
     if (denied) return denied;
     // Find the first org, or the org the role belongs to
@@ -249,10 +253,19 @@ server.addTool({
       throw new Error("No organization found. Call found() first.");
     }
 
-    // For hire: use first org. For others: find by role assignment or first org.
+    // Resolve target organization
     let orgName: string;
     if (operation === "hire") {
-      orgName = dir.organizations[0].name;
+      if (targetOrg) {
+        orgName = targetOrg;
+      } else if (dir.organizations.length === 1) {
+        orgName = dir.organizations[0].name;
+      } else {
+        const orgNames = dir.organizations.map((o) => o.name).join(", ");
+        throw new Error(
+          `Multiple organizations exist (${orgNames}). Specify orgName to indicate which one.`
+        );
+      }
     } else {
       const assignment = platform.getAssignment(name);
       orgName = assignment?.org ?? dir.organizations[0].name;
