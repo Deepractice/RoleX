@@ -142,8 +142,8 @@ export interface Platform {
   /** Load all identity features for a role (includes duties if on_duty) */
   identity(roleId: string): Feature[];
 
-  /** Add a growth dimension to a role's identity */
-  growup(
+  /** Add a dimension to a role's identity (knowledge, experience, or voice) */
+  addIdentity(
     roleId: string,
     type: "knowledge" | "experience" | "voice",
     name: string,
@@ -177,8 +177,8 @@ export interface Platform {
   /** Abandon the current active goal, optionally with experience reflection */
   abandonGoal(roleId: string, experience?: string): void;
 
-  /** Mark a task as done */
-  completeTask(roleId: string, name: string): void;
+  /** Mark a task as done, optionally with experience reflection */
+  completeTask(roleId: string, name: string, experience?: string): void;
 
   /** Reflect: distill experiences into knowledge, removing the original experiences */
   reflect(

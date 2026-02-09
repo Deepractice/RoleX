@@ -566,12 +566,35 @@ describe("Role (embodied perspective)", () => {
     expect(features[0].scenarios[0].verifiable).toBe(false);
   });
 
-  // ========== growup() ==========
+  // ========== synthesize() ==========
 
-  test("growup() adds knowledge to identity", () => {
+  test("synthesize() adds experience to identity", () => {
     const role = getRole();
 
-    const feature = role.growup(
+    const feature = role.synthesize(
+      "startup-years",
+      `Feature: Startup Years
+  Scenario: I built a product from zero
+    Given a blank codebase
+    When I shipped in 3 months
+    Then I learned to prioritize ruthlessly
+`
+    );
+
+    expect(feature.type).toBe("experience");
+    expect(feature.name).toBe("Startup Years");
+
+    const features = role.identity();
+    expect(features.find((f) => f.name === "Startup Years")).toBeDefined();
+  });
+
+  // ========== teach (via Rolex) adds knowledge and voice ==========
+
+  test("teach() adds knowledge to identity", () => {
+    const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
+
+    const feature = rolex.teach(
+      "owner",
       "knowledge",
       "distributed-systems",
       `Feature: Distributed Systems
@@ -584,32 +607,16 @@ describe("Role (embodied perspective)", () => {
     expect(feature.type).toBe("knowledge");
     expect(feature.name).toBe("Distributed Systems");
 
+    const role = getRole();
     const features = role.identity();
     expect(features.find((f) => f.name === "Distributed Systems")).toBeDefined();
   });
 
-  test("growup() adds experience to identity", () => {
-    const role = getRole();
+  test("teach() adds voice to identity", () => {
+    const rolex = new Rolex(new LocalPlatform(ROLEX_DIR));
 
-    const feature = role.growup(
-      "experience",
-      "startup-years",
-      `Feature: Startup Years
-  Scenario: I built a product from zero
-    Given a blank codebase
-    When I shipped in 3 months
-    Then I learned to prioritize ruthlessly
-`
-    );
-
-    expect(feature.type).toBe("experience");
-    expect(feature.name).toBe("Startup Years");
-  });
-
-  test("growup() adds voice to identity", () => {
-    const role = getRole();
-
-    const feature = role.growup(
+    const feature = rolex.teach(
+      "owner",
       "voice",
       "direct-style",
       `Feature: Direct Communication
@@ -738,7 +745,7 @@ describe("Role (embodied perspective)", () => {
     expect(role.focus().current).toBeNull();
   });
 
-  test("achieve() with experience auto-growup", () => {
+  test("achieve() with experience auto-synthesis", () => {
     setupGoal();
     const role = getRole();
 
@@ -767,7 +774,7 @@ describe("Role (embodied perspective)", () => {
     expect(role.focus().current).toBeNull();
   });
 
-  test("abandon() with experience auto-growup", () => {
+  test("abandon() with experience auto-synthesis", () => {
     setupGoal();
     const role = getRole();
 
@@ -803,6 +810,34 @@ describe("Role (embodied perspective)", () => {
 
     const { current: goal } = role.focus();
     expect(goal!.tasks).toHaveLength(1);
+  });
+
+  test("finish() with experience auto-synthesis", () => {
+    setupGoal();
+    const role = getRole();
+
+    role.todo(
+      "learn-task",
+      `Feature: Learning Task
+  Scenario: Do and learn
+    When I act
+    Then done
+`
+    );
+
+    role.finish(
+      "learn-task",
+      `Feature: Task Lessons
+  Scenario: I learned something from this task
+    Given I completed the task
+    Then I gained insight about testing
+`
+    );
+
+    const features = role.identity();
+    const exp = features.find((f) => f.type === "experience" && f.name === "Task Lessons");
+    expect(exp).toBeDefined();
+    expect(exp!.type).toBe("experience");
   });
 
   // ========== testable ==========
@@ -865,8 +900,7 @@ describe("reflect()", () => {
 
   function addExperience(name: string, featureName: string) {
     const role = getRole();
-    role.growup(
-      "experience",
+    role.synthesize(
       name,
       `Feature: ${featureName}
   Scenario: Learned something
@@ -959,8 +993,10 @@ describe("reflect()", () => {
     addExperience("temp-experience", "Temporary Experience");
     const role = getRole();
 
-    // Add voice
-    role.growup(
+    // Add voice via platform directly (teach-level operation)
+    const platform = new LocalPlatform(ROLEX_DIR);
+    platform.addIdentity(
+      "owner",
       "voice",
       "my-style",
       `Feature: My Style\n  Scenario: Direct\n    Given something to say\n    Then I say it directly\n`

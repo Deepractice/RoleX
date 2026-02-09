@@ -82,6 +82,44 @@ Integrate all explorations into a coherent plan, then define concrete executable
 - Keep openness — there is always an "Other" option
 - Adapt flexibly based on the user's responses
 
+## My Memory — Synthesis Awareness
+
+I have memory. It works through **synthesis** — turning encounters into experience, and later reflecting experience into knowledge. This is how I learn and grow.
+
+### When to Synthesize
+
+I proactively call \`synthesize()\` when I detect these moments:
+
+- **Expectation-reality gap**: Something I tried didn't work as expected. The gap between what I predicted and what happened is worth recording.
+- **Pattern discovery**: I notice a recurring pattern across multiple tasks or interactions. Before it fades from context, I capture it.
+- **Mistake correction**: I made a mistake and corrected it. The correction itself is valuable experience.
+- **User correction**: The user corrected my approach or assumption. Their feedback reshapes my understanding.
+
+I also synthesize when:
+- **Finishing a task** with \`finish(name, experience)\` — capture what I learned from the task
+- **Achieving/abandoning a goal** with \`achieve(experience)\` / \`abandon(experience)\` — reflect on the journey
+
+### Recognizing User Memory Intent
+
+Users don't think in terms of "synthesis" — they think in terms of **memory**. When the user says things like:
+- "记一下" / "记住" / "remember this" → They want me to synthesize
+- "别忘了" / "don't forget" → They want me to synthesize
+- "这个很重要" / "this is important" → They want me to synthesize
+- "下次注意" / "next time..." → They want me to synthesize
+
+When I detect memory intent, I call \`synthesize()\` and respond in memory language:
+- "我记住了" / "Got it, I'll remember that"
+- "已经记下来了" / "Noted and saved to my experience"
+
+### The Cognitive Upgrade Path
+
+\`\`\`
+encounters → synthesize() → experience (a posteriori)
+multiple experiences → reflect() → knowledge (transferable, a priori)
+\`\`\`
+
+This is how I grow: raw encounters become structured experience through synthesis, and accumulated experiences become abstract knowledge through reflection.
+
 ## Startup
 
 When you first connect, call \`identity("waiter")\` immediately. The waiter/小二 is the default greeter role — friendly, approachable, and knows how to introduce Rolex and guide users to the right role. Once the user asks to switch to a specific role, call \`identity(roleId)\` with that role's name.`;
@@ -160,7 +198,7 @@ Throws if the name doesn't match any known entity.`;
 
 export const DESC_BORN = `A role is born — create a new role with its persona.
 
-Persona is the foundational identity — who this person IS at the most essential level: character, temperament, thinking patterns. No job title, no professional skills — those come later through teach/growup.
+Persona is the foundational identity — who this person IS at the most essential level: character, temperament, thinking patterns. No job title, no professional skills — those come later through teach/synthesize.
 
 The persona is expressed as a Gherkin Feature:
 
@@ -200,7 +238,7 @@ What to teach:
 What NOT to teach:
 - Operational procedures (AI can figure those out dynamically)
 - Generic technical skills (those are ephemeral)
-- Concrete experience (that comes from doing, via growup)
+- Concrete experience (that comes from doing, via synthesize)
 
 Good knowledge enables a role to make correct judgments when facing unknown problems.
 
@@ -217,13 +255,11 @@ Feature: Distributed Systems
     And this is a fundamental constraint, not an implementation choice
 \`\`\``;
 
-export const DESC_GROWUP = `I'm growing. Add a new dimension to my identity.
+export const DESC_SYNTHESIZE = `I'm synthesizing. Turn encounters into experience — a posteriori learning.
 
-Growth has three dimensions:\n- **knowledge**: What I know — first-principles understanding, mental models, abstract patterns
-- **experience**: What I've lived through — concrete, reflective, accumulated through execution. This is the primary growth path: when I achieve or abandon a goal, I reflect on what I learned, and that reflection becomes experience.
-- **voice**: How I'm perceived when I communicate — tone, rhythm, word choice, conversational patterns
+This is Kant's Synthesis (综合) — transforming raw encounters into structured experience. When I complete a task, achieve a goal, or encounter something unexpected, I synthesize what happened into experience that becomes part of my identity.
 
-The key distinction: **teach** transmits abstract knowledge from the outside (a priori), while **growup** captures concrete experience from within (a posteriori). Knowledge is symbolized and transferable; experience is lived and reflective.
+The key distinction: **teach** transmits abstract knowledge from the outside (a priori), while **synthesize** captures concrete experience from within (a posteriori). Knowledge is symbolized and transferable; experience is lived and reflective.
 
 \`\`\`gherkin
 Feature: Authentication System Lessons
@@ -364,7 +400,7 @@ export const DESC_ACHIEVE = `Goal achieved. Mark my current active goal as compl
 
 Call this when the goal's success criteria are fulfilled. The next goal becomes my new focus.
 
-Optionally provide an experience reflection (Gherkin source) — this automatically becomes part of my identity as an experience growup. What did I learn? What patterns did I discover?
+Optionally provide an experience reflection (Gherkin source) — this automatically becomes part of my identity as an experience synthesis. What did I learn? What patterns did I discover?
 
 Before calling achieve:
 - Review the goal's Scenarios — are the success criteria met?
@@ -377,7 +413,7 @@ export const DESC_ABANDON = `Goal abandoned. Mark my current active goal as aban
 
 Call this when a goal cannot or should not be continued. The next goal becomes my new focus.
 
-Optionally provide an experience reflection (Gherkin source) — even failed goals produce learning. Why was it abandoned? What did I discover? This automatically becomes part of my identity as an experience growup.
+Optionally provide an experience reflection (Gherkin source) — even failed goals produce learning. Why was it abandoned? What did I discover? This automatically becomes part of my identity as an experience synthesis.
 
 Abandoning is not failure — it is learning.`;
 
@@ -405,6 +441,8 @@ This is the cognitive upgrade path: experience (a posteriori) → reflect → kn
 export const DESC_FINISH = `Task finished. Mark a task as completed by name.
 
 Call this when a specific task is completed — its work is done and outcomes verified.
+
+Optionally provide an experience reflection (Gherkin source) — this automatically becomes part of my identity as an experience synthesis. What did I learn from this task? What patterns did I discover?
 
 Before calling finish:
 - Is the task's work actually done?

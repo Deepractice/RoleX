@@ -65,7 +65,7 @@ export class Rolex {
     dimensionName: string,
     source: string
   ): Feature {
-    return this.platform.growup(name, type, dimensionName, source);
+    return this.platform.addIdentity(name, type, dimensionName, source);
   }
 
   /** Access any born role directly — society-level, no org required. */

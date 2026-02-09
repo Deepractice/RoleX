@@ -20,7 +20,7 @@ Society manages the existence of people and organizations. It answers: who exist
 
 Create a new role with its persona.
 
-Persona is the foundational identity — who this person IS at the most essential level: character, temperament, thinking patterns. No job title, no professional skills — those come later through teach/growup.
+Persona is the foundational identity — who this person IS at the most essential level: character, temperament, thinking patterns. No job title, no professional skills — those come later through teach/synthesize.
 
 ```bash
 rolex born sean --source 'Feature: Alex

@@ -188,11 +188,11 @@ nuwa is the genesis role. She will bootstrap the environment and guide you throu
 
 RoleX provides 15 tools through the MCP server, organized in three layers:
 
-| Layer            | Tools                                                                                 | Who uses it |
-| ---------------- | ------------------------------------------------------------------------------------- | ----------- |
-| **Society**      | `society` (born, found, directory, find, teach)                                       | nuwa only   |
-| **Organization** | `organization` (hire, fire)                                                           | nuwa only   |
-| **Role**         | `identity`, `focus`, `want`, `plan`, `todo`, `achieve`, `abandon`, `finish`, `growup` | Any role    |
+| Layer            | Tools                                                                                     | Who uses it |
+| ---------------- | ----------------------------------------------------------------------------------------- | ----------- |
+| **Society**      | `society` (born, found, directory, find, teach)                                           | nuwa only   |
+| **Organization** | `organization` (hire, fire)                                                               | nuwa only   |
+| **Role**         | `identity`, `focus`, `want`, `plan`, `todo`, `achieve`, `abandon`, `finish`, `synthesize` | Any role    |
 
 ## Packages
 

@@ -4,10 +4,10 @@ import { createRolex } from "../lib/client.js";
 import { Organization } from "rolexjs";
 import { resolveSource } from "../lib/source.js";
 
-export const growup = defineCommand({
+export const synthesize = defineCommand({
   meta: {
-    name: "growup",
-    description: "Add a growth dimension to a role's identity",
+    name: "synthesize",
+    description: "Synthesize encounters into experience (a posteriori learning)",
   },
   args: {
     roleId: {
@@ -15,14 +15,9 @@ export const growup = defineCommand({
       description: "Role name (e.g. 'sean')",
       required: true,
     },
-    type: {
-      type: "positional",
-      description: "Growth dimension: knowledge, experience, or voice",
-      required: true,
-    },
     name: {
       type: "positional",
-      description: "Name for this growth (used as filename)",
+      description: "Name for this experience (used as filename)",
       required: true,
     },
     source: {
@@ -42,14 +37,10 @@ export const growup = defineCommand({
       const org = rolex.find(dir.organizations[0].name) as Organization;
       const role = org.role(args.roleId);
       const src = resolveSource(args);
-      const feature = role.growup(
-        args.type as "knowledge" | "experience" | "voice",
-        args.name,
-        src
-      );
-      consola.success(`Growth added (${args.type}): ${feature.name}`);
+      const feature = role.synthesize(args.name, src);
+      consola.success(`Experience synthesized: ${feature.name}`);
     } catch (error) {
-      consola.error(error instanceof Error ? error.message : "Failed to add growth");
+      consola.error(error instanceof Error ? error.message : "Failed to synthesize experience");
       process.exit(1);
     }
   },

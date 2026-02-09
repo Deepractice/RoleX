@@ -9,7 +9,7 @@ import { hire } from "./commands/hire.js";
 import { fire } from "./commands/fire.js";
 import { teach } from "./commands/teach.js";
 import { identity } from "./commands/identity.js";
-import { growup } from "./commands/growup.js";
+import { synthesize } from "./commands/synthesize.js";
 import { focus } from "./commands/focus.js";
 import { want } from "./commands/want.js";
 import { plan } from "./commands/plan.js";
@@ -36,7 +36,7 @@ const main = defineCommand({
     teach,
     // Role
     identity,
-    growup,
+    synthesize,
     focus,
     want,
     plan,

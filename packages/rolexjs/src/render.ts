@@ -93,7 +93,7 @@ export const NEXT: Record<string, string> = {
   dismiss: "Role is back to member. `appoint` to reassign, or `fire` to remove from org.",
   teach: "`teach` more knowledge, or `hire` to bring into organization.",
   fire: "Role identity remains intact. `hire` to re-hire, or `directory` to see current state.",
-  growup: "`focus()` to check current goal, or continue working.",
+  synthesize: "`focus()` to check current goal, or continue working.",
   want: "`plan` to design how to achieve it, or `todo` to create tasks directly.",
   plan: "`todo` to break the plan into concrete tasks.",
   todo: "Execute the task, then `finish(name)` when done.",

@@ -42,7 +42,7 @@ rolex fire sean
 
 Teach a role — add knowledge, experience, or voice from the organization's perspective.
 
-Same as `growup` but called from the outside. Use when the organization is developing a role's capabilities.
+Transmit knowledge, experience, or voice from the outside. Use when the organization is developing a role's capabilities.
 
 **Growth dimensions:**
 

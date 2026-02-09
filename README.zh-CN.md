@@ -188,11 +188,11 @@ claude mcp add rolex -- npx -y @rolexjs/mcp-server
 
 RoleX 通过 MCP 服务器提供 15 个工具，分为三层：
 
-| 层级     | 工具                                                                                  | 使用者   |
-| -------- | ------------------------------------------------------------------------------------- | -------- |
-| **社会** | `society`（born, found, directory, find, teach）                                      | 仅女娲   |
-| **组织** | `organization`（hire, fire）                                                          | 仅女娲   |
-| **角色** | `identity`, `focus`, `want`, `plan`, `todo`, `achieve`, `abandon`, `finish`, `growup` | 所有角色 |
+| 层级     | 工具                                                                                      | 使用者   |
+| -------- | ----------------------------------------------------------------------------------------- | -------- |
+| **社会** | `society`（born, found, directory, find, teach）                                          | 仅女娲   |
+| **组织** | `organization`（hire, fire）                                                              | 仅女娲   |
+| **角色** | `identity`, `focus`, `want`, `plan`, `todo`, `achieve`, `abandon`, `finish`, `synthesize` | 所有角色 |
 
 ## 包结构
 

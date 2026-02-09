@@ -28,15 +28,13 @@ rolex identity sean
 
 After loading, prefix responses with role name in brackets (e.g. `[Sean]`).
 
-### `rolex growup <name> <type> <dimensionName> [--source <gherkin>] [-f <file>]`
+### `rolex synthesize <name> <dimensionName> [--source <gherkin>] [-f <file>]`
 
-I'm growing. Add a new dimension to my identity.
-
-**Dimensions:** `knowledge`, `experience`, `voice`
+I'm synthesizing. Turn encounters into experience (a posteriori learning).
 
 ```bash
-rolex growup sean knowledge cap-theorem \
-  -f cap-theorem.feature
+rolex synthesize sean auth-lessons \
+  -f auth-lessons.feature
 ```
 
 ## Goal Lifecycle

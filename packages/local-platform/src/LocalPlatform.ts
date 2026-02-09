@@ -308,9 +308,9 @@ export class LocalPlatform implements Platform {
     return features;
   }
 
-  // ========== Growup ==========
+  // ========== Identity Dimensions ==========
 
-  growup(
+  addIdentity(
     roleId: string,
     type: "knowledge" | "experience" | "voice",
     name: string,
@@ -356,7 +356,7 @@ export class LocalPlatform implements Platform {
     }
 
     // Phase 2: Create knowledge FIRST (safe — if this fails, nothing is lost)
-    const feature = this.growup(roleId, "knowledge", knowledgeName, knowledgeSource);
+    const feature = this.addIdentity(roleId, "knowledge", knowledgeName, knowledgeSource);
 
     // Phase 3: Delete experience files (only after knowledge is safely persisted)
     for (const expFile of expFiles) {
@@ -499,7 +499,7 @@ export class LocalPlatform implements Platform {
 
     if (experience) {
       const goalName = basename(goalDir);
-      this.growup(roleId, "experience", goalName, experience);
+      this.addIdentity(roleId, "experience", goalName, experience);
     }
   }
 
@@ -513,11 +513,11 @@ export class LocalPlatform implements Platform {
 
     if (experience) {
       const goalName = basename(goalDir);
-      this.growup(roleId, "experience", goalName, experience);
+      this.addIdentity(roleId, "experience", goalName, experience);
     }
   }
 
-  completeTask(roleId: string, name: string): void {
+  completeTask(roleId: string, name: string, experience?: string): void {
     const roleDir = this.resolveRoleDir(roleId);
     const goalDir = this.getActiveGoalDir(roleDir);
     if (!goalDir) throw new Error("No active goal");
@@ -527,6 +527,10 @@ export class LocalPlatform implements Platform {
     if (!existsSync(taskFile)) throw new Error(`Task not found: ${name}`);
 
     this.addDoneTag(taskFile);
+
+    if (experience) {
+      this.addIdentity(roleId, "experience", name, experience);
+    }
   }
 
   // ========== Internal ==========

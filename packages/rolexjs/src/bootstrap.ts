@@ -24,7 +24,7 @@ export function bootstrap(platform: Platform): void {
     platform.born(role.name, role.persona);
 
     for (const dim of role.dimensions) {
-      platform.growup(role.name, dim.type, dim.name, dim.source);
+      platform.addIdentity(role.name, dim.type, dim.name, dim.source);
     }
   }
 }

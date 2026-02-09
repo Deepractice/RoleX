@@ -13,7 +13,7 @@
  *   organization — Admin: hire, fire, appoint, dismiss
  *   directory    — Lookup: list all / find by name (all roles)
  *   identity     — Activate a role
- *   growup/focus/want/plan/todo/achieve/abandon/finish — Role lifecycle
+ *   synthesize/focus/want/plan/todo/achieve/abandon/finish — Role lifecycle
  *
  * Usage:
  *   rolex-mcp [.rolex-dir]
@@ -30,7 +30,7 @@ import {
   DESC_SOCIETY,
   DESC_DIRECTORY,
   DESC_ORGANIZATION,
-  DESC_GROWUP,
+  DESC_SYNTHESIZE,
   DESC_IDENTITY,
   DESC_FOCUS,
   DESC_WANT,
@@ -330,23 +330,18 @@ server.addTool({
 // ========== Role Tools ==========
 
 server.addTool({
-  name: "growup",
-  description: DESC_GROWUP,
+  name: "synthesize",
+  description: DESC_SYNTHESIZE,
   parameters: z.object({
-    type: z
-      .enum(["knowledge", "experience", "voice"])
-      .describe(
-        "Growth dimension: knowledge (what I know), experience (what I've lived), voice (how I'm perceived)"
-      ),
     name: z
       .string()
-      .describe("Name for this growth (used as filename, e.g. 'distributed-systems')"),
+      .describe("Name for this experience (used as filename, e.g. 'auth-system-lessons')"),
     source: z.string().describe("Gherkin feature source text"),
   }),
-  execute: safeTool("growup", async ({ type, name, source }) => {
+  execute: safeTool("synthesize", async ({ name, source }) => {
     const role = requireRole();
-    const feature = role.growup(type, name, source);
-    return next(`Growth added (${type}): ${feature.name}`, NEXT.growup);
+    const feature = role.synthesize(name, source);
+    return next(`Experience synthesized: ${feature.name}`, NEXT.synthesize);
   }),
 });
 
@@ -453,7 +448,7 @@ server.addTool({
       .string()
       .optional()
       .describe(
-        "Optional Gherkin feature source capturing what was learned — auto-saved as experience growup"
+        "Optional Gherkin feature source capturing what was learned — auto-saved as experience synthesis"
       ),
   }),
   execute: safeTool("achieve", async ({ experience }) => {
@@ -472,7 +467,7 @@ server.addTool({
       .string()
       .optional()
       .describe(
-        "Optional Gherkin feature source capturing what was learned — auto-saved as experience growup"
+        "Optional Gherkin feature source capturing what was learned — auto-saved as experience synthesis"
       ),
   }),
   execute: safeTool("abandon", async ({ experience }) => {
@@ -514,17 +509,26 @@ server.addTool({
   description: DESC_FINISH,
   parameters: z.object({
     name: z.string().describe("Task name to mark as done"),
+    experience: z
+      .string()
+      .optional()
+      .describe(
+        "Optional Gherkin feature source capturing what was learned — auto-saved as experience synthesis"
+      ),
   }),
-  execute: safeTool("finish", async ({ name }) => {
+  execute: safeTool("finish", async ({ name, experience }) => {
     const role = requireRole();
-    role.finish(name);
+    role.finish(name, experience);
 
     // Dynamic hint: check remaining tasks
     const { current } = role.focus();
     const remaining = current
       ? current.tasks.filter((t) => !t.tags?.some((tag) => tag.name === "@done")).length
       : -1;
-    return next(`Task finished: ${name}`, remaining >= 0 ? nextFinish(remaining) : NEXT.achieve);
+    const msg = experience
+      ? `Task finished: ${name}. Experience captured.`
+      : `Task finished: ${name}`;
+    return next(msg, remaining >= 0 ? nextFinish(remaining) : NEXT.achieve);
   }),
 });
 

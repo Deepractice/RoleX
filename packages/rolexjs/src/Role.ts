@@ -42,9 +42,9 @@ export class Role {
     return this.platform.createGoal(this.name, name, source, testable);
   }
 
-  /** I'm growing. Add knowledge, experience, or voice to my identity. */
-  growup(type: "knowledge" | "experience" | "voice", name: string, source: string): Feature {
-    return this.platform.growup(this.name, type, name, source);
+  /** I'm synthesizing. Turn encounters into experience — a posteriori learning. */
+  synthesize(name: string, source: string): Feature {
+    return this.platform.addIdentity(this.name, "experience", name, source);
   }
 
   /** Here's how I'll do it. Create a plan for my active goal. */
@@ -67,9 +67,9 @@ export class Role {
     this.platform.abandonGoal(this.name, experience);
   }
 
-  /** Task finished. Mark a task as @done. */
-  finish(name: string): void {
-    this.platform.completeTask(this.name, name);
+  /** Task finished. Mark a task as @done, optionally capture what I learned. */
+  finish(name: string, experience?: string): void {
+    this.platform.completeTask(this.name, name, experience);
   }
 
   /** Reflect: distill experiences into knowledge. Experiences are consumed, knowledge is created. */
