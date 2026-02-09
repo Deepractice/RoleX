@@ -1,0 +1,9 @@
+/**
+ * api/index.ts — Public API surface.
+ */
+
+export type { ApiOperation, ApiContext, ApiNamespace, ApiRegistry, Permission } from "./types.js";
+export { apiRegistry } from "./registry.js";
+export { societyOperations } from "./society.js";
+export { organizationOperations } from "./organization.js";
+export { roleOperations } from "./role.js";

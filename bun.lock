@@ -27,7 +27,7 @@
     },
     "apps/cli": {
       "name": "@rolexjs/cli",
-      "version": "0.2.0",
+      "version": "0.10.0",
       "bin": {
         "rolex": "./dist/index.js",
       },
@@ -40,7 +40,7 @@
     },
     "apps/mcp-server": {
       "name": "@rolexjs/mcp-server",
-      "version": "0.2.0",
+      "version": "0.10.0",
       "bin": {
         "rolex-mcp": "./dist/index.js",
       },
@@ -53,14 +53,14 @@
     },
     "packages/core": {
       "name": "@rolexjs/core",
-      "version": "0.3.0",
+      "version": "0.10.0",
       "devDependencies": {
         "@cucumber/messages": "^32.0.1",
       },
     },
     "packages/local-platform": {
       "name": "@rolexjs/local-platform",
-      "version": "0.2.0",
+      "version": "0.10.0",
       "dependencies": {
         "@rolexjs/core": "workspace:*",
         "@rolexjs/parser": "workspace:*",
@@ -71,7 +71,7 @@
     },
     "packages/parser": {
       "name": "@rolexjs/parser",
-      "version": "0.1.1",
+      "version": "0.10.0",
       "dependencies": {
         "@cucumber/gherkin": "^38.0.0",
         "@cucumber/messages": "^32.0.0",
@@ -79,9 +79,10 @@
     },
     "packages/rolexjs": {
       "name": "rolexjs",
-      "version": "0.3.0",
+      "version": "0.10.0",
       "dependencies": {
         "@rolexjs/core": "workspace:*",
+        "zod": "^3.25.0",
       },
     },
   },
