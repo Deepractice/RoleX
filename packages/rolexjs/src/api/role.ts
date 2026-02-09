@@ -292,38 +292,6 @@ export const reflect: ApiOperation<{
   },
 };
 
-export const equip: ApiOperation<{ skillName: string }> = {
-  name: "equip",
-  namespace: "role",
-  description:
-    "Equip a skill to the current role \u2014 gain the capability.\n\nThe skill must exist (created via createSkill). Once equipped, the skill's content is injected into the role's identity.",
-  parameters: z.object({
-    skillName: z.string().describe("Skill name to equip"),
-  }),
-  permission: "nuwa",
-  execute(ctx, { skillName }) {
-    requireRole(ctx);
-    ctx.platform.equip(ctx.currentRoleName, skillName);
-    return next(`Skill equipped: ${ctx.currentRoleName} \u2190 ${skillName}`, NEXT.equip);
-  },
-};
-
-export const unequip: ApiOperation<{ skillName: string }> = {
-  name: "unequip",
-  namespace: "role",
-  description:
-    "Unequip a skill from the current role \u2014 remove the capability.\n\nThe skill remains in the system; only the role's equipment is changed.",
-  parameters: z.object({
-    skillName: z.string().describe("Skill name to unequip"),
-  }),
-  permission: "nuwa",
-  execute(ctx, { skillName }) {
-    requireRole(ctx);
-    ctx.platform.unequip(ctx.currentRoleName, skillName);
-    return next(`Skill unequipped: ${ctx.currentRoleName} \u2715 ${skillName}`, NEXT.unequip);
-  },
-};
-
 /** All role operations. */
 export const roleOperations = {
   identity,
@@ -336,6 +304,4 @@ export const roleOperations = {
   finish,
   synthesize,
   reflect,
-  equip,
-  unequip,
 } as const;

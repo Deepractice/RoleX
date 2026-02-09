@@ -14,7 +14,7 @@ import type { Rolex } from "../Rolex.js";
 import type { Role } from "../Role.js";
 
 /** API namespace — groups operations by domain. */
-export type ApiNamespace = "society" | "organization" | "role";
+export type ApiNamespace = "society" | "organization" | "role" | "skill";
 
 /** Permission level — who can execute this operation. */
 export type Permission = "nuwa" | "role" | "any";
@@ -62,6 +62,7 @@ export interface ApiRegistry {
   readonly society: Record<string, ApiOperation>;
   readonly organization: Record<string, ApiOperation>;
   readonly role: Record<string, ApiOperation>;
+  readonly skill: Record<string, ApiOperation>;
 
   /** Flat list of all operations across all namespaces. */
   allOperations(): ApiOperation[];

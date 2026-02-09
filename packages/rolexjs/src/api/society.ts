@@ -3,7 +3,7 @@
  *
  * Creation and establishment: born, found, establish, teach, directory.
  * These are the founding acts of society — creating roles, organizations,
- * positions, skills, and transmitting knowledge.
+ * positions, and transmitting knowledge.
  */
 
 import { z } from "zod";
@@ -14,7 +14,6 @@ import {
   DESC_ESTABLISH,
   DESC_TEACH,
   DESC_DIRECTORY,
-  DESC_SKILL,
 } from "../descriptions.js";
 import { next, NEXT, renderFeatures } from "../render.js";
 import { Organization } from "../Organization.js";
@@ -99,21 +98,6 @@ export const teach: ApiOperation<{
   execute(ctx, { roleId, type, dimensionName, source }) {
     const feature = ctx.rolex.teach(roleId, type, dimensionName, source);
     return next(`Taught ${type}: ${feature.name}`, NEXT.teach);
-  },
-};
-
-export const createSkill: ApiOperation<{ name: string; source: string }> = {
-  name: "createSkill",
-  namespace: "society",
-  description: DESC_SKILL,
-  parameters: z.object({
-    name: z.string().describe("Skill name"),
-    source: z.string().describe("Gherkin feature source describing the skill"),
-  }),
-  permission: "nuwa",
-  execute(ctx, { name, source }) {
-    const skill = ctx.rolex.createSkill(name, source);
-    return next(`Skill created: ${skill.name}`, NEXT.createSkill);
   },
 };
 
@@ -208,6 +192,5 @@ export const societyOperations = {
   found,
   establish,
   teach,
-  createSkill,
   directory,
 } as const;

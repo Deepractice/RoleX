@@ -9,6 +9,7 @@ import type { ApiOperation, ApiRegistry } from "./types.js";
 import { societyOperations } from "./society.js";
 import { organizationOperations } from "./organization.js";
 import { roleOperations } from "./role.js";
+import { skillOperations } from "./skill.js";
 
 /**
  * The Rolex API registry — all operations grouped by namespace.
@@ -20,6 +21,7 @@ import { roleOperations } from "./role.js";
  *   apiRegistry.society.born
  *   apiRegistry.organization.hire
  *   apiRegistry.role.identity
+ *   apiRegistry.skill.create
  *
  *   // Iterate all operations
  *   for (const op of apiRegistry.allOperations()) {
@@ -30,12 +32,14 @@ export const apiRegistry: ApiRegistry = {
   society: societyOperations,
   organization: organizationOperations,
   role: roleOperations,
+  skill: skillOperations,
 
   allOperations(): ApiOperation[] {
     return [
       ...Object.values(societyOperations),
       ...Object.values(organizationOperations),
       ...Object.values(roleOperations),
+      ...Object.values(skillOperations),
     ];
   },
 };

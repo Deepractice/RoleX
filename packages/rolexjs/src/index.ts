@@ -39,6 +39,7 @@ export {
   societyOperations,
   organizationOperations,
   roleOperations,
+  skillOperations,
 } from "./api/index.js";
 export type {
   ApiOperation,

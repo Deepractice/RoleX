@@ -7,3 +7,4 @@ export { apiRegistry } from "./registry.js";
 export { societyOperations } from "./society.js";
 export { organizationOperations } from "./organization.js";
 export { roleOperations } from "./role.js";
+export { skillOperations } from "./skill.js";
