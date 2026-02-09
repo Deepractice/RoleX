@@ -438,6 +438,26 @@ reflect(
 
 This is the cognitive upgrade path: experience (a posteriori) → reflect → knowledge (transferable).`;
 
+export const DESC_SKILL = `Manage skills — pluggable capability modules.
+
+Skills are standalone Gherkin features that describe HOW to perform operations. When equipped, they inject into a role's identity, giving the role operational knowledge.
+
+Skills are independent of organizations and positions. Any born role can equip/unequip skills.
+
+Operations:
+- **create**: Create a new skill. Params: name, source (Gherkin feature)
+- **equip**: Equip a skill to a role. Params: roleId, skillName
+- **unequip**: Unequip a skill from a role. Params: roleId, skillName
+
+Example skill:
+\`\`\`gherkin
+Feature: Organization Management
+  Scenario: How to hire a role
+    Given you want to add a member to the organization
+    Then use the organization tool with operation hire
+    And provide the role name as the name parameter
+\`\`\``;
+
 export const DESC_FINISH = `Task finished. Mark a task as completed by name.
 
 Call this when a specific task is completed — its work is done and outcomes verified.

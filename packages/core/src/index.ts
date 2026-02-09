@@ -38,6 +38,7 @@ export type {
   OrganizationInfo,
   OrganizationConfig,
   PositionInfo,
+  SkillInfo,
   Assignment,
   RolexConfig,
   RoleEntry,

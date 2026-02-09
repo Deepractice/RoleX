@@ -20,6 +20,7 @@ export interface Feature extends GherkinFeature {
     | "goal"
     | "plan"
     | "task"
-    | "duty";
+    | "duty"
+    | "skill";
   readonly scenarios: Scenario[];
 }

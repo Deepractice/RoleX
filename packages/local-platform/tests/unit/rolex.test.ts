@@ -1024,3 +1024,202 @@ describe("reflect()", () => {
     expect(features.find((f) => f.name === "Temporary Experience")).toBeUndefined();
   });
 });
+
+describe("Skill system", () => {
+  beforeEach(() => {
+    rmSync(TEST_ROOT, { recursive: true, force: true });
+    setupTestOrg();
+  });
+
+  afterEach(() => {
+    rmSync(TEST_ROOT, { recursive: true, force: true });
+  });
+
+  const SKILL_SOURCE = `Feature: Organization Management
+  Scenario: How to hire a role
+    Given you want to add a member
+    Then use organization tool with operation hire
+    And provide the role name
+
+  Scenario: How to fire a role
+    Given you want to remove a member
+    Then use organization tool with operation fire
+`;
+
+  test("createSkill() creates a skill", () => {
+    const platform = new LocalPlatform(ROLEX_DIR);
+    const rolex = new Rolex(platform);
+
+    const skill = rolex.createSkill("org-management", SKILL_SOURCE);
+    expect(skill.type).toBe("skill");
+    expect(skill.name).toBe("Organization Management");
+
+    // File should exist
+    const skillFile = join(ROLEX_DIR, "skills", "org-management", "org-management.skill.feature");
+    expect(existsSync(skillFile)).toBe(true);
+  });
+
+  test("createSkill() is idempotent in config", () => {
+    const platform = new LocalPlatform(ROLEX_DIR);
+    const rolex = new Rolex(platform);
+
+    rolex.createSkill("org-management", SKILL_SOURCE);
+    rolex.createSkill("org-management", SKILL_SOURCE);
+
+    const skills = rolex.directory().skills;
+    expect(skills.filter((s) => s.name === "org-management")).toHaveLength(1);
+  });
+
+  test("directory() includes skills", () => {
+    const platform = new LocalPlatform(ROLEX_DIR);
+    const rolex = new Rolex(platform);
+
+    rolex.createSkill("org-management", SKILL_SOURCE);
+    rolex.createSkill(
+      "role-ops",
+      `Feature: Role Ops\n  Scenario: Focus\n    Given a goal\n    Then focus on it\n`
+    );
+
+    const dir = rolex.directory();
+    expect(dir.skills).toHaveLength(2);
+    expect(dir.skills.map((s) => s.name)).toContain("org-management");
+    expect(dir.skills.map((s) => s.name)).toContain("role-ops");
+  });
+
+  test("find() can find a skill", () => {
+    const platform = new LocalPlatform(ROLEX_DIR);
+    const rolex = new Rolex(platform);
+
+    rolex.createSkill("org-management", SKILL_SOURCE);
+    const result = rolex.find("org-management");
+    expect(result).toBeDefined();
+  });
+
+  test("equip() equips a skill to a role", () => {
+    const platform = new LocalPlatform(ROLEX_DIR);
+    const rolex = new Rolex(platform);
+
+    rolex.createSkill("org-management", SKILL_SOURCE);
+    const role = rolex.role("owner");
+    role.equip("org-management");
+
+    const skills = role.skills();
+    expect(skills).toHaveLength(1);
+    expect(skills[0].name).toBe("Organization Management");
+    expect(skills[0].type).toBe("skill");
+  });
+
+  test("equip() is idempotent", () => {
+    const platform = new LocalPlatform(ROLEX_DIR);
+    const rolex = new Rolex(platform);
+
+    rolex.createSkill("org-management", SKILL_SOURCE);
+    const role = rolex.role("owner");
+    role.equip("org-management");
+    role.equip("org-management");
+
+    expect(role.skills()).toHaveLength(1);
+  });
+
+  test("unequip() removes a skill from a role", () => {
+    const platform = new LocalPlatform(ROLEX_DIR);
+    const rolex = new Rolex(platform);
+
+    rolex.createSkill("org-management", SKILL_SOURCE);
+    const role = rolex.role("owner");
+    role.equip("org-management");
+    expect(role.skills()).toHaveLength(1);
+
+    role.unequip("org-management");
+    expect(role.skills()).toHaveLength(0);
+  });
+
+  test("identity() injects equipped skills", () => {
+    const platform = new LocalPlatform(ROLEX_DIR);
+    const rolex = new Rolex(platform);
+
+    rolex.createSkill("org-management", SKILL_SOURCE);
+    const role = rolex.role("owner");
+    role.equip("org-management");
+
+    const features = role.identity();
+    const skillFeatures = features.filter((f) => f.type === "skill");
+    expect(skillFeatures).toHaveLength(1);
+    expect(skillFeatures[0].name).toBe("Organization Management");
+  });
+
+  test("identity() does NOT inject unequipped skills", () => {
+    const platform = new LocalPlatform(ROLEX_DIR);
+    const rolex = new Rolex(platform);
+
+    rolex.createSkill("org-management", SKILL_SOURCE);
+
+    const role = rolex.role("owner");
+    const features = role.identity();
+    const skillFeatures = features.filter((f) => f.type === "skill");
+    expect(skillFeatures).toHaveLength(0);
+  });
+
+  test("equip() throws for non-existent skill", () => {
+    const platform = new LocalPlatform(ROLEX_DIR);
+    platform.equip;
+    expect(() => platform.equip("owner", "ghost-skill")).toThrow("Skill not found");
+  });
+
+  test("equip() throws for non-existent role", () => {
+    const platform = new LocalPlatform(ROLEX_DIR);
+    const rolex = new Rolex(platform);
+    rolex.createSkill("org-management", SKILL_SOURCE);
+
+    expect(() => platform.equip("ghost-role", "org-management")).toThrow("Role not found");
+  });
+
+  test("unequip() throws for skill not equipped", () => {
+    const platform = new LocalPlatform(ROLEX_DIR);
+    const rolex = new Rolex(platform);
+    rolex.createSkill("org-management", SKILL_SOURCE);
+
+    expect(() => platform.unequip("owner", "org-management")).toThrow("does not have skill");
+  });
+
+  test("getSkill() returns equippedBy info", () => {
+    const platform = new LocalPlatform(ROLEX_DIR);
+    const rolex = new Rolex(platform);
+
+    rolex.createSkill("org-management", SKILL_SOURCE);
+    platform.equip("owner", "org-management");
+
+    const info = platform.getSkill("org-management");
+    expect(info).not.toBeNull();
+    expect(info!.equippedBy).toContain("owner");
+  });
+
+  test("getSkill() returns null for non-existent skill", () => {
+    const platform = new LocalPlatform(ROLEX_DIR);
+    expect(platform.getSkill("non-existent")).toBeNull();
+  });
+
+  test("config migration: old config without skills/equipment still works", () => {
+    // Overwrite with old-format config (no skills/equipment)
+    writeFileSync(
+      join(ROLEX_DIR, "rolex.json"),
+      JSON.stringify({
+        roles: ["owner"],
+        organizations: { "Test Org": { positions: [] } },
+        assignments: { owner: { org: "Test Org" } },
+      })
+    );
+
+    const platform = new LocalPlatform(ROLEX_DIR);
+    const rolex = new Rolex(platform);
+
+    // Should work without error
+    const dir = rolex.directory();
+    expect(dir.skills).toHaveLength(0);
+
+    // Should be able to create and equip skills
+    rolex.createSkill("test-skill", `Feature: Test\n  Scenario: A\n    Given x\n    Then y\n`);
+    platform.equip("owner", "test-skill");
+    expect(platform.roleSkills("owner")).toHaveLength(1);
+  });
+});

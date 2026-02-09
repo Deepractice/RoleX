@@ -21,6 +21,7 @@ export { Rolex } from "./Rolex.js";
 export { Organization } from "./Organization.js";
 export { Role } from "./Role.js";
 export { Position } from "./Position.js";
+export { SkillEntity } from "./Skill.js";
 export * from "./descriptions.js";
 export {
   renderFeature,

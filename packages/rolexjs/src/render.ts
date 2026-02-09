@@ -100,6 +100,9 @@ export const NEXT: Record<string, string> = {
   achieve: "`focus()` to see the next goal.",
   abandon: "`focus()` to see the next goal.",
   reflect: "`identity(roleId)` to see updated knowledge.",
+  createSkill: '`skill(operation: "equip")` to equip this skill to a role.',
+  equip: "`identity(roleId)` to see the skill injected into identity.",
+  unequip: "Skill removed. `identity(roleId)` to verify.",
 };
 
 /** Dynamic hint for hire — includes the role name. */
@@ -143,6 +146,11 @@ const HINTS: Array<[RegExp, string]> = [
   ],
   [/Position.*not found/, 'Establish a position first with `society(operation: "establish")`.'],
   [/Position.*already exists/, "Use a different name for the position."],
+  [/Skill not found/, 'Create the skill first with `skill(operation: "create")`.'],
+  [
+    /does not have skill/,
+    'The role hasn\'t equipped this skill. Use `skill(operation: "equip")` first.',
+  ],
   [/not appointed/, 'Appoint the role first with `organization(operation: "appoint")`.'],
   [/Invalid transition/, "Check the current state. Use `directory` to see role states."],
   [/already assigned/, "The entity is already assigned. Dismiss or fire first."],

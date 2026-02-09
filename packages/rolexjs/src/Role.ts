@@ -5,7 +5,7 @@
  * Once constructed with a name, all operations are scoped to this role.
  */
 
-import type { Platform, Feature, Goal, Plan, Task } from "@rolexjs/core";
+import type { Platform, Feature, Goal, Plan, Task, Skill } from "@rolexjs/core";
 
 export class Role {
   constructor(
@@ -75,5 +75,20 @@ export class Role {
   /** Reflect: distill experiences into knowledge. Experiences are consumed, knowledge is created. */
   reflect(experienceNames: string[], knowledgeName: string, knowledgeSource: string): Feature {
     return this.platform.reflect(this.name, experienceNames, knowledgeName, knowledgeSource);
+  }
+
+  /** Equip a skill — gain the capability. */
+  equip(skillName: string): void {
+    this.platform.equip(this.name, skillName);
+  }
+
+  /** Unequip a skill — remove the capability. */
+  unequip(skillName: string): void {
+    this.platform.unequip(this.name, skillName);
+  }
+
+  /** What skills do I have? */
+  skills(): Skill[] {
+    return this.platform.roleSkills(this.name);
   }
 }

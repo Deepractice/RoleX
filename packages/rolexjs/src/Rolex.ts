@@ -13,11 +13,12 @@
  * Bootstrap (seeding 女娲 etc.) is each Platform's responsibility.
  */
 
-import type { Platform, Directory, Feature } from "@rolexjs/core";
+import type { Platform, Directory, Feature, Skill } from "@rolexjs/core";
 import { getRoleState } from "@rolexjs/core";
 import { Organization } from "./Organization.js";
 import { Role } from "./Role.js";
 import { Position } from "./Position.js";
+import { SkillEntity } from "./Skill.js";
 
 export class Rolex {
   constructor(private readonly platform: Platform) {}
@@ -37,6 +38,11 @@ export class Rolex {
     this.platform.establish(positionName, source, orgName);
   }
 
+  /** Create a skill — a pluggable capability module. */
+  createSkill(name: string, source: string): Skill {
+    return this.platform.createSkill(name, source);
+  }
+
   /** Society directory — all born roles with states, orgs with positions. */
   directory(): Directory {
     const allNames = this.platform.allBornRoles();
@@ -52,9 +58,12 @@ export class Rolex {
       };
     });
 
+    const skills = this.platform.allSkills();
+
     return {
       roles,
       organizations: orgs,
+      skills,
     };
   }
 
@@ -73,8 +82,8 @@ export class Rolex {
     return new Role(this.platform, name);
   }
 
-  /** Find a role, organization, or position by name — searches all of society. */
-  find(name: string): Role | Organization | Position {
+  /** Find a role, organization, position, or skill by name — searches all of society. */
+  find(name: string): Role | Organization | Position | SkillEntity {
     // Check organizations
     const org = this.platform.getOrganization(name);
     if (org) {
@@ -93,6 +102,12 @@ export class Rolex {
       if (orgInfo.positions.includes(name)) {
         return new Position(this.platform, name, orgInfo.name);
       }
+    }
+
+    // Check skills
+    const skill = this.platform.getSkill(name);
+    if (skill) {
+      return new SkillEntity(this.platform, name);
     }
 
     throw new Error(`Not found in society: ${name}`);

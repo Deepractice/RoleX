@@ -18,6 +18,7 @@ import type { Goal } from "./Goal.js";
 import type { Plan } from "./Plan.js";
 import type { Task } from "./Task.js";
 import type { Duty } from "./Duty.js";
+import type { Skill } from "./Skill.js";
 import type { RoleState, PositionState } from "./model/states.js";
 
 // ========== Config ==========
@@ -47,6 +48,8 @@ export interface RolexConfig {
   roles: string[];
   organizations: Record<string, OrganizationConfig>;
   assignments: Record<string, Assignment>;
+  skills: string[];
+  equipment: Record<string, string[]>;
 }
 
 // ========== Runtime Views ==========
@@ -83,11 +86,20 @@ export interface RoleEntry {
 }
 
 /**
- * Society directory — all known roles, organizations, and positions.
+ * Skill info (runtime view).
+ */
+export interface SkillInfo {
+  readonly name: string;
+  readonly equippedBy: string[];
+}
+
+/**
+ * Society directory — all known roles, organizations, positions, and skills.
  */
 export interface Directory {
   readonly roles: readonly RoleEntry[];
   readonly organizations: readonly OrganizationInfo[];
+  readonly skills: readonly SkillInfo[];
 }
 
 /**
@@ -136,6 +148,26 @@ export interface Platform {
 
   /** Get position info */
   getPosition(positionName: string, orgName: string): PositionInfo | null;
+
+  // ========== Skill ==========
+
+  /** Create a new skill */
+  createSkill(name: string, source: string): Skill;
+
+  /** List all registered skills */
+  allSkills(): SkillInfo[];
+
+  /** Get skill info by name */
+  getSkill(name: string): SkillInfo | null;
+
+  /** Equip a skill to a role */
+  equip(roleId: string, skillName: string): void;
+
+  /** Unequip a skill from a role */
+  unequip(roleId: string, skillName: string): void;
+
+  /** Get all equipped skill features for a role */
+  roleSkills(roleId: string): Skill[];
 
   // ========== Role ==========
 

@@ -16,6 +16,7 @@
  *   <rootDir>/orgs/<org>/org.feature                            (optional)
  *   <rootDir>/orgs/<org>/positions/<name>/<name>.position.feature
  *   <rootDir>/orgs/<org>/positions/<name>/*.duty.feature
+ *   <rootDir>/skills/<name>/<name>.skill.feature
  */
 
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from "node:fs";
@@ -27,6 +28,7 @@ import type {
   RolexConfig,
   OrganizationInfo,
   PositionInfo,
+  SkillInfo,
   Assignment,
   Feature,
   Scenario,
@@ -34,6 +36,7 @@ import type {
   Plan,
   Task,
   Duty,
+  Skill,
 } from "@rolexjs/core";
 import {
   getRoleState,
@@ -281,6 +284,93 @@ export class LocalPlatform implements Platform {
     };
   }
 
+  // ========== Skill ==========
+
+  createSkill(name: string, source: string): Skill {
+    const skillDir = join(this.rootDir, "skills", name);
+    mkdirSync(skillDir, { recursive: true });
+
+    writeFileSync(join(skillDir, `${name}.skill.feature`), source, "utf-8");
+
+    const config = this.loadConfig();
+    if (!config.skills.includes(name)) {
+      config.skills.push(name);
+      this.saveConfig(config);
+    }
+
+    const doc = parse(source);
+    return this.toFeature(doc.feature!, "skill") as Skill;
+  }
+
+  allSkills(): SkillInfo[] {
+    const config = this.loadConfig();
+    return config.skills.map((name) => this.getSkill(name)!).filter(Boolean);
+  }
+
+  getSkill(name: string): SkillInfo | null {
+    const config = this.loadConfig();
+    if (!config.skills.includes(name)) return null;
+
+    const equippedBy = Object.entries(config.equipment)
+      .filter(([, skills]) => skills.includes(name))
+      .map(([roleId]) => roleId);
+
+    return { name, equippedBy };
+  }
+
+  equip(roleId: string, skillName: string): void {
+    const config = this.loadConfig();
+
+    if (!config.roles.includes(roleId)) {
+      throw new Error(`Role not found: ${roleId}. Call born() first.`);
+    }
+    if (!config.skills.includes(skillName)) {
+      throw new Error(`Skill not found: ${skillName}. Call createSkill() first.`);
+    }
+
+    if (!config.equipment[roleId]) {
+      config.equipment[roleId] = [];
+    }
+
+    // Idempotent
+    if (!config.equipment[roleId].includes(skillName)) {
+      config.equipment[roleId].push(skillName);
+      this.saveConfig(config);
+    }
+  }
+
+  unequip(roleId: string, skillName: string): void {
+    const config = this.loadConfig();
+
+    const equipped = config.equipment[roleId];
+    if (!equipped || !equipped.includes(skillName)) {
+      throw new Error(`Role "${roleId}" does not have skill "${skillName}" equipped`);
+    }
+
+    config.equipment[roleId] = equipped.filter((s) => s !== skillName);
+    if (config.equipment[roleId].length === 0) {
+      delete config.equipment[roleId];
+    }
+    this.saveConfig(config);
+  }
+
+  roleSkills(roleId: string): Skill[] {
+    const config = this.loadConfig();
+    const equipped = config.equipment[roleId] ?? [];
+
+    return equipped
+      .map((skillName) => {
+        const skillDir = join(this.rootDir, "skills", skillName);
+        const skillFile = join(skillDir, `${skillName}.skill.feature`);
+        if (!existsSync(skillFile)) return null;
+
+        const source = readFileSync(skillFile, "utf-8");
+        const doc = parse(source);
+        return this.toFeature(doc.feature!, "skill") as Skill;
+      })
+      .filter(Boolean) as Skill[];
+  }
+
   // ========== Role Identity ==========
 
   identity(roleId: string): Feature[] {
@@ -304,6 +394,10 @@ export class LocalPlatform implements Platform {
       const duties = this.positionDuties(assignment.position, assignment.org);
       features.push(...duties);
     }
+
+    // Inject equipped skill features
+    const skills = this.roleSkills(roleId);
+    features.push(...skills);
 
     return features;
   }
@@ -550,13 +644,21 @@ export class LocalPlatform implements Platform {
         roles: raw.roles ?? [],
         organizations: raw.organizations ?? {},
         assignments: raw.assignments ?? {},
+        skills: raw.skills ?? [],
+        equipment: raw.equipment ?? {},
       };
       return this.config;
     }
 
     // Create default config
     mkdirSync(this.rootDir, { recursive: true });
-    const config: RolexConfig = { roles: [], organizations: {}, assignments: {} };
+    const config: RolexConfig = {
+      roles: [],
+      organizations: {},
+      assignments: {},
+      skills: [],
+      equipment: {},
+    };
     this.saveConfig(config);
     return config;
   }

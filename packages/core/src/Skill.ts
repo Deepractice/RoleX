@@ -1,16 +1,19 @@
 /**
- * Skill — Execution capability for a task.
+ * Skill — Pluggable capability module.
  *
- * Compatible with existing skill systems:
- * Claude Code skills, ResourceX resources, MCP tools, etc.
+ * A Skill IS-A Feature with type='skill'.
+ * Expressed as *.skill.feature files in the skills directory.
+ * Injected into role identity when the role equips the skill.
+ *
+ * Skills are independent of organizations and positions.
+ * They can be equipped/unequipped by any born role.
  */
 
+import type { Feature } from "./Feature.js";
+
 /**
- * A capability that a role uses to execute a task.
+ * A skill (capability) that can be equipped by a role.
  */
-export interface Skill {
-  /** Skill identifier, e.g. "commit", "bdd", "dev-flow" */
-  readonly name: string;
-  /** Reference to the concrete implementation: skill path, resource locator, tool URI */
-  readonly reference: string;
+export interface Skill extends Feature {
+  readonly type: "skill";
 }

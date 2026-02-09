@@ -26,10 +26,12 @@ import {
   Organization,
   Role,
   Position,
+  SkillEntity,
   INSTRUCTIONS,
   DESC_SOCIETY,
   DESC_DIRECTORY,
   DESC_ORGANIZATION,
+  DESC_SKILL,
   DESC_SYNTHESIZE,
   DESC_IDENTITY,
   DESC_FOCUS,
@@ -193,6 +195,11 @@ server.addTool({
         const info = result.info();
         return `Position: ${info.name} in ${info.org}\nState: ${info.state}\nAssigned: ${info.assignedRole || "none"}\nDuties: ${info.duties.length}`;
       }
+      if (result instanceof SkillEntity) {
+        const info = result.info();
+        const equipped = info.equippedBy.length > 0 ? info.equippedBy.join(", ") : "none";
+        return `Skill: ${info.name}\nEquipped by: ${equipped}`;
+      }
       const features = (result as Role).identity();
       return renderFeatures(features);
     }
@@ -232,6 +239,15 @@ server.addTool({
       lines.push("Free Roles:");
       for (const role of freeRoles) {
         lines.push(`  - ${role.name}`);
+      }
+    }
+
+    if (dir.skills.length > 0) {
+      if (lines.length > 0) lines.push("");
+      lines.push("Skills:");
+      for (const skill of dir.skills) {
+        const equipped = skill.equippedBy.length > 0 ? ` ← ${skill.equippedBy.join(", ")}` : "";
+        lines.push(`  - ${skill.name}${equipped}`);
       }
     }
 
@@ -304,6 +320,44 @@ server.addTool({
       }
       default:
         throw new Error(`Unknown organization operation: ${operation}`);
+    }
+  }),
+});
+
+// ========== Skill ==========
+
+server.addTool({
+  name: "skill",
+  description: DESC_SKILL,
+  parameters: z.object({
+    operation: z.enum(["create", "equip", "unequip"]).describe("The skill operation to perform"),
+    name: z.string().optional().describe("Skill name (for create)"),
+    source: z.string().optional().describe("Gherkin feature source (for create)"),
+    roleId: z.string().optional().describe("Role name (for equip/unequip)"),
+    skillName: z.string().optional().describe("Skill name (for equip/unequip)"),
+  }),
+  execute: safeTool("skill", async ({ operation, name, source, roleId, skillName }) => {
+    const denied = requireNuwa();
+    if (denied) return denied;
+
+    switch (operation) {
+      case "create": {
+        if (!name || !source) throw new Error("create requires: name, source");
+        const skill = rolex.createSkill(name, source);
+        return next(`Skill created: ${skill.name}`, NEXT.createSkill);
+      }
+      case "equip": {
+        if (!roleId || !skillName) throw new Error("equip requires: roleId, skillName");
+        platform.equip(roleId, skillName);
+        return next(`Skill equipped: ${roleId} ← ${skillName}`, NEXT.equip);
+      }
+      case "unequip": {
+        if (!roleId || !skillName) throw new Error("unequip requires: roleId, skillName");
+        platform.unequip(roleId, skillName);
+        return next(`Skill unequipped: ${roleId} ✕ ${skillName}`, NEXT.unequip);
+      }
+      default:
+        throw new Error(`Unknown skill operation: ${operation}`);
     }
   }),
 });
