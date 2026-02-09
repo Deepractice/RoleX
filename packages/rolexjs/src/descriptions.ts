@@ -96,8 +96,6 @@ Operations:
 - **born**: Create a new role with persona. Params: name, source (Gherkin persona feature)
 - **found**: Create an organization. Params: name, source (optional Gherkin), parent (optional parent org name)
 - **establish**: Create a position within an organization. Params: name, source (Gherkin duty feature), orgName
-- **directory**: List all roles (with states), organizations (with positions). No params needed
-- **find**: Look up a role, organization, or position by name. Params: name
 - **teach**: Transmit first-principles knowledge to a role. Params: roleId, type (knowledge/experience/voice), dimensionName, source (Gherkin feature)
 
 Workflow example:
@@ -148,9 +146,11 @@ The role remains in the organization but is no longer on duty. Their identity wi
 
 State: on_duty → member`;
 
-export const DESC_DIRECTORY = `Society directory — list all known roles and organizations.
+export const DESC_DIRECTORY = `Look up the society — roles, organizations, positions. Available to all roles.
 
-Returns a directory of everyone and everything in this society: all born roles (with their states and assignments) and all founded organizations (with their positions and members). Use this to see who exists before using find() to interact with them.`;
+Without a name parameter, lists everything: all born roles (with their states and assignments) and all founded organizations (with their positions and members).
+
+With a name parameter, finds a specific role, organization, or position by name and returns its details.`;
 
 export const DESC_FIND = `Find a role, organization, or position by name.
 

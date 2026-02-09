@@ -9,8 +9,9 @@
  *   Position     = WHAT  (duties, boundaries)
  *
  * Tools:
- *   society      — Admin: born, found, establish, directory, find, teach
+ *   society      — Admin: born, found, establish, teach
  *   organization — Admin: hire, fire, appoint, dismiss
+ *   directory    — Lookup: list all / find by name (all roles)
  *   identity     — Activate a role
  *   growup/focus/want/plan/todo/achieve/abandon/finish — Role lifecycle
  *
@@ -27,6 +28,7 @@ import {
   Position,
   INSTRUCTIONS,
   DESC_SOCIETY,
+  DESC_DIRECTORY,
   DESC_ORGANIZATION,
   DESC_GROWUP,
   DESC_IDENTITY,
@@ -109,14 +111,12 @@ server.addTool({
   description: DESC_SOCIETY,
   parameters: z.object({
     operation: z
-      .enum(["born", "found", "establish", "directory", "find", "teach"])
+      .enum(["born", "found", "establish", "teach"])
       .describe("The society operation to perform"),
     name: z
       .string()
       .optional()
-      .describe(
-        "Role name (born/find/teach), organization name (found), or position name (establish)"
-      ),
+      .describe("Role name (born/teach), organization name (found), or position name (establish)"),
     source: z
       .string()
       .optional()
@@ -157,64 +157,6 @@ server.addTool({
           rolex.establish(name, source, orgName);
           return next(`Position established: ${name} in ${orgName}`, NEXT.establish);
         }
-        case "directory": {
-          const dir = rolex.directory();
-          const lines: string[] = [];
-
-          // Organizations with positions and members
-          if (dir.organizations.length > 0) {
-            for (const org of dir.organizations) {
-              const parentStr = org.parent ? ` (parent: ${org.parent})` : "";
-              lines.push(`Organization: ${org.name}${parentStr}`);
-
-              if (org.positions.length > 0) {
-                lines.push("  Positions:");
-                for (const pos of org.positions) {
-                  const posInfo = platform.getPosition(pos, org.name);
-                  const holder = posInfo?.assignedRole ? ` ← ${posInfo.assignedRole}` : " (vacant)";
-                  lines.push(`    - ${pos}${holder}`);
-                }
-              }
-
-              if (org.members.length > 0) {
-                lines.push("  Members:");
-                for (const member of org.members) {
-                  const role = dir.roles.find((r) => r.name === member);
-                  const state = role ? ` [${role.state}]` : "";
-                  const pos = role?.position ? ` → ${role.position}` : "";
-                  lines.push(`    - ${member}${state}${pos}`);
-                }
-              }
-            }
-          }
-
-          // Free roles (not in any org)
-          const freeRoles = dir.roles.filter((r) => r.state === "free");
-          if (freeRoles.length > 0) {
-            if (lines.length > 0) lines.push("");
-            lines.push("Free Roles:");
-            for (const role of freeRoles) {
-              lines.push(`  - ${role.name}`);
-            }
-          }
-
-          return lines.join("\n") || "No roles or organizations found.";
-        }
-        case "find": {
-          if (!name) throw new Error("find requires: name");
-          const result = rolex.find(name);
-          if (result instanceof Organization) {
-            const info = result.info();
-            const parentStr = info.parent ? ` (parent: ${info.parent})` : "";
-            return `Organization: ${info.name}${parentStr}\nMembers: ${info.members.length}\nPositions: ${info.positions.join(", ") || "none"}`;
-          }
-          if (result instanceof Position) {
-            const info = result.info();
-            return `Position: ${info.name} in ${info.org}\nState: ${info.state}\nAssigned: ${info.assignedRole || "none"}\nDuties: ${info.duties.length}`;
-          }
-          const features = (result as Role).identity();
-          return renderFeatures(features);
-        }
         case "teach": {
           if (!roleId || !type || !dimensionName || !source)
             throw new Error("teach requires: roleId, type, dimensionName, source");
@@ -226,6 +168,75 @@ server.addTool({
       }
     }
   ),
+});
+
+// ========== Directory (all roles) ==========
+
+server.addTool({
+  name: "directory",
+  description: DESC_DIRECTORY,
+  parameters: z.object({
+    name: z
+      .string()
+      .optional()
+      .describe("Role, organization, or position name to look up. If omitted, lists everything."),
+  }),
+  execute: safeTool("directory", async ({ name }) => {
+    if (name) {
+      const result = rolex.find(name);
+      if (result instanceof Organization) {
+        const info = result.info();
+        const parentStr = info.parent ? ` (parent: ${info.parent})` : "";
+        return `Organization: ${info.name}${parentStr}\nMembers: ${info.members.length}\nPositions: ${info.positions.join(", ") || "none"}`;
+      }
+      if (result instanceof Position) {
+        const info = result.info();
+        return `Position: ${info.name} in ${info.org}\nState: ${info.state}\nAssigned: ${info.assignedRole || "none"}\nDuties: ${info.duties.length}`;
+      }
+      const features = (result as Role).identity();
+      return renderFeatures(features);
+    }
+
+    const dir = rolex.directory();
+    const lines: string[] = [];
+
+    if (dir.organizations.length > 0) {
+      for (const org of dir.organizations) {
+        const parentStr = org.parent ? ` (parent: ${org.parent})` : "";
+        lines.push(`Organization: ${org.name}${parentStr}`);
+
+        if (org.positions.length > 0) {
+          lines.push("  Positions:");
+          for (const pos of org.positions) {
+            const posInfo = platform.getPosition(pos, org.name);
+            const holder = posInfo?.assignedRole ? ` ← ${posInfo.assignedRole}` : " (vacant)";
+            lines.push(`    - ${pos}${holder}`);
+          }
+        }
+
+        if (org.members.length > 0) {
+          lines.push("  Members:");
+          for (const member of org.members) {
+            const role = dir.roles.find((r) => r.name === member);
+            const state = role ? ` [${role.state}]` : "";
+            const pos = role?.position ? ` → ${role.position}` : "";
+            lines.push(`    - ${member}${state}${pos}`);
+          }
+        }
+      }
+    }
+
+    const freeRoles = dir.roles.filter((r) => r.state === "free");
+    if (freeRoles.length > 0) {
+      if (lines.length > 0) lines.push("");
+      lines.push("Free Roles:");
+      for (const role of freeRoles) {
+        lines.push(`  - ${role.name}`);
+      }
+    }
+
+    return lines.join("\n") || "No roles or organizations found.";
+  }),
 });
 
 // ========== Organization (folded) ==========
