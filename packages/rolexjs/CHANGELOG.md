@@ -1,5 +1,17 @@
 # rolexjs
 
+## 0.10.0
+
+### Minor Changes
+
+- 17f21bd: feat: extract directory as standalone tool accessible to all roles
+
+  Moved `directory` and `find` operations out of the nuwa-only `society` tool into a new standalone `directory` tool that any role can use. Query operations (list all, find by name) no longer require admin privileges.
+
+### Patch Changes
+
+- @rolexjs/core@0.10.0
+
 ## 0.9.1
 
 ### Patch Changes

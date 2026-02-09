@@ -1,5 +1,12 @@
 # @rolexjs/local-platform
 
+## 0.10.0
+
+### Patch Changes
+
+- @rolexjs/core@0.10.0
+- @rolexjs/parser@0.10.0
+
 ## 0.9.1
 
 ### Patch Changes
