@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 import consola from "consola";
-import { createClient } from "../lib/client.js";
+import { createHydratedClient } from "../lib/session.js";
 
 export const explore = defineCommand({
   meta: {
@@ -16,7 +16,7 @@ export const explore = defineCommand({
   },
   async run({ args }) {
     try {
-      const rolex = createClient();
+      const rolex = await createHydratedClient();
       const params: any = {};
       if (args.name) params.name = args.name;
       const result = await rolex.individual.execute("explore", params);

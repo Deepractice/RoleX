@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 import consola from "consola";
-import { createClient } from "../lib/client.js";
+import { createHydratedClient } from "../lib/session.js";
 import { resolveSource } from "../lib/source.js";
 
 export const plan = defineCommand({
@@ -9,9 +9,9 @@ export const plan = defineCommand({
     description: "Design a plan for the current active goal",
   },
   args: {
-    roleId: {
+    name: {
       type: "positional",
-      description: "Role name (e.g. 'sean')",
+      description: "Plan name",
       required: true,
     },
     source: {
@@ -26,13 +26,15 @@ export const plan = defineCommand({
   },
   async run({ args }) {
     try {
-      const rolex = createClient();
-      await rolex.individual.execute("identity", { roleId: args.roleId });
+      const rolex = await createHydratedClient();
       const src = resolveSource(args);
-      const result = await rolex.individual.execute("design", { source: src });
+      const result = await rolex.individual.execute("design", {
+        name: args.name,
+        source: src,
+      });
       consola.success(result);
     } catch (error) {
-      consola.error(error instanceof Error ? error.message : "Failed to create plan");
+      consola.error(error instanceof Error ? error.message : "Failed");
       process.exit(1);
     }
   },

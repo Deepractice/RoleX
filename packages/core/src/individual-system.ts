@@ -608,8 +608,25 @@ const explore: Process<{ name?: string }, Feature> = {
     if (charter) {
       sections.push(renderFeature(charter));
       const subs = ctx.platform.listStructures(params.name);
-      if (subs.length > 0) {
-        sections.push(`positions: ${subs.join(", ")}`);
+      const subPositions: string[] = [];
+      const subOrgs: string[] = [];
+      for (const s of subs) {
+        const subCharter = ctx.platform.readInformation(s, "charter", "charter");
+        if (subCharter) {
+          subOrgs.push(s);
+        } else {
+          subPositions.push(s);
+        }
+      }
+      if (subPositions.length > 0) {
+        sections.push(`positions: ${subPositions.join(", ")}`);
+      }
+      if (subOrgs.length > 0) {
+        sections.push(`sub-orgs: ${subOrgs.join(", ")}`);
+      }
+      const members = ctx.platform.listRelations("membership", params.name);
+      if (members.length > 0) {
+        sections.push(`members: ${members.join(", ")}`);
       }
       return sections.join("\n\n");
     }

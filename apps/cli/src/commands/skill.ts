@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 import consola from "consola";
-import { createClient } from "../lib/client.js";
+import { createHydratedClient } from "../lib/session.js";
 
 export const skill = defineCommand({
   meta: {
@@ -8,11 +8,6 @@ export const skill = defineCommand({
     description: "Load a skill — read procedure and load SKILL.md instructions",
   },
   args: {
-    roleId: {
-      type: "positional",
-      description: "Role name (e.g. 'sean')",
-      required: true,
-    },
     name: {
       type: "positional",
       description: "Procedure name to load",
@@ -21,14 +16,13 @@ export const skill = defineCommand({
   },
   async run({ args }) {
     try {
-      const rolex = createClient();
-      await rolex.individual.execute("identity", { roleId: args.roleId });
+      const rolex = await createHydratedClient();
       const result = await rolex.individual.execute("skill", {
         name: args.name,
       });
       consola.success(result);
     } catch (error) {
-      consola.error(error instanceof Error ? error.message : "Failed to load skill");
+      consola.error(error instanceof Error ? error.message : "Failed");
       process.exit(1);
     }
   },

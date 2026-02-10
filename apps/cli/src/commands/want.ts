@@ -1,19 +1,14 @@
 import { defineCommand } from "citty";
 import consola from "consola";
-import { createClient } from "../lib/client.js";
+import { createHydratedClient } from "../lib/session.js";
 import { resolveSource } from "../lib/source.js";
 
 export const want = defineCommand({
   meta: {
     name: "want",
-    description: "Declare a new goal for a role",
+    description: "Declare a new goal",
   },
   args: {
-    roleId: {
-      type: "positional",
-      description: "Role name (e.g. 'sean')",
-      required: true,
-    },
     name: {
       type: "positional",
       description: "Goal name",
@@ -31,8 +26,7 @@ export const want = defineCommand({
   },
   async run({ args }) {
     try {
-      const rolex = createClient();
-      await rolex.individual.execute("identity", { roleId: args.roleId });
+      const rolex = await createHydratedClient();
       const src = resolveSource(args);
       const result = await rolex.individual.execute("want", {
         name: args.name,
@@ -40,7 +34,7 @@ export const want = defineCommand({
       });
       consola.success(result);
     } catch (error) {
-      consola.error(error instanceof Error ? error.message : "Failed to create goal");
+      consola.error(error instanceof Error ? error.message : "Failed");
       process.exit(1);
     }
   },

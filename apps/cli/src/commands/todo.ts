@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 import consola from "consola";
-import { createClient } from "../lib/client.js";
+import { createHydratedClient } from "../lib/session.js";
 import { resolveSource } from "../lib/source.js";
 
 export const todo = defineCommand({
@@ -9,11 +9,6 @@ export const todo = defineCommand({
     description: "Create a task for the current active goal",
   },
   args: {
-    roleId: {
-      type: "positional",
-      description: "Role name (e.g. 'sean')",
-      required: true,
-    },
     name: {
       type: "positional",
       description: "Task name",
@@ -31,8 +26,7 @@ export const todo = defineCommand({
   },
   async run({ args }) {
     try {
-      const rolex = createClient();
-      await rolex.individual.execute("identity", { roleId: args.roleId });
+      const rolex = await createHydratedClient();
       const src = resolveSource(args);
       const result = await rolex.individual.execute("todo", {
         name: args.name,
@@ -40,7 +34,7 @@ export const todo = defineCommand({
       });
       consola.success(result);
     } catch (error) {
-      consola.error(error instanceof Error ? error.message : "Failed to create task");
+      consola.error(error instanceof Error ? error.message : "Failed");
       process.exit(1);
     }
   },

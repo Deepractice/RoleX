@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 import consola from "consola";
-import { createClient } from "../lib/client.js";
+import { createHydratedClient } from "../lib/session.js";
 import { resolveSource } from "../lib/source.js";
 
 export const reflect = defineCommand({
@@ -9,11 +9,6 @@ export const reflect = defineCommand({
     description: "Distill experiences into transferable knowledge",
   },
   args: {
-    roleId: {
-      type: "positional",
-      description: "Role name (e.g. 'sean')",
-      required: true,
-    },
     knowledgeName: {
       type: "positional",
       description: "Knowledge name to produce",
@@ -36,8 +31,7 @@ export const reflect = defineCommand({
   },
   async run({ args }) {
     try {
-      const rolex = createClient();
-      await rolex.individual.execute("identity", { roleId: args.roleId });
+      const rolex = await createHydratedClient();
       const src = resolveSource(args);
       const experienceNames = args.experiences.split(",").map((s: string) => s.trim());
       const result = await rolex.individual.execute("reflect", {
@@ -47,7 +41,7 @@ export const reflect = defineCommand({
       });
       consola.success(result);
     } catch (error) {
-      consola.error(error instanceof Error ? error.message : "Failed to reflect");
+      consola.error(error instanceof Error ? error.message : "Failed");
       process.exit(1);
     }
   },

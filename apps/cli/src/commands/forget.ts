@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 import consola from "consola";
-import { createClient } from "../lib/client.js";
+import { createHydratedClient } from "../lib/session.js";
 
 export const forget = defineCommand({
   meta: {
@@ -8,14 +8,9 @@ export const forget = defineCommand({
     description: "Forget information — remove knowledge, experience, or procedure",
   },
   args: {
-    roleId: {
-      type: "positional",
-      description: "Role name (e.g. 'sean')",
-      required: true,
-    },
     type: {
       type: "positional",
-      description: "Information type: knowledge, experience, or procedure",
+      description: "Information type: knowledge.pattern, knowledge.procedure, knowledge.theory, experience.insight",
       required: true,
     },
     name: {
@@ -26,15 +21,14 @@ export const forget = defineCommand({
   },
   async run({ args }) {
     try {
-      const rolex = createClient();
-      await rolex.individual.execute("identity", { roleId: args.roleId });
+      const rolex = await createHydratedClient();
       const result = await rolex.individual.execute("forget", {
         type: args.type,
         name: args.name,
       });
       consola.success(result);
     } catch (error) {
-      consola.error(error instanceof Error ? error.message : "Failed to forget");
+      consola.error(error instanceof Error ? error.message : "Failed");
       process.exit(1);
     }
   },
