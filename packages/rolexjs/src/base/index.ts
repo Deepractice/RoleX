@@ -15,15 +15,20 @@ import type { BaseProvider } from "@rolexjs/system";
 
 // ========== _common ==========
 
-import commonRolexUsage from "./_common/rolex-usage.knowledge.pattern.feature";
+// (empty — add shared knowledge here when needed)
 
 // ========== nuwa ==========
 
 import nuwaPersona from "./nuwa/persona.feature";
 
-// ========== waiter ==========
+// ========== guider ==========
 
-import waiterPersona from "./waiter/persona.feature";
+import guiderPersona from "./guider/persona.feature";
+import guiderOverview from "./guider/rolex-overview.knowledge.pattern.feature";
+import guiderExecution from "./guider/execution-cycle.knowledge.pattern.feature";
+import guiderGrowth from "./guider/growth-cycle.knowledge.pattern.feature";
+import guiderCapability from "./guider/capability-system.knowledge.pattern.feature";
+import guiderGherkin from "./guider/gherkin-basics.knowledge.pattern.feature";
 
 // ========== Parser ==========
 
@@ -41,13 +46,18 @@ function parseFeature(source: string, type: Feature["type"]): Feature {
 
 // ========== Feature Registry ==========
 
-const common: Feature[] = [
-  parseFeature(commonRolexUsage, "knowledge.pattern"),
-];
+const common: Feature[] = [];
 
 const roles: Record<string, Feature[]> = {
   nuwa: [parseFeature(nuwaPersona, "persona")],
-  waiter: [parseFeature(waiterPersona, "persona")],
+  guider: [
+    parseFeature(guiderPersona, "persona"),
+    parseFeature(guiderOverview, "knowledge.pattern"),
+    parseFeature(guiderExecution, "knowledge.pattern"),
+    parseFeature(guiderGrowth, "knowledge.pattern"),
+    parseFeature(guiderCapability, "knowledge.pattern"),
+    parseFeature(guiderGherkin, "knowledge.pattern"),
+  ],
 };
 
 // ========== BaseProvider ==========

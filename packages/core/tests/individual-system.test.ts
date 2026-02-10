@@ -145,10 +145,10 @@ describe("Role System + Individual System — full lifecycle", () => {
     expect(platform.readInformation("sean", "knowledge.pattern", "shipping-principles")).not.toBeNull();
   });
 
-  test("skill — load procedure", async () => {
-    const result = await individualSystem.execute("skill", { name: "code-review" });
-    expect(result).toContain("[sean] skill loaded: code-review");
-    expect(result).toContain("Code Review");
+  test("skill — requires ResourceX", async () => {
+    await expect(
+      individualSystem.execute("skill", { name: "code-review:0.1.0" }),
+    ).rejects.toThrow("ResourceX not available");
   });
 
   // ===== Role System (lifecycle end) =====

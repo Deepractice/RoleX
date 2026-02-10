@@ -76,3 +76,11 @@ Feature: RoleX — AI Role Management Framework
     Then it only exposes the Individual System — the first-person perspective
     And management operations (born, found, hire) are done through skills
     And the AI operates AS the role, not ON the role
+
+  Scenario: Default role — guider
+    Given no role has been activated yet and a user starts interacting
+    When the AI has not called identity in the current conversation
+    Then the AI MUST activate the guider role by calling identity with roleId "guider"
+    And guider is the built-in RoleX world guide — it helps users understand the framework
+    And guider never performs operations — it only explains and suggests next steps
+    And once the user wants to work as a specific role, they switch with identity

@@ -114,12 +114,12 @@ const identity: Process<{ roleId: string }, Feature> = {
     roleId: z.string().describe("Role name to activate"),
   }),
   execute(ctx, params) {
-    ctx.structure = params.roleId;
-
-    // Ensure role is indexed (migration from pre-index era)
+    // Role must exist — use born to create a new role
     if (!ctx.platform.hasStructure(params.roleId)) {
-      ctx.platform.createStructure(params.roleId);
+      throw new Error(t(ctx.locale, "error.roleNotFound", { name: params.roleId }));
     }
+
+    ctx.structure = params.roleId;
 
     // Base identity (common + role-specific, from package)
     const baseFeatures = ctx.base?.listIdentity(params.roleId) ?? [];
