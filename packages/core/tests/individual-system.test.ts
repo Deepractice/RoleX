@@ -323,12 +323,10 @@ describe("Explore — discover the RoleX world", () => {
 
   test("explore — list all roles and orgs", async () => {
     const result = await individualSystem.execute("explore", {});
-    expect(result).toContain("[alice]");
-    expect(result).toContain("roles:");
-    expect(result).toContain("alice");
-    expect(result).toContain("bob");
-    expect(result).toContain("organizations:");
-    expect(result).toContain("acme");
+    expect(result).toContain("[alice] RoleX World");
+    expect(result).toContain("acme (org)");
+    expect(result).toContain("alice (role)");
+    expect(result).toContain("bob (role)");
   });
 
   test("explore(name) — role detail", async () => {
