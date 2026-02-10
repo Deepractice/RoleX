@@ -37,7 +37,11 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@rolexjs/parser": "workspace:*",
+    "@rolexjs/system": "workspace:*",
+    "zod": "^3.25.0"
+  },
   "devDependencies": {
     "@cucumber/messages": "^32.0.1"
   },

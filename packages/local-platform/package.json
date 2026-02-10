@@ -22,9 +22,7 @@
     "@rolexjs/core": "workspace:*",
     "@rolexjs/parser": "workspace:*"
   },
-  "devDependencies": {
-    "rolexjs": "workspace:*"
-  },
+  "devDependencies": {},
   "publishConfig": {
     "access": "public"
   }

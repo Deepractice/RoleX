@@ -1,61 +1,102 @@
 /**
  * @rolexjs/core
  *
- * RDD (Role-Driven Development) Five-Dimension Model.
+ * Built on @rolexjs/system.
  *
- * Three-entity architecture:
- *   Role         = WHO  (identity, goals)
- *   Organization = WHERE (structure, nesting)
- *   Position     = WHAT  (duties, boundaries)
- *
- * Every role operates through five dimensions:
- *
- *   Identity → Goal → Plan → Task/Skill
- *   (I am)     (I want) (I plan) (I do)
- *
- * Goal, Plan, Task, Duty extend Feature (IS-A).
- * Identity wraps Features (HAS-A).
- * Feature and Scenario extend Gherkin types with RDD semantics.
- * Verification is embedded — Scenario.verifiable determines testability.
+ * Four systems share one Platform:
+ *   - Role System: born, teach, train, retire, kill (external)
+ *   - Individual System: identity...apply (first-person)
+ *   - Organization System: found, dissolve (external)
+ *   - Governance System: rule...directory (internal)
  */
 
-// ========== RDD Types (extend Gherkin) ==========
+// ========== Platform ==========
+
+export type { Platform } from "./Platform.js";
+
+// ========== Types ==========
 
 export type { Feature } from "./Feature.js";
 export type { Scenario } from "./Scenario.js";
 
-// ========== Core Model ==========
-
-export type { Role } from "./Role.js";
-export type { Identity } from "./Identity.js";
-export type { Goal } from "./Goal.js";
-export type { Plan } from "./Plan.js";
-export type { Task } from "./Task.js";
-export type { Duty } from "./Duty.js";
-export type { Skill } from "./Skill.js";
-export type {
-  Platform,
-  OrganizationInfo,
-  OrganizationConfig,
-  PositionInfo,
-  SkillInfo,
-  Assignment,
-  RolexConfig,
-  RoleEntry,
-  Directory,
-} from "./Platform.js";
-
-// ========== State Machines ==========
+// ========== Role System (declarations) ==========
 
 export {
-  getRoleState,
-  getPositionState,
-  ROLE_MACHINE,
-  POSITION_MACHINE,
-  findTransition,
-  canTransition,
-  transition,
-  RELATIONS,
-  validateOneToOne,
-} from "./model/index.js";
-export type { RoleState, PositionState, Transition, OneToOneConstraint } from "./model/index.js";
+  BORN,
+  TEACH,
+  TRAIN,
+  RETIRE,
+  KILL,
+  ROLE_LIFECYCLE,
+} from "./Role.js";
+
+// ========== Individual System (declarations) ==========
+
+export {
+  // Structure
+  ROLE,
+  // Information
+  PERSONA,
+  KNOWLEDGE,
+  PROCEDURE,
+  EXPERIENCE,
+  GOAL,
+  PLAN,
+  TASK,
+  // State
+  COGNITION,
+  INTENTION,
+  // Process
+  WANT,
+  DESIGN,
+  TODO,
+  FINISH,
+  ACHIEVE,
+  ABANDON,
+  SYNTHESIZE,
+  REFLECT,
+  IDENTITY,
+  FOCUS,
+  APPLY,
+  USE,
+  // System
+  GOAL_EXECUTION,
+  COGNITIVE_GROWTH,
+} from "./individual.js";
+
+// ========== Organization System (declarations) ==========
+
+export {
+  // Structure
+  ORGANIZATION,
+  POSITION,
+  // Information
+  CHARTER,
+  DUTY,
+  // Relation
+  MEMBERSHIP,
+  ASSIGNMENT,
+  // Process (external)
+  FOUND,
+  DISSOLVE,
+  // Process (governance)
+  RULE,
+  ESTABLISH,
+  ABOLISH,
+  ASSIGN,
+  HIRE,
+  FIRE,
+  APPOINT,
+  DISMISS,
+  DIRECTORY,
+  // System
+  ORG_LIFECYCLE,
+  GOVERNANCE,
+} from "./organization.js";
+
+// ========== Runnable Systems ==========
+
+export { createRoleSystem } from "./role-system.js";
+export { createIndividualSystem } from "./individual-system.js";
+export { createOrgSystem } from "./org-system.js";
+export { createGovernanceSystem } from "./governance-system.js";

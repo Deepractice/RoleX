@@ -1,88 +1,174 @@
 /**
  * @rolexjs/mcp-server
  *
- * MCP server for Rolex — Role-Driven Development.
+ * RoleX Individual System MCP server.
  *
- * This is a thin consumer of the Rolex API registry.
- * All operation definitions (descriptions, parameters, permissions, execute)
- * come from rolexjs — this server only adds:
- * - MCP transport (stdio)
- * - Permission checking (nuwa gate)
- * - Error rendering
+ * 12 tools — one per Individual System process:
+ *   identity, focus, want, design, todo,
+ *   finish, achieve, abandon, synthesize, reflect, apply, use
  *
- * Usage:
- *   rolex-mcp [.rolex-dir]
+ * Management operations (born, found, hire, etc.) are exposed via skills,
+ * not MCP tools. The AI operates AS the role, not ON the role.
  */
 
 import { FastMCP } from "fastmcp";
-import { Rolex, INSTRUCTIONS, apiRegistry, renderError, bootstrap } from "rolexjs";
-import type { ApiContext, ApiOperation } from "rolexjs";
+import { z } from "zod";
+import { createRolex, world, WORLD_TOPICS, descriptions } from "rolexjs";
 import { LocalPlatform } from "@rolexjs/local-platform";
 
-import { join } from "node:path";
-import { homedir } from "node:os";
+// ========== Platform & System ==========
 
-const DEFAULT_ROLEX_DIR = join(homedir(), ".rolex");
-const rolexDir = process.argv[2] || process.env.ROLEX_DIR || DEFAULT_ROLEX_DIR;
-const platform = new LocalPlatform(rolexDir);
-bootstrap(platform);
-const rolex = new Rolex(platform);
+const rootDir = process.env.ROLEX_ROOT || process.cwd();
+const platform = new LocalPlatform(rootDir);
+const rolex = createRolex({ platform });
 
-// ========== API Context ==========
+// ========== Instructions ==========
 
-const ctx: ApiContext = {
-  rolex,
-  platform,
-  currentRole: null,
-  currentRoleName: "",
-};
+const instructions = WORLD_TOPICS.map((t) => world[t]).join("\n\n");
 
-// ========== MCP Server ==========
+// ========== Server ==========
 
 const server = new FastMCP({
-  name: "Rolex MCP Server",
-  version: "0.3.0",
-  instructions: INSTRUCTIONS,
+  name: "RoleX MCP Server",
+  version: "1.0.0",
+  instructions,
 });
 
-// ========== Permission Check ==========
+// ========== Helpers ==========
 
-function checkPermission(op: ApiOperation): string | null {
-  if (op.permission === "nuwa") {
-    if (!ctx.currentRole || ctx.currentRoleName !== "nuwa") {
-      const who = ctx.currentRoleName || "none";
-      return `Permission denied. Only nuwa can use this tool. Current role: ${who}`;
-    }
-  }
-  if (op.permission === "role") {
-    if (!ctx.currentRole) {
-      throw new Error("No active role. Call identity(roleId) first to activate a role.");
-    }
-  }
-  return null;
-}
+const experienceParam = z.object({
+  name: z.string().describe("Experience name"),
+  source: z.string().describe("Gherkin feature source for the experience"),
+}).optional().describe("Optional experience to synthesize on completion");
 
-// ========== Register All Operations ==========
+// ========== Tools ==========
 
-for (const op of apiRegistry.allOperations()) {
-  server.addTool({
-    name: op.name,
-    description: op.description,
-    parameters: op.parameters,
-    execute: async (args: any) => {
-      try {
-        // Permission gate
-        const denied = checkPermission(op);
-        if (denied) return denied;
+// identity
+server.addTool({
+  name: "identity",
+  description: descriptions.identity,
+  parameters: z.object({
+    roleId: z.string().describe("Role name to activate"),
+  }),
+  execute: async (args) => rolex.individual.execute("identity", args),
+});
 
-        // Delegate to API operation
-        return op.execute(ctx, args);
-      } catch (error) {
-        throw new Error(renderError(op.name, error));
-      }
-    },
-  });
-}
+// focus
+server.addTool({
+  name: "focus",
+  description: descriptions.focus,
+  parameters: z.object({
+    name: z.string().optional().describe("Goal name to switch focus to"),
+  }),
+  execute: async (args) => rolex.individual.execute("focus", args),
+});
+
+// want
+server.addTool({
+  name: "want",
+  description: descriptions.want,
+  parameters: z.object({
+    name: z.string().describe("Goal name"),
+    source: z.string().describe("Gherkin goal feature source"),
+  }),
+  execute: async (args) => rolex.individual.execute("want", args),
+});
+
+// design
+server.addTool({
+  name: "design",
+  description: descriptions.design,
+  parameters: z.object({
+    source: z.string().describe("Gherkin plan feature source"),
+  }),
+  execute: async (args) => rolex.individual.execute("design", args),
+});
+
+// todo
+server.addTool({
+  name: "todo",
+  description: descriptions.todo,
+  parameters: z.object({
+    name: z.string().describe("Task name"),
+    source: z.string().describe("Gherkin task feature source"),
+  }),
+  execute: async (args) => rolex.individual.execute("todo", args),
+});
+
+// finish
+server.addTool({
+  name: "finish",
+  description: descriptions.finish,
+  parameters: z.object({
+    name: z.string().describe("Task name to finish"),
+    experience: experienceParam,
+  }),
+  execute: async (args) => rolex.individual.execute("finish", args),
+});
+
+// achieve
+server.addTool({
+  name: "achieve",
+  description: descriptions.achieve,
+  parameters: z.object({
+    experience: experienceParam,
+  }),
+  execute: async (args) => rolex.individual.execute("achieve", args),
+});
+
+// abandon
+server.addTool({
+  name: "abandon",
+  description: descriptions.abandon,
+  parameters: z.object({
+    experience: experienceParam,
+  }),
+  execute: async (args) => rolex.individual.execute("abandon", args),
+});
+
+// synthesize
+server.addTool({
+  name: "synthesize",
+  description: descriptions.synthesize,
+  parameters: z.object({
+    name: z.string().describe("Experience name"),
+    source: z.string().describe("Gherkin experience feature source"),
+  }),
+  execute: async (args) => rolex.individual.execute("synthesize", args),
+});
+
+// reflect
+server.addTool({
+  name: "reflect",
+  description: descriptions.reflect,
+  parameters: z.object({
+    experienceNames: z.array(z.string()).describe("Experience names to consume"),
+    knowledgeName: z.string().describe("Knowledge name to produce"),
+    knowledgeSource: z.string().describe("Gherkin knowledge feature source"),
+  }),
+  execute: async (args) => rolex.individual.execute("reflect", args),
+});
+
+// apply
+server.addTool({
+  name: "apply",
+  description: descriptions.apply,
+  parameters: z.object({
+    name: z.string().describe("Procedure name to apply"),
+  }),
+  execute: async (args) => rolex.individual.execute("apply", args),
+});
+
+// use
+server.addTool({
+  name: "use",
+  description: descriptions.use,
+  parameters: z.object({
+    locator: z.string().describe("Resource locator (e.g. 'tool-name:1.0.0')"),
+    args: z.unknown().optional().describe("Arguments to pass to the tool"),
+  }),
+  execute: async (args) => rolex.individual.execute("use", args),
+});
 
 // ========== Start ==========
 

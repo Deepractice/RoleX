@@ -32,14 +32,15 @@
     "dist"
   ],
   "scripts": {
-    "build": "bun scripts/generate-seed.ts && tsup",
+    "build": "tsup",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
   "dependencies": {
     "@rolexjs/core": "workspace:*",
-    "zod": "^3.25.0"
+    "@rolexjs/system": "workspace:*",
+    "resourcexjs": "^2.5.7"
   },
   "devDependencies": {},
   "publishConfig": {

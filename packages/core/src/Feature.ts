@@ -15,11 +15,14 @@ export interface Feature extends GherkinFeature {
   readonly type:
     | "persona"
     | "knowledge"
+    | "procedure"
     | "experience"
-    | "voice"
     | "goal"
     | "plan"
     | "task"
+    // legacy — kept for backward compatibility
+    | "voice"
+    | "charter"
     | "duty"
     | "skill";
   readonly scenarios: Scenario[];

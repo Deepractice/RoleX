@@ -1,0 +1,46 @@
+{
+  "name": "@rolexjs/system",
+  "version": "0.1.0",
+  "description": "RoleX Systems Theory — six concepts + defineSystem() runtime",
+  "keywords": [
+    "rolex",
+    "systems-theory",
+    "system",
+    "process",
+    "define"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Deepractice/RoleX.git",
+    "directory": "packages/model"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {},
+  "publishConfig": {
+    "access": "public"
+  }
+}
