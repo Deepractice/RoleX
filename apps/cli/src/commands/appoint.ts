@@ -2,33 +2,33 @@ import { defineCommand } from "citty";
 import consola from "consola";
 import { createClient } from "../lib/client.js";
 
-export const hire = defineCommand({
+export const appoint = defineCommand({
   meta: {
-    name: "hire",
-    description: "Hire a role into an organization",
+    name: "appoint",
+    description: "Appoint a role to a position",
   },
   args: {
-    org: {
+    role: {
       type: "positional",
-      description: "Organization name",
+      description: "Role name",
       required: true,
     },
-    name: {
+    position: {
       type: "positional",
-      description: "Role name to hire",
+      description: "Position name",
       required: true,
     },
   },
   async run({ args }) {
     try {
       const rolex = createClient();
-      const result = await rolex.governance.execute("hire", {
-        orgName: args.org,
-        roleName: args.name,
+      const result = await rolex.governance.execute("appoint", {
+        roleName: args.role,
+        positionName: args.position,
       });
       consola.success(result);
     } catch (error) {
-      consola.error(error instanceof Error ? error.message : "Failed to hire role");
+      consola.error(error instanceof Error ? error.message : "Failed");
       process.exit(1);
     }
   },

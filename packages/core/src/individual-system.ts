@@ -507,7 +507,7 @@ const explore: Process<{ name?: string }, Feature> = {
     const l = ctx.locale;
 
     if (!params.name) {
-      // List all top-level structures — orgs have charter, everything else is a role
+      // Build tree view of the RoleX world
       const all = ctx.platform.listStructures();
       const roles: string[] = [];
       const orgs: string[] = [];
@@ -519,7 +519,80 @@ const explore: Process<{ name?: string }, Feature> = {
           roles.push(name);
         }
       }
-      return `[${r}] ${t(l, "individual.explore.world", { roles: roles.join(", ") || "none", orgs: orgs.join(", ") || "none" })}`;
+
+      const lines: string[] = [`[${r}] RoleX World`];
+
+      // Render org tree
+      for (let oi = 0; oi < orgs.length; oi++) {
+        const orgName = orgs[oi];
+        const isLastOrg = oi === orgs.length - 1 && roles.length === 0;
+        const orgPrefix = isLastOrg ? "└── " : "├── ";
+        const childPrefix = isLastOrg ? "    " : "│   ";
+        lines.push(`${orgPrefix}${orgName} (org)`);
+
+        // Positions under this org
+        const positions = ctx.platform.listStructures(orgName);
+        const positionsOnly: string[] = [];
+        const subOrgs: string[] = [];
+        for (const p of positions) {
+          const subCharter = ctx.platform.readInformation(p, "charter", "charter");
+          if (subCharter) {
+            subOrgs.push(p);
+          } else {
+            positionsOnly.push(p);
+          }
+        }
+
+        // Members
+        const members = ctx.platform.listRelations("membership", orgName);
+
+        const childItems = [...positionsOnly, ...subOrgs, ...(members.length > 0 ? ["__members__"] : [])];
+        for (let ci = 0; ci < childItems.length; ci++) {
+          const isLast = ci === childItems.length - 1;
+          const itemPrefix = isLast ? "└── " : "├── ";
+          const item = childItems[ci];
+
+          if (item === "__members__") {
+            lines.push(`${childPrefix}${itemPrefix}members: ${members.join(", ")}`);
+          } else if (subOrgs.includes(item)) {
+            lines.push(`${childPrefix}${itemPrefix}${item} (sub-org)`);
+          } else {
+            // Position — find who is appointed
+            const appointed: string[] = [];
+            for (const m of members) {
+              if (ctx.platform.hasRelation("assignment", m, item)) {
+                appointed.push(m);
+              }
+            }
+            const holder = appointed.length > 0 ? ` — ${appointed.join(", ")}` : "";
+            lines.push(`${childPrefix}${itemPrefix}${item}${holder}`);
+          }
+        }
+      }
+
+      // Render roles
+      for (let ri = 0; ri < roles.length; ri++) {
+        const roleName = roles[ri];
+        const isLast = ri === roles.length - 1;
+        const prefix = isLast ? "└── " : "├── ";
+
+        // Find org and position
+        let context = "";
+        for (const orgName of orgs) {
+          if (ctx.platform.hasRelation("membership", orgName, roleName)) {
+            const pos = ctx.platform.listRelations("assignment", roleName);
+            context = pos.length > 0 ? ` → ${orgName}/${pos.join(", ")}` : ` → ${orgName}`;
+            break;
+          }
+        }
+        lines.push(`${prefix}${roleName} (role)${context}`);
+      }
+
+      if (orgs.length === 0 && roles.length === 0) {
+        lines.push("└── (empty)");
+      }
+
+      return lines.join("\n");
     }
 
     // Detail view of a specific structure

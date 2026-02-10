@@ -4,10 +4,13 @@ import { found } from "./commands/found.js";
 import { directory } from "./commands/directory.js";
 import { hire } from "./commands/hire.js";
 import { fire } from "./commands/fire.js";
+import { establish } from "./commands/establish.js";
+import { appoint } from "./commands/appoint.js";
 import { teach } from "./commands/teach.js";
 import { train } from "./commands/train.js";
 import { identity } from "./commands/identity.js";
 
+import { explore } from "./commands/explore.js";
 import { focus } from "./commands/focus.js";
 import { want } from "./commands/want.js";
 import { plan } from "./commands/plan.js";
@@ -32,12 +35,12 @@ const org = defineCommand({
 
 const governance = defineCommand({
   meta: { name: "governance", description: "Governance System — hire, fire, directory" },
-  subCommands: { hire, fire, directory },
+  subCommands: { hire, fire, establish, appoint, directory },
 });
 
 const individual = defineCommand({
   meta: { name: "individual", description: "Individual System — identity, focus, want, plan, todo, finish, achieve, abandon, reflect, skill" },
-  subCommands: { identity, focus, want, plan, todo, finish, achieve, abandon, forget, reflect, skill },
+  subCommands: { identity, focus, explore, want, plan, todo, finish, achieve, abandon, forget, reflect, skill },
 });
 
 const main = defineCommand({
