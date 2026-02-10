@@ -114,9 +114,14 @@ const identity: Process<{ roleId: string }, Feature> = {
     roleId: z.string().describe("Role name to activate"),
   }),
   execute(ctx, params) {
-    // Role must exist — use born to create a new role
+    // Role must exist — unless it's a built-in base role (auto-create)
     if (!ctx.platform.hasStructure(params.roleId)) {
-      throw new Error(t(ctx.locale, "error.roleNotFound", { name: params.roleId }));
+      const baseFeatures = ctx.base?.listIdentity(params.roleId) ?? [];
+      if (baseFeatures.length > 0) {
+        ctx.platform.createStructure(params.roleId);
+      } else {
+        throw new Error(t(ctx.locale, "error.roleNotFound", { name: params.roleId }));
+      }
     }
 
     ctx.structure = params.roleId;
