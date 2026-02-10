@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import { defineCommand, runMain } from "citty";
 import { born } from "./commands/born.js";
 import { found } from "./commands/found.js";
