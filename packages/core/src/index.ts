@@ -94,6 +94,11 @@ export {
   GOVERNANCE,
 } from "./organization.js";
 
+// ========== i18n ==========
+
+export { t } from "./i18n/index.js";
+export type { Locale, MessageKey } from "./i18n/index.js";
+
 // ========== Runnable Systems ==========
 
 export { createRoleSystem } from "./role-system.js";

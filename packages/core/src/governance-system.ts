@@ -14,6 +14,7 @@ import type { Process, RunnableSystem } from "@rolexjs/system";
 import type { Platform } from "./Platform.js";
 import type { Feature } from "./Feature.js";
 import type { Scenario } from "./Scenario.js";
+import { t } from "./i18n/index.js";
 import {
   RULE, ESTABLISH, ABOLISH, ASSIGN,
   HIRE, FIRE, APPOINT, DISMISS, DIRECTORY,
@@ -51,7 +52,7 @@ const rule: Process<{ orgName: string; name: string; source: string }, Feature> 
   execute(ctx, params) {
     const feature = parseSource(params.source, "charter");
     ctx.platform.writeInformation(params.orgName, "charter", params.name, feature);
-    return `[${params.orgName}] charter: ${params.name}\n\n${renderFeature(feature)}`;
+    return `[${params.orgName}] ${t(ctx.locale, "governance.charter", { name: params.name })}\n\n${renderFeature(feature)}`;
   },
 };
 
@@ -66,7 +67,7 @@ const establish: Process<{ orgName: string; name: string; source: string }, Feat
     ctx.platform.createStructure(params.name, params.orgName);
     const feature = parseSource(params.source, "duty");
     ctx.platform.writeInformation(params.name, "duty", "duty", feature);
-    return `[${params.orgName}] established: ${params.name}`;
+    return `[${params.orgName}] ${t(ctx.locale, "governance.established", { name: params.name })}`;
   },
 };
 
@@ -83,7 +84,7 @@ const abolish: Process<{ orgName: string; name: string }, Feature> = {
       ctx.platform.removeRelation("assignment", member, params.name);
     }
     ctx.platform.removeStructure(params.name);
-    return `[${params.orgName}] abolished: ${params.name}`;
+    return `[${params.orgName}] ${t(ctx.locale, "governance.abolished", { name: params.name })}`;
   },
 };
 
@@ -97,7 +98,7 @@ const assign: Process<{ positionName: string; name: string; source: string }, Fe
   execute(ctx, params) {
     const feature = parseSource(params.source, "duty");
     ctx.platform.writeInformation(params.positionName, "duty", params.name, feature);
-    return `[${params.positionName}] duty: ${params.name}\n\n${renderFeature(feature)}`;
+    return `[${params.positionName}] ${t(ctx.locale, "governance.duty", { name: params.name })}\n\n${renderFeature(feature)}`;
   },
 };
 
@@ -109,7 +110,7 @@ const hire: Process<{ orgName: string; roleName: string }, Feature> = {
   }),
   execute(ctx, params) {
     ctx.platform.addRelation("membership", params.orgName, params.roleName);
-    return `[${params.orgName}] hired: ${params.roleName}`;
+    return `[${params.orgName}] ${t(ctx.locale, "governance.hired", { name: params.roleName })}`;
   },
 };
 
@@ -126,7 +127,7 @@ const fire: Process<{ orgName: string; roleName: string }, Feature> = {
       ctx.platform.removeRelation("assignment", params.roleName, pos);
     }
     ctx.platform.removeRelation("membership", params.orgName, params.roleName);
-    return `[${params.orgName}] fired: ${params.roleName}`;
+    return `[${params.orgName}] ${t(ctx.locale, "governance.fired", { name: params.roleName })}`;
   },
 };
 
@@ -138,7 +139,7 @@ const appoint: Process<{ roleName: string; positionName: string }, Feature> = {
   }),
   execute(ctx, params) {
     ctx.platform.addRelation("assignment", params.roleName, params.positionName);
-    return `[${params.roleName}] appointed to: ${params.positionName}`;
+    return `[${params.roleName}] ${t(ctx.locale, "governance.appointed", { name: params.positionName })}`;
   },
 };
 
@@ -150,7 +151,7 @@ const dismiss: Process<{ roleName: string; positionName: string }, Feature> = {
   }),
   execute(ctx, params) {
     ctx.platform.removeRelation("assignment", params.roleName, params.positionName);
-    return `[${params.roleName}] dismissed from: ${params.positionName}`;
+    return `[${params.roleName}] ${t(ctx.locale, "governance.dismissed", { name: params.positionName })}`;
   },
 };
 
@@ -175,14 +176,15 @@ const directory: Process<{ orgName: string }, Feature> = {
       return `  - ${p}${dutyNames ? `: ${dutyNames}` : ""}`;
     });
 
+    const l = ctx.locale;
     const membersInfo = memberLines.length > 0
-      ? `Members:\n${memberLines.join("\n")}`
-      : "Members: none";
+      ? `${t(l, "governance.members")}\n${memberLines.join("\n")}`
+      : t(l, "governance.membersNone");
     const positionsInfo = positionLines.length > 0
-      ? `Positions:\n${positionLines.join("\n")}`
-      : "Positions: none";
+      ? `${t(l, "governance.positions")}\n${positionLines.join("\n")}`
+      : t(l, "governance.positionsNone");
 
-    return `[${params.orgName}] directory\n${membersInfo}\n${positionsInfo}`;
+    return `[${params.orgName}] ${t(l, "governance.directory")}\n${membersInfo}\n${positionsInfo}`;
   },
 };
 

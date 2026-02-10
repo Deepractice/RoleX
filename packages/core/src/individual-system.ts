@@ -12,11 +12,12 @@
 import { z } from "zod";
 import { defineSystem } from "@rolexjs/system";
 import { parse } from "@rolexjs/parser";
-import type { Process, RunnableSystem } from "@rolexjs/system";
+import type { Process, ProcessContext, RunnableSystem } from "@rolexjs/system";
 import type { Platform } from "./Platform.js";
 import type { Feature } from "./Feature.js";
 import type { Scenario } from "./Scenario.js";
 import type { ResourceX } from "resourcexjs";
+import { t } from "./i18n/index.js";
 import {
   WANT, DESIGN, TODO,
   FINISH, ACHIEVE, ABANDON, SYNTHESIZE, REFLECT,
@@ -49,15 +50,15 @@ function renderFeatures(features: Feature[]): string {
 }
 
 /** Get current role name from context, or throw. */
-function role(ctx: { structure: string }): string {
-  if (!ctx.structure) throw new Error("No role activated. Call identity first.");
+function role(ctx: ProcessContext<Feature>): string {
+  if (!ctx.structure) throw new Error(t(ctx.locale, "error.noRole"));
   return ctx.structure;
 }
 
 /** Get the focused goal name via Relation, or throw. */
-function focusedGoal(platform: Platform, roleName: string): string {
-  const names = platform.listRelations("focus", roleName);
-  if (names.length === 0) throw new Error("No active goal. Call want first.");
+function focusedGoal(ctx: ProcessContext<Feature>): string {
+  const names = ctx.platform.listRelations("focus", ctx.structure);
+  if (names.length === 0) throw new Error(t(ctx.locale, "error.noGoal"));
   return names[0];
 }
 
@@ -82,7 +83,7 @@ const identity: Process<{ roleId: string }, Feature> = {
     const procedure = ctx.platform.listInformation(params.roleId, "procedure");
     const experience = ctx.platform.listInformation(params.roleId, "experience");
     const all = [...persona, ...knowledge, ...procedure, ...experience];
-    return `[${params.roleId}] identity loaded\n\n${renderFeatures(all)}`;
+    return `[${params.roleId}] ${t(ctx.locale, "individual.identity.loaded")}\n\n${renderFeatures(all)}`;
   },
 };
 
@@ -93,15 +94,14 @@ const focus: Process<{ name?: string }, Feature> = {
   }),
   execute(ctx, params) {
     const r = role(ctx);
+    const l = ctx.locale;
 
     if (params.name) {
-      // Focus is one-at-a-time: remove old, add new
       const old = ctx.platform.listRelations("focus", r);
       for (const o of old) ctx.platform.removeRelation("focus", r, o);
       ctx.platform.addRelation("focus", r, params.name);
     }
 
-    // Read current focus via Relation
     const focusList = ctx.platform.listRelations("focus", r);
     const focusName = focusList.length > 0 ? focusList[0] : null;
 
@@ -111,32 +111,30 @@ const focus: Process<{ name?: string }, Feature> = {
         .filter((g) => !g.tags?.some((t: any) => t.name === "@done" || t.name === "@abandoned"))
         .map((g) => g.name);
       const others = activeNames.join(", ");
-      return `[${r}] goal: none${others ? `\nOther goals: ${others}` : ""}`;
+      return `[${r}] ${t(l, "individual.focus.noGoal")}${others ? `\n${t(l, "individual.focus.otherGoals", { names: others })}` : ""}`;
     }
 
-    // Read focused goal directly by key
     const current = ctx.platform.readInformation(r, "goal", focusName);
     if (!current || current.tags?.some((t: any) => t.name === "@done" || t.name === "@abandoned")) {
-      return `[${r}] goal: none (focused goal not active)`;
+      return `[${r}] ${t(l, "individual.focus.noGoalInactive")}`;
     }
 
     const plan = ctx.platform.readInformation(r, "plan", focusName);
     const tasks = ctx.platform.listInformation(r, "task");
-    const planInfo = plan ? `\nPlan: ${plan.name}` : "\nPlan: none";
-    const taskList = tasks.map((t) => {
-      const done = t.tags?.some((tag: any) => tag.name === "@done") ? " @done" : "";
-      return `  - ${t.name}${done}`;
+    const planInfo = plan ? `\n${t(l, "individual.focus.plan", { name: plan.name })}` : `\n${t(l, "individual.focus.planNone")}`;
+    const taskList = tasks.map((tk) => {
+      const done = tk.tags?.some((tag: any) => tag.name === "@done") ? " @done" : "";
+      return `  - ${tk.name}${done}`;
     }).join("\n");
-    const tasksInfo = taskList ? `\nTasks:\n${taskList}` : "\nTasks: none";
+    const tasksInfo = taskList ? `\n${t(l, "individual.focus.tasks")}\n${taskList}` : `\n${t(l, "individual.focus.tasksNone")}`;
 
-    // Other active goals
     const allGoals = ctx.platform.listInformation(r, "goal");
     const otherNames = allGoals
       .filter((g) => g.name !== current.name && !g.tags?.some((t: any) => t.name === "@done" || t.name === "@abandoned"))
       .map((g) => g.name);
-    const othersInfo = otherNames.length > 0 ? `\nOther goals: ${otherNames.join(", ")}` : "";
+    const othersInfo = otherNames.length > 0 ? `\n${t(l, "individual.focus.otherGoals", { names: otherNames.join(", ") })}` : "";
 
-    return `[${r}] goal: ${focusName}${planInfo}${tasksInfo}${othersInfo}`;
+    return `[${r}] ${t(l, "individual.focus.goal", { name: focusName })}${planInfo}${tasksInfo}${othersInfo}`;
   },
 };
 
@@ -150,11 +148,10 @@ const want: Process<{ name: string; source: string }, Feature> = {
     const r = role(ctx);
     const feature = parseSource(params.source, "goal");
     ctx.platform.writeInformation(r, "goal", params.name, feature);
-    // Auto-focus if no current focus
     if (ctx.platform.listRelations("focus", r).length === 0) {
       ctx.platform.addRelation("focus", r, params.name);
     }
-    return `[${r}] want: ${params.name}\n\n${renderFeature(feature)}`;
+    return `[${r}] ${t(ctx.locale, "individual.want.created", { name: params.name })}\n\n${renderFeature(feature)}`;
   },
 };
 
@@ -165,10 +162,10 @@ const design: Process<{ source: string }, Feature> = {
   }),
   execute(ctx, params) {
     const r = role(ctx);
-    const goalName = focusedGoal(ctx.platform, r);
+    const goalName = focusedGoal(ctx);
     const feature = parseSource(params.source, "plan");
     ctx.platform.writeInformation(r, "plan", goalName, feature);
-    return `[${r}] plan for ${goalName}\n\n${renderFeature(feature)}`;
+    return `[${r}] ${t(ctx.locale, "individual.design.created", { name: goalName })}\n\n${renderFeature(feature)}`;
   },
 };
 
@@ -182,7 +179,7 @@ const todo: Process<{ name: string; source: string }, Feature> = {
     const r = role(ctx);
     const feature = parseSource(params.source, "task");
     ctx.platform.writeInformation(r, "task", params.name, feature);
-    return `[${r}] todo: ${params.name}\n\n${renderFeature(feature)}`;
+    return `[${r}] ${t(ctx.locale, "individual.todo.created", { name: params.name })}\n\n${renderFeature(feature)}`;
   },
 };
 
@@ -194,19 +191,19 @@ const finish: Process<{ name: string; experience?: { name: string; source: strin
   }),
   execute(ctx, params) {
     const r = role(ctx);
+    const l = ctx.locale;
 
-    // Read task, add @done tag, write back
     const task = ctx.platform.readInformation(r, "task", params.name);
-    if (!task) throw new Error(`Task not found: ${params.name}`);
+    if (!task) throw new Error(t(l, "error.taskNotFound", { name: params.name }));
     const updated = { ...task, tags: [...(task.tags || []), { name: "@done" }] } as Feature;
     ctx.platform.writeInformation(r, "task", params.name, updated);
 
-    let output = `[${r}] finished: ${params.name}`;
+    let output = `[${r}] ${t(l, "individual.finish.done", { name: params.name })}`;
 
     if (params.experience) {
       const exp = parseSource(params.experience.source, "experience");
       ctx.platform.writeInformation(r, "experience", params.experience.name, exp);
-      output += `\nsynthesized: ${params.experience.name}`;
+      output += `\n${t(l, "individual.finish.synthesized", { name: params.experience.name })}`;
     }
 
     return output;
@@ -220,20 +217,20 @@ const achieve: Process<{ experience?: { name: string; source: string } }, Featur
   }),
   execute(ctx, params) {
     const r = role(ctx);
-    const goalName = focusedGoal(ctx.platform, r);
+    const l = ctx.locale;
+    const goalName = focusedGoal(ctx);
 
-    // Read goal, add @done tag, write back
     const goal = ctx.platform.readInformation(r, "goal", goalName);
-    if (!goal) throw new Error(`Goal not found: ${goalName}`);
+    if (!goal) throw new Error(t(l, "error.goalNotFound", { name: goalName }));
     const updated = { ...goal, tags: [...(goal.tags || []), { name: "@done" }] } as Feature;
     ctx.platform.writeInformation(r, "goal", goalName, updated);
 
-    let output = `[${r}] achieved: ${goalName}`;
+    let output = `[${r}] ${t(l, "individual.achieve.done", { name: goalName })}`;
 
     if (params.experience) {
       const exp = parseSource(params.experience.source, "experience");
       ctx.platform.writeInformation(r, "experience", params.experience.name, exp);
-      output += `\nsynthesized: ${params.experience.name}`;
+      output += `\n${t(l, "individual.finish.synthesized", { name: params.experience.name })}`;
     }
 
     return output;
@@ -247,19 +244,20 @@ const abandon: Process<{ experience?: { name: string; source: string } }, Featur
   }),
   execute(ctx, params) {
     const r = role(ctx);
-    const goalName = focusedGoal(ctx.platform, r);
+    const l = ctx.locale;
+    const goalName = focusedGoal(ctx);
 
     const goal = ctx.platform.readInformation(r, "goal", goalName);
-    if (!goal) throw new Error(`Goal not found: ${goalName}`);
+    if (!goal) throw new Error(t(l, "error.goalNotFound", { name: goalName }));
     const updated = { ...goal, tags: [...(goal.tags || []), { name: "@abandoned" }] } as Feature;
     ctx.platform.writeInformation(r, "goal", goalName, updated);
 
-    let output = `[${r}] abandoned: ${goalName}`;
+    let output = `[${r}] ${t(l, "individual.abandon.done", { name: goalName })}`;
 
     if (params.experience) {
       const exp = parseSource(params.experience.source, "experience");
       ctx.platform.writeInformation(r, "experience", params.experience.name, exp);
-      output += `\nsynthesized: ${params.experience.name}`;
+      output += `\n${t(l, "individual.finish.synthesized", { name: params.experience.name })}`;
     }
 
     return output;
@@ -276,7 +274,7 @@ const synthesize: Process<{ name: string; source: string }, Feature> = {
     const r = role(ctx);
     const feature = parseSource(params.source, "experience");
     ctx.platform.writeInformation(r, "experience", params.name, feature);
-    return `[${r}] synthesized: ${params.name}\n\n${renderFeature(feature)}`;
+    return `[${r}] ${t(ctx.locale, "individual.synthesize.done", { name: params.name })}\n\n${renderFeature(feature)}`;
   },
 };
 
@@ -289,27 +287,25 @@ const reflect: Process<{ experienceNames: string[]; knowledgeName: string; knowl
   }),
   execute(ctx, params) {
     const r = role(ctx);
+    const l = ctx.locale;
 
     if (params.experienceNames.length === 0) {
-      throw new Error("At least one experience required");
+      throw new Error(t(l, "error.experienceRequired"));
     }
 
-    // Validate all experiences exist
     for (const expName of params.experienceNames) {
       const exists = ctx.platform.readInformation(r, "experience", expName);
-      if (!exists) throw new Error(`Experience not found: ${expName}`);
+      if (!exists) throw new Error(t(l, "error.experienceNotFound", { name: expName }));
     }
 
-    // Write knowledge
     const feature = parseSource(params.knowledgeSource, "knowledge");
     ctx.platform.writeInformation(r, "knowledge", params.knowledgeName, feature);
 
-    // Remove consumed experiences
     for (const expName of params.experienceNames) {
       ctx.platform.removeInformation(r, "experience", expName);
     }
 
-    return `[${r}] reflected: ${params.experienceNames.join(", ")} → ${params.knowledgeName}\n\n${renderFeature(feature)}`;
+    return `[${r}] ${t(l, "individual.reflect.done", { from: params.experienceNames.join(", "), to: params.knowledgeName })}\n\n${renderFeature(feature)}`;
   },
 };
 
@@ -321,8 +317,8 @@ const apply: Process<{ name: string }, Feature> = {
   execute(ctx, params) {
     const r = role(ctx);
     const feature = ctx.platform.readInformation(r, "procedure", params.name);
-    if (!feature) throw new Error(`Procedure not found: ${params.name}`);
-    return `[${r}] applying: ${params.name}\n\n${renderFeature(feature)}`;
+    if (!feature) throw new Error(t(ctx.locale, "error.procedureNotFound", { name: params.name }));
+    return `[${r}] ${t(ctx.locale, "individual.apply.done", { name: params.name })}\n\n${renderFeature(feature)}`;
   },
 };
 
@@ -338,7 +334,7 @@ function createUseProcess(rx: ResourceX): Process<{ locator: string; args?: unkn
       const r = role(ctx);
       const executable = await rx.use(params.locator);
       const result = await executable.execute(params.args);
-      return `[${r}] used: ${params.locator}\n\n${typeof result === "string" ? result : JSON.stringify(result, null, 2)}`;
+      return `[${r}] ${t(ctx.locale, "individual.use.done", { name: params.locator })}\n\n${typeof result === "string" ? result : JSON.stringify(result, null, 2)}`;
     },
   };
 }

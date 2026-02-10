@@ -14,6 +14,7 @@ import type { Process, RunnableSystem } from "@rolexjs/system";
 import type { Platform } from "./Platform.js";
 import type { Feature } from "./Feature.js";
 import type { Scenario } from "./Scenario.js";
+import { t } from "./i18n/index.js";
 import { BORN, TEACH, TRAIN, RETIRE, KILL } from "./Role.js";
 
 // ========== Helpers ==========
@@ -48,7 +49,7 @@ const born: Process<{ name: string; source: string }, Feature> = {
     ctx.platform.createStructure(params.name);
     const feature = parseSource(params.source, "persona");
     ctx.platform.writeInformation(params.name, "persona", "persona", feature);
-    return `[${params.name}] born\n\n${renderFeature(feature)}`;
+    return `[${params.name}] ${t(ctx.locale, "role.born")}\n\n${renderFeature(feature)}`;
   },
 };
 
@@ -62,7 +63,7 @@ const teach: Process<{ roleId: string; name: string; source: string }, Feature> 
   execute(ctx, params) {
     const feature = parseSource(params.source, "knowledge");
     ctx.platform.writeInformation(params.roleId, "knowledge", params.name, feature);
-    return `[${params.roleId}] taught: ${params.name}\n\n${renderFeature(feature)}`;
+    return `[${params.roleId}] ${t(ctx.locale, "role.taught", { name: params.name })}\n\n${renderFeature(feature)}`;
   },
 };
 
@@ -76,7 +77,7 @@ const train: Process<{ roleId: string; name: string; source: string }, Feature> 
   execute(ctx, params) {
     const feature = parseSource(params.source, "procedure");
     ctx.platform.writeInformation(params.roleId, "procedure", params.name, feature);
-    return `[${params.roleId}] trained: ${params.name}\n\n${renderFeature(feature)}`;
+    return `[${params.roleId}] ${t(ctx.locale, "role.trained", { name: params.name })}\n\n${renderFeature(feature)}`;
   },
 };
 
@@ -88,10 +89,10 @@ const retire: Process<{ name: string }, Feature> = {
   execute(ctx, params) {
     // Read persona, add @retired tag, write back
     const persona = ctx.platform.readInformation(params.name, "persona", "persona");
-    if (!persona) throw new Error(`Role not found: ${params.name}`);
+    if (!persona) throw new Error(t(ctx.locale, "error.roleNotFound", { name: params.name }));
     const updated = { ...persona, tags: [...(persona.tags || []), { name: "@retired" }] } as Feature;
     ctx.platform.writeInformation(params.name, "persona", "persona", updated);
-    return `[${params.name}] retired`;
+    return `[${params.name}] ${t(ctx.locale, "role.retired")}`;
   },
 };
 
@@ -102,7 +103,7 @@ const kill: Process<{ name: string }, Feature> = {
   }),
   execute(ctx, params) {
     ctx.platform.removeStructure(params.name);
-    return `[${params.name}] killed`;
+    return `[${params.name}] ${t(ctx.locale, "role.killed")}`;
   },
 };
 

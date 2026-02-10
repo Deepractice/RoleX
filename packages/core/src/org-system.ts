@@ -13,6 +13,7 @@ import type { Process, RunnableSystem } from "@rolexjs/system";
 import type { Platform } from "./Platform.js";
 import type { Feature } from "./Feature.js";
 import type { Scenario } from "./Scenario.js";
+import { t } from "./i18n/index.js";
 import { FOUND, DISSOLVE } from "./organization.js";
 
 // ========== Helpers ==========
@@ -42,7 +43,7 @@ const found: Process<{ name: string; source: string; parent?: string }, Feature>
     ctx.platform.createStructure(params.name, params.parent);
     const feature = parseSource(params.source, "charter");
     ctx.platform.writeInformation(params.name, "charter", "charter", feature);
-    return `[${params.name}] founded`;
+    return `[${params.name}] ${t(ctx.locale, "org.founded")}`;
   },
 };
 
@@ -53,7 +54,7 @@ const dissolve: Process<{ name: string }, Feature> = {
   }),
   execute(ctx, params) {
     ctx.platform.removeStructure(params.name);
-    return `[${params.name}] dissolved`;
+    return `[${params.name}] ${t(ctx.locale, "org.dissolved")}`;
   },
 };
 

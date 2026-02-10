@@ -31,4 +31,9 @@ export interface Platform<I = unknown> {
   listRelations(name: string, from: string): string[];
   hasRelation(name: string, from: string, to: string): boolean;
   removeRelation(name: string, from: string, to: string): void;
+
+  // ===== Settings (global key-value, optional) =====
+
+  readSettings?(): Record<string, unknown>;
+  writeSettings?(settings: Record<string, unknown>): void;
 }

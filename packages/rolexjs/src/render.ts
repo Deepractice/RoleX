@@ -6,6 +6,7 @@
  */
 
 import type { Platform } from "@rolexjs/core";
+import { t } from "@rolexjs/core";
 
 // ========== Status Bar ==========
 
@@ -26,7 +27,7 @@ export function readRoleState(platform: Platform, roleName: string): RoleState {
   let hasPlan = false;
   if (goalName) {
     const g = platform.readInformation(roleName, "goal", goalName);
-    const done = g?.tags?.some((t: any) => t.name === "@done" || t.name === "@abandoned");
+    const done = g?.tags?.some((tg: any) => tg.name === "@done" || tg.name === "@abandoned");
     goal = done ? "none" : goalName;
 
     if (goal !== "none") {
@@ -35,79 +36,86 @@ export function readRoleState(platform: Platform, roleName: string): RoleState {
     }
   }
 
-  const tasks = platform.listInformation(roleName, "task");
-  const tasksDone = tasks.filter((t) => t.tags?.some((tag: any) => tag.name === "@done")).length;
+  let tasksDone = 0;
+  let tasksTotal = 0;
+  if (goal !== "none") {
+    const tasks = platform.listInformation(roleName, "task");
+    tasksDone = tasks.filter((tk) => tk.tags?.some((tag: any) => tag.name === "@done")).length;
+    tasksTotal = tasks.length;
+  }
 
-  return { roleName, goal, hasPlan, tasksDone, tasksTotal: tasks.length };
+  return { roleName, goal, hasPlan, tasksDone, tasksTotal };
 }
 
 /** Render the two-line status bar. */
-export function statusBar(state: RoleState, processName: string, extra?: { taskName?: string }): string {
+export function statusBar(state: RoleState, processName: string, locale: string, extra?: { taskName?: string }): string {
   const now = new Date().toISOString().replace("T", " ").slice(0, 19);
-  const plan = state.goal === "none" ? "✗" : state.hasPlan ? "✓" : "✗";
   const line1Parts = [
     `[${state.roleName}]`,
-    `goal: ${state.goal}`,
-    `plan: ${plan}`,
-    `tasks: ${state.tasksDone}/${state.tasksTotal}`,
-    now,
+    t(locale, "render.goal", { name: state.goal }),
   ];
+  if (state.goal !== "none") {
+    line1Parts.push(t(locale, "render.plan", { status: state.hasPlan ? "✓" : "✗" }));
+    line1Parts.push(t(locale, "render.tasks", { done: state.tasksDone, total: state.tasksTotal }));
+  }
+  line1Parts.push(now);
   const line1 = line1Parts.join(" | ");
-  const line2 = `Next: ${nextHint(processName, state, extra)}`;
+  const hint = nextHint(processName, state, locale, extra);
+  const line2 = t(locale, "render.next", { hint });
   return `${line1}\n${line2}`;
 }
 
 // ========== Next Hints ==========
 
 /** Compute the next-step hint for a given process. */
-function nextHint(processName: string, state: RoleState, extra?: { taskName?: string }): string {
+function nextHint(processName: string, state: RoleState, locale: string, extra?: { taskName?: string }): string {
   switch (processName) {
     case "identity":
       return state.goal === "none"
-        ? "`want` to set a goal, or `focus` to check existing goals."
-        : "`focus` to check current goal.";
+        ? t(locale, "render.hint.identity.noGoal")
+        : t(locale, "render.hint.identity.hasGoal");
 
     case "focus":
-      if (state.goal === "none") return "`want` to set a new goal.";
-      if (!state.hasPlan && state.tasksTotal === 0) return "`design` to create a plan, or `todo` to create tasks.";
-      if (state.tasksTotal === 0) return "`todo` to break the plan into concrete tasks.";
-      return "Continue with next task, or `todo` to add more tasks.";
+      if (state.goal === "none") return t(locale, "render.hint.focus.noGoal");
+      if (!state.hasPlan && state.tasksTotal === 0) return t(locale, "render.hint.focus.noPlanNoTask");
+      if (state.tasksTotal === 0) return t(locale, "render.hint.focus.noTask");
+      return t(locale, "render.hint.focus.hasTasks");
 
     case "want":
-      return "`design` to create a plan, or `todo` to create tasks directly.";
+      return t(locale, "render.hint.want");
 
     case "design":
-      return "`todo` to break the plan into concrete tasks.";
+      return t(locale, "render.hint.design");
 
     case "todo":
       return extra?.taskName
-        ? `Execute the task, then \`finish("${extra.taskName}")\` when done.`
-        : "Execute the task, then `finish` when done.";
+        ? t(locale, "render.hint.todo", { name: extra.taskName })
+        : t(locale, "render.hint.todo.generic");
 
     case "finish": {
       const remaining = state.tasksTotal - state.tasksDone;
-      if (remaining === 0) return "All tasks done! `achieve` to complete the goal.";
-      return `${remaining} task(s) remaining.`;
+      if (remaining === 0) return t(locale, "render.hint.finish.allDone");
+      return t(locale, "render.hint.finish.remaining", { count: remaining });
     }
 
     case "achieve":
     case "abandon":
-      return "`want` to set a new goal, or `focus` to check other goals.";
+      return t(locale, "render.hint.achieveAbandon");
 
     case "synthesize":
-      return "Continue working. When patterns emerge, `reflect` to distill into knowledge.";
+      return t(locale, "render.hint.synthesize");
 
     case "reflect":
-      return "`identity` to see updated knowledge.";
+      return t(locale, "render.hint.reflect");
 
     case "apply":
-      return "Procedure loaded. Execute using the described workflow.";
+      return t(locale, "render.hint.apply");
 
     case "use":
-      return "Tool executed. Continue with your task.";
+      return t(locale, "render.hint.use");
 
     default:
-      return "Continue working.";
+      return t(locale, "render.hint.default");
   }
 }
 
@@ -119,7 +127,8 @@ export function wrapOutput(
   result: string,
   extra?: { taskName?: string },
 ): string {
+  const locale = (platform.readSettings?.()?.locale as string) ?? "en";
   const state = readRoleState(platform, roleName);
-  const bar = statusBar(state, processName, extra);
+  const bar = statusBar(state, processName, locale, extra);
   return `${bar}\n\n${result}`;
 }

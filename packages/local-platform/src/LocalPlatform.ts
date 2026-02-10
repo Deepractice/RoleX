@@ -200,6 +200,21 @@ export class LocalPlatform implements Platform {
     if (existsSync(filePath)) rmSync(filePath);
   }
 
+  // ===== Settings =====
+
+  readSettings(): Record<string, unknown> {
+    const settingsPath = join(this.rootDir, "settings.json");
+    if (!existsSync(settingsPath)) return {};
+    return JSON.parse(readFileSync(settingsPath, "utf-8"));
+  }
+
+  writeSettings(settings: Record<string, unknown>): void {
+    const existing = this.readSettings();
+    const merged = { ...existing, ...settings };
+    mkdirSync(this.rootDir, { recursive: true });
+    writeFileSync(join(this.rootDir, "settings.json"), JSON.stringify(merged, null, 2), "utf-8");
+  }
+
   // ===== Internal =====
 
   /** Build path for a structure given its name and parent. */

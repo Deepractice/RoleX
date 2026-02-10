@@ -14,6 +14,8 @@ export interface ProcessContext<I = unknown> {
   readonly platform: Platform<I>;
   /** Current active structure name (e.g. role name). */
   structure: string;
+  /** Current locale. Reads from platform settings, defaults to "en". */
+  readonly locale: string;
 }
 
 /** A process with params schema and execute logic. */
@@ -48,6 +50,9 @@ export function defineSystem<I>(platform: Platform<I>, config: SystemConfig<I>):
   const ctx: ProcessContext<I> = {
     platform,
     structure: "",
+    get locale(): string {
+      return (platform.readSettings?.()?.locale as string) ?? "en";
+    },
   };
 
   return {

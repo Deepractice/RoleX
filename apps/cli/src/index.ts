@@ -14,6 +14,7 @@ import { todo } from "./commands/todo.js";
 import { achieve } from "./commands/achieve.js";
 import { abandon } from "./commands/abandon.js";
 import { finish } from "./commands/finish.js";
+import { setting } from "./commands/setting.js";
 
 const main = defineCommand({
   meta: {
@@ -41,6 +42,8 @@ const main = defineCommand({
     achieve,
     abandon,
     synthesize,
+    // Settings
+    setting,
   },
 });
 
