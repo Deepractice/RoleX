@@ -128,9 +128,9 @@ describe("Role System + Individual System — full lifecycle", () => {
     expect(result).toContain("conclusion: build-mvp");
     expect(result).toContain("synthesized: mvp-achievement");
     // Verify experience was written
-    expect(platform.readInformation("sean", "experience", "mvp-achievement")).not.toBeNull();
+    expect(platform.readInformation("sean", "experience.insight", "mvp-achievement")).not.toBeNull();
     // Verify conclusion was written
-    expect(platform.readInformation("sean", "conclusion", "build-mvp")).not.toBeNull();
+    expect(platform.readInformation("sean", "experience.conclusion", "build-mvp")).not.toBeNull();
   });
 
   test("reflect — distill experience into knowledge", async () => {
@@ -141,8 +141,8 @@ describe("Role System + Individual System — full lifecycle", () => {
     });
     expect(result).toContain("[sean] reflected");
     expect(result).toContain("shipping-principles");
-    expect(platform.readInformation("sean", "experience", "mvp-achievement")).toBeNull();
-    expect(platform.readInformation("sean", "knowledge", "shipping-principles")).not.toBeNull();
+    expect(platform.readInformation("sean", "experience.insight", "mvp-achievement")).toBeNull();
+    expect(platform.readInformation("sean", "knowledge.pattern", "shipping-principles")).not.toBeNull();
   });
 
   test("skill — load procedure", async () => {

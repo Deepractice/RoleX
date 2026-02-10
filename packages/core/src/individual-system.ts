@@ -121,11 +121,12 @@ const identity: Process<{ roleId: string }, Feature> = {
 
     // Local identity (from platform storage)
     const persona = ctx.platform.listInformation(params.roleId, "persona");
-    const knowledge = ctx.platform.listInformation(params.roleId, "knowledge");
-    const procedure = ctx.platform.listInformation(params.roleId, "procedure");
-    const experience = ctx.platform.listInformation(params.roleId, "experience");
+    const pattern = ctx.platform.listInformation(params.roleId, "knowledge.pattern");
+    const procedure = ctx.platform.listInformation(params.roleId, "knowledge.procedure");
+    const insight = ctx.platform.listInformation(params.roleId, "experience.insight");
+    const conclusion = ctx.platform.listInformation(params.roleId, "experience.conclusion");
 
-    const all = [...baseFeatures, ...persona, ...knowledge, ...procedure, ...experience];
+    const all = [...baseFeatures, ...persona, ...pattern, ...procedure, ...insight, ...conclusion];
     return `[${params.roleId}] ${t(ctx.locale, "individual.identity.loaded")}\n\n${renderFeatures(all)}`;
   },
 };
@@ -307,8 +308,8 @@ const finish: Process<{ name: string; conclusion?: string }, Feature> = {
     let output = `[${r}] ${t(l, "individual.finish.done", { name: params.name })}`;
 
     if (params.conclusion) {
-      const conclusionFeature = parseSource(params.conclusion, "conclusion");
-      ctx.platform.writeInformation(r, "conclusion", params.name, conclusionFeature);
+      const conclusionFeature = parseSource(params.conclusion, "experience.conclusion");
+      ctx.platform.writeInformation(r, "experience.conclusion", params.name, conclusionFeature);
       output += `\n${t(l, "individual.finish.conclusion", { name: params.name })}`;
     }
 
@@ -336,12 +337,12 @@ const achieve: Process<{ conclusion: string; experience: { name: string; source:
     ctx.platform.writeInformation(r, "goal", goalName, updated);
 
     // Write conclusion
-    const conclusionFeature = parseSource(params.conclusion, "conclusion");
-    ctx.platform.writeInformation(r, "conclusion", goalName, conclusionFeature);
+    const conclusionFeature = parseSource(params.conclusion, "experience.conclusion");
+    ctx.platform.writeInformation(r, "experience.conclusion", goalName, conclusionFeature);
 
-    // Write experience
-    const exp = parseSource(params.experience.source, "experience");
-    ctx.platform.writeInformation(r, "experience", params.experience.name, exp);
+    // Write insight
+    const exp = parseSource(params.experience.source, "experience.insight");
+    ctx.platform.writeInformation(r, "experience.insight", params.experience.name, exp);
 
     let output = `[${r}] ${t(l, "individual.achieve.done", { name: goalName })}`;
     output += `\n${t(l, "individual.achieve.conclusion", { name: goalName })}`;
@@ -370,14 +371,14 @@ const abandon: Process<{ conclusion?: string; experience?: { name: string; sourc
     let output = `[${r}] ${t(l, "individual.abandon.done", { name: goalName })}`;
 
     if (params.conclusion) {
-      const conclusionFeature = parseSource(params.conclusion, "conclusion");
-      ctx.platform.writeInformation(r, "conclusion", goalName, conclusionFeature);
+      const conclusionFeature = parseSource(params.conclusion, "experience.conclusion");
+      ctx.platform.writeInformation(r, "experience.conclusion", goalName, conclusionFeature);
       output += `\n${t(l, "individual.abandon.conclusion", { name: goalName })}`;
     }
 
     if (params.experience) {
-      const exp = parseSource(params.experience.source, "experience");
-      ctx.platform.writeInformation(r, "experience", params.experience.name, exp);
+      const exp = parseSource(params.experience.source, "experience.insight");
+      ctx.platform.writeInformation(r, "experience.insight", params.experience.name, exp);
       output += `\n${t(l, "individual.abandon.synthesized", { name: params.experience.name })}`;
     }
 
@@ -385,12 +386,12 @@ const abandon: Process<{ conclusion?: string; experience?: { name: string; sourc
   },
 };
 
-const FORGETTABLE_TYPES = ["knowledge", "experience", "procedure"] as const;
+const FORGETTABLE_TYPES = ["knowledge.pattern", "knowledge.procedure", "experience.insight"] as const;
 
 const forget: Process<{ type: string; name: string }, Feature> = {
   ...FORGET,
   params: z.object({
-    type: z.enum(FORGETTABLE_TYPES).describe("Information type: knowledge, experience, or procedure"),
+    type: z.enum(FORGETTABLE_TYPES).describe("Information type: knowledge.pattern, knowledge.procedure, or experience.insight"),
     name: z.string().describe("Name of the information to forget"),
   }),
   execute(ctx, params) {
@@ -420,15 +421,15 @@ const reflect: Process<{ experienceNames: string[]; knowledgeName: string; knowl
     }
 
     for (const expName of params.experienceNames) {
-      const exists = ctx.platform.readInformation(r, "experience", expName);
+      const exists = ctx.platform.readInformation(r, "experience.insight", expName);
       if (!exists) throw new Error(t(l, "error.experienceNotFound", { name: expName }));
     }
 
-    const feature = parseSource(params.knowledgeSource, "knowledge");
-    ctx.platform.writeInformation(r, "knowledge", params.knowledgeName, feature);
+    const feature = parseSource(params.knowledgeSource, "knowledge.pattern");
+    ctx.platform.writeInformation(r, "knowledge.pattern", params.knowledgeName, feature);
 
     for (const expName of params.experienceNames) {
-      ctx.platform.removeInformation(r, "experience", expName);
+      ctx.platform.removeInformation(r, "experience.insight", expName);
     }
 
     return `[${r}] ${t(l, "individual.reflect.done", { from: params.experienceNames.join(", "), to: params.knowledgeName })}\n\n${renderFeature(feature)}`;
@@ -442,8 +443,8 @@ const skill: Process<{ name: string }, Feature> = {
   }),
   execute(ctx, params) {
     const r = role(ctx);
-    const feature = ctx.platform.readInformation(r, "procedure", params.name)
-      ?? ctx.base?.readInformation(r, "procedure", params.name)
+    const feature = ctx.platform.readInformation(r, "knowledge.procedure", params.name)
+      ?? ctx.base?.readInformation(r, "knowledge.procedure", params.name)
       ?? null;
     if (!feature) throw new Error(t(ctx.locale, "error.procedureNotFound", { name: params.name }));
 

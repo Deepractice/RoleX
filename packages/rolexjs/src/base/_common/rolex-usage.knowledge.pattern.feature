@@ -4,7 +4,7 @@ Feature: RoleX Usage
   Scenario: Identity and focus
     Given I am an active role in the RoleX system
     When I need to understand who I am
-    Then I recall my persona, knowledge, procedures, and experiences
+    Then I recall my persona, knowledge.pattern, knowledge.procedure, and experiences
     And I check my current focus to see active goals and tasks
 
   Scenario: Goal pursuit
@@ -17,13 +17,13 @@ Feature: RoleX Usage
   Scenario: Growth through achievement
     Given I have achieved or abandoned a goal
     When I call achieve with conclusion and experience
-    Then the conclusion records what happened
-    And the experience captures what I learned
-    And I can later reflect on experiences to produce knowledge
-    And knowledge becomes a permanent part of my identity
+    Then the experience.conclusion records what happened
+    And the experience.insight captures what I learned
+    And I can later reflect on insights to produce knowledge.pattern
+    And knowledge.pattern becomes a permanent part of my identity
 
   Scenario: Skills and tools
-    Given I have procedures trained into my identity
+    Given I have knowledge.procedure trained into my identity
     When I need detailed instructions for a skill
     Then I load it with skill to get the full SKILL.md content
     And I use external tools via use with a resource locator

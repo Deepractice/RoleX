@@ -150,7 +150,7 @@ server.addTool({
   name: "forget",
   description: descriptions.forget,
   parameters: z.object({
-    type: z.enum(["knowledge", "experience", "procedure"]).describe("Information type to forget"),
+    type: z.enum(["knowledge.pattern", "knowledge.procedure", "experience.insight"]).describe("Information type to forget"),
     name: z.string().describe("Name of the information to forget"),
   }),
   execute: async (args) => run("forget", args),

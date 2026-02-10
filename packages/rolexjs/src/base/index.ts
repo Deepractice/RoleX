@@ -15,7 +15,7 @@ import type { BaseProvider } from "@rolexjs/system";
 
 // ========== _common ==========
 
-import commonRolexUsage from "./_common/rolex-usage.knowledge.feature";
+import commonRolexUsage from "./_common/rolex-usage.knowledge.pattern.feature";
 
 // ========== nuwa ==========
 
@@ -42,7 +42,7 @@ function parseFeature(source: string, type: Feature["type"]): Feature {
 // ========== Feature Registry ==========
 
 const common: Feature[] = [
-  parseFeature(commonRolexUsage, "knowledge"),
+  parseFeature(commonRolexUsage, "knowledge.pattern"),
 ];
 
 const roles: Record<string, Feature[]> = {

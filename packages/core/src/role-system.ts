@@ -61,8 +61,8 @@ const teach: Process<{ roleId: string; name: string; source: string }, Feature> 
     source: z.string().describe("Gherkin knowledge source"),
   }),
   execute(ctx, params) {
-    const feature = parseSource(params.source, "knowledge");
-    ctx.platform.writeInformation(params.roleId, "knowledge", params.name, feature);
+    const feature = parseSource(params.source, "knowledge.pattern");
+    ctx.platform.writeInformation(params.roleId, "knowledge.pattern", params.name, feature);
     return `[${params.roleId}] ${t(ctx.locale, "role.taught", { name: params.name })}\n\n${renderFeature(feature)}`;
   },
 };
@@ -75,8 +75,8 @@ const train: Process<{ roleId: string; name: string; source: string }, Feature> 
     source: z.string().describe("Gherkin procedure source"),
   }),
   execute(ctx, params) {
-    const feature = parseSource(params.source, "procedure");
-    ctx.platform.writeInformation(params.roleId, "procedure", params.name, feature);
+    const feature = parseSource(params.source, "knowledge.procedure");
+    ctx.platform.writeInformation(params.roleId, "knowledge.procedure", params.name, feature);
     return `[${params.roleId}] ${t(ctx.locale, "role.trained", { name: params.name })}\n\n${renderFeature(feature)}`;
   },
 };

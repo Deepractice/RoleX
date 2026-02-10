@@ -14,9 +14,10 @@ import type { Scenario } from "./Scenario.js";
 export interface Feature extends GherkinFeature {
   readonly type:
     | "persona"
-    | "knowledge"
-    | "procedure"
-    | "experience"
+    | "knowledge.pattern"
+    | "knowledge.procedure"
+    | "experience.insight"
+    | "experience.conclusion"
     | "goal"
     | "plan"
     | "task"

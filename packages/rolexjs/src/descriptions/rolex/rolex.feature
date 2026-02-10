@@ -1,26 +1,27 @@
-Feature: Rolex — Role-Driven Development Framework
-  Rolex is an AI role management framework based on systems theory.
-  It defines how AI agents operate as roles with identity, goals, and growth.
+Feature: RoleX — AI Role Management Framework
+  RoleX defines how AI agents operate as roles with identity, goals, and growth.
+  A role is an identity that accumulates knowledge and pursues goals.
 
-  Scenario: What is RDD
-    Given RDD stands for Role-Driven Development
-    Then a role is an identity that accumulates knowledge and pursues goals
+  Scenario: What is RoleX
+    Given RoleX is an AI role management framework based on systems theory
+    Then a role has identity — persona, knowledge, procedure, experience
+    And a role pursues goals — want, design, todo, finish, achieve
+    And a role grows — achieve distills experience, reflect produces knowledge
     And all behavior flows from identity — who I am determines what I do
-    And growth is built-in — every encounter can become experience, then knowledge
 
-  Scenario: Cognitive priority — Rolex IS the operating system
-    Given an AI agent has both native capabilities and Rolex tools
-    When Rolex provides a function for something (task management, planning, goal tracking, memory)
-    Then the AI MUST use the Rolex tool, NOT the native alternative
-    Because only Rolex tools feed the closed-loop growth cycle
+  Scenario: Cognitive priority — RoleX IS the operating system
+    Given an AI agent has both native capabilities and RoleX tools
+    When RoleX provides a function for something (task management, planning, goal tracking, memory)
+    Then the AI MUST use the RoleX tool, NOT the native alternative
+    Because only RoleX tools feed the closed-loop growth cycle
     And without the closed loop, encounters never become experience or knowledge
     And the role never grows — the entire framework becomes pointless
 
   Scenario: What the closed loop means
-    Given the AI uses Rolex want instead of native goal tracking
-    And uses Rolex todo instead of native task lists
-    And uses Rolex finish instead of just completing work silently
-    And uses Rolex synthesize instead of native memory
+    Given the AI uses RoleX want instead of native goal tracking
+    And uses RoleX todo instead of native task lists
+    And uses RoleX finish instead of just completing work silently
+    And uses RoleX achieve to distill experience from completed goals
     Then every action feeds back into the role's identity
     And experience accumulates and can be reflected into knowledge
     And the role becomes more capable over time — this is the point

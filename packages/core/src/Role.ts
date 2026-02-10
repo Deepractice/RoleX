@@ -30,7 +30,7 @@ export const TEACH: ProcessDefinition = {
   kind: "write",
   targets: ["Role"],
   inputs: [],
-  outputs: ["knowledge"],
+  outputs: ["knowledge.pattern"],
 };
 
 export const TRAIN: ProcessDefinition = {
@@ -39,7 +39,7 @@ export const TRAIN: ProcessDefinition = {
   kind: "write",
   targets: ["Role"],
   inputs: [],
-  outputs: ["procedure"],
+  outputs: ["knowledge.procedure"],
 };
 
 export const RETIRE: ProcessDefinition = {

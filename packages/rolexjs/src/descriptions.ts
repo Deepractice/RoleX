@@ -8,7 +8,7 @@
 // ========== Rolex (top-level) ==========
 
 import rolexFeature from "./descriptions/rolex/rolex.feature";
-import cognitionFeature from "./descriptions/rolex/cognition/cognition.feature";
+import informationFeature from "./descriptions/rolex/information/information.feature";
 import executionFeature from "./descriptions/rolex/execution/execution.feature";
 import growthFeature from "./descriptions/rolex/growth/growth.feature";
 import capabilityFeature from "./descriptions/rolex/capability/capability.feature";
@@ -54,7 +54,7 @@ import directoryFeature from "./descriptions/governance/directory/directory.feat
 
 /** Rolex world description topic names. */
 export const WORLD_TOPICS = [
-  "rolex", "cognition", "execution",
+  "rolex", "information", "execution",
   "growth", "capability", "gherkin",
 ] as const;
 
@@ -63,7 +63,7 @@ export type WorldTopic = (typeof WORLD_TOPICS)[number];
 /** World-level Gherkin descriptions — the foundational positioning for AI. */
 export const world: Record<WorldTopic, string> = {
   rolex: rolexFeature,
-  cognition: cognitionFeature,
+  information: informationFeature,
   execution: executionFeature,
   growth: growthFeature,
   capability: capabilityFeature,

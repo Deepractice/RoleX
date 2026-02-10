@@ -22,13 +22,14 @@ Feature: Execution — the doing cycle
     Given I have tasks to do
     When I complete a task
     Then I call finish to mark it done
-    And optionally capture what I learned as experience
+    And optionally write a conclusion summarizing what happened
 
   Scenario: Achieve or abandon
     Given all tasks are done or the goal is no longer viable
-    When the goal is fulfilled I call achieve
+    When the goal is fulfilled I call achieve with conclusion and experience
     Or when the goal should be dropped I call abandon
-    And optionally capture what I learned as experience
+    Then achieve writes a conclusion and distills experience in one step
+    And abandon optionally writes conclusion and experience
 
   Scenario: Multiple goals
     Given I may have several active goals

@@ -10,4 +10,4 @@ Feature: finish
     Given I completed a task and want to summarize what happened
     When I call finish with a conclusion (Gherkin source)
     Then the task is marked @done
-    And the conclusion is stored as a completion summary
+    And the experience.conclusion is stored as a completion summary

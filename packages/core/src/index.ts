@@ -37,9 +37,9 @@ export {
   ROLE,
   // Information
   PERSONA,
-  KNOWLEDGE,
+  PATTERN,
   PROCEDURE,
-  EXPERIENCE,
+  INSIGHT,
   CONCLUSION,
   GOAL,
   PLAN,

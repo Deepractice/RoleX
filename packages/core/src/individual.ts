@@ -22,7 +22,7 @@ import type {
 export const ROLE: StructureDefinition = {
   name: "Role",
   description: "The individual — an identity that accumulates knowledge, experience, and pursues goals.",
-  informationTypes: ["persona", "knowledge", "procedure", "experience", "conclusion", "goal", "plan", "task"],
+  informationTypes: ["persona", "knowledge.pattern", "knowledge.procedure", "experience.insight", "experience.conclusion", "goal", "plan", "task"],
 };
 
 // ========== Information ==========
@@ -33,26 +33,26 @@ export const PERSONA: InformationType = {
   belongsTo: "Role",
 };
 
-export const KNOWLEDGE: InformationType = {
-  type: "knowledge",
-  description: "Declarative knowledge — what the role knows (facts, concepts, principles).",
+export const PATTERN: InformationType = {
+  type: "knowledge.pattern",
+  description: "Transferable principles — distilled from experience through reflection, or taught directly.",
   belongsTo: "Role",
 };
 
 export const PROCEDURE: InformationType = {
-  type: "procedure",
+  type: "knowledge.procedure",
   description: "Procedural knowledge — what the role knows how to do (workflows, operations).",
   belongsTo: "Role",
 };
 
-export const EXPERIENCE: InformationType = {
-  type: "experience",
-  description: "A posteriori knowledge — what the role has learned from encounters.",
+export const INSIGHT: InformationType = {
+  type: "experience.insight",
+  description: "A posteriori knowledge — what the role learned from an encounter. Temporary, consumed by reflect.",
   belongsTo: "Role",
 };
 
 export const CONCLUSION: InformationType = {
-  type: "conclusion",
+  type: "experience.conclusion",
   description: "Completion summary — what happened, what was the result.",
   belongsTo: "Role",
 };
@@ -82,7 +82,7 @@ export const COGNITION: StateDefinition = {
   description: "The role's self-awareness — who am I, what do I know.",
   appliesTo: "Role",
   producedBy: "identity",
-  includes: ["persona", "knowledge", "procedure", "experience"],
+  includes: ["persona", "knowledge.pattern", "knowledge.procedure", "experience.insight", "experience.conclusion"],
 };
 
 export const INTENTION: StateDefinition = {
@@ -128,43 +128,43 @@ export const FINISH: ProcessDefinition = {
   kind: "write",
   targets: ["Role"],
   inputs: ["task"],
-  outputs: ["conclusion"],
+  outputs: ["experience.conclusion"],
 };
 
 export const ACHIEVE: ProcessDefinition = {
   name: "achieve",
-  description: "Mark the current goal achieved. Write conclusion and distill experience.",
+  description: "Mark the current goal achieved. Write conclusion and distill insight.",
   kind: "write",
   targets: ["Role"],
   inputs: ["goal"],
-  outputs: ["conclusion", "experience"],
+  outputs: ["experience.conclusion", "experience.insight"],
 };
 
 export const ABANDON: ProcessDefinition = {
   name: "abandon",
-  description: "Mark the current goal abandoned. Optionally write conclusion and distill experience.",
+  description: "Mark the current goal abandoned. Optionally write conclusion and distill insight.",
   kind: "write",
   targets: ["Role"],
   inputs: ["goal"],
-  outputs: ["conclusion", "experience"],
+  outputs: ["experience.conclusion", "experience.insight"],
 };
 
 export const FORGET: ProcessDefinition = {
   name: "forget",
-  description: "Forget information — remove knowledge, experience, or procedure from identity.",
+  description: "Forget information — remove pattern, procedure, or insight from identity.",
   kind: "write",
   targets: ["Role"],
-  inputs: ["knowledge", "procedure", "experience"],
+  inputs: ["knowledge.pattern", "knowledge.procedure", "experience.insight"],
   outputs: [],
 };
 
 export const REFLECT: ProcessDefinition = {
   name: "reflect",
-  description: "Distill experiences into knowledge — the cognitive upgrade path.",
+  description: "Distill insights into patterns — the cognitive upgrade path.",
   kind: "transform",
   targets: ["Role"],
-  inputs: ["experience"],
-  outputs: ["knowledge"],
+  inputs: ["experience.insight"],
+  outputs: ["knowledge.pattern"],
 };
 
 export const IDENTITY: ProcessDefinition = {
@@ -172,7 +172,7 @@ export const IDENTITY: ProcessDefinition = {
   description: "Load the role's complete identity — render cognition frame.",
   kind: "query",
   targets: ["Role"],
-  inputs: ["persona", "knowledge", "procedure", "experience"],
+  inputs: ["persona", "knowledge.pattern", "knowledge.procedure", "experience.insight", "experience.conclusion"],
   outputs: [],
 };
 
@@ -190,7 +190,7 @@ export const SKILL: ProcessDefinition = {
   description: "Load a skill — read the procedure summary and load the full SKILL.md instructions.",
   kind: "query",
   targets: ["Role"],
-  inputs: ["procedure"],
+  inputs: ["knowledge.procedure"],
   outputs: [],
 };
 
@@ -209,12 +209,12 @@ export const GOAL_EXECUTION: SystemDefinition = {
   name: "goal-execution",
   description: "The doing cycle — set goals, make plans, execute tasks, achieve.",
   processes: ["identity", "want", "design", "todo", "finish", "achieve"],
-  feedback: ["experience"],
+  feedback: ["experience.insight"],
 };
 
 export const COGNITIVE_GROWTH: SystemDefinition = {
   name: "cognitive-growth",
   description: "The learning cycle — achieve distills experience, reflect turns experience into knowledge.",
   processes: ["achieve", "reflect"],
-  feedback: ["knowledge"],
+  feedback: ["knowledge.pattern"],
 };
