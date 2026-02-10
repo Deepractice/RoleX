@@ -16,6 +16,7 @@ export interface Feature extends GherkinFeature {
     | "persona"
     | "knowledge.pattern"
     | "knowledge.procedure"
+    | "knowledge.theory"
     | "experience.insight"
     | "experience.conclusion"
     | "goal"

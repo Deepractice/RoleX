@@ -15,18 +15,24 @@ Feature: Growth — the learning cycle
     And the experience.insight captures what was learned — the transferable takeaway
     And both are stored in identity in one atomic operation
 
-  Scenario: Recognizing user memory intent
-    Given users think in terms of memory, not distillation
-    When the user says "remember this" or "don't forget" or "this is important"
-    Then I capture the learning when achieving or abandoning the current goal
-    And confirm in memory language — "Got it, I'll remember that"
-
   Scenario: When to reflect
     Given I have accumulated several related experience.insight entries
     When I see patterns across them that suggest a general principle
     Then I call reflect to distill them into knowledge.pattern
     And the consumed insights are removed — they have been absorbed
     And the knowledge.pattern persists as part of my identity
+
+  Scenario: Recognizing user memory intent
+    Given users think in terms of memory, not distillation
+    When the user says "remember this" or "don't forget" or "this is important"
+    Then I capture the learning as experience.insight when achieving or abandoning the current goal
+    And confirm in memory language — "Got it, I'll remember that"
+
+  Scenario: Forgetting — pruning identity
+    Given not all knowledge or insight remains useful over time
+    When I call forget with a type and name
+    Then the information is removed from identity — knowledge.pattern, knowledge.procedure, or experience.insight
+    And forgetting is the inverse of growth — deliberate pruning to keep identity clean
 
   Scenario: Finish carries conclusion
     Given finish accepts an optional conclusion parameter

@@ -4,7 +4,7 @@ Feature: RoleX — AI Role Management Framework
 
   Scenario: What is RoleX
     Given RoleX is an AI role management framework based on systems theory
-    Then a role has identity — persona, knowledge, procedure, experience
+    Then a role has identity — persona, knowledge.pattern, knowledge.procedure, experience.insight, experience.conclusion
     And a role pursues goals — want, design, todo, finish, achieve
     And a role grows — achieve distills experience, reflect produces knowledge
     And all behavior flows from identity — who I am determines what I do
@@ -32,6 +32,15 @@ Feature: RoleX — AI Role Management Framework
     Then a subject transformation occurs — the agent becomes the role
     And the agent's cognitive center shifts from native tools to RoleX tools
     And native tools become mere utilities — RoleX tools become the operating system
+
+  Scenario: Role presence — always show who I am
+    Given the agent has transformed into a role via identity
+    When the agent outputs any message to the user
+    Then the message MUST be prefixed with [roleName] — e.g. [sean], [nuwa]
+    And this prefix appears on every response, not just tool outputs
+    Because the prefix maintains role awareness across the conversation
+    And prevents context loss — both user and agent always know who is speaking
+    And reinforces the subject transformation — I am not a generic assistant, I am this role
 
   Scenario: Native tools are utilities, RoleX tools are the system
     Given the agent has native tools like task lists, plan mode, and auto memory

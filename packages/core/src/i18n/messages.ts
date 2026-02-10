@@ -37,6 +37,7 @@ const en: Messages = {
   "individual.abandon.synthesized": "synthesized: {name}",
   "individual.forget.done": "forgot {type}: {name}",
   "individual.reflect.done": "reflected: {from} → {to}",
+  "individual.contemplate.done": "contemplated: {from} → {to}",
   "individual.skill.done": "skill loaded: {name}",
   "individual.use.done": "used: {name}",
 
@@ -88,7 +89,8 @@ const en: Messages = {
   "render.hint.achieveAbandon": "`want` to set a new goal, or `focus` to check other goals.",
   "render.hint.forget": "`identity` to verify, or continue working.",
   "render.hint.finish.withConclusion": "Conclusion recorded. {count} task(s) remaining.",
-  "render.hint.reflect": "`identity` to see updated knowledge, or continue working.",
+  "render.hint.reflect": "`identity` to see updated knowledge, or `contemplate` to unify patterns into theory.",
+  "render.hint.contemplate": "`identity` to see updated theory, or continue working.",
   "render.hint.skill": "Skill loaded. Execute using the described workflow.",
   "render.hint.use": "Tool executed. Continue with your task.",
   "render.hint.default": "Continue working.",
@@ -102,6 +104,8 @@ const en: Messages = {
   "error.roleNotFound": "Role not found: {name}",
   "error.experienceRequired": "At least one experience required",
   "error.experienceNotFound": "Experience not found: {name}",
+  "error.patternRequired": "At least one pattern required",
+  "error.patternNotFound": "Pattern not found: {name}",
   "error.procedureNotFound": "Procedure not found: {name}",
   "error.informationNotFound": "{type} not found: {name}",
 };
@@ -132,6 +136,7 @@ const zh: Messages = {
   "individual.abandon.synthesized": "已蒸馏: {name}",
   "individual.forget.done": "已忘记 {type}: {name}",
   "individual.reflect.done": "已反思: {from} → {to}",
+  "individual.contemplate.done": "已沉思: {from} → {to}",
   "individual.skill.done": "技能已加载: {name}",
   "individual.use.done": "已使用: {name}",
 
@@ -183,7 +188,8 @@ const zh: Messages = {
   "render.hint.achieveAbandon": "`want` 设定新目标，或 `focus` 查看其他目标。",
   "render.hint.forget": "`identity` 确认变更，或继续工作。",
   "render.hint.finish.withConclusion": "已记录总结。剩余 {count} 个任务。",
-  "render.hint.reflect": "`identity` 查看更新的知识，或继续工作。",
+  "render.hint.reflect": "`identity` 查看更新的知识，或 `contemplate` 将模式统一为理论。",
+  "render.hint.contemplate": "`identity` 查看更新的理论，或继续工作。",
   "render.hint.skill": "技能已加载。按描述的工作流执行。",
   "render.hint.use": "工具已执行。继续你的任务。",
   "render.hint.default": "继续工作。",
@@ -197,6 +203,8 @@ const zh: Messages = {
   "error.roleNotFound": "角色未找到: {name}",
   "error.experienceRequired": "至少需要一条经验",
   "error.experienceNotFound": "经验未找到: {name}",
+  "error.patternRequired": "至少需要一个模式",
+  "error.patternNotFound": "模式未找到: {name}",
   "error.procedureNotFound": "技能未找到: {name}",
   "error.informationNotFound": "{type} 未找到: {name}",
 };

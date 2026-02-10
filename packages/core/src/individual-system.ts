@@ -20,7 +20,7 @@ import type { ResourceX } from "resourcexjs";
 import { t } from "./i18n/index.js";
 import {
   WANT, DESIGN, TODO,
-  FINISH, ACHIEVE, ABANDON, FORGET, REFLECT,
+  FINISH, ACHIEVE, ABANDON, FORGET, REFLECT, CONTEMPLATE,
   IDENTITY, FOCUS, SKILL, USE,
 } from "./individual.js";
 
@@ -123,10 +123,11 @@ const identity: Process<{ roleId: string }, Feature> = {
     const persona = ctx.platform.listInformation(params.roleId, "persona");
     const pattern = ctx.platform.listInformation(params.roleId, "knowledge.pattern");
     const procedure = ctx.platform.listInformation(params.roleId, "knowledge.procedure");
+    const theory = ctx.platform.listInformation(params.roleId, "knowledge.theory");
     const insight = ctx.platform.listInformation(params.roleId, "experience.insight");
     const conclusion = ctx.platform.listInformation(params.roleId, "experience.conclusion");
 
-    const all = [...baseFeatures, ...persona, ...pattern, ...procedure, ...insight, ...conclusion];
+    const all = [...baseFeatures, ...persona, ...pattern, ...procedure, ...theory, ...insight, ...conclusion];
     return `[${params.roleId}] ${t(ctx.locale, "individual.identity.loaded")}\n\n${renderFeatures(all)}`;
   },
 };
@@ -386,12 +387,12 @@ const abandon: Process<{ conclusion?: string; experience?: { name: string; sourc
   },
 };
 
-const FORGETTABLE_TYPES = ["knowledge.pattern", "knowledge.procedure", "experience.insight"] as const;
+const FORGETTABLE_TYPES = ["knowledge.pattern", "knowledge.procedure", "knowledge.theory", "experience.insight"] as const;
 
 const forget: Process<{ type: string; name: string }, Feature> = {
   ...FORGET,
   params: z.object({
-    type: z.enum(FORGETTABLE_TYPES).describe("Information type: knowledge.pattern, knowledge.procedure, or experience.insight"),
+    type: z.enum(FORGETTABLE_TYPES).describe("Information type: knowledge.pattern, knowledge.procedure, knowledge.theory, or experience.insight"),
     name: z.string().describe("Name of the information to forget"),
   }),
   execute(ctx, params) {
@@ -433,6 +434,34 @@ const reflect: Process<{ experienceNames: string[]; knowledgeName: string; knowl
     }
 
     return `[${r}] ${t(l, "individual.reflect.done", { from: params.experienceNames.join(", "), to: params.knowledgeName })}\n\n${renderFeature(feature)}`;
+  },
+};
+
+const contemplate: Process<{ patternNames: string[]; theoryName: string; theorySource: string }, Feature> = {
+  ...CONTEMPLATE,
+  params: z.object({
+    patternNames: z.array(z.string()).describe("Pattern names to contemplate"),
+    theoryName: z.string().describe("Theory name to produce"),
+    theorySource: z.string().describe("Gherkin theory source"),
+  }),
+  execute(ctx, params) {
+    const r = role(ctx);
+    const l = ctx.locale;
+
+    if (params.patternNames.length === 0) {
+      throw new Error(t(l, "error.patternRequired"));
+    }
+
+    for (const pn of params.patternNames) {
+      const exists = ctx.platform.readInformation(r, "knowledge.pattern", pn);
+      if (!exists) throw new Error(t(l, "error.patternNotFound", { name: pn }));
+    }
+
+    const feature = parseSource(params.theorySource, "knowledge.theory");
+    ctx.platform.writeInformation(r, "knowledge.theory", params.theoryName, feature);
+
+    // Patterns are NOT consumed — theory is a view across patterns, patterns retain independent value
+    return `[${r}] ${t(l, "individual.contemplate.done", { from: params.patternNames.join(", "), to: params.theoryName })}\n\n${renderFeature(feature)}`;
   },
 };
 
@@ -487,7 +516,7 @@ export function createIndividualSystem(platform: Platform, rx?: ResourceX, base?
     identity, focus,
     want, design, todo,
     finish, achieve, abandon,
-    forget, reflect,
+    forget, reflect, contemplate,
     skill,
   };
 

@@ -3,7 +3,7 @@
  *
  * Everything here is done BY the role itself:
  * identity → focus → want → design → todo → finish → achieve →
- * abandon → reflect → skill
+ * abandon → reflect → contemplate → skill
  *
  * External processes (born, teach, train, retire, kill)
  * belong to the Role System.
@@ -22,7 +22,7 @@ import type {
 export const ROLE: StructureDefinition = {
   name: "Role",
   description: "The individual — an identity that accumulates knowledge, experience, and pursues goals.",
-  informationTypes: ["persona", "knowledge.pattern", "knowledge.procedure", "experience.insight", "experience.conclusion", "goal", "plan", "task"],
+  informationTypes: ["persona", "knowledge.pattern", "knowledge.procedure", "knowledge.theory", "experience.insight", "experience.conclusion", "goal", "plan", "task"],
 };
 
 // ========== Information ==========
@@ -42,6 +42,12 @@ export const PATTERN: InformationType = {
 export const PROCEDURE: InformationType = {
   type: "knowledge.procedure",
   description: "Procedural knowledge — what the role knows how to do (workflows, operations).",
+  belongsTo: "Role",
+};
+
+export const THEORY: InformationType = {
+  type: "knowledge.theory",
+  description: "Unified principles — the philosophical coherence across all patterns. Produced by contemplate.",
   belongsTo: "Role",
 };
 
@@ -82,7 +88,7 @@ export const COGNITION: StateDefinition = {
   description: "The role's self-awareness — who am I, what do I know.",
   appliesTo: "Role",
   producedBy: "identity",
-  includes: ["persona", "knowledge.pattern", "knowledge.procedure", "experience.insight", "experience.conclusion"],
+  includes: ["persona", "knowledge.pattern", "knowledge.procedure", "knowledge.theory", "experience.insight", "experience.conclusion"],
 };
 
 export const INTENTION: StateDefinition = {
@@ -151,10 +157,10 @@ export const ABANDON: ProcessDefinition = {
 
 export const FORGET: ProcessDefinition = {
   name: "forget",
-  description: "Forget information — remove pattern, procedure, or insight from identity.",
+  description: "Forget information — remove pattern, procedure, theory, or insight from identity.",
   kind: "write",
   targets: ["Role"],
-  inputs: ["knowledge.pattern", "knowledge.procedure", "experience.insight"],
+  inputs: ["knowledge.pattern", "knowledge.procedure", "knowledge.theory", "experience.insight"],
   outputs: [],
 };
 
@@ -167,12 +173,21 @@ export const REFLECT: ProcessDefinition = {
   outputs: ["knowledge.pattern"],
 };
 
+export const CONTEMPLATE: ProcessDefinition = {
+  name: "contemplate",
+  description: "Unify patterns into theory — the philosophical upgrade path.",
+  kind: "write",
+  targets: ["Role"],
+  inputs: ["knowledge.pattern"],
+  outputs: ["knowledge.theory"],
+};
+
 export const IDENTITY: ProcessDefinition = {
   name: "identity",
   description: "Load the role's complete identity — render cognition frame.",
   kind: "query",
   targets: ["Role"],
-  inputs: ["persona", "knowledge.pattern", "knowledge.procedure", "experience.insight", "experience.conclusion"],
+  inputs: ["persona", "knowledge.pattern", "knowledge.procedure", "knowledge.theory", "experience.insight", "experience.conclusion"],
   outputs: [],
 };
 
@@ -214,7 +229,7 @@ export const GOAL_EXECUTION: SystemDefinition = {
 
 export const COGNITIVE_GROWTH: SystemDefinition = {
   name: "cognitive-growth",
-  description: "The learning cycle — achieve distills experience, reflect turns experience into knowledge.",
-  processes: ["achieve", "reflect"],
-  feedback: ["knowledge.pattern"],
+  description: "The learning cycle — achieve distills experience, reflect turns experience into knowledge, contemplate unifies knowledge into theory.",
+  processes: ["achieve", "reflect", "contemplate"],
+  feedback: ["knowledge.pattern", "knowledge.theory"],
 };
