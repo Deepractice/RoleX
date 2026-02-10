@@ -57,7 +57,7 @@ export {
   REFLECT,
   IDENTITY,
   FOCUS,
-  APPLY,
+  SKILL,
   USE,
   // System
   GOAL_EXECUTION,

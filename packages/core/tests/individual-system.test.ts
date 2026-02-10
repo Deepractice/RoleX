@@ -125,9 +125,9 @@ describe("Role System + Individual System — full lifecycle", () => {
     expect(platform.readInformation("sean", "knowledge", "shipping-principles")).not.toBeNull();
   });
 
-  test("apply — load procedure", async () => {
-    const result = await individualSystem.execute("apply", { name: "code-review" });
-    expect(result).toContain("[sean] applying: code-review");
+  test("skill — load procedure", async () => {
+    const result = await individualSystem.execute("skill", { name: "code-review" });
+    expect(result).toContain("[sean] skill loaded: code-review");
     expect(result).toContain("Code Review");
   });
 

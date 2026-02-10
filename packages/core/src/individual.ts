@@ -143,6 +143,15 @@ export const ABANDON: ProcessDefinition = {
   outputs: ["experience"],
 };
 
+export const FORGET: ProcessDefinition = {
+  name: "forget",
+  description: "Forget information — remove knowledge, experience, or procedure from identity.",
+  kind: "write",
+  targets: ["Role"],
+  inputs: ["knowledge", "procedure", "experience"],
+  outputs: [],
+};
+
 export const SYNTHESIZE: ProcessDefinition = {
   name: "synthesize",
   description: "Turn encounters into experience — a posteriori learning.",

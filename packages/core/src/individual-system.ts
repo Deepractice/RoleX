@@ -20,7 +20,7 @@ import type { ResourceX } from "resourcexjs";
 import { t } from "./i18n/index.js";
 import {
   WANT, DESIGN, TODO,
-  FINISH, ACHIEVE, ABANDON, SYNTHESIZE, REFLECT,
+  FINISH, ACHIEVE, ABANDON, FORGET, SYNTHESIZE, REFLECT,
   IDENTITY, FOCUS, SKILL, USE,
 } from "./individual.js";
 
@@ -264,6 +264,25 @@ const abandon: Process<{ experience?: { name: string; source: string } }, Featur
   },
 };
 
+const FORGETTABLE_TYPES = ["knowledge", "experience", "procedure"] as const;
+
+const forget: Process<{ type: string; name: string }, Feature> = {
+  ...FORGET,
+  params: z.object({
+    type: z.enum(FORGETTABLE_TYPES).describe("Information type: knowledge, experience, or procedure"),
+    name: z.string().describe("Name of the information to forget"),
+  }),
+  execute(ctx, params) {
+    const r = role(ctx);
+    const existing = ctx.platform.readInformation(r, params.type, params.name);
+    if (!existing) {
+      throw new Error(t(ctx.locale, "error.informationNotFound", { type: params.type, name: params.name }));
+    }
+    ctx.platform.removeInformation(r, params.type, params.name);
+    return `[${r}] ${t(ctx.locale, "individual.forget.done", { type: params.type, name: params.name })}`;
+  },
+};
+
 const synthesize: Process<{ name: string; source: string }, Feature> = {
   ...SYNTHESIZE,
   params: z.object({
@@ -358,7 +377,7 @@ export function createIndividualSystem(platform: Platform, rx?: ResourceX): Runn
     identity, focus,
     want, design, todo,
     finish, achieve, abandon,
-    synthesize, reflect,
+    forget, synthesize, reflect,
     skill,
   };
 

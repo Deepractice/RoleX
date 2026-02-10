@@ -31,6 +31,7 @@ const en: Messages = {
   "individual.finish.synthesized": "synthesized: {name}",
   "individual.achieve.done": "achieved: {name}",
   "individual.abandon.done": "abandoned: {name}",
+  "individual.forget.done": "forgot {type}: {name}",
   "individual.synthesize.done": "synthesized: {name}",
   "individual.reflect.done": "reflected: {from} → {to}",
   "individual.skill.done": "skill loaded: {name}",
@@ -82,6 +83,7 @@ const en: Messages = {
   "render.hint.finish.allDone": "All tasks done! `achieve` to complete the goal, or `todo` to add more.",
   "render.hint.finish.remaining": "{count} task(s) remaining. `finish` next task, or `todo` to add more.",
   "render.hint.achieveAbandon": "`want` to set a new goal, or `focus` to check other goals.",
+  "render.hint.forget": "`identity` to verify, or continue working.",
   "render.hint.synthesize": "`synthesize` more experiences, or `reflect` to distill into knowledge.",
   "render.hint.reflect": "`identity` to see updated knowledge, or `synthesize` to capture more.",
   "render.hint.skill": "Skill loaded. Execute using the described workflow.",
@@ -97,6 +99,7 @@ const en: Messages = {
   "error.experienceRequired": "At least one experience required",
   "error.experienceNotFound": "Experience not found: {name}",
   "error.procedureNotFound": "Procedure not found: {name}",
+  "error.informationNotFound": "{type} not found: {name}",
 };
 
 // ========== Chinese ==========
@@ -119,6 +122,7 @@ const zh: Messages = {
   "individual.finish.synthesized": "已合成: {name}",
   "individual.achieve.done": "已达成: {name}",
   "individual.abandon.done": "已放弃: {name}",
+  "individual.forget.done": "已忘记 {type}: {name}",
   "individual.synthesize.done": "已合成: {name}",
   "individual.reflect.done": "已反思: {from} → {to}",
   "individual.skill.done": "技能已加载: {name}",
@@ -170,6 +174,7 @@ const zh: Messages = {
   "render.hint.finish.allDone": "所有任务已完成！`achieve` 完成目标，或 `todo` 添加更多。",
   "render.hint.finish.remaining": "剩余 {count} 个任务。`finish` 下一个，或 `todo` 添加更多。",
   "render.hint.achieveAbandon": "`want` 设定新目标，或 `focus` 查看其他目标。",
+  "render.hint.forget": "`identity` 确认变更，或继续工作。",
   "render.hint.synthesize": "`synthesize` 继续积累经验，或 `reflect` 蒸馏为知识。",
   "render.hint.reflect": "`identity` 查看更新的知识，或 `synthesize` 继续积累。",
   "render.hint.skill": "技能已加载。按描述的工作流执行。",
@@ -185,6 +190,7 @@ const zh: Messages = {
   "error.experienceRequired": "至少需要一条经验",
   "error.experienceNotFound": "经验未找到: {name}",
   "error.procedureNotFound": "技能未找到: {name}",
+  "error.informationNotFound": "{type} 未找到: {name}",
 };
 
 // ========== Lookup ==========
