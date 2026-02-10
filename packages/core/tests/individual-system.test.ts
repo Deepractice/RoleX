@@ -55,31 +55,51 @@ describe("Role System + Individual System — full lifecycle", () => {
     expect(platform.listRelations("focus", "sean")).toContain("build-mvp");
   });
 
-  test("focus — check current goal", async () => {
+  test("focus — check current goal (no plan yet)", async () => {
     const result = await individualSystem.execute("focus", {});
     expect(result).toContain("[sean]");
     expect(result).toContain("goal: build-mvp");
+    // Full goal Gherkin
+    expect(result).toContain("Feature: Build MVP");
+    expect(result).toContain("I need a working product");
+    // No plans yet
+    expect(result).toContain("Plans: none");
   });
 
-  test("design — create plan", async () => {
+  test("design — create plan with name", async () => {
     const result = await individualSystem.execute("design", {
+      name: "mvp-plan",
       source: "Feature: MVP Plan\n  Scenario: Phase 1\n    Given setup the database",
     });
-    expect(result).toContain("[sean] plan for build-mvp");
+    expect(result).toContain("[sean] plan: mvp-plan (for build-mvp)");
+    // Verify relations
+    expect(platform.listRelations("has-plan.build-mvp", "sean")).toContain("mvp-plan");
+    expect(platform.listRelations("focus-plan.build-mvp", "sean")).toContain("mvp-plan");
   });
 
-  test("todo — create task", async () => {
+  test("todo — create task (auto-associates with focused plan)", async () => {
     const result = await individualSystem.execute("todo", {
       name: "setup-db",
       source: "Feature: Setup DB\n  Scenario: Create tables\n    Given I run migrations",
     });
-    expect(result).toContain("[sean] todo: setup-db");
+    expect(result).toContain("[sean] todo: setup-db (plan: mvp-plan)");
+    // Verify relation
+    expect(platform.listRelations("has-task.mvp-plan", "sean")).toContain("setup-db");
   });
 
-  test("focus — shows plan and tasks", async () => {
+  test("focus — shows full goal, plan, and task content", async () => {
     const result = await individualSystem.execute("focus", {});
-    expect(result).toContain("Plan: MVP Plan");
-    expect(result).toContain("Setup DB");
+    // Goal content
+    expect(result).toContain("Feature: Build MVP");
+    expect(result).toContain("I need a working product");
+    // Plan content
+    expect(result).toContain("Plans (focused: mvp-plan)");
+    expect(result).toContain("Feature: MVP Plan");
+    expect(result).toContain("setup the database");
+    // Task content
+    expect(result).toContain("Tasks (plan: mvp-plan)");
+    expect(result).toContain("Feature: Setup DB");
+    expect(result).toContain("I run migrations");
   });
 
   test("finish — complete task with experience", async () => {
@@ -92,6 +112,11 @@ describe("Role System + Individual System — full lifecycle", () => {
     });
     expect(result).toContain("[sean] finished: setup-db");
     expect(result).toContain("synthesized: db-setup-learnings");
+  });
+
+  test("focus — finished task shows @done", async () => {
+    const result = await individualSystem.execute("focus", {});
+    expect(result).toContain("[setup-db] @done");
   });
 
   test("synthesize — record experience", async () => {
@@ -150,5 +175,130 @@ describe("Role System + Individual System — full lifecycle", () => {
     const result = await roleSystem.execute("kill", { name: "temp" });
     expect(result).toContain("[temp] killed");
     expect(platform.readInformation("temp", "persona", "persona")).toBeNull();
+  });
+});
+
+describe("Multi-goal, multi-plan hierarchy", () => {
+  const platform = new MemoryPlatform();
+  const roleSystem = createRoleSystem(platform);
+  const individualSystem = createIndividualSystem(platform);
+
+  test("setup role with two goals", async () => {
+    await roleSystem.execute("born", {
+      name: "dev",
+      source: "Feature: Developer\n  Scenario: Dev\n    Given I am a developer",
+    });
+    await individualSystem.execute("identity", { roleId: "dev" });
+
+    await individualSystem.execute("want", {
+      name: "goal-a",
+      source: "Feature: Goal A\n  Scenario: First goal\n    Given I want to build A",
+    });
+    await individualSystem.execute("want", {
+      name: "goal-b",
+      source: "Feature: Goal B\n  Scenario: Second goal\n    Given I want to build B",
+    });
+
+    // goal-a is auto-focused (first want)
+    expect(platform.listRelations("focus", "dev")).toContain("goal-a");
+  });
+
+  test("design two plans for goal-a", async () => {
+    await individualSystem.execute("design", {
+      name: "plan-a1",
+      source: "Feature: Plan A1\n  Scenario: Approach 1\n    Given we try approach one",
+    });
+    await individualSystem.execute("design", {
+      name: "plan-a2",
+      source: "Feature: Plan A2\n  Scenario: Approach 2\n    Given we try approach two",
+    });
+
+    // Both plans linked to goal-a
+    const plans = platform.listRelations("has-plan.goal-a", "dev");
+    expect(plans).toContain("plan-a1");
+    expect(plans).toContain("plan-a2");
+
+    // plan-a2 is focused (latest design)
+    expect(platform.listRelations("focus-plan.goal-a", "dev")).toEqual(["plan-a2"]);
+  });
+
+  test("todo creates tasks under focused plan (plan-a2)", async () => {
+    await individualSystem.execute("todo", {
+      name: "task-1",
+      source: "Feature: Task 1\n  Scenario: Do thing\n    Given I do the first thing",
+    });
+
+    expect(platform.listRelations("has-task.plan-a2", "dev")).toContain("task-1");
+    // No tasks under plan-a1
+    expect(platform.listRelations("has-task.plan-a1", "dev")).toEqual([]);
+  });
+
+  test("focus shows full hierarchy", async () => {
+    const result = await individualSystem.execute("focus", {});
+
+    // Goal content
+    expect(result).toContain("Feature: Goal A");
+    expect(result).toContain("I want to build A");
+
+    // Both plans shown
+    expect(result).toContain("Feature: Plan A1");
+    expect(result).toContain("Feature: Plan A2");
+
+    // Focused plan marked
+    expect(result).toContain("Plans (focused: plan-a2)");
+    expect(result).toContain("[plan-a2] [focused]");
+
+    // Tasks for focused plan
+    expect(result).toContain("Tasks (plan: plan-a2)");
+    expect(result).toContain("Feature: Task 1");
+
+    // Other goals listed (Feature names)
+    expect(result).toContain("Other goals: Goal B");
+  });
+
+  test("switch focus to goal-b", async () => {
+    const result = await individualSystem.execute("focus", { name: "goal-b" });
+
+    expect(result).toContain("goal: goal-b");
+    expect(result).toContain("Feature: Goal B");
+    // No plans for goal-b
+    expect(result).toContain("Plans: none");
+    // Other goals (Feature names)
+    expect(result).toContain("Other goals: Goal A");
+  });
+
+  test("todo without plan throws error", async () => {
+    // goal-b has no plan
+    try {
+      await individualSystem.execute("todo", {
+        name: "orphan-task",
+        source: "Feature: Orphan\n  Scenario: Lost\n    Given no plan",
+      });
+      expect(true).toBe(false); // Should not reach here
+    } catch (e: any) {
+      expect(e.message).toContain("No plan");
+    }
+  });
+
+  test("design for goal-b and create task", async () => {
+    await individualSystem.execute("design", {
+      name: "plan-b1",
+      source: "Feature: Plan B1\n  Scenario: B approach\n    Given we try B approach",
+    });
+    await individualSystem.execute("todo", {
+      name: "task-b1",
+      source: "Feature: Task B1\n  Scenario: B work\n    Given I do B work",
+    });
+
+    expect(platform.listRelations("has-plan.goal-b", "dev")).toContain("plan-b1");
+    expect(platform.listRelations("has-task.plan-b1", "dev")).toContain("task-b1");
+  });
+
+  test("switch back to goal-a retains focus-plan", async () => {
+    const result = await individualSystem.execute("focus", { name: "goal-a" });
+
+    // goal-a's focused plan is still plan-a2
+    expect(result).toContain("Plans (focused: plan-a2)");
+    expect(result).toContain("Feature: Task 1");
   });
 });

@@ -40,9 +40,46 @@ function parseSource(source: string, type: Feature["type"]): Feature {
 }
 
 function renderFeature(f: Feature): string {
-  const tag = f.type ? `# type: ${f.type}` : "";
-  const name = f.name ?? "";
-  return `${tag}\n${name}`.trim();
+  const lines: string[] = [];
+
+  // Type tag (RoleX metadata, not Gherkin)
+  if (f.type) lines.push(`# type: ${f.type}`);
+
+  // Feature line
+  lines.push(`Feature: ${f.name || ""}`);
+
+  // Description
+  if (f.description) {
+    for (const line of f.description.split("\n")) {
+      lines.push(`  ${line.trimEnd()}`);
+    }
+  }
+
+  // Scenarios with steps
+  const children = (f.children || []) as any[];
+  for (const child of children) {
+    if (!child.scenario) continue;
+    const sc = child.scenario;
+    lines.push("");
+
+    const stags = sc.tags || [];
+    if (stags.length > 0) {
+      lines.push(`  ${stags.map((t: any) => t.name).join(" ")}`);
+    }
+
+    lines.push(`  Scenario: ${sc.name || ""}`);
+    if (sc.description) {
+      for (const line of sc.description.split("\n")) {
+        lines.push(`    ${line.trimEnd()}`);
+      }
+    }
+
+    for (const step of sc.steps || []) {
+      lines.push(`    ${step.keyword}${step.text}`);
+    }
+  }
+
+  return lines.join("\n");
 }
 
 function renderFeatures(features: Feature[]): string {
@@ -102,6 +139,7 @@ const focus: Process<{ name?: string }, Feature> = {
     const r = role(ctx);
     const l = ctx.locale;
 
+    // Switch focus if name provided
     if (params.name) {
       const old = ctx.platform.listRelations("focus", r);
       for (const o of old) ctx.platform.removeRelation("focus", r, o);
@@ -125,22 +163,61 @@ const focus: Process<{ name?: string }, Feature> = {
       return `[${r}] ${t(l, "individual.focus.noGoalInactive")}`;
     }
 
-    const plan = ctx.platform.readInformation(r, "plan", focusName);
-    const tasks = ctx.platform.listInformation(r, "task");
-    const planInfo = plan ? `\n${t(l, "individual.focus.plan", { name: plan.name })}` : `\n${t(l, "individual.focus.planNone")}`;
-    const taskList = tasks.map((tk) => {
-      const done = tk.tags?.some((tag: any) => tag.name === "@done") ? " @done" : "";
-      return `  - ${tk.name}${done}`;
-    }).join("\n");
-    const tasksInfo = taskList ? `\n${t(l, "individual.focus.tasks")}\n${taskList}` : `\n${t(l, "individual.focus.tasksNone")}`;
+    const sections: string[] = [];
 
+    // Header
+    sections.push(`[${r}] ${t(l, "individual.focus.goal", { name: focusName })}`);
+
+    // Goal — full Gherkin
+    sections.push(renderFeature(current));
+
+    // Plans — via relation
+    const planNames = ctx.platform.listRelations(`has-plan.${focusName}`, r);
+    const focusPlanList = ctx.platform.listRelations(`focus-plan.${focusName}`, r);
+    const focusPlanName = focusPlanList.length > 0 ? focusPlanList[0] : null;
+
+    if (planNames.length > 0) {
+      sections.push(`---\n${t(l, "individual.focus.plans", { name: focusPlanName || "none" })}`);
+      for (const pn of planNames) {
+        const plan = ctx.platform.readInformation(r, "plan", pn);
+        if (plan) {
+          const marker = pn === focusPlanName ? " [focused]" : "";
+          sections.push(`[${pn}]${marker}\n${renderFeature(plan)}`);
+        }
+      }
+    } else {
+      sections.push(`---\n${t(l, "individual.focus.plansNone")}`);
+    }
+
+    // Tasks — via relation (focused plan only)
+    if (focusPlanName) {
+      const taskNames = ctx.platform.listRelations(`has-task.${focusPlanName}`, r);
+      if (taskNames.length > 0) {
+        sections.push(`---\n${t(l, "individual.focus.tasks", { name: focusPlanName })}`);
+        for (const tn of taskNames) {
+          const task = ctx.platform.readInformation(r, "task", tn);
+          if (task) {
+            const done = task.tags?.some((tag: any) => tag.name === "@done") ? " @done" : "";
+            sections.push(`[${tn}]${done}\n${renderFeature(task)}`);
+          }
+        }
+      } else {
+        sections.push(`---\n${t(l, "individual.focus.tasksNone")}`);
+      }
+    } else {
+      sections.push(`---\n${t(l, "individual.focus.tasksNone")}`);
+    }
+
+    // Other active goals
     const allGoals = ctx.platform.listInformation(r, "goal");
     const otherNames = allGoals
       .filter((g) => g.name !== current.name && !g.tags?.some((t: any) => t.name === "@done" || t.name === "@abandoned"))
       .map((g) => g.name);
-    const othersInfo = otherNames.length > 0 ? `\n${t(l, "individual.focus.otherGoals", { names: otherNames.join(", ") })}` : "";
+    if (otherNames.length > 0) {
+      sections.push(`---\n${t(l, "individual.focus.otherGoals", { names: otherNames.join(", ") })}`);
+    }
 
-    return `[${r}] ${t(l, "individual.focus.goal", { name: focusName })}${planInfo}${tasksInfo}${othersInfo}`;
+    return sections.join("\n\n");
   },
 };
 
@@ -161,17 +238,29 @@ const want: Process<{ name: string; source: string }, Feature> = {
   },
 };
 
-const design: Process<{ source: string }, Feature> = {
+const design: Process<{ name: string; source: string }, Feature> = {
   ...DESIGN,
   params: z.object({
+    name: z.string().describe("Plan name"),
     source: z.string().describe("Gherkin plan source"),
   }),
   execute(ctx, params) {
     const r = role(ctx);
     const goalName = focusedGoal(ctx);
     const feature = parseSource(params.source, "plan");
-    ctx.platform.writeInformation(r, "plan", goalName, feature);
-    return `[${r}] ${t(ctx.locale, "individual.design.created", { name: goalName })}\n\n${renderFeature(feature)}`;
+
+    // Store plan
+    ctx.platform.writeInformation(r, "plan", params.name, feature);
+
+    // Relation: goal → plan
+    ctx.platform.addRelation(`has-plan.${goalName}`, r, params.name);
+
+    // Auto focus-plan (replace old)
+    const old = ctx.platform.listRelations(`focus-plan.${goalName}`, r);
+    for (const o of old) ctx.platform.removeRelation(`focus-plan.${goalName}`, r, o);
+    ctx.platform.addRelation(`focus-plan.${goalName}`, r, params.name);
+
+    return `[${r}] ${t(ctx.locale, "individual.design.created", { name: params.name, goal: goalName })}\n\n${renderFeature(feature)}`;
   },
 };
 
@@ -183,9 +272,20 @@ const todo: Process<{ name: string; source: string }, Feature> = {
   }),
   execute(ctx, params) {
     const r = role(ctx);
+    const goalName = focusedGoal(ctx);
+
+    // Get focused plan
+    const plans = ctx.platform.listRelations(`focus-plan.${goalName}`, r);
+    if (plans.length === 0) throw new Error(t(ctx.locale, "error.noPlan"));
+    const planName = plans[0];
+
     const feature = parseSource(params.source, "task");
     ctx.platform.writeInformation(r, "task", params.name, feature);
-    return `[${r}] ${t(ctx.locale, "individual.todo.created", { name: params.name })}\n\n${renderFeature(feature)}`;
+
+    // Relation: plan → task
+    ctx.platform.addRelation(`has-task.${planName}`, r, params.name);
+
+    return `[${r}] ${t(ctx.locale, "individual.todo.created", { name: params.name, plan: planName })}\n\n${renderFeature(feature)}`;
   },
 };
 

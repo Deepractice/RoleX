@@ -4,7 +4,9 @@ Feature: focus
   Scenario: Check current focus
     Given I have an active identity
     When I call focus without a name
-    Then I see my current goal with its plan and tasks
+    Then I see my current goal with its full Gherkin content
+    And I see all plans for this goal with their full content
+    And I see tasks for the focused plan with their full content
     And I see a list of other active goals
 
   Scenario: Switch focus

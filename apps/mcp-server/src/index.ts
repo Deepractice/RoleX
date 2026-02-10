@@ -94,6 +94,7 @@ server.addTool({
   name: "design",
   description: descriptions.design,
   parameters: z.object({
+    name: z.string().describe("Plan name"),
     source: z.string().describe("Gherkin plan feature source"),
   }),
   execute: async (args) => run("design", args),

@@ -31,17 +31,27 @@ export function readRoleState(platform: Platform, roleName: string): RoleState {
     goal = done ? "none" : goalName;
 
     if (goal !== "none") {
-      const plan = platform.readInformation(roleName, "plan", goalName);
-      hasPlan = plan !== null;
+      const planNames = platform.listRelations(`has-plan.${goal}`, roleName);
+      hasPlan = planNames.length > 0;
     }
   }
 
   let tasksDone = 0;
   let tasksTotal = 0;
   if (goal !== "none") {
-    const tasks = platform.listInformation(roleName, "task");
-    tasksDone = tasks.filter((tk) => tk.tags?.some((tag: any) => tag.name === "@done")).length;
-    tasksTotal = tasks.length;
+    // Count tasks via focused plan relation
+    const focusPlanList = platform.listRelations(`focus-plan.${goal}`, roleName);
+    const focusPlanName = focusPlanList.length > 0 ? focusPlanList[0] : null;
+    if (focusPlanName) {
+      const taskNames = platform.listRelations(`has-task.${focusPlanName}`, roleName);
+      for (const tn of taskNames) {
+        const tk = platform.readInformation(roleName, "task", tn);
+        if (tk) {
+          tasksTotal++;
+          if (tk.tags?.some((tag: any) => tag.name === "@done")) tasksDone++;
+        }
+      }
+    }
   }
 
   return { roleName, goal, hasPlan, tasksDone, tasksTotal };
