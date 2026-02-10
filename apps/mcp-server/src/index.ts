@@ -3,8 +3,8 @@
  *
  * RoleX Individual System MCP server.
  *
- * 13 tools — one per Individual System process:
- *   identity, focus, want, design, todo,
+ * 14 tools — one per Individual System process:
+ *   identity, focus, explore, want, design, todo,
  *   finish, achieve, abandon, forget, reflect, contemplate, skill, use
  *
  * Management operations (born, found, hire, etc.) are exposed via skills,
@@ -71,6 +71,16 @@ server.addTool({
     name: z.string().optional().describe("Goal name to switch focus to"),
   }),
   execute: async (args) => run("focus", args),
+});
+
+// explore
+server.addTool({
+  name: "explore",
+  description: descriptions.explore,
+  parameters: z.object({
+    name: z.string().optional().describe("Name of role or organization to explore"),
+  }),
+  execute: async (args) => run("explore", args),
 });
 
 // want

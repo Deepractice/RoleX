@@ -27,6 +27,7 @@ import achieveFeature from "./descriptions/individual/achieve/achieve.feature";
 import abandonFeature from "./descriptions/individual/abandon/abandon.feature";
 import forgetFeature from "./descriptions/individual/forget/forget.feature";
 
+import exploreFeature from "./descriptions/individual/explore/explore.feature";
 import reflectFeature from "./descriptions/individual/reflect/reflect.feature";
 import contemplateFeature from "./descriptions/individual/contemplate/contemplate.feature";
 import skillFeature from "./descriptions/individual/skill/skill.feature";
@@ -86,6 +87,7 @@ export const systems = {
 export const individual = {
   identity: identityFeature,
   focus: focusFeature,
+  explore: exploreFeature,
   want: wantFeature,
   design: designFeature,
   todo: todoFeature,

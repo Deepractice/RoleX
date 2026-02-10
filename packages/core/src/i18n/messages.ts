@@ -39,6 +39,9 @@ const en: Messages = {
   "individual.reflect.done": "reflected: {from} → {to}",
   "individual.contemplate.done": "contemplated: {from} → {to}",
   "individual.skill.done": "skill loaded: {name}",
+  "individual.explore.world": "roles: {roles} | organizations: {orgs}",
+  "individual.explore.detail": "exploring: {name}",
+  "individual.explore.roleInfo": "knowledge.pattern: {patterns} | knowledge.procedure: {procedures} | knowledge.theory: {theories} | experience.insight: {insights} | active goals: {goals}",
   "individual.use.done": "used: {name}",
 
   // --- Role System ---
@@ -68,6 +71,8 @@ const en: Messages = {
   "governance.positionsNone": "Positions: none",
 
   // --- Render (status bar) ---
+  "render.org": "org: {name}",
+  "render.position": "position: {name}",
   "render.goal": "goal: {name}",
   "render.plan": "plan: {status}",
   "render.tasks": "tasks: {done}/{total}",
@@ -76,6 +81,8 @@ const en: Messages = {
   // --- Render (hints) ---
   "render.hint.identity.noGoal": "`want` to set a goal, or `focus` to check existing goals.",
   "render.hint.identity.hasGoal": "`focus` to check current goal, or `want` to set a new goal.",
+  "render.hint.identity.canReflect": "{count} insight(s) available — `reflect` when you see a pattern across them.",
+  "render.hint.identity.canContemplate": "{count} pattern(s) available — `contemplate` when you see a unifying theory.",
   "render.hint.focus.noGoal": "`want` to set a new goal.",
   "render.hint.focus.noPlanNoTask": "`design` to create a plan, or `todo` to create tasks.",
   "render.hint.focus.noTask": "`todo` to break the plan into concrete tasks.",
@@ -89,10 +96,11 @@ const en: Messages = {
   "render.hint.achieveAbandon": "`want` to set a new goal, or `focus` to check other goals.",
   "render.hint.forget": "`identity` to verify, or continue working.",
   "render.hint.finish.withConclusion": "Conclusion recorded. {count} task(s) remaining.",
-  "render.hint.reflect": "`identity` to see updated knowledge, or `contemplate` to unify patterns into theory.",
+  "render.hint.reflect": "`identity` to see updated knowledge, or continue working.",
   "render.hint.contemplate": "`identity` to see updated theory, or continue working.",
   "render.hint.skill": "Skill loaded. Execute using the described workflow.",
   "render.hint.use": "Tool executed. Continue with your task.",
+  "render.hint.explore": "Continue working, or `explore` a specific role or organization.",
   "render.hint.default": "Continue working.",
 
   // --- Errors ---
@@ -138,6 +146,9 @@ const zh: Messages = {
   "individual.reflect.done": "已反思: {from} → {to}",
   "individual.contemplate.done": "已沉思: {from} → {to}",
   "individual.skill.done": "技能已加载: {name}",
+  "individual.explore.world": "角色: {roles} | 组织: {orgs}",
+  "individual.explore.detail": "探索: {name}",
+  "individual.explore.roleInfo": "知识模式: {patterns} | 知识程序: {procedures} | 知识理论: {theories} | 经验洞察: {insights} | 活跃目标: {goals}",
   "individual.use.done": "已使用: {name}",
 
   // --- Role System ---
@@ -167,6 +178,8 @@ const zh: Messages = {
   "governance.positionsNone": "职位: 无",
 
   // --- Render (status bar) ---
+  "render.org": "组织: {name}",
+  "render.position": "职位: {name}",
   "render.goal": "目标: {name}",
   "render.plan": "计划: {status}",
   "render.tasks": "任务: {done}/{total}",
@@ -175,6 +188,8 @@ const zh: Messages = {
   // --- Render (hints) ---
   "render.hint.identity.noGoal": "`want` 设定目标，或 `focus` 查看已有目标。",
   "render.hint.identity.hasGoal": "`focus` 查看当前目标，或 `want` 设定新目标。",
+  "render.hint.identity.canReflect": "有 {count} 条洞察 — 当你发现其中的规律时，`reflect` 将其提炼为知识。",
+  "render.hint.identity.canContemplate": "有 {count} 个模式 — 当你发现统一的理论时，`contemplate` 将其升华。",
   "render.hint.focus.noGoal": "`want` 设定新目标。",
   "render.hint.focus.noPlanNoTask": "`design` 制定计划，或 `todo` 创建任务。",
   "render.hint.focus.noTask": "`todo` 将计划拆解为具体任务。",
@@ -188,10 +203,11 @@ const zh: Messages = {
   "render.hint.achieveAbandon": "`want` 设定新目标，或 `focus` 查看其他目标。",
   "render.hint.forget": "`identity` 确认变更，或继续工作。",
   "render.hint.finish.withConclusion": "已记录总结。剩余 {count} 个任务。",
-  "render.hint.reflect": "`identity` 查看更新的知识，或 `contemplate` 将模式统一为理论。",
+  "render.hint.reflect": "`identity` 查看更新的知识，或继续工作。",
   "render.hint.contemplate": "`identity` 查看更新的理论，或继续工作。",
   "render.hint.skill": "技能已加载。按描述的工作流执行。",
   "render.hint.use": "工具已执行。继续你的任务。",
+  "render.hint.explore": "继续工作，或 `explore` 特定的角色或组织。",
   "render.hint.default": "继续工作。",
 
   // --- Errors ---

@@ -6,7 +6,7 @@ Feature: Execution — the doing cycle
     Given I know who I am via identity
     When I want something — a desired outcome
     Then I declare it with want, providing a name and Gherkin description
-    And if I have no current focus, this goal becomes my focus automatically
+    And focus automatically switches to this new goal
 
   Scenario: Make a plan
     Given I have a focused goal

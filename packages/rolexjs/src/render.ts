@@ -12,10 +12,14 @@ import { t } from "@rolexjs/core";
 
 interface RoleState {
   roleName: string;
+  org: string;
+  position: string;
   goal: string;
   hasPlan: boolean;
   tasksDone: number;
   tasksTotal: number;
+  insightCount: number;
+  patternCount: number;
 }
 
 /** Read current role state from platform. */
@@ -54,7 +58,28 @@ export function readRoleState(platform: Platform, roleName: string): RoleState {
     }
   }
 
-  return { roleName, goal, hasPlan, tasksDone, tasksTotal };
+  // Count insights and patterns for growth hints
+  const insights = platform.listInformation(roleName, "experience.insight");
+  const patterns = platform.listInformation(roleName, "knowledge.pattern");
+  const insightCount = insights.length;
+  const patternCount = patterns.length;
+
+  // Find org membership (scan structures for orgs that have this role)
+  let org = "none";
+  const allStructures = platform.listStructures();
+  for (const s of allStructures) {
+    const charter = platform.readInformation(s, "charter", "charter");
+    if (charter && platform.hasRelation("membership", s, roleName)) {
+      org = s;
+      break;
+    }
+  }
+
+  // Find position assignment (direct lookup)
+  const positions = platform.listRelations("assignment", roleName);
+  const position = positions.length > 0 ? positions.join(", ") : "none";
+
+  return { roleName, org, position, goal, hasPlan, tasksDone, tasksTotal, insightCount, patternCount };
 }
 
 /** Render the two-line status bar. */
@@ -62,8 +87,14 @@ export function statusBar(state: RoleState, processName: string, locale: string,
   const now = new Date().toISOString().replace("T", " ").slice(0, 19);
   const line1Parts = [
     `[${state.roleName}]`,
-    t(locale, "render.goal", { name: state.goal }),
   ];
+  if (state.org !== "none") {
+    line1Parts.push(t(locale, "render.org", { name: state.org }));
+  }
+  if (state.position !== "none") {
+    line1Parts.push(t(locale, "render.position", { name: state.position }));
+  }
+  line1Parts.push(t(locale, "render.goal", { name: state.goal }));
   if (state.goal !== "none") {
     line1Parts.push(t(locale, "render.plan", { status: state.hasPlan ? "✓" : "✗" }));
     line1Parts.push(t(locale, "render.tasks", { done: state.tasksDone, total: state.tasksTotal }));
@@ -80,10 +111,19 @@ export function statusBar(state: RoleState, processName: string, locale: string,
 /** Compute the next-step hint for a given process. */
 function nextHint(processName: string, state: RoleState, locale: string, extra?: { taskName?: string }): string {
   switch (processName) {
-    case "identity":
-      return state.goal === "none"
+    case "identity": {
+      let hint = state.goal === "none"
         ? t(locale, "render.hint.identity.noGoal")
         : t(locale, "render.hint.identity.hasGoal");
+      // Growth hints — only when material exists, emphasize optional
+      if (state.insightCount > 0) {
+        hint += ` ${t(locale, "render.hint.identity.canReflect", { count: state.insightCount })}`;
+      }
+      if (state.patternCount >= 2) {
+        hint += ` ${t(locale, "render.hint.identity.canContemplate", { count: state.patternCount })}`;
+      }
+      return hint;
+    }
 
     case "focus":
       if (state.goal === "none") return t(locale, "render.hint.focus.noGoal");
@@ -120,6 +160,10 @@ function nextHint(processName: string, state: RoleState, locale: string, extra?:
 
     case "contemplate":
       return t(locale, "render.hint.contemplate");
+
+
+    case "explore":
+      return t(locale, "render.hint.explore");
 
     case "skill":
       return t(locale, "render.hint.skill");

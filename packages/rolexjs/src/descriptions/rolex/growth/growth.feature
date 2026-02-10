@@ -18,17 +18,17 @@ Feature: Growth — the learning cycle
 
   Scenario: When to reflect
     Given I have accumulated several related experience.insight entries
-    When I see patterns across them that suggest a general principle
+    When I genuinely see a pattern across them — not just because they exist
     Then I call reflect to distill them into knowledge.pattern
     And the consumed insights are removed — they have been absorbed
-    And the knowledge.pattern persists as part of my identity
+    And reflect is NOT mandatory — only when real closure emerges
 
   Scenario: When to contemplate
     Given I have accumulated several related knowledge.pattern entries
-    When I see a unifying thread across them — a philosophical coherence
+    When I genuinely see a unifying theory across them — a philosophical coherence
     Then I call contemplate to unify them into knowledge.theory
     And the patterns are NOT consumed — they retain independent value
-    And the knowledge.theory persists as the highest form of understanding
+    And contemplate is NOT mandatory — only when real unification emerges
 
   Scenario: Recognizing user memory intent
     Given users think in terms of memory, not distillation

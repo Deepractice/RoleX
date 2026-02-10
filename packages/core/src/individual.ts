@@ -209,6 +209,15 @@ export const SKILL: ProcessDefinition = {
   outputs: [],
 };
 
+export const EXPLORE: ProcessDefinition = {
+  name: "explore",
+  description: "Explore the RoleX world — discover roles, organizations, and relationships.",
+  kind: "query",
+  targets: ["Role"],
+  inputs: [],
+  outputs: [],
+};
+
 export const USE: ProcessDefinition = {
   name: "use",
   description: "Use an external tool — resolve a resource locator and execute it.",

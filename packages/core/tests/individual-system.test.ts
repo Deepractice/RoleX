@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { createRoleSystem, createIndividualSystem } from "@rolexjs/core";
+import { createRoleSystem, createIndividualSystem, createOrgSystem } from "@rolexjs/core";
 import { MemoryPlatform } from "./memory-platform";
 
 describe("Role System + Individual System — full lifecycle", () => {
@@ -186,15 +186,15 @@ describe("Multi-goal, multi-plan hierarchy", () => {
     await individualSystem.execute("identity", { roleId: "dev" });
 
     await individualSystem.execute("want", {
-      name: "goal-a",
-      source: "Feature: Goal A\n  Scenario: First goal\n    Given I want to build A",
-    });
-    await individualSystem.execute("want", {
       name: "goal-b",
       source: "Feature: Goal B\n  Scenario: Second goal\n    Given I want to build B",
     });
+    await individualSystem.execute("want", {
+      name: "goal-a",
+      source: "Feature: Goal A\n  Scenario: First goal\n    Given I want to build A",
+    });
 
-    // goal-a is auto-focused (first want)
+    // goal-a is auto-focused (latest want always focuses)
     expect(platform.listRelations("focus", "dev")).toContain("goal-a");
   });
 
@@ -295,5 +295,64 @@ describe("Multi-goal, multi-plan hierarchy", () => {
     // goal-a's focused plan is still plan-a2
     expect(result).toContain("Plans (focused: plan-a2)");
     expect(result).toContain("Feature: Task 1");
+  });
+});
+
+describe("Explore — discover the RoleX world", () => {
+  const platform = new MemoryPlatform();
+  const roleSystem = createRoleSystem(platform);
+  const orgSystem = createOrgSystem(platform);
+  const individualSystem = createIndividualSystem(platform);
+
+  test("setup world — roles and orgs", async () => {
+    await roleSystem.execute("born", {
+      name: "alice",
+      source: "Feature: Alice\n  Scenario: Who\n    Given I am Alice the engineer",
+    });
+    await roleSystem.execute("born", {
+      name: "bob",
+      source: "Feature: Bob\n  Scenario: Who\n    Given I am Bob the designer",
+    });
+    await orgSystem.execute("found", {
+      name: "acme",
+      source: "Feature: Acme Corp\n  Scenario: Mission\n    Given we build great products",
+    });
+
+    await individualSystem.execute("identity", { roleId: "alice" });
+  });
+
+  test("explore — list all roles and orgs", async () => {
+    const result = await individualSystem.execute("explore", {});
+    expect(result).toContain("[alice]");
+    expect(result).toContain("roles:");
+    expect(result).toContain("alice");
+    expect(result).toContain("bob");
+    expect(result).toContain("organizations:");
+    expect(result).toContain("acme");
+  });
+
+  test("explore(name) — role detail", async () => {
+    const result = await individualSystem.execute("explore", { name: "bob" });
+    expect(result).toContain("[alice]");
+    expect(result).toContain("exploring: bob");
+    expect(result).toContain("Feature: Bob");
+    expect(result).toContain("I am Bob the designer");
+  });
+
+  test("explore(name) — org detail", async () => {
+    const result = await individualSystem.execute("explore", { name: "acme" });
+    expect(result).toContain("[alice]");
+    expect(result).toContain("exploring: acme");
+    expect(result).toContain("Feature: Acme Corp");
+    expect(result).toContain("we build great products");
+  });
+
+  test("explore(name) — not found", async () => {
+    try {
+      await individualSystem.execute("explore", { name: "nonexistent" });
+      expect(true).toBe(false);
+    } catch (e: any) {
+      expect(e.message).toContain("not found");
+    }
   });
 });

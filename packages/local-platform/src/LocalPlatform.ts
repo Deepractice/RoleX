@@ -87,8 +87,8 @@ function parseFeature(source: string, type: Feature["type"]): Feature {
 // ========== Index ==========
 
 interface Index {
-  /** Maps structure name → parent (structure-type directory). */
-  structures: Record<string, string | undefined>;
+  /** Maps structure name → parent (null = top-level, string = child). */
+  structures: Record<string, string | null>;
 }
 
 // ========== LocalPlatform ==========
@@ -108,7 +108,7 @@ export class LocalPlatform implements Platform {
     mkdirSync(dir, { recursive: true });
 
     const idx = this.loadIndex();
-    idx.structures[name] = parent;
+    idx.structures[name] = parent ?? null;
     this.saveIndex(idx);
   }
 
@@ -123,8 +123,9 @@ export class LocalPlatform implements Platform {
 
   listStructures(parent?: string): string[] {
     const idx = this.loadIndex();
+    const target = parent ?? null;
     return Object.entries(idx.structures)
-      .filter(([_, p]) => p === parent)
+      .filter(([_, p]) => p === target)
       .map(([name]) => name)
       .sort();
   }
@@ -234,7 +235,7 @@ export class LocalPlatform implements Platform {
   private resolveStructurePath(name: string): string {
     const idx = this.loadIndex();
     const parent = idx.structures[name];
-    return this.structurePath(name, parent);
+    return this.structurePath(name, parent ?? undefined);
   }
 
   private loadIndex(): Index {

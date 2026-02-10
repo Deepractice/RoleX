@@ -1,9 +1,9 @@
 /**
  * Individual System — the role's first-person cognitive lifecycle.
  *
- * 11 processes (all active, first-person):
- *   identity, focus, want, design, todo,
- *   finish, achieve, abandon, reflect, skill, use
+ * 14 processes (all active, first-person):
+ *   identity, focus, explore, want, design, todo,
+ *   finish, achieve, abandon, forget, reflect, contemplate, skill, use
  *
  * External processes (born, teach, train, retire, kill)
  * belong to the Role System (role-system.ts).
@@ -21,7 +21,7 @@ import { t } from "./i18n/index.js";
 import {
   WANT, DESIGN, TODO,
   FINISH, ACHIEVE, ABANDON, FORGET, REFLECT, CONTEMPLATE,
-  IDENTITY, FOCUS, SKILL, USE,
+  IDENTITY, FOCUS, SKILL, USE, EXPLORE,
 } from "./individual.js";
 
 // ========== Helpers ==========
@@ -115,6 +115,11 @@ const identity: Process<{ roleId: string }, Feature> = {
   }),
   execute(ctx, params) {
     ctx.structure = params.roleId;
+
+    // Ensure role is indexed (migration from pre-index era)
+    if (!ctx.platform.hasStructure(params.roleId)) {
+      ctx.platform.createStructure(params.roleId);
+    }
 
     // Base identity (common + role-specific, from package)
     const baseFeatures = ctx.base?.listIdentity(params.roleId) ?? [];
@@ -233,9 +238,10 @@ const want: Process<{ name: string; source: string }, Feature> = {
     const r = role(ctx);
     const feature = parseSource(params.source, "goal");
     ctx.platform.writeInformation(r, "goal", params.name, feature);
-    if (ctx.platform.listRelations("focus", r).length === 0) {
-      ctx.platform.addRelation("focus", r, params.name);
-    }
+    // Always focus on the new goal
+    const oldFocus = ctx.platform.listRelations("focus", r);
+    for (const o of oldFocus) ctx.platform.removeRelation("focus", r, o);
+    ctx.platform.addRelation("focus", r, params.name);
     return `[${r}] ${t(ctx.locale, "individual.want.created", { name: params.name })}\n\n${renderFeature(feature)}`;
   },
 };
@@ -491,6 +497,111 @@ const skill: Process<{ name: string }, Feature> = {
   },
 };
 
+const explore: Process<{ name?: string }, Feature> = {
+  ...EXPLORE,
+  params: z.object({
+    name: z.string().optional().describe("Name of role or organization to explore"),
+  }),
+  execute(ctx, params) {
+    const r = role(ctx);
+    const l = ctx.locale;
+
+    if (!params.name) {
+      // List all top-level structures — orgs have charter, everything else is a role
+      const all = ctx.platform.listStructures();
+      const roles: string[] = [];
+      const orgs: string[] = [];
+      for (const name of all) {
+        const charter = ctx.platform.readInformation(name, "charter", "charter");
+        if (charter) {
+          orgs.push(name);
+        } else {
+          roles.push(name);
+        }
+      }
+      return `[${r}] ${t(l, "individual.explore.world", { roles: roles.join(", ") || "none", orgs: orgs.join(", ") || "none" })}`;
+    }
+
+    // Detail view of a specific structure
+    if (!ctx.platform.hasStructure(params.name)) {
+      throw new Error(t(l, "error.roleNotFound", { name: params.name }));
+    }
+
+    const sections: string[] = [];
+    sections.push(`[${r}] ${t(l, "individual.explore.detail", { name: params.name })}`);
+
+    // Check if org (has charter)
+    const charter = ctx.platform.readInformation(params.name, "charter", "charter");
+    if (charter) {
+      sections.push(renderFeature(charter));
+      const subs = ctx.platform.listStructures(params.name);
+      if (subs.length > 0) {
+        sections.push(`positions: ${subs.join(", ")}`);
+      }
+      return sections.join("\n\n");
+    }
+
+    // Otherwise it's a role
+    const persona = ctx.platform.listInformation(params.name, "persona");
+    if (persona.length > 0) {
+      sections.push(renderFeatures(persona));
+      const patterns = ctx.platform.listInformation(params.name, "knowledge.pattern");
+      const procedures = ctx.platform.listInformation(params.name, "knowledge.procedure");
+      const theories = ctx.platform.listInformation(params.name, "knowledge.theory");
+      const insights = ctx.platform.listInformation(params.name, "experience.insight");
+      const goals = ctx.platform.listInformation(params.name, "goal")
+        .filter(g => !g.tags?.some((tg: any) => tg.name === "@done" || tg.name === "@abandoned"));
+      sections.push(t(l, "individual.explore.roleInfo", {
+        patterns: patterns.length, procedures: procedures.length,
+        theories: theories.length, insights: insights.length,
+        goals: goals.length,
+      }));
+
+      // Show org membership and positions
+      const allStructures = ctx.platform.listStructures();
+      const memberOf: string[] = [];
+      for (const s of allStructures) {
+        const ch = ctx.platform.readInformation(s, "charter", "charter");
+        if (ch && ctx.platform.hasRelation("membership", s, params.name)) {
+          memberOf.push(s);
+        }
+      }
+      if (memberOf.length > 0) sections.push(`org: ${memberOf.join(", ")}`);
+      const positionList = ctx.platform.listRelations("assignment", params.name);
+      if (positionList.length > 0) sections.push(`position: ${positionList.join(", ")}`);
+
+      return sections.join("\n\n");
+    }
+
+    // Role without persona — show what we have
+    const patterns = ctx.platform.listInformation(params.name, "knowledge.pattern");
+    const procedures = ctx.platform.listInformation(params.name, "knowledge.procedure");
+    const theories = ctx.platform.listInformation(params.name, "knowledge.theory");
+    const insights = ctx.platform.listInformation(params.name, "experience.insight");
+    const goals = ctx.platform.listInformation(params.name, "goal")
+      .filter(g => !g.tags?.some((tg: any) => tg.name === "@done" || tg.name === "@abandoned"));
+    sections.push(t(l, "individual.explore.roleInfo", {
+      patterns: patterns.length, procedures: procedures.length,
+      theories: theories.length, insights: insights.length,
+      goals: goals.length,
+    }));
+
+    const allStructures = ctx.platform.listStructures();
+    const memberOf: string[] = [];
+    for (const s of allStructures) {
+      const ch = ctx.platform.readInformation(s, "charter", "charter");
+      if (ch && ctx.platform.hasRelation("membership", s, params.name)) {
+        memberOf.push(s);
+      }
+    }
+    if (memberOf.length > 0) sections.push(`org: ${memberOf.join(", ")}`);
+    const positionList = ctx.platform.listRelations("assignment", params.name);
+    if (positionList.length > 0) sections.push(`position: ${positionList.join(", ")}`);
+
+    return sections.join("\n\n");
+  },
+};
+
 /** Create the use process — needs ResourceX instance for tool execution. */
 function createUseProcess(rx: ResourceX): Process<{ locator: string; args?: unknown }, Feature> {
   return {
@@ -513,7 +624,7 @@ function createUseProcess(rx: ResourceX): Process<{ locator: string; args?: unkn
 /** Create the individual system, ready to execute. */
 export function createIndividualSystem(platform: Platform, rx?: ResourceX, base?: BaseProvider<Feature>): RunnableSystem<Feature> {
   const processes: Record<string, Process<any, Feature>> = {
-    identity, focus,
+    identity, focus, explore,
     want, design, todo,
     finish, achieve, abandon,
     forget, reflect, contemplate,

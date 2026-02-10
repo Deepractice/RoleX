@@ -21,6 +21,11 @@ Feature: Individual System
     And contemplate unifies knowledge.pattern into knowledge.theory
     And forget prunes outdated knowledge or experience
 
+  Scenario: Exploration
+    Given I want to discover the RoleX world
+    Then explore lists roles and organizations
+    And explore with a name shows detailed information
+
   Scenario: Capability
     Given I have skills and tools
     Then skill loads instructions, use executes tools

@@ -62,6 +62,7 @@ export {
   FOCUS,
   SKILL,
   USE,
+  EXPLORE,
   // System
   GOAL_EXECUTION,
   COGNITIVE_GROWTH,
