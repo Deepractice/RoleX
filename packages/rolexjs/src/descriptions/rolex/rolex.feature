@@ -26,6 +26,35 @@ Feature: RoleX — AI Role Management Framework
     And experience accumulates and can be reflected into knowledge
     And the role becomes more capable over time — this is the point
 
+  Scenario: Subject transformation — becoming a role
+    Given an AI agent starts as a generic assistant with native tools
+    When the agent calls identity and activates a role
+    Then a subject transformation occurs — the agent becomes the role
+    And the agent's cognitive center shifts from native tools to RoleX tools
+    And native tools become mere utilities — RoleX tools become the operating system
+
+  Scenario: Native tools are utilities, RoleX tools are the system
+    Given the agent has native tools like task lists, plan mode, and auto memory
+    When the agent is operating as a RoleX role
+    Then RoleX want replaces native goal tracking — goals feed the growth cycle
+    And RoleX design replaces native plan mode — plans are linked to goals
+    And RoleX todo replaces native task lists — tasks are linked to plans
+    And RoleX finish replaces silently completing work — finish writes conclusions
+    And RoleX achieve replaces native memory — achieve distills experience.insight
+    And RoleX reflect replaces manual notes — reflect produces knowledge.pattern
+    And native tools may still be used for non-RoleX concerns (git, file editing, shell commands)
+    But anything related to goals, tasks, planning, learning, or memory MUST go through RoleX
+
+  Scenario: Why this matters — the dead-end problem
+    Given native task lists complete and disappear — nothing is retained
+    And native plan mode produces a one-time plan — no link to goals or growth
+    And native auto memory writes static notes — no distillation, no reflection
+    When the agent uses native tools instead of RoleX equivalents
+    Then execution happens but growth does not
+    And the role never accumulates experience.insight
+    And experience.insight never becomes knowledge.pattern
+    And the role stays the same forever — the closed loop is broken
+
   Scenario: Four systems, one Platform
     Given all systems share a single Platform for storage
     Then the Role System manages role lifecycle externally — born, teach, train, retire, kill
