@@ -520,76 +520,33 @@ const explore: Process<{ name?: string }, Feature> = {
         }
       }
 
+      // Role-centric view: show roles first (people), then orgs (just names)
+      const items = [...roles, ...orgs];
       const lines: string[] = [`[${r}] RoleX World`];
 
-      // Render org tree
-      for (let oi = 0; oi < orgs.length; oi++) {
-        const orgName = orgs[oi];
-        const isLastOrg = oi === orgs.length - 1 && roles.length === 0;
-        const orgPrefix = isLastOrg ? "└── " : "├── ";
-        const childPrefix = isLastOrg ? "    " : "│   ";
-        lines.push(`${orgPrefix}${orgName} (org)`);
-
-        // Positions under this org
-        const positions = ctx.platform.listStructures(orgName);
-        const positionsOnly: string[] = [];
-        const subOrgs: string[] = [];
-        for (const p of positions) {
-          const subCharter = ctx.platform.readInformation(p, "charter", "charter");
-          if (subCharter) {
-            subOrgs.push(p);
-          } else {
-            positionsOnly.push(p);
-          }
-        }
-
-        // Members
-        const members = ctx.platform.listRelations("membership", orgName);
-
-        const childItems = [...positionsOnly, ...subOrgs, ...(members.length > 0 ? ["__members__"] : [])];
-        for (let ci = 0; ci < childItems.length; ci++) {
-          const isLast = ci === childItems.length - 1;
-          const itemPrefix = isLast ? "└── " : "├── ";
-          const item = childItems[ci];
-
-          if (item === "__members__") {
-            lines.push(`${childPrefix}${itemPrefix}members: ${members.join(", ")}`);
-          } else if (subOrgs.includes(item)) {
-            lines.push(`${childPrefix}${itemPrefix}${item} (sub-org)`);
-          } else {
-            // Position — find who is appointed
-            const appointed: string[] = [];
-            for (const m of members) {
-              if (ctx.platform.hasRelation("assignment", m, item)) {
-                appointed.push(m);
-              }
-            }
-            const holder = appointed.length > 0 ? ` — ${appointed.join(", ")}` : "";
-            lines.push(`${childPrefix}${itemPrefix}${item}${holder}`);
-          }
-        }
+      if (items.length === 0) {
+        lines.push("└── (empty)");
       }
 
-      // Render roles
-      for (let ri = 0; ri < roles.length; ri++) {
-        const roleName = roles[ri];
-        const isLast = ri === roles.length - 1;
+      for (let i = 0; i < items.length; i++) {
+        const name = items[i];
+        const isLast = i === items.length - 1;
         const prefix = isLast ? "└── " : "├── ";
 
-        // Find org and position
-        let context = "";
-        for (const orgName of orgs) {
-          if (ctx.platform.hasRelation("membership", orgName, roleName)) {
-            const pos = ctx.platform.listRelations("assignment", roleName);
-            context = pos.length > 0 ? ` → ${orgName}/${pos.join(", ")}` : ` → ${orgName}`;
-            break;
+        if (orgs.includes(name)) {
+          lines.push(`${prefix}${name} (org)`);
+        } else {
+          // Role — show org/position context
+          let context = "";
+          for (const orgName of orgs) {
+            if (ctx.platform.hasRelation("membership", orgName, name)) {
+              const pos = ctx.platform.listRelations("assignment", name);
+              context = pos.length > 0 ? ` → ${orgName}/${pos.join(", ")}` : ` → ${orgName}`;
+              break;
+            }
           }
+          lines.push(`${prefix}${name}${context}`);
         }
-        lines.push(`${prefix}${roleName} (role)${context}`);
-      }
-
-      if (orgs.length === 0 && roles.length === 0) {
-        lines.push("└── (empty)");
       }
 
       return lines.join("\n");

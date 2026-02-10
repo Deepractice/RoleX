@@ -325,8 +325,8 @@ describe("Explore — discover the RoleX world", () => {
     const result = await individualSystem.execute("explore", {});
     expect(result).toContain("[alice] RoleX World");
     expect(result).toContain("acme (org)");
-    expect(result).toContain("alice (role)");
-    expect(result).toContain("bob (role)");
+    expect(result).toContain("├── alice");
+    expect(result).toContain("├── bob");
   });
 
   test("explore(name) — role detail", async () => {
