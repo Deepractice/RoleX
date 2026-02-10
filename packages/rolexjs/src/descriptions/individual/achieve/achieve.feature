@@ -14,4 +14,4 @@ Feature: achieve
     When I achieve a goal
     Then the experience.conclusion captures what happened — the factual summary
     And the experience.insight captures what I learned — the transferable insight
-    And no separate synthesize call is needed
+    And both are written in one atomic operation

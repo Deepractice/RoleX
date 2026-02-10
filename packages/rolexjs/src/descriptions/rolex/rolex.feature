@@ -4,9 +4,9 @@ Feature: RoleX — AI Role Management Framework
 
   Scenario: What is RoleX
     Given RoleX is an AI role management framework based on systems theory
-    Then a role has identity — persona, knowledge.pattern, knowledge.procedure, experience.insight, experience.conclusion
+    Then a role has identity — persona, knowledge.pattern, knowledge.procedure, knowledge.theory, experience.insight, experience.conclusion
     And a role pursues goals — want, design, todo, finish, achieve
-    And a role grows — achieve distills experience, reflect produces knowledge
+    And a role grows — achieve distills experience, reflect produces knowledge, contemplate unifies theory
     And all behavior flows from identity — who I am determines what I do
 
   Scenario: Cognitive priority — RoleX IS the operating system

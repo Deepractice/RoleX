@@ -19,6 +19,7 @@ Feature: Individual System
     Then achieve distills experience.insight in one step
     And reflect turns experience.insight into knowledge.pattern
     And contemplate unifies knowledge.pattern into knowledge.theory
+    And forget prunes outdated knowledge or experience
 
   Scenario: Capability
     Given I have skills and tools

@@ -46,3 +46,4 @@ Feature: Growth — the learning cycle
     Given finish accepts an optional conclusion parameter
     When I complete a task with a summary of what happened
     Then I pass the conclusion inline — a task-level experience.conclusion
+    And this bridges execution and growth — every task completion can carry learning

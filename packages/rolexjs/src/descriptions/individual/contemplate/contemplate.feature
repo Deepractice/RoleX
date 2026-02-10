@@ -7,8 +7,3 @@ Feature: contemplate
     Then knowledge.theory is produced and stored in my identity
     And the patterns are NOT consumed — they retain independent value
     And theory represents the unified philosophical coherence across patterns
-
-  Scenario: Must be called first
-    Given no role is currently active
-    When any first-person operation is attempted
-    Then it fails because identity has not been loaded

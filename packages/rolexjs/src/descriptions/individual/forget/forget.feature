@@ -5,4 +5,4 @@ Feature: forget
     Given I have knowledge.pattern, knowledge.procedure, knowledge.theory, or experience.insight in my identity
     When I call forget with the type and name
     Then the information is removed from my identity
-    And I no longer carry that knowledge, experience, or skill
+    And I no longer carry that knowledge or experience
