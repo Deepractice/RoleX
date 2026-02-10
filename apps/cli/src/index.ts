@@ -16,35 +16,33 @@ import { abandon } from "./commands/abandon.js";
 import { finish } from "./commands/finish.js";
 import { setting } from "./commands/setting.js";
 
+const role = defineCommand({
+  meta: { name: "role", description: "Role System — born, teach" },
+  subCommands: { born, teach },
+});
+
+const org = defineCommand({
+  meta: { name: "org", description: "Organization System — found" },
+  subCommands: { found },
+});
+
+const governance = defineCommand({
+  meta: { name: "governance", description: "Governance System — hire, fire, directory" },
+  subCommands: { hire, fire, directory },
+});
+
+const individual = defineCommand({
+  meta: { name: "individual", description: "Individual System — identity, focus, want, plan, todo, finish, achieve, abandon, synthesize" },
+  subCommands: { identity, focus, want, plan, todo, finish, achieve, abandon, synthesize },
+});
+
 const main = defineCommand({
   meta: {
     name: "rolex",
     version: "0.1.0",
     description: "RoleX — AI Agent Role Management CLI",
   },
-  subCommands: {
-    // Role System
-    born,
-    teach,
-    // Org System
-    found,
-    // Governance System
-    hire,
-    fire,
-    directory,
-    // Individual System
-    identity,
-    focus,
-    want,
-    plan,
-    todo,
-    finish,
-    achieve,
-    abandon,
-    synthesize,
-    // Settings
-    setting,
-  },
+  subCommands: { role, org, governance, individual, setting },
 });
 
 runMain(main);
