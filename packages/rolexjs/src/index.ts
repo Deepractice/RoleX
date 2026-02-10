@@ -22,6 +22,9 @@ export {
 } from "./descriptions.js";
 export type { WorldTopic, ProcessName } from "./descriptions.js";
 
+// Base role templates
+export { base } from "./base/index.js";
+
 // Render
 export { wrapOutput, statusBar, readRoleState } from "./render.js";
 

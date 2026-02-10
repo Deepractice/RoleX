@@ -15,6 +15,7 @@ import type { Platform } from "@rolexjs/core";
 import type { RunnableSystem } from "@rolexjs/system";
 import type { Feature } from "@rolexjs/core";
 import type { ResourceX } from "resourcexjs";
+import { base } from "./base/index.js";
 
 export interface RolexConfig {
   /** Storage platform (Structure, Information, Relation). */
@@ -38,7 +39,7 @@ export interface Rolex {
 export function createRolex(config: RolexConfig): Rolex {
   const { platform, resourcex } = config;
   return {
-    individual: createIndividualSystem(platform, resourcex),
+    individual: createIndividualSystem(platform, resourcex, base),
     role: createRoleSystem(platform),
     org: createOrgSystem(platform),
     governance: createGovernanceSystem(platform),

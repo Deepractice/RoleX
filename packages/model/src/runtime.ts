@@ -9,6 +9,14 @@ import { z } from "zod";
 import type { ProcessDefinition } from "./process.js";
 import type { Platform } from "./platform.js";
 
+/** Provides built-in base identity for roles. */
+export interface BaseProvider<I = unknown> {
+  /** Get all identity features for a role (common + role-specific). */
+  listIdentity(roleName: string): I[];
+  /** Read a specific base information item (e.g., procedure for skill). */
+  readInformation(roleName: string, type: string, name: string): I | null;
+}
+
 /** Runtime context passed to every process. */
 export interface ProcessContext<I = unknown> {
   readonly platform: Platform<I>;
@@ -16,6 +24,8 @@ export interface ProcessContext<I = unknown> {
   structure: string;
   /** Current locale. Reads from platform settings, defaults to "en". */
   readonly locale: string;
+  /** Optional base identity provider for built-in role templates. */
+  readonly base?: BaseProvider<I>;
 }
 
 /** A process with params schema and execute logic. */
@@ -46,13 +56,14 @@ export interface RunnableSystem<I = unknown> {
 }
 
 /** Create a runnable system from config + platform. */
-export function defineSystem<I>(platform: Platform<I>, config: SystemConfig<I>): RunnableSystem<I> {
+export function defineSystem<I>(platform: Platform<I>, config: SystemConfig<I>, base?: BaseProvider<I>): RunnableSystem<I> {
   const ctx: ProcessContext<I> = {
     platform,
     structure: "",
     get locale(): string {
       return (platform.readSettings?.()?.locale as string) ?? "en";
     },
+    base,
   };
 
   return {

@@ -30,6 +30,7 @@ export type { Platform } from "./platform.js";
 
 export { defineSystem } from "./runtime.js";
 export type {
+  BaseProvider,
   ProcessContext,
   Process,
   SystemConfig,

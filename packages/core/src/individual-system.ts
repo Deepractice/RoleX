@@ -12,7 +12,7 @@
 import { z } from "zod";
 import { defineSystem } from "@rolexjs/system";
 import { parse } from "@rolexjs/parser";
-import type { Process, ProcessContext, RunnableSystem } from "@rolexjs/system";
+import type { Process, ProcessContext, RunnableSystem, BaseProvider } from "@rolexjs/system";
 import type { Platform } from "./Platform.js";
 import type { Feature } from "./Feature.js";
 import type { Scenario } from "./Scenario.js";
@@ -78,11 +78,17 @@ const identity: Process<{ roleId: string }, Feature> = {
   }),
   execute(ctx, params) {
     ctx.structure = params.roleId;
+
+    // Base identity (common + role-specific, from package)
+    const baseFeatures = ctx.base?.listIdentity(params.roleId) ?? [];
+
+    // Local identity (from platform storage)
     const persona = ctx.platform.listInformation(params.roleId, "persona");
     const knowledge = ctx.platform.listInformation(params.roleId, "knowledge");
     const procedure = ctx.platform.listInformation(params.roleId, "procedure");
     const experience = ctx.platform.listInformation(params.roleId, "experience");
-    const all = [...persona, ...knowledge, ...procedure, ...experience];
+
+    const all = [...baseFeatures, ...persona, ...knowledge, ...procedure, ...experience];
     return `[${params.roleId}] ${t(ctx.locale, "individual.identity.loaded")}\n\n${renderFeatures(all)}`;
   },
 };
@@ -335,7 +341,9 @@ const skill: Process<{ name: string }, Feature> = {
   }),
   execute(ctx, params) {
     const r = role(ctx);
-    const feature = ctx.platform.readInformation(r, "procedure", params.name);
+    const feature = ctx.platform.readInformation(r, "procedure", params.name)
+      ?? ctx.base?.readInformation(r, "procedure", params.name)
+      ?? null;
     if (!feature) throw new Error(t(ctx.locale, "error.procedureNotFound", { name: params.name }));
 
     // Try to load SKILL.md from path in Feature description
@@ -372,7 +380,7 @@ function createUseProcess(rx: ResourceX): Process<{ locator: string; args?: unkn
 // ========== System Factory ==========
 
 /** Create the individual system, ready to execute. */
-export function createIndividualSystem(platform: Platform, rx?: ResourceX): RunnableSystem<Feature> {
+export function createIndividualSystem(platform: Platform, rx?: ResourceX, base?: BaseProvider<Feature>): RunnableSystem<Feature> {
   const processes: Record<string, Process<any, Feature>> = {
     identity, focus,
     want, design, todo,
@@ -389,5 +397,5 @@ export function createIndividualSystem(platform: Platform, rx?: ResourceX): Runn
     name: "individual",
     description: "A single role's cognitive lifecycle — birth, learning, goal pursuit, growth.",
     processes,
-  });
+  }, base);
 }
