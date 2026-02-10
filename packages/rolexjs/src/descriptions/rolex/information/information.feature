@@ -13,13 +13,21 @@ Feature: Information — the types of knowledge a role carries
     Given knowledge is the role's accumulated understanding
     Then knowledge.pattern represents transferable principles — generalized from experience or taught directly
     And knowledge.procedure represents skills — what the role knows how to do (workflows, operations)
-    And both are permanent — they become part of who the role is
+    And knowledge.theory represents unified principles — philosophical coherence across all patterns
+    And all are permanent — they become part of who the role is
 
   Scenario: knowledge.pattern — transferable principles
-    Given pattern is the highest form of understanding
+    Given pattern is the primary unit of understanding
     Then it is produced by reflect (experience.insight → knowledge.pattern) or teach (direct)
     And patterns are general principles that apply across situations
     And they persist as part of identity permanently
+
+  Scenario: knowledge.theory — unified principles
+    Given theory represents the philosophical coherence across all patterns
+    Then it is produced by contemplate (knowledge.pattern → knowledge.theory)
+    And patterns are NOT consumed — they retain independent value
+    And theory is the highest form of understanding — the "big picture"
+    And it persists as part of identity permanently
 
   Scenario: knowledge.procedure — skills the role can perform
     Given procedure describes what the role knows how to do

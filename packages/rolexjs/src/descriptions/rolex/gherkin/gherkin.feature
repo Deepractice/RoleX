@@ -5,7 +5,7 @@ Feature: Gherkin — the universal language
   Scenario: One format for everything
     Given RoleX needs to represent personas, knowledge, goals, plans, tasks, and experience
     Then all of these are Gherkin Feature files
-    And Feature.type distinguishes them — persona, knowledge.pattern, knowledge.procedure, experience.insight, experience.conclusion, goal, plan, task
+    And Feature.type distinguishes them — persona, knowledge.pattern, knowledge.procedure, knowledge.theory, experience.insight, experience.conclusion, goal, plan, task
     And Scenario is the atomic unit of meaning within each Feature
 
   Scenario: Why Gherkin

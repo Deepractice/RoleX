@@ -4,7 +4,7 @@ Feature: Individual System
 
   Scenario: Cognition frame
     Given identity loads who I am
-    Then I have persona, knowledge.pattern, knowledge.procedure, experience.insight, and experience.conclusion
+    Then I have persona, knowledge.pattern, knowledge.procedure, knowledge.theory, experience.insight, and experience.conclusion
 
   Scenario: Intention frame
     Given focus loads what I am doing
@@ -18,6 +18,7 @@ Feature: Individual System
     Given execution and growth are unified
     Then achieve distills experience.insight in one step
     And reflect turns experience.insight into knowledge.pattern
+    And contemplate unifies knowledge.pattern into knowledge.theory
 
   Scenario: Capability
     Given I have skills and tools

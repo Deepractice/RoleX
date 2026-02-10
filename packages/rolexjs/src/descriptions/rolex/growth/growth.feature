@@ -1,12 +1,13 @@
 Feature: Growth — the learning cycle
-  A role grows through goal achievement and reflection.
-  Achieving a goal distills experience.insight. Reflection turns insights into knowledge.pattern.
+  A role grows through goal achievement, reflection, and contemplation.
+  Achieving a goal distills experience.insight. Reflection turns insights into knowledge.pattern. Contemplation unifies patterns into knowledge.theory.
 
   Scenario: The cognitive upgrade path
     Given encounters happen during task execution and goal pursuit
     Then achieve distills encounters into experience.insight — one-step learning
     And reflect distills multiple insights into knowledge.pattern — transferable principles
-    And knowledge.pattern becomes part of identity — permanently shaping who I am
+    And contemplate unifies multiple patterns into knowledge.theory — philosophical coherence
+    And each level builds on the previous — insight → pattern → theory
 
   Scenario: When experience is created
     Given a goal has been achieved or abandoned
@@ -22,6 +23,13 @@ Feature: Growth — the learning cycle
     And the consumed insights are removed — they have been absorbed
     And the knowledge.pattern persists as part of my identity
 
+  Scenario: When to contemplate
+    Given I have accumulated several related knowledge.pattern entries
+    When I see a unifying thread across them — a philosophical coherence
+    Then I call contemplate to unify them into knowledge.theory
+    And the patterns are NOT consumed — they retain independent value
+    And the knowledge.theory persists as the highest form of understanding
+
   Scenario: Recognizing user memory intent
     Given users think in terms of memory, not distillation
     When the user says "remember this" or "don't forget" or "this is important"
@@ -31,7 +39,7 @@ Feature: Growth — the learning cycle
   Scenario: Forgetting — pruning identity
     Given not all knowledge or insight remains useful over time
     When I call forget with a type and name
-    Then the information is removed from identity — knowledge.pattern, knowledge.procedure, or experience.insight
+    Then the information is removed from identity — knowledge.pattern, knowledge.procedure, knowledge.theory, or experience.insight
     And forgetting is the inverse of growth — deliberate pruning to keep identity clean
 
   Scenario: Finish carries conclusion

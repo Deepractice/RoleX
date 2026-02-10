@@ -28,6 +28,7 @@ import abandonFeature from "./descriptions/individual/abandon/abandon.feature";
 import forgetFeature from "./descriptions/individual/forget/forget.feature";
 
 import reflectFeature from "./descriptions/individual/reflect/reflect.feature";
+import contemplateFeature from "./descriptions/individual/contemplate/contemplate.feature";
 import skillFeature from "./descriptions/individual/skill/skill.feature";
 import useFeature from "./descriptions/individual/use/use.feature";
 
@@ -93,6 +94,7 @@ export const individual = {
   abandon: abandonFeature,
   forget: forgetFeature,
   reflect: reflectFeature,
+  contemplate: contemplateFeature,
   skill: skillFeature,
   use: useFeature,
 } as const;
