@@ -195,7 +195,7 @@ server.addTool({
   name: "skill",
   description: descriptions.skill,
   parameters: z.object({
-    name: z.string().describe("Procedure name to load"),
+    name: z.string().describe("ResourceX locator (e.g. 'role-management:0.1.0')"),
   }),
   execute: async (args) => run("skill", args),
 });

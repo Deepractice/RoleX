@@ -471,31 +471,22 @@ const contemplate: Process<{ patternNames: string[]; theoryName: string; theoryS
   },
 };
 
-const skill: Process<{ name: string }, Feature> = {
-  ...SKILL,
-  params: z.object({
-    name: z.string().describe("Procedure name to load"),
-  }),
-  execute(ctx, params) {
-    const r = role(ctx);
-    const feature = ctx.platform.readInformation(r, "knowledge.procedure", params.name)
-      ?? ctx.base?.readInformation(r, "knowledge.procedure", params.name)
-      ?? null;
-    if (!feature) throw new Error(t(ctx.locale, "error.procedureNotFound", { name: params.name }));
-
-    // Try to load SKILL.md from path in Feature description
-    const desc = (feature.description || "").trim();
-    if (desc && ctx.platform.readFile) {
-      const content = ctx.platform.readFile(desc);
-      if (content) {
-        return `[${r}] ${t(ctx.locale, "individual.skill.done", { name: params.name })}\n\n${content}`;
-      }
-    }
-
-    // Fallback: render full Gherkin procedure
-    return `[${r}] ${t(ctx.locale, "individual.skill.done", { name: params.name })}\n\n${renderFeature(feature)}`;
-  },
-};
+/** Create the skill process — resolves ResourceX locator directly. */
+function createSkillProcess(rx?: ResourceX): Process<{ name: string }, Feature> {
+  return {
+    ...SKILL,
+    params: z.object({
+      name: z.string().describe("ResourceX locator (e.g. 'role-management:0.1.0')"),
+    }),
+    async execute(ctx, params) {
+      const r = role(ctx);
+      if (!rx) throw new Error("ResourceX not available");
+      const executable = await rx.use(params.name);
+      const content = await executable.execute();
+      return `[${r}] ${t(ctx.locale, "individual.skill.done", { name: params.name })}\n\n${typeof content === "string" ? content : JSON.stringify(content, null, 2)}`;
+    },
+  };
+}
 
 const explore: Process<{ name?: string }, Feature> = {
   ...EXPLORE,
@@ -675,7 +666,7 @@ export function createIndividualSystem(platform: Platform, rx?: ResourceX, base?
     want, design, todo,
     finish, achieve, abandon,
     forget, reflect, contemplate,
-    skill,
+    skill: createSkillProcess(rx),
   };
 
   if (rx) {

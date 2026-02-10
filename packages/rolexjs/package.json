@@ -40,7 +40,8 @@
   "dependencies": {
     "@rolexjs/core": "workspace:*",
     "@rolexjs/system": "workspace:*",
-    "resourcexjs": "^2.5.7"
+    "resourcexjs": "^2.6.0",
+    "@resourcexjs/node-provider": "^2.6.0"
   },
   "devDependencies": {},
   "publishConfig": {
