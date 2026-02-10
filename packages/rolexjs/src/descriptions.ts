@@ -26,7 +26,7 @@ import finishFeature from "./descriptions/individual/finish/finish.feature";
 import achieveFeature from "./descriptions/individual/achieve/achieve.feature";
 import abandonFeature from "./descriptions/individual/abandon/abandon.feature";
 import forgetFeature from "./descriptions/individual/forget/forget.feature";
-import synthesizeFeature from "./descriptions/individual/synthesize/synthesize.feature";
+
 import reflectFeature from "./descriptions/individual/reflect/reflect.feature";
 import skillFeature from "./descriptions/individual/skill/skill.feature";
 import useFeature from "./descriptions/individual/use/use.feature";
@@ -92,7 +92,6 @@ export const individual = {
   achieve: achieveFeature,
   abandon: abandonFeature,
   forget: forgetFeature,
-  synthesize: synthesizeFeature,
   reflect: reflectFeature,
   skill: skillFeature,
   use: useFeature,

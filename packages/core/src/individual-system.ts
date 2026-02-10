@@ -1,9 +1,9 @@
 /**
  * Individual System — the role's first-person cognitive lifecycle.
  *
- * 12 processes (all active, first-person):
+ * 11 processes (all active, first-person):
  *   identity, focus, want, design, todo,
- *   finish, achieve, abandon, synthesize, reflect, skill, use
+ *   finish, achieve, abandon, reflect, skill, use
  *
  * External processes (born, teach, train, retire, kill)
  * belong to the Role System (role-system.ts).
@@ -20,7 +20,7 @@ import type { ResourceX } from "resourcexjs";
 import { t } from "./i18n/index.js";
 import {
   WANT, DESIGN, TODO,
-  FINISH, ACHIEVE, ABANDON, FORGET, SYNTHESIZE, REFLECT,
+  FINISH, ACHIEVE, ABANDON, FORGET, REFLECT,
   IDENTITY, FOCUS, SKILL, USE,
 } from "./individual.js";
 
@@ -289,11 +289,11 @@ const todo: Process<{ name: string; source: string }, Feature> = {
   },
 };
 
-const finish: Process<{ name: string; experience?: { name: string; source: string } }, Feature> = {
+const finish: Process<{ name: string; conclusion?: string }, Feature> = {
   ...FINISH,
   params: z.object({
     name: z.string().describe("Task name to finish"),
-    experience: experienceSchema,
+    conclusion: z.string().optional().describe("Gherkin — task completion summary"),
   }),
   execute(ctx, params) {
     const r = role(ctx);
@@ -306,20 +306,24 @@ const finish: Process<{ name: string; experience?: { name: string; source: strin
 
     let output = `[${r}] ${t(l, "individual.finish.done", { name: params.name })}`;
 
-    if (params.experience) {
-      const exp = parseSource(params.experience.source, "experience");
-      ctx.platform.writeInformation(r, "experience", params.experience.name, exp);
-      output += `\n${t(l, "individual.finish.synthesized", { name: params.experience.name })}`;
+    if (params.conclusion) {
+      const conclusionFeature = parseSource(params.conclusion, "conclusion");
+      ctx.platform.writeInformation(r, "conclusion", params.name, conclusionFeature);
+      output += `\n${t(l, "individual.finish.conclusion", { name: params.name })}`;
     }
 
     return output;
   },
 };
 
-const achieve: Process<{ experience?: { name: string; source: string } }, Feature> = {
+const achieve: Process<{ conclusion: string; experience: { name: string; source: string } }, Feature> = {
   ...ACHIEVE,
   params: z.object({
-    experience: experienceSchema,
+    conclusion: z.string().describe("Gherkin — goal-level summary"),
+    experience: z.object({
+      name: z.string().describe("Experience name"),
+      source: z.string().describe("Gherkin — distilled experience"),
+    }).describe("Experience to synthesize into identity"),
   }),
   execute(ctx, params) {
     const r = role(ctx);
@@ -331,21 +335,26 @@ const achieve: Process<{ experience?: { name: string; source: string } }, Featur
     const updated = { ...goal, tags: [...(goal.tags || []), { name: "@done" }] } as Feature;
     ctx.platform.writeInformation(r, "goal", goalName, updated);
 
-    let output = `[${r}] ${t(l, "individual.achieve.done", { name: goalName })}`;
+    // Write conclusion
+    const conclusionFeature = parseSource(params.conclusion, "conclusion");
+    ctx.platform.writeInformation(r, "conclusion", goalName, conclusionFeature);
 
-    if (params.experience) {
-      const exp = parseSource(params.experience.source, "experience");
-      ctx.platform.writeInformation(r, "experience", params.experience.name, exp);
-      output += `\n${t(l, "individual.finish.synthesized", { name: params.experience.name })}`;
-    }
+    // Write experience
+    const exp = parseSource(params.experience.source, "experience");
+    ctx.platform.writeInformation(r, "experience", params.experience.name, exp);
+
+    let output = `[${r}] ${t(l, "individual.achieve.done", { name: goalName })}`;
+    output += `\n${t(l, "individual.achieve.conclusion", { name: goalName })}`;
+    output += `\n${t(l, "individual.achieve.synthesized", { name: params.experience.name })}`;
 
     return output;
   },
 };
 
-const abandon: Process<{ experience?: { name: string; source: string } }, Feature> = {
+const abandon: Process<{ conclusion?: string; experience?: { name: string; source: string } }, Feature> = {
   ...ABANDON,
   params: z.object({
+    conclusion: z.string().optional().describe("Gherkin — why abandoned"),
     experience: experienceSchema,
   }),
   execute(ctx, params) {
@@ -360,10 +369,16 @@ const abandon: Process<{ experience?: { name: string; source: string } }, Featur
 
     let output = `[${r}] ${t(l, "individual.abandon.done", { name: goalName })}`;
 
+    if (params.conclusion) {
+      const conclusionFeature = parseSource(params.conclusion, "conclusion");
+      ctx.platform.writeInformation(r, "conclusion", goalName, conclusionFeature);
+      output += `\n${t(l, "individual.abandon.conclusion", { name: goalName })}`;
+    }
+
     if (params.experience) {
       const exp = parseSource(params.experience.source, "experience");
       ctx.platform.writeInformation(r, "experience", params.experience.name, exp);
-      output += `\n${t(l, "individual.finish.synthesized", { name: params.experience.name })}`;
+      output += `\n${t(l, "individual.abandon.synthesized", { name: params.experience.name })}`;
     }
 
     return output;
@@ -386,20 +401,6 @@ const forget: Process<{ type: string; name: string }, Feature> = {
     }
     ctx.platform.removeInformation(r, params.type, params.name);
     return `[${r}] ${t(ctx.locale, "individual.forget.done", { type: params.type, name: params.name })}`;
-  },
-};
-
-const synthesize: Process<{ name: string; source: string }, Feature> = {
-  ...SYNTHESIZE,
-  params: z.object({
-    name: z.string().describe("Experience name"),
-    source: z.string().describe("Gherkin experience source"),
-  }),
-  execute(ctx, params) {
-    const r = role(ctx);
-    const feature = parseSource(params.source, "experience");
-    ctx.platform.writeInformation(r, "experience", params.name, feature);
-    return `[${r}] ${t(ctx.locale, "individual.synthesize.done", { name: params.name })}\n\n${renderFeature(feature)}`;
   },
 };
 
@@ -485,7 +486,7 @@ export function createIndividualSystem(platform: Platform, rx?: ResourceX, base?
     identity, focus,
     want, design, todo,
     finish, achieve, abandon,
-    forget, synthesize, reflect,
+    forget, reflect,
     skill,
   };
 

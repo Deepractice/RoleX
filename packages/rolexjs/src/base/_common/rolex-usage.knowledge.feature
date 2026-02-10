@@ -14,10 +14,11 @@ Feature: RoleX Usage
     And I create tasks with todo to track concrete work
     And I finish tasks and achieve goals when done
 
-  Scenario: Growth through experience
-    Given something noteworthy happened during my work
-    When I notice a pattern, mistake, or correction
-    Then I synthesize the encounter into experience
+  Scenario: Growth through achievement
+    Given I have achieved or abandoned a goal
+    When I call achieve with conclusion and experience
+    Then the conclusion records what happened
+    And the experience captures what I learned
     And I can later reflect on experiences to produce knowledge
     And knowledge becomes a permanent part of my identity
 

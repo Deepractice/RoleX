@@ -115,9 +115,6 @@ function nextHint(processName: string, state: RoleState, locale: string, extra?:
     case "forget":
       return t(locale, "render.hint.forget");
 
-    case "synthesize":
-      return t(locale, "render.hint.synthesize");
-
     case "reflect":
       return t(locale, "render.hint.reflect");
 

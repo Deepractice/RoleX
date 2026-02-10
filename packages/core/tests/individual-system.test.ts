@@ -102,16 +102,13 @@ describe("Role System + Individual System — full lifecycle", () => {
     expect(result).toContain("I run migrations");
   });
 
-  test("finish — complete task with experience", async () => {
+  test("finish — complete task with conclusion", async () => {
     const result = await individualSystem.execute("finish", {
       name: "setup-db",
-      experience: {
-        name: "db-setup-learnings",
-        source: "Feature: DB Setup Learnings\n  Scenario: Migrations matter\n    Given I learned to always test migrations",
-      },
+      conclusion: "Feature: DB Setup Complete\n  Scenario: Result\n    Given migrations ran successfully\n    And all tables created",
     });
     expect(result).toContain("[sean] finished: setup-db");
-    expect(result).toContain("synthesized: db-setup-learnings");
+    expect(result).toContain("conclusion: setup-db");
   });
 
   test("focus — finished task shows @done", async () => {
@@ -119,34 +116,32 @@ describe("Role System + Individual System — full lifecycle", () => {
     expect(result).toContain("[setup-db] @done");
   });
 
-  test("synthesize — record experience", async () => {
-    const result = await individualSystem.execute("synthesize", {
-      name: "mvp-insight",
-      source: "Feature: MVP Insight\n  Scenario: Speed matters\n    Given shipping fast beats perfection",
-    });
-    expect(result).toContain("[sean] synthesized: mvp-insight");
-  });
-
-  test("achieve — complete goal", async () => {
+  test("achieve — complete goal with conclusion + experience", async () => {
     const result = await individualSystem.execute("achieve", {
+      conclusion: "Feature: MVP Conclusion\n  Scenario: Summary\n    Given the MVP was shipped on time\n    And all core features working",
       experience: {
         name: "mvp-achievement",
-        source: "Feature: MVP Done\n  Scenario: We shipped\n    Given the MVP is live",
+        source: "Feature: MVP Done\n  Scenario: We shipped\n    Given the MVP is live\n    And shipping fast beats perfection",
       },
     });
     expect(result).toContain("[sean] achieved: build-mvp");
+    expect(result).toContain("conclusion: build-mvp");
     expect(result).toContain("synthesized: mvp-achievement");
+    // Verify experience was written
+    expect(platform.readInformation("sean", "experience", "mvp-achievement")).not.toBeNull();
+    // Verify conclusion was written
+    expect(platform.readInformation("sean", "conclusion", "build-mvp")).not.toBeNull();
   });
 
   test("reflect — distill experience into knowledge", async () => {
     const result = await individualSystem.execute("reflect", {
-      experienceNames: ["db-setup-learnings", "mvp-insight", "mvp-achievement"],
+      experienceNames: ["mvp-achievement"],
       knowledgeName: "shipping-principles",
       knowledgeSource: "Feature: Shipping Principles\n  Scenario: Key lessons\n    Given test migrations early\n    And ship fast, iterate later",
     });
     expect(result).toContain("[sean] reflected");
     expect(result).toContain("shipping-principles");
-    expect(platform.readInformation("sean", "experience", "db-setup-learnings")).toBeNull();
+    expect(platform.readInformation("sean", "experience", "mvp-achievement")).toBeNull();
     expect(platform.readInformation("sean", "knowledge", "shipping-principles")).not.toBeNull();
   });
 

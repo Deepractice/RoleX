@@ -6,8 +6,8 @@ Feature: finish
     When I call finish with the task name
     Then the task is marked @done
 
-  Scenario: Finish with experience
-    Given I learned something while completing a task
-    When I call finish with an experience name and Gherkin source
+  Scenario: Finish with conclusion
+    Given I completed a task and want to summarize what happened
+    When I call finish with a conclusion (Gherkin source)
     Then the task is marked @done
-    And the experience is synthesized into my identity
+    And the conclusion is stored as a completion summary

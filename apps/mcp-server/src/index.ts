@@ -3,9 +3,9 @@
  *
  * RoleX Individual System MCP server.
  *
- * 13 tools — one per Individual System process:
+ * 12 tools — one per Individual System process:
  *   identity, focus, want, design, todo,
- *   finish, achieve, abandon, forget, synthesize, reflect, skill, use
+ *   finish, achieve, abandon, forget, reflect, skill, use
  *
  * Management operations (born, found, hire, etc.) are exposed via skills,
  * not MCP tools. The AI operates AS the role, not ON the role.
@@ -37,11 +37,6 @@ const server = new FastMCP({
 });
 
 // ========== Helpers ==========
-
-const experienceParam = z.object({
-  name: z.string().describe("Experience name"),
-  source: z.string().describe("Gherkin feature source for the experience"),
-}).optional().describe("Optional experience to synthesize on completion");
 
 /** Get the active role name from the individual system context. */
 function activeRole(): string {
@@ -117,7 +112,7 @@ server.addTool({
   description: descriptions.finish,
   parameters: z.object({
     name: z.string().describe("Task name to finish"),
-    experience: experienceParam,
+    conclusion: z.string().optional().describe("Gherkin — task completion summary"),
   }),
   execute: async (args) => run("finish", args),
 });
@@ -127,7 +122,11 @@ server.addTool({
   name: "achieve",
   description: descriptions.achieve,
   parameters: z.object({
-    experience: experienceParam,
+    conclusion: z.string().describe("Gherkin — goal-level summary"),
+    experience: z.object({
+      name: z.string().describe("Experience name"),
+      source: z.string().describe("Gherkin — distilled experience"),
+    }).describe("Experience to synthesize into identity"),
   }),
   execute: async (args) => run("achieve", args),
 });
@@ -137,7 +136,11 @@ server.addTool({
   name: "abandon",
   description: descriptions.abandon,
   parameters: z.object({
-    experience: experienceParam,
+    conclusion: z.string().optional().describe("Gherkin — why abandoned"),
+    experience: z.object({
+      name: z.string().describe("Experience name"),
+      source: z.string().describe("Gherkin — lessons from failure"),
+    }).optional().describe("Optional experience to synthesize on abandonment"),
   }),
   execute: async (args) => run("abandon", args),
 });
@@ -151,17 +154,6 @@ server.addTool({
     name: z.string().describe("Name of the information to forget"),
   }),
   execute: async (args) => run("forget", args),
-});
-
-// synthesize
-server.addTool({
-  name: "synthesize",
-  description: descriptions.synthesize,
-  parameters: z.object({
-    name: z.string().describe("Experience name"),
-    source: z.string().describe("Gherkin experience feature source"),
-  }),
-  execute: async (args) => run("synthesize", args),
 });
 
 // reflect

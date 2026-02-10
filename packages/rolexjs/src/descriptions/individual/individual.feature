@@ -15,8 +15,9 @@ Feature: Individual System
     Then want → design → todo → finish → achieve or abandon
 
   Scenario: Learning cycle
-    Given encounters become growth
-    Then synthesize → reflect → knowledge becomes part of identity
+    Given execution and growth are unified
+    Then achieve distills experience in one step
+    And reflect turns experience into knowledge
 
   Scenario: Capability
     Given I have skills and tools

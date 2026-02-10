@@ -3,7 +3,7 @@
  *
  * Everything here is done BY the role itself:
  * identity → focus → want → design → todo → finish → achieve →
- * abandon → synthesize → reflect → skill
+ * abandon → reflect → skill
  *
  * External processes (born, teach, train, retire, kill)
  * belong to the Role System.
@@ -22,7 +22,7 @@ import type {
 export const ROLE: StructureDefinition = {
   name: "Role",
   description: "The individual — an identity that accumulates knowledge, experience, and pursues goals.",
-  informationTypes: ["persona", "knowledge", "procedure", "experience", "goal", "plan", "task"],
+  informationTypes: ["persona", "knowledge", "procedure", "experience", "conclusion", "goal", "plan", "task"],
 };
 
 // ========== Information ==========
@@ -48,6 +48,12 @@ export const PROCEDURE: InformationType = {
 export const EXPERIENCE: InformationType = {
   type: "experience",
   description: "A posteriori knowledge — what the role has learned from encounters.",
+  belongsTo: "Role",
+};
+
+export const CONCLUSION: InformationType = {
+  type: "conclusion",
+  description: "Completion summary — what happened, what was the result.",
   belongsTo: "Role",
 };
 
@@ -118,29 +124,29 @@ export const TODO: ProcessDefinition = {
 
 export const FINISH: ProcessDefinition = {
   name: "finish",
-  description: "Mark a task complete. Optionally synthesize experience.",
+  description: "Mark a task complete. Optionally write a conclusion.",
   kind: "write",
   targets: ["Role"],
   inputs: ["task"],
-  outputs: ["experience"],
+  outputs: ["conclusion"],
 };
 
 export const ACHIEVE: ProcessDefinition = {
   name: "achieve",
-  description: "Mark the current goal achieved. Optionally synthesize experience.",
+  description: "Mark the current goal achieved. Write conclusion and distill experience.",
   kind: "write",
   targets: ["Role"],
   inputs: ["goal"],
-  outputs: ["experience"],
+  outputs: ["conclusion", "experience"],
 };
 
 export const ABANDON: ProcessDefinition = {
   name: "abandon",
-  description: "Mark the current goal abandoned. Optionally synthesize experience.",
+  description: "Mark the current goal abandoned. Optionally write conclusion and distill experience.",
   kind: "write",
   targets: ["Role"],
   inputs: ["goal"],
-  outputs: ["experience"],
+  outputs: ["conclusion", "experience"],
 };
 
 export const FORGET: ProcessDefinition = {
@@ -150,15 +156,6 @@ export const FORGET: ProcessDefinition = {
   targets: ["Role"],
   inputs: ["knowledge", "procedure", "experience"],
   outputs: [],
-};
-
-export const SYNTHESIZE: ProcessDefinition = {
-  name: "synthesize",
-  description: "Turn encounters into experience — a posteriori learning.",
-  kind: "write",
-  targets: ["Role"],
-  inputs: [],
-  outputs: ["experience"],
 };
 
 export const REFLECT: ProcessDefinition = {
@@ -217,7 +214,7 @@ export const GOAL_EXECUTION: SystemDefinition = {
 
 export const COGNITIVE_GROWTH: SystemDefinition = {
   name: "cognitive-growth",
-  description: "The learning cycle — synthesize encounters into experience, reflect into knowledge.",
-  processes: ["synthesize", "reflect"],
+  description: "The learning cycle — achieve distills experience, reflect turns experience into knowledge.",
+  processes: ["achieve", "reflect"],
   feedback: ["knowledge"],
 };

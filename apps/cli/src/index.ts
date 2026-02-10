@@ -7,7 +7,7 @@ import { fire } from "./commands/fire.js";
 import { teach } from "./commands/teach.js";
 import { train } from "./commands/train.js";
 import { identity } from "./commands/identity.js";
-import { synthesize } from "./commands/synthesize.js";
+
 import { focus } from "./commands/focus.js";
 import { want } from "./commands/want.js";
 import { plan } from "./commands/plan.js";
@@ -36,8 +36,8 @@ const governance = defineCommand({
 });
 
 const individual = defineCommand({
-  meta: { name: "individual", description: "Individual System — identity, focus, want, plan, todo, finish, achieve, abandon, synthesize, reflect, skill" },
-  subCommands: { identity, focus, want, plan, todo, finish, achieve, abandon, forget, synthesize, reflect, skill },
+  meta: { name: "individual", description: "Individual System — identity, focus, want, plan, todo, finish, achieve, abandon, reflect, skill" },
+  subCommands: { identity, focus, want, plan, todo, finish, achieve, abandon, forget, reflect, skill },
 });
 
 const main = defineCommand({
