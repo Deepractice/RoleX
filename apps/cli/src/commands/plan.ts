@@ -1,13 +1,12 @@
 import { defineCommand } from "citty";
 import consola from "consola";
-import { createRolex } from "../lib/client.js";
-import { Organization } from "rolexjs";
+import { createClient } from "../lib/client.js";
 import { resolveSource } from "../lib/source.js";
 
 export const plan = defineCommand({
   meta: {
     name: "plan",
-    description: "Create a plan for the current active goal",
+    description: "Design a plan for the current active goal",
   },
   args: {
     roleId: {
@@ -17,7 +16,7 @@ export const plan = defineCommand({
     },
     source: {
       type: "string",
-      description: "Gherkin feature source text",
+      description: "Gherkin plan feature source text",
     },
     file: {
       type: "string",
@@ -27,13 +26,11 @@ export const plan = defineCommand({
   },
   async run({ args }) {
     try {
-      const rolex = createRolex();
-      const dir = rolex.directory();
-      const org = rolex.find(dir.organizations[0].name) as Organization;
-      const role = org.role(args.roleId);
+      const rolex = createClient();
+      await rolex.individual.execute("identity", { roleId: args.roleId });
       const src = resolveSource(args);
-      const p = role.plan(src);
-      consola.success(`Plan created: ${p.name}`);
+      const result = await rolex.individual.execute("design", { source: src });
+      consola.success(result);
     } catch (error) {
       consola.error(error instanceof Error ? error.message : "Failed to create plan");
       process.exit(1);

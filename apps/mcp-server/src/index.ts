@@ -12,13 +12,15 @@
  */
 
 import { FastMCP } from "fastmcp";
+import { join } from "node:path";
+import { homedir } from "node:os";
 import { z } from "zod";
-import { createRolex, world, WORLD_TOPICS, descriptions } from "rolexjs";
+import { createRolex, world, WORLD_TOPICS, descriptions, wrapOutput } from "rolexjs";
 import { LocalPlatform } from "@rolexjs/local-platform";
 
 // ========== Platform & System ==========
 
-const rootDir = process.env.ROLEX_ROOT || process.cwd();
+const rootDir = process.env.ROLEX_ROOT || join(homedir(), ".deepractice", "rolex");
 const platform = new LocalPlatform(rootDir);
 const rolex = createRolex({ platform });
 
@@ -41,6 +43,19 @@ const experienceParam = z.object({
   source: z.string().describe("Gherkin feature source for the experience"),
 }).optional().describe("Optional experience to synthesize on completion");
 
+/** Get the active role name from the individual system context. */
+function activeRole(): string {
+  return rolex.individual.ctx.structure;
+}
+
+/** Execute a process and wrap output with status bar + hint. */
+async function run(processName: string, args: unknown, extra?: { taskName?: string }): Promise<string> {
+  const result = await rolex.individual.execute(processName, args);
+  const roleName = activeRole();
+  if (!roleName) return result;
+  return wrapOutput(platform, roleName, processName, result, extra);
+}
+
 // ========== Tools ==========
 
 // identity
@@ -50,7 +65,7 @@ server.addTool({
   parameters: z.object({
     roleId: z.string().describe("Role name to activate"),
   }),
-  execute: async (args) => rolex.individual.execute("identity", args),
+  execute: async (args) => run("identity", args),
 });
 
 // focus
@@ -60,7 +75,7 @@ server.addTool({
   parameters: z.object({
     name: z.string().optional().describe("Goal name to switch focus to"),
   }),
-  execute: async (args) => rolex.individual.execute("focus", args),
+  execute: async (args) => run("focus", args),
 });
 
 // want
@@ -71,7 +86,7 @@ server.addTool({
     name: z.string().describe("Goal name"),
     source: z.string().describe("Gherkin goal feature source"),
   }),
-  execute: async (args) => rolex.individual.execute("want", args),
+  execute: async (args) => run("want", args),
 });
 
 // design
@@ -81,7 +96,7 @@ server.addTool({
   parameters: z.object({
     source: z.string().describe("Gherkin plan feature source"),
   }),
-  execute: async (args) => rolex.individual.execute("design", args),
+  execute: async (args) => run("design", args),
 });
 
 // todo
@@ -92,7 +107,7 @@ server.addTool({
     name: z.string().describe("Task name"),
     source: z.string().describe("Gherkin task feature source"),
   }),
-  execute: async (args) => rolex.individual.execute("todo", args),
+  execute: async (args) => run("todo", args, { taskName: args.name }),
 });
 
 // finish
@@ -103,7 +118,7 @@ server.addTool({
     name: z.string().describe("Task name to finish"),
     experience: experienceParam,
   }),
-  execute: async (args) => rolex.individual.execute("finish", args),
+  execute: async (args) => run("finish", args),
 });
 
 // achieve
@@ -113,7 +128,7 @@ server.addTool({
   parameters: z.object({
     experience: experienceParam,
   }),
-  execute: async (args) => rolex.individual.execute("achieve", args),
+  execute: async (args) => run("achieve", args),
 });
 
 // abandon
@@ -123,7 +138,7 @@ server.addTool({
   parameters: z.object({
     experience: experienceParam,
   }),
-  execute: async (args) => rolex.individual.execute("abandon", args),
+  execute: async (args) => run("abandon", args),
 });
 
 // synthesize
@@ -134,7 +149,7 @@ server.addTool({
     name: z.string().describe("Experience name"),
     source: z.string().describe("Gherkin experience feature source"),
   }),
-  execute: async (args) => rolex.individual.execute("synthesize", args),
+  execute: async (args) => run("synthesize", args),
 });
 
 // reflect
@@ -146,7 +161,7 @@ server.addTool({
     knowledgeName: z.string().describe("Knowledge name to produce"),
     knowledgeSource: z.string().describe("Gherkin knowledge feature source"),
   }),
-  execute: async (args) => rolex.individual.execute("reflect", args),
+  execute: async (args) => run("reflect", args),
 });
 
 // apply
@@ -156,7 +171,7 @@ server.addTool({
   parameters: z.object({
     name: z.string().describe("Procedure name to apply"),
   }),
-  execute: async (args) => rolex.individual.execute("apply", args),
+  execute: async (args) => run("apply", args),
 });
 
 // use
@@ -167,7 +182,7 @@ server.addTool({
     locator: z.string().describe("Resource locator (e.g. 'tool-name:1.0.0')"),
     args: z.unknown().optional().describe("Arguments to pass to the tool"),
   }),
-  execute: async (args) => rolex.individual.execute("use", args),
+  execute: async (args) => run("use", args),
 });
 
 // ========== Start ==========

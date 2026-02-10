@@ -18,5 +18,8 @@ export type { RolexConfig, Rolex } from "./createRolex.js";
 export { world, WORLD_TOPICS, descriptions, PROCESS_NAMES } from "./descriptions.js";
 export type { WorldTopic, ProcessName } from "./descriptions.js";
 
+// Render
+export { wrapOutput, statusBar, readRoleState } from "./render.js";
+
 // Re-export core types
 export * from "@rolexjs/core";

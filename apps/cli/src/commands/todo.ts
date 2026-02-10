@@ -1,7 +1,6 @@
 import { defineCommand } from "citty";
 import consola from "consola";
-import { createRolex } from "../lib/client.js";
-import { Organization } from "rolexjs";
+import { createClient } from "../lib/client.js";
 import { resolveSource } from "../lib/source.js";
 
 export const todo = defineCommand({
@@ -17,33 +16,29 @@ export const todo = defineCommand({
     },
     name: {
       type: "positional",
-      description: "Task name (used as filename)",
+      description: "Task name",
       required: true,
     },
     source: {
       type: "string",
-      description: "Gherkin feature source text",
+      description: "Gherkin task feature source text",
     },
     file: {
       type: "string",
       alias: "f",
       description: "Path to .feature file",
     },
-    testable: {
-      type: "boolean",
-      description: "Mark scenarios as testable",
-      default: false,
-    },
   },
   async run({ args }) {
     try {
-      const rolex = createRolex();
-      const dir = rolex.directory();
-      const org = rolex.find(dir.organizations[0].name) as Organization;
-      const role = org.role(args.roleId);
+      const rolex = createClient();
+      await rolex.individual.execute("identity", { roleId: args.roleId });
       const src = resolveSource(args);
-      const task = role.todo(args.name, src, args.testable);
-      consola.success(`Task created: ${task.name}`);
+      const result = await rolex.individual.execute("todo", {
+        name: args.name,
+        source: src,
+      });
+      consola.success(result);
     } catch (error) {
       consola.error(error instanceof Error ? error.message : "Failed to create task");
       process.exit(1);

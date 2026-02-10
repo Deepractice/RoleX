@@ -1,7 +1,6 @@
 import { defineCommand } from "citty";
 import consola from "consola";
-import { createRolex } from "../lib/client.js";
-import { Organization } from "rolexjs";
+import { createClient } from "../lib/client.js";
 import { resolveSource } from "../lib/source.js";
 
 export const synthesize = defineCommand({
@@ -17,12 +16,12 @@ export const synthesize = defineCommand({
     },
     name: {
       type: "positional",
-      description: "Name for this experience (used as filename)",
+      description: "Name for this experience",
       required: true,
     },
     source: {
       type: "string",
-      description: "Gherkin feature source text",
+      description: "Gherkin experience feature source text",
     },
     file: {
       type: "string",
@@ -32,13 +31,14 @@ export const synthesize = defineCommand({
   },
   async run({ args }) {
     try {
-      const rolex = createRolex();
-      const dir = rolex.directory();
-      const org = rolex.find(dir.organizations[0].name) as Organization;
-      const role = org.role(args.roleId);
+      const rolex = createClient();
+      await rolex.individual.execute("identity", { roleId: args.roleId });
       const src = resolveSource(args);
-      const feature = role.synthesize(args.name, src);
-      consola.success(`Experience synthesized: ${feature.name}`);
+      const result = await rolex.individual.execute("synthesize", {
+        name: args.name,
+        source: src,
+      });
+      consola.success(result);
     } catch (error) {
       consola.error(error instanceof Error ? error.message : "Failed to synthesize experience");
       process.exit(1);

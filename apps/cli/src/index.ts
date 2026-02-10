@@ -4,7 +4,6 @@ import { defineCommand, runMain } from "citty";
 import { born } from "./commands/born.js";
 import { found } from "./commands/found.js";
 import { directory } from "./commands/directory.js";
-import { find } from "./commands/find.js";
 import { hire } from "./commands/hire.js";
 import { fire } from "./commands/fire.js";
 import { teach } from "./commands/teach.js";
@@ -22,28 +21,28 @@ const main = defineCommand({
   meta: {
     name: "rolex",
     version: "0.1.0",
-    description: "Rolex — AI Agent Role Management CLI",
+    description: "RoleX — AI Agent Role Management CLI",
   },
   subCommands: {
-    // Society
+    // Role System
     born,
+    teach,
+    // Org System
     found,
-    directory,
-    find,
-    // Organization
+    // Governance System
     hire,
     fire,
-    teach,
-    // Role
+    directory,
+    // Individual System
     identity,
-    synthesize,
     focus,
     want,
     plan,
     todo,
+    finish,
     achieve,
     abandon,
-    finish,
+    synthesize,
   },
 });
 

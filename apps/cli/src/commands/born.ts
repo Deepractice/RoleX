@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 import consola from "consola";
-import { createRolex } from "../lib/client.js";
+import { createClient } from "../lib/client.js";
 import { resolveSource } from "../lib/source.js";
 
 export const born = defineCommand({
@@ -11,27 +11,20 @@ export const born = defineCommand({
   args: {
     name: {
       type: "positional",
-      description: "Role name (e.g. 'sean')",
+      description: "Role name",
       required: true,
     },
-    source: {
-      type: "string",
-      description: "Gherkin feature source text",
-    },
-    file: {
-      type: "string",
-      alias: "f",
-      description: "Path to .feature file",
-    },
+    source: { type: "string", description: "Gherkin persona source" },
+    file: { type: "string", alias: "f", description: "Path to .feature file" },
   },
   async run({ args }) {
     try {
-      const rolex = createRolex();
+      const rolex = createClient();
       const src = resolveSource(args);
-      const persona = rolex.born(args.name, src);
-      consola.success(`Role born: ${persona.name}`);
+      const result = await rolex.role.execute("born", { name: args.name, source: src });
+      consola.success(result);
     } catch (error) {
-      consola.error(error instanceof Error ? error.message : "Failed to create role");
+      consola.error(error instanceof Error ? error.message : "Failed");
       process.exit(1);
     }
   },

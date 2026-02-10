@@ -1,7 +1,6 @@
 import { defineCommand } from "citty";
 import consola from "consola";
-import { createRolex } from "../lib/client.js";
-import { Organization } from "rolexjs";
+import { createClient } from "../lib/client.js";
 import { resolveSource } from "../lib/source.js";
 
 export const abandon = defineCommand({
@@ -17,30 +16,35 @@ export const abandon = defineCommand({
     },
     source: {
       type: "string",
-      description: "Optional experience reflection (Gherkin source)",
+      description: "Optional experience Gherkin source",
     },
     file: {
       type: "string",
       alias: "f",
       description: "Path to experience .feature file",
     },
+    expName: {
+      type: "string",
+      description: "Experience name (required if providing experience source)",
+    },
   },
   async run({ args }) {
     try {
-      const rolex = createRolex();
-      const dir = rolex.directory();
-      const org = rolex.find(dir.organizations[0].name) as Organization;
-      const role = org.role(args.roleId);
+      const rolex = createClient();
+      await rolex.individual.execute("identity", { roleId: args.roleId });
 
-      let experience: string | undefined;
+      let experience: { name: string; source: string } | undefined;
       try {
-        experience = resolveSource(args);
+        const src = resolveSource(args);
+        if (args.expName) {
+          experience = { name: args.expName, source: src };
+        }
       } catch {
         // No experience provided — that's fine
       }
 
-      role.abandon(experience);
-      consola.success(experience ? "Goal abandoned. Experience captured." : "Goal abandoned.");
+      const result = await rolex.individual.execute("abandon", { experience });
+      consola.success(result);
     } catch (error) {
       consola.error(error instanceof Error ? error.message : "Failed to abandon goal");
       process.exit(1);

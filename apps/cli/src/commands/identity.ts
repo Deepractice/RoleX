@@ -1,7 +1,6 @@
 import { defineCommand } from "citty";
 import consola from "consola";
-import { createRolex } from "../lib/client.js";
-import { Organization, renderFeatures } from "rolexjs";
+import { createClient } from "../lib/client.js";
 
 export const identity = defineCommand({
   meta: {
@@ -17,13 +16,11 @@ export const identity = defineCommand({
   },
   async run({ args }) {
     try {
-      const rolex = createRolex();
-      const dir = rolex.directory();
-      const org = rolex.find(dir.organizations[0].name) as Organization;
-      const role = org.role(args.roleId);
-      const features = role.identity();
-
-      console.log(renderFeatures(features));
+      const rolex = createClient();
+      const result = await rolex.individual.execute("identity", {
+        roleId: args.roleId,
+      });
+      consola.success(result);
     } catch (error) {
       consola.error(error instanceof Error ? error.message : "Failed to load identity");
       process.exit(1);

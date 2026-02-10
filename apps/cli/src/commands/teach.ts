@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 import consola from "consola";
-import { createRolex } from "../lib/client.js";
+import { createClient } from "../lib/client.js";
 import { resolveSource } from "../lib/source.js";
 
 export const teach = defineCommand({
@@ -36,15 +36,15 @@ export const teach = defineCommand({
   },
   async run({ args }) {
     try {
-      const rolex = createRolex();
+      const rolex = createClient();
       const src = resolveSource(args);
-      const feature = rolex.teach(
-        args.roleId,
-        args.type as "knowledge" | "experience" | "voice",
-        args.name,
-        src
-      );
-      consola.success(`Taught ${args.type}: ${feature.name}`);
+      const result = await rolex.role.execute("teach", {
+        roleId: args.roleId,
+        type: args.type as "knowledge" | "experience" | "voice",
+        name: args.name,
+        source: src,
+      });
+      consola.success(result);
     } catch (error) {
       consola.error(error instanceof Error ? error.message : "Failed to teach role");
       process.exit(1);

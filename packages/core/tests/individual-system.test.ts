@@ -40,7 +40,8 @@ describe("Role System + Individual System — full lifecycle", () => {
 
   test("identity — load role", async () => {
     const result = await individualSystem.execute("identity", { roleId: "sean" });
-    expect(result).toContain("[sean] identity loaded");
+    expect(result).toContain("[sean]");
+    expect(result).toContain("goal: none");
     expect(result).toContain("I am Sean");
     expect(result).toContain("TypeScript");
     expect(result).toContain("Code Review");
@@ -57,7 +58,8 @@ describe("Role System + Individual System — full lifecycle", () => {
 
   test("focus — check current goal", async () => {
     const result = await individualSystem.execute("focus", {});
-    expect(result).toContain("[sean] goal: build-mvp");
+    expect(result).toContain("[sean]");
+    expect(result).toContain("goal: build-mvp");
   });
 
   test("design — create plan", async () => {

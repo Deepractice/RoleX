@@ -1,14 +1,18 @@
 import { defineCommand } from "citty";
 import consola from "consola";
-import { createRolex } from "../lib/client.js";
-import { Organization } from "rolexjs";
+import { createClient } from "../lib/client.js";
 
 export const fire = defineCommand({
   meta: {
     name: "fire",
-    description: "Fire a role from the organization",
+    description: "Fire a role from an organization",
   },
   args: {
+    org: {
+      type: "positional",
+      description: "Organization name",
+      required: true,
+    },
     name: {
       type: "positional",
       description: "Role name to fire",
@@ -17,11 +21,12 @@ export const fire = defineCommand({
   },
   async run({ args }) {
     try {
-      const rolex = createRolex();
-      const dir = rolex.directory();
-      const org = rolex.find(dir.organizations[0].name) as Organization;
-      org.fire(args.name);
-      consola.success(`Role fired: ${args.name}`);
+      const rolex = createClient();
+      const result = await rolex.governance.execute("fire", {
+        orgId: args.org,
+        roleId: args.name,
+      });
+      consola.success(result);
     } catch (error) {
       consola.error(error instanceof Error ? error.message : "Failed to fire role");
       process.exit(1);
