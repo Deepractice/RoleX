@@ -3,7 +3,7 @@
  *
  * 12 processes (all active, first-person):
  *   identity, focus, want, design, todo,
- *   finish, achieve, abandon, synthesize, reflect, apply, use
+ *   finish, achieve, abandon, synthesize, reflect, skill, use
  *
  * External processes (born, teach, train, retire, kill)
  * belong to the Role System (role-system.ts).
@@ -21,7 +21,7 @@ import { t } from "./i18n/index.js";
 import {
   WANT, DESIGN, TODO,
   FINISH, ACHIEVE, ABANDON, SYNTHESIZE, REFLECT,
-  IDENTITY, FOCUS, APPLY, USE,
+  IDENTITY, FOCUS, SKILL, USE,
 } from "./individual.js";
 
 // ========== Helpers ==========
@@ -309,16 +309,27 @@ const reflect: Process<{ experienceNames: string[]; knowledgeName: string; knowl
   },
 };
 
-const apply: Process<{ name: string }, Feature> = {
-  ...APPLY,
+const skill: Process<{ name: string }, Feature> = {
+  ...SKILL,
   params: z.object({
-    name: z.string().describe("Procedure name to apply"),
+    name: z.string().describe("Procedure name to load"),
   }),
   execute(ctx, params) {
     const r = role(ctx);
     const feature = ctx.platform.readInformation(r, "procedure", params.name);
     if (!feature) throw new Error(t(ctx.locale, "error.procedureNotFound", { name: params.name }));
-    return `[${r}] ${t(ctx.locale, "individual.apply.done", { name: params.name })}\n\n${renderFeature(feature)}`;
+
+    // Try to load SKILL.md from path in Feature description
+    const desc = (feature.description || "").trim();
+    if (desc && ctx.platform.readFile) {
+      const content = ctx.platform.readFile(desc);
+      if (content) {
+        return `[${r}] ${t(ctx.locale, "individual.skill.done", { name: params.name })}\n\n${content}`;
+      }
+    }
+
+    // Fallback: render full Gherkin procedure
+    return `[${r}] ${t(ctx.locale, "individual.skill.done", { name: params.name })}\n\n${renderFeature(feature)}`;
   },
 };
 
@@ -348,7 +359,7 @@ export function createIndividualSystem(platform: Platform, rx?: ResourceX): Runn
     want, design, todo,
     finish, achieve, abandon,
     synthesize, reflect,
-    apply,
+    skill,
   };
 
   if (rx) {

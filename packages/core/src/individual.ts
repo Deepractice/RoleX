@@ -3,7 +3,7 @@
  *
  * Everything here is done BY the role itself:
  * identity → focus → want → design → todo → finish → achieve →
- * abandon → synthesize → reflect → apply
+ * abandon → synthesize → reflect → skill
  *
  * External processes (born, teach, train, retire, kill)
  * belong to the Role System.
@@ -179,9 +179,9 @@ export const FOCUS: ProcessDefinition = {
   outputs: [],
 };
 
-export const APPLY: ProcessDefinition = {
-  name: "apply",
-  description: "Apply a skill — load procedural knowledge into the current context.",
+export const SKILL: ProcessDefinition = {
+  name: "skill",
+  description: "Load a skill — read the procedure summary and load the full SKILL.md instructions.",
   kind: "query",
   targets: ["Role"],
   inputs: ["procedure"],

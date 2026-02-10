@@ -25,7 +25,7 @@ import achieveFeature from "./descriptions/achieve/achieve.feature";
 import abandonFeature from "./descriptions/abandon/abandon.feature";
 import synthesizeFeature from "./descriptions/synthesize/synthesize.feature";
 import reflectFeature from "./descriptions/reflect/reflect.feature";
-import applyFeature from "./descriptions/apply/apply.feature";
+import skillFeature from "./descriptions/skill/skill.feature";
 import useFeature from "./descriptions/use/use.feature";
 
 /** Rolex world description topic names. */
@@ -42,7 +42,7 @@ export const PROCESS_NAMES = [
   "want", "design", "todo",
   "finish", "achieve", "abandon",
   "synthesize", "reflect",
-  "apply", "use",
+  "skill", "use",
 ] as const;
 
 export type ProcessName = (typeof PROCESS_NAMES)[number];
@@ -70,6 +70,6 @@ export const descriptions: Record<ProcessName, string> = {
   abandon: abandonFeature,
   synthesize: synthesizeFeature,
   reflect: reflectFeature,
-  apply: applyFeature,
+  skill: skillFeature,
   use: useFeature,
 };

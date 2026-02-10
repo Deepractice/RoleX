@@ -6,14 +6,15 @@ Feature: Capability — skills and tools
     Given a role has been trained with procedures
     Then procedures are loaded at identity time as part of cognition
     And each procedure is a Gherkin summary of what a skill can do
+    And the Feature description contains the path to the full SKILL.md
     And I know what skills I have without loading their full content
-    And this is like seeing tool names and descriptions — lightweight awareness
 
-  Scenario: Apply to load instructions
+  Scenario: Skill to load instructions
     Given I know a procedure exists from my identity
     When I need the detailed instructions for that skill
-    Then I call apply with the procedure name
-    And the full procedural knowledge is loaded into my context
+    Then I call skill with the procedure name
+    And the full SKILL.md is read from the path in the procedure description
+    And the skill instructions are loaded into my context
 
   Scenario: Use to execute tools
     Given a resource locator identifies an executable tool
@@ -25,6 +26,6 @@ Feature: Capability — skills and tools
   Scenario: Progressive disclosure
     Given the three layers of capability awareness
     Then identity loads procedure summaries — I know what exists
-    And apply loads full instructions — I know how to do it
+    And skill loads full SKILL.md instructions — I know how to do it
     And use executes the tool — I actually do it
     And each layer adds detail only when needed

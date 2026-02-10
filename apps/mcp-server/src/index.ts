@@ -164,14 +164,14 @@ server.addTool({
   execute: async (args) => run("reflect", args),
 });
 
-// apply
+// skill
 server.addTool({
-  name: "apply",
-  description: descriptions.apply,
+  name: "skill",
+  description: descriptions.skill,
   parameters: z.object({
-    name: z.string().describe("Procedure name to apply"),
+    name: z.string().describe("Procedure name to load"),
   }),
-  execute: async (args) => run("apply", args),
+  execute: async (args) => run("skill", args),
 });
 
 // use

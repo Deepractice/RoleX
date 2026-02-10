@@ -33,7 +33,7 @@ const en: Messages = {
   "individual.abandon.done": "abandoned: {name}",
   "individual.synthesize.done": "synthesized: {name}",
   "individual.reflect.done": "reflected: {from} → {to}",
-  "individual.apply.done": "applying: {name}",
+  "individual.skill.done": "skill loaded: {name}",
   "individual.use.done": "used: {name}",
 
   // --- Role System ---
@@ -84,7 +84,7 @@ const en: Messages = {
   "render.hint.achieveAbandon": "`want` to set a new goal, or `focus` to check other goals.",
   "render.hint.synthesize": "`synthesize` more experiences, or `reflect` to distill into knowledge.",
   "render.hint.reflect": "`identity` to see updated knowledge, or `synthesize` to capture more.",
-  "render.hint.apply": "Procedure loaded. Execute using the described workflow.",
+  "render.hint.skill": "Skill loaded. Execute using the described workflow.",
   "render.hint.use": "Tool executed. Continue with your task.",
   "render.hint.default": "Continue working.",
 
@@ -121,7 +121,7 @@ const zh: Messages = {
   "individual.abandon.done": "已放弃: {name}",
   "individual.synthesize.done": "已合成: {name}",
   "individual.reflect.done": "已反思: {from} → {to}",
-  "individual.apply.done": "正在应用: {name}",
+  "individual.skill.done": "技能已加载: {name}",
   "individual.use.done": "已使用: {name}",
 
   // --- Role System ---
@@ -172,7 +172,7 @@ const zh: Messages = {
   "render.hint.achieveAbandon": "`want` 设定新目标，或 `focus` 查看其他目标。",
   "render.hint.synthesize": "`synthesize` 继续积累经验，或 `reflect` 蒸馏为知识。",
   "render.hint.reflect": "`identity` 查看更新的知识，或 `synthesize` 继续积累。",
-  "render.hint.apply": "技能已加载。按描述的工作流执行。",
+  "render.hint.skill": "技能已加载。按描述的工作流执行。",
   "render.hint.use": "工具已执行。继续你的任务。",
   "render.hint.default": "继续工作。",
 

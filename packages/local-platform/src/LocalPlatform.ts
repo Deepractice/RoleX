@@ -200,6 +200,13 @@ export class LocalPlatform implements Platform {
     if (existsSync(filePath)) rmSync(filePath);
   }
 
+  // ===== File =====
+
+  readFile(path: string): string | null {
+    if (!existsSync(path)) return null;
+    return readFileSync(path, "utf-8");
+  }
+
   // ===== Settings =====
 
   readSettings(): Record<string, unknown> {

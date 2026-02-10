@@ -108,8 +108,8 @@ function nextHint(processName: string, state: RoleState, locale: string, extra?:
     case "reflect":
       return t(locale, "render.hint.reflect");
 
-    case "apply":
-      return t(locale, "render.hint.apply");
+    case "skill":
+      return t(locale, "render.hint.skill");
 
     case "use":
       return t(locale, "render.hint.use");

@@ -32,6 +32,10 @@ export interface Platform<I = unknown> {
   hasRelation(name: string, from: string, to: string): boolean;
   removeRelation(name: string, from: string, to: string): void;
 
+  // ===== File (arbitrary file read, optional) =====
+
+  readFile?(path: string): string | null;
+
   // ===== Settings (global key-value, optional) =====
 
   readSettings?(): Record<string, unknown>;
