@@ -5,6 +5,7 @@ import { directory } from "./commands/directory.js";
 import { hire } from "./commands/hire.js";
 import { fire } from "./commands/fire.js";
 import { teach } from "./commands/teach.js";
+import { train } from "./commands/train.js";
 import { identity } from "./commands/identity.js";
 import { synthesize } from "./commands/synthesize.js";
 import { focus } from "./commands/focus.js";
@@ -14,11 +15,13 @@ import { todo } from "./commands/todo.js";
 import { achieve } from "./commands/achieve.js";
 import { abandon } from "./commands/abandon.js";
 import { finish } from "./commands/finish.js";
+import { reflect } from "./commands/reflect.js";
+import { apply } from "./commands/apply.js";
 import { setting } from "./commands/setting.js";
 
 const role = defineCommand({
-  meta: { name: "role", description: "Role System — born, teach" },
-  subCommands: { born, teach },
+  meta: { name: "role", description: "Role System — born, teach, train" },
+  subCommands: { born, teach, train },
 });
 
 const org = defineCommand({
@@ -32,8 +35,8 @@ const governance = defineCommand({
 });
 
 const individual = defineCommand({
-  meta: { name: "individual", description: "Individual System — identity, focus, want, plan, todo, finish, achieve, abandon, synthesize" },
-  subCommands: { identity, focus, want, plan, todo, finish, achieve, abandon, synthesize },
+  meta: { name: "individual", description: "Individual System — identity, focus, want, plan, todo, finish, achieve, abandon, synthesize, reflect, apply" },
+  subCommands: { identity, focus, want, plan, todo, finish, achieve, abandon, synthesize, reflect, apply },
 });
 
 const main = defineCommand({
