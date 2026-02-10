@@ -3,9 +3,9 @@
  *
  * RoleX Individual System MCP server.
  *
- * 12 tools — one per Individual System process:
+ * 13 tools — one per Individual System process:
  *   identity, focus, want, design, todo,
- *   finish, achieve, abandon, synthesize, reflect, apply, use
+ *   finish, achieve, abandon, forget, synthesize, reflect, skill, use
  *
  * Management operations (born, found, hire, etc.) are exposed via skills,
  * not MCP tools. The AI operates AS the role, not ON the role.
@@ -139,6 +139,17 @@ server.addTool({
     experience: experienceParam,
   }),
   execute: async (args) => run("abandon", args),
+});
+
+// forget
+server.addTool({
+  name: "forget",
+  description: descriptions.forget,
+  parameters: z.object({
+    type: z.enum(["knowledge", "experience", "procedure"]).describe("Information type to forget"),
+    name: z.string().describe("Name of the information to forget"),
+  }),
+  execute: async (args) => run("forget", args),
 });
 
 // synthesize

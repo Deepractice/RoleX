@@ -1,56 +1,68 @@
 /**
- * descriptions — Gherkin descriptions for Rolex world + Individual System processes.
+ * descriptions — Gherkin descriptions for all RoleX systems and processes.
  *
- * Source of truth: descriptions/<name>/<name>.feature
+ * Structure: descriptions/[system]/[command]/[command].feature
  * Built by tsup with esbuild text loader — .feature files are inlined at build time.
  */
 
-// World-level descriptions
-import rolexFeature from "./descriptions/rolex/rolex.feature";
-import roleFeature from "./descriptions/rolex/role.feature";
-import cognitionFeature from "./descriptions/rolex/cognition.feature";
-import executionFeature from "./descriptions/rolex/execution.feature";
-import growthFeature from "./descriptions/rolex/growth.feature";
-import capabilityFeature from "./descriptions/rolex/capability.feature";
-import gherkinFeature from "./descriptions/rolex/gherkin.feature";
+// ========== Rolex (top-level) ==========
 
-// Process descriptions
-import identityFeature from "./descriptions/identity/identity.feature";
-import focusFeature from "./descriptions/focus/focus.feature";
-import wantFeature from "./descriptions/want/want.feature";
-import designFeature from "./descriptions/design/design.feature";
-import todoFeature from "./descriptions/todo/todo.feature";
-import finishFeature from "./descriptions/finish/finish.feature";
-import achieveFeature from "./descriptions/achieve/achieve.feature";
-import abandonFeature from "./descriptions/abandon/abandon.feature";
-import synthesizeFeature from "./descriptions/synthesize/synthesize.feature";
-import reflectFeature from "./descriptions/reflect/reflect.feature";
-import skillFeature from "./descriptions/skill/skill.feature";
-import useFeature from "./descriptions/use/use.feature";
+import rolexFeature from "./descriptions/rolex/rolex.feature";
+import cognitionFeature from "./descriptions/rolex/cognition/cognition.feature";
+import executionFeature from "./descriptions/rolex/execution/execution.feature";
+import growthFeature from "./descriptions/rolex/growth/growth.feature";
+import capabilityFeature from "./descriptions/rolex/capability/capability.feature";
+import gherkinFeature from "./descriptions/rolex/gherkin/gherkin.feature";
+
+// ========== Individual System ==========
+
+import individualFeature from "./descriptions/individual/individual.feature";
+import identityFeature from "./descriptions/individual/identity/identity.feature";
+import focusFeature from "./descriptions/individual/focus/focus.feature";
+import wantFeature from "./descriptions/individual/want/want.feature";
+import designFeature from "./descriptions/individual/design/design.feature";
+import todoFeature from "./descriptions/individual/todo/todo.feature";
+import finishFeature from "./descriptions/individual/finish/finish.feature";
+import achieveFeature from "./descriptions/individual/achieve/achieve.feature";
+import abandonFeature from "./descriptions/individual/abandon/abandon.feature";
+import forgetFeature from "./descriptions/individual/forget/forget.feature";
+import synthesizeFeature from "./descriptions/individual/synthesize/synthesize.feature";
+import reflectFeature from "./descriptions/individual/reflect/reflect.feature";
+import skillFeature from "./descriptions/individual/skill/skill.feature";
+import useFeature from "./descriptions/individual/use/use.feature";
+
+// ========== Role System ==========
+
+import roleFeature from "./descriptions/role/role.feature";
+import bornFeature from "./descriptions/role/born/born.feature";
+import teachFeature from "./descriptions/role/teach/teach.feature";
+import trainFeature from "./descriptions/role/train/train.feature";
+
+// ========== Org System ==========
+
+import orgFeature from "./descriptions/org/org.feature";
+import foundFeature from "./descriptions/org/found/found.feature";
+
+// ========== Governance System ==========
+
+import governanceFeature from "./descriptions/governance/governance.feature";
+import hireFeature from "./descriptions/governance/hire/hire.feature";
+import fireFeature from "./descriptions/governance/fire/fire.feature";
+import directoryFeature from "./descriptions/governance/directory/directory.feature";
+
+// ========== World Topics ==========
 
 /** Rolex world description topic names. */
 export const WORLD_TOPICS = [
-  "rolex", "role", "cognition", "execution",
+  "rolex", "cognition", "execution",
   "growth", "capability", "gherkin",
 ] as const;
 
 export type WorldTopic = (typeof WORLD_TOPICS)[number];
 
-/** All Individual System process names. */
-export const PROCESS_NAMES = [
-  "identity", "focus",
-  "want", "design", "todo",
-  "finish", "achieve", "abandon",
-  "synthesize", "reflect",
-  "skill", "use",
-] as const;
-
-export type ProcessName = (typeof PROCESS_NAMES)[number];
-
 /** World-level Gherkin descriptions — the foundational positioning for AI. */
 export const world: Record<WorldTopic, string> = {
   rolex: rolexFeature,
-  role: roleFeature,
   cognition: cognitionFeature,
   execution: executionFeature,
   growth: growthFeature,
@@ -58,8 +70,19 @@ export const world: Record<WorldTopic, string> = {
   gherkin: gherkinFeature,
 };
 
-/** Gherkin descriptions for each Individual System process. */
-export const descriptions: Record<ProcessName, string> = {
+// ========== System Descriptions ==========
+
+export const systems = {
+  individual: individualFeature,
+  role: roleFeature,
+  org: orgFeature,
+  governance: governanceFeature,
+} as const;
+
+// ========== Process Descriptions (by system) ==========
+
+/** Individual System processes. */
+export const individual = {
   identity: identityFeature,
   focus: focusFeature,
   want: wantFeature,
@@ -68,8 +91,36 @@ export const descriptions: Record<ProcessName, string> = {
   finish: finishFeature,
   achieve: achieveFeature,
   abandon: abandonFeature,
+  forget: forgetFeature,
   synthesize: synthesizeFeature,
   reflect: reflectFeature,
   skill: skillFeature,
   use: useFeature,
-};
+} as const;
+
+/** Role System processes. */
+export const role = {
+  born: bornFeature,
+  teach: teachFeature,
+  train: trainFeature,
+} as const;
+
+/** Org System processes. */
+export const org = {
+  found: foundFeature,
+} as const;
+
+/** Governance System processes. */
+export const governance = {
+  hire: hireFeature,
+  fire: fireFeature,
+  directory: directoryFeature,
+} as const;
+
+// ========== Backward-compatible flat exports ==========
+
+/** @deprecated Use `individual` instead. */
+export const descriptions = individual;
+
+export const PROCESS_NAMES = Object.keys(individual) as (keyof typeof individual)[];
+export type ProcessName = keyof typeof individual;

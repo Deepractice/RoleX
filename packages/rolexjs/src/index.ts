@@ -15,7 +15,11 @@ export { createRolex } from "./createRolex.js";
 export type { RolexConfig, Rolex } from "./createRolex.js";
 
 // Descriptions
-export { world, WORLD_TOPICS, descriptions, PROCESS_NAMES } from "./descriptions.js";
+export {
+  world, WORLD_TOPICS,
+  systems, individual, role, org, governance,
+  descriptions, PROCESS_NAMES,
+} from "./descriptions.js";
 export type { WorldTopic, ProcessName } from "./descriptions.js";
 
 // Render
