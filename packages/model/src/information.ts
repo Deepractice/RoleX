@@ -23,4 +23,7 @@ export interface InformationType {
 
   /** Which structure type holds this information. */
   readonly belongsTo: string;
+
+  /** Child information types contained within this type. */
+  readonly children?: readonly string[];
 }

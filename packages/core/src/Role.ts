@@ -48,6 +48,7 @@ export const RETIRE: ProcessDefinition = {
   targets: ["Role"],
   inputs: [],
   outputs: [],
+  consumes: ["Role"],
 };
 
 export const KILL: ProcessDefinition = {

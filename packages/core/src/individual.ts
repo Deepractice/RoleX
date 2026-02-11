@@ -83,18 +83,21 @@ export const GOAL: InformationType = {
   type: "goal",
   description: "What the role wants to achieve — a desired outcome.",
   belongsTo: "Role",
+  children: ["plan"],
 };
 
 export const PLAN: InformationType = {
   type: "plan",
   description: "How to achieve a goal — a decomposition into phases or steps.",
   belongsTo: "Role",
+  children: ["task"],
 };
 
 export const TASK: InformationType = {
   type: "task",
   description: "A concrete unit of work within a plan.",
   belongsTo: "Role",
+  children: ["experience.conclusion"],
 };
 
 // ========== State ==========
@@ -158,6 +161,7 @@ export const FINISH: ProcessDefinition = {
   targets: ["Role"],
   inputs: ["task"],
   outputs: ["experience.conclusion"],
+  consumes: ["task"],
 };
 
 export const ACHIEVE: ProcessDefinition = {
@@ -166,7 +170,8 @@ export const ACHIEVE: ProcessDefinition = {
   kind: "write",
   targets: ["Role"],
   inputs: ["goal"],
-  outputs: ["experience.conclusion", "experience.insight"],
+  outputs: ["experience.insight"],
+  consumes: ["goal"],
 };
 
 export const ABANDON: ProcessDefinition = {
@@ -175,7 +180,8 @@ export const ABANDON: ProcessDefinition = {
   kind: "write",
   targets: ["Role"],
   inputs: ["goal"],
-  outputs: ["experience.conclusion", "experience.insight"],
+  outputs: ["experience.insight"],
+  consumes: ["goal"],
 };
 
 export const FORGET: ProcessDefinition = {
@@ -185,6 +191,7 @@ export const FORGET: ProcessDefinition = {
   targets: ["Role"],
   inputs: ["knowledge.pattern", "knowledge.procedure", "knowledge.theory", "experience.insight"],
   outputs: [],
+  consumes: ["knowledge.pattern", "knowledge.procedure", "knowledge.theory", "experience.insight"],
 };
 
 export const REFLECT: ProcessDefinition = {
@@ -194,6 +201,7 @@ export const REFLECT: ProcessDefinition = {
   targets: ["Role"],
   inputs: ["experience.insight"],
   outputs: ["knowledge.pattern"],
+  consumes: ["experience.insight"],
 };
 
 export const CONTEMPLATE: ProcessDefinition = {

@@ -81,6 +81,7 @@ export const DISSOLVE: ProcessDefinition = {
   targets: ["Organization"],
   inputs: [],
   outputs: [],
+  consumes: ["Organization"],
 };
 
 // ========== Process: Governance System (internal) ==========
@@ -110,6 +111,7 @@ export const ABOLISH: ProcessDefinition = {
   targets: ["Position"],
   inputs: [],
   outputs: [],
+  consumes: ["Position"],
 };
 
 export const ASSIGN: ProcessDefinition = {

@@ -36,4 +36,7 @@ export interface ProcessDefinition {
 
   /** Information types this process produces as output. */
   readonly outputs: readonly string[];
+
+  /** Information types this process consumes (removed from active state). */
+  readonly consumes?: readonly string[];
 }
