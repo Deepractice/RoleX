@@ -18,15 +18,13 @@ export type { RolexConfig, Rolex } from "./createRolex.js";
 export {
   world,
   WORLD_TOPICS,
-  systems,
   individual,
   role,
   org,
   governance,
   descriptions,
-  PROCESS_NAMES,
 } from "./descriptions.js";
-export type { WorldTopic, ProcessName } from "./descriptions.js";
+export type { WorldTopic } from "./descriptions.js";
 
 // Base role templates
 export { base } from "./base/index.js";

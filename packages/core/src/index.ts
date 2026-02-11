@@ -101,6 +101,18 @@ export {
 export { t } from "./i18n/index.js";
 export type { Locale, MessageKey } from "./i18n/index.js";
 
+// ========== Descriptions (auto-generated from .feature files) ==========
+
+export {
+  world,
+  WORLD_TOPICS,
+  individual as individualDescriptions,
+  role as roleDescriptions,
+  org as orgDescriptions,
+  governance as governanceDescriptions,
+} from "./descriptions/index.js";
+export type { WorldTopic } from "./descriptions/index.js";
+
 // ========== Runnable Systems ==========
 
 export { createRoleSystem } from "./role-system.js";

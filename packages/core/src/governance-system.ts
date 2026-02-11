@@ -18,6 +18,7 @@ import type { Platform } from "./Platform.js";
 import type { Feature } from "./Feature.js";
 import type { Scenario } from "./Scenario.js";
 import { t } from "./i18n/index.js";
+import { governance as govDesc } from "./descriptions/index.js";
 import {
   RULE,
   ESTABLISH,
@@ -262,7 +263,7 @@ const directory: Process<{ orgName: string }, Feature> = {
 export function createGovernanceSystem(graph: GraphModel, platform: Platform): RunnableSystem<Feature> {
   return defineSystem(graph, platform, {
     name: "governance",
-    description: "Internal governance — rules, positions, membership, assignments.",
+    description: govDesc.system,
     processes: { rule, establish, abolish, assign, hire, fire, appoint, dismiss, directory },
   });
 }

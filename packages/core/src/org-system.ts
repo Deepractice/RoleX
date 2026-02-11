@@ -17,6 +17,7 @@ import type { Platform } from "./Platform.js";
 import type { Feature } from "./Feature.js";
 import type { Scenario } from "./Scenario.js";
 import { t } from "./i18n/index.js";
+import { org as orgDesc } from "./descriptions/index.js";
 import { FOUND, DISSOLVE } from "./organization.js";
 
 // ========== Helpers ==========
@@ -88,7 +89,7 @@ const dissolve: Process<{ name: string }, Feature> = {
 export function createOrgSystem(graph: GraphModel, platform: Platform): RunnableSystem<Feature> {
   return defineSystem(graph, platform, {
     name: "org-lifecycle",
-    description: "External management of organization lifecycle — create and dissolve.",
+    description: orgDesc.system,
     processes: { found, dissolve },
   });
 }

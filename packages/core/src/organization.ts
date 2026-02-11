@@ -15,6 +15,8 @@ import type {
   SystemDefinition,
 } from "@rolexjs/system";
 
+import { org as orgDesc, governance as govDesc } from "./descriptions/index.js";
+
 // ========== Structure ==========
 
 export const ORGANIZATION: StructureDefinition = {
@@ -65,7 +67,7 @@ export const ASSIGNMENT: RelationDefinition = {
 
 export const FOUND: ProcessDefinition = {
   name: "found",
-  description: "Create an organization.",
+  description: orgDesc.found,
   kind: "create",
   targets: ["Organization"],
   inputs: [],
@@ -74,7 +76,7 @@ export const FOUND: ProcessDefinition = {
 
 export const DISSOLVE: ProcessDefinition = {
   name: "dissolve",
-  description: "Dissolve an organization — archive all data.",
+  description: orgDesc.dissolve,
   kind: "write",
   targets: ["Organization"],
   inputs: [],
@@ -85,7 +87,7 @@ export const DISSOLVE: ProcessDefinition = {
 
 export const RULE: ProcessDefinition = {
   name: "rule",
-  description: "Write or update a charter entry for the organization.",
+  description: govDesc.rule,
   kind: "write",
   targets: ["Organization"],
   inputs: [],
@@ -94,7 +96,7 @@ export const RULE: ProcessDefinition = {
 
 export const ESTABLISH: ProcessDefinition = {
   name: "establish",
-  description: "Create a position within the organization.",
+  description: govDesc.establish,
   kind: "create",
   targets: ["Position"],
   inputs: [],
@@ -103,7 +105,7 @@ export const ESTABLISH: ProcessDefinition = {
 
 export const ABOLISH: ProcessDefinition = {
   name: "abolish",
-  description: "Remove a position from the organization.",
+  description: govDesc.abolish,
   kind: "write",
   targets: ["Position"],
   inputs: [],
@@ -112,7 +114,7 @@ export const ABOLISH: ProcessDefinition = {
 
 export const ASSIGN: ProcessDefinition = {
   name: "assign",
-  description: "Write or update duty for a position.",
+  description: govDesc.assign,
   kind: "write",
   targets: ["Position"],
   inputs: [],
@@ -121,7 +123,7 @@ export const ASSIGN: ProcessDefinition = {
 
 export const HIRE: ProcessDefinition = {
   name: "hire",
-  description: "Add a role as a member of the organization.",
+  description: govDesc.hire,
   kind: "relate",
   targets: ["Organization"],
   inputs: [],
@@ -130,7 +132,7 @@ export const HIRE: ProcessDefinition = {
 
 export const FIRE: ProcessDefinition = {
   name: "fire",
-  description: "Remove a role from the organization. Auto-dismisses from positions.",
+  description: govDesc.fire,
   kind: "relate",
   targets: ["Organization"],
   inputs: [],
@@ -139,7 +141,7 @@ export const FIRE: ProcessDefinition = {
 
 export const APPOINT: ProcessDefinition = {
   name: "appoint",
-  description: "Assign a role to a position.",
+  description: govDesc.appoint,
   kind: "relate",
   targets: ["Position"],
   inputs: [],
@@ -148,7 +150,7 @@ export const APPOINT: ProcessDefinition = {
 
 export const DISMISS: ProcessDefinition = {
   name: "dismiss",
-  description: "Remove a role from a position.",
+  description: govDesc.dismiss,
   kind: "relate",
   targets: ["Position"],
   inputs: [],
@@ -157,7 +159,7 @@ export const DISMISS: ProcessDefinition = {
 
 export const DIRECTORY: ProcessDefinition = {
   name: "directory",
-  description: "Query the organization — members, positions, assignments.",
+  description: govDesc.directory,
   kind: "query",
   targets: ["Organization"],
   inputs: ["charter", "duty"],
@@ -168,14 +170,14 @@ export const DIRECTORY: ProcessDefinition = {
 
 export const ORG_LIFECYCLE: SystemDefinition = {
   name: "org-lifecycle",
-  description: "External management of organization lifecycle — create and dissolve.",
+  description: orgDesc.system,
   processes: ["found", "dissolve"],
   feedback: [],
 };
 
 export const GOVERNANCE: SystemDefinition = {
   name: "governance",
-  description: "Internal governance — rules, positions, membership, assignments.",
+  description: govDesc.system,
   processes: [
     "rule",
     "establish",

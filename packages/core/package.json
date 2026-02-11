@@ -31,7 +31,8 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsup",
+    "gen:desc": "bun run scripts/gen-descriptions.ts",
+    "build": "bun run gen:desc && tsup",
     "test": "bun test || true",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

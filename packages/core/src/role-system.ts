@@ -15,6 +15,7 @@ import type { Platform } from "./Platform.js";
 import type { Feature } from "./Feature.js";
 import type { Scenario } from "./Scenario.js";
 import { t } from "./i18n/index.js";
+import { role as roleDesc } from "./descriptions/index.js";
 import { BORN, TEACH, TRAIN, RETIRE, KILL } from "./Role.js";
 
 // ========== Helpers ==========
@@ -157,7 +158,7 @@ const kill: Process<{ name: string }, Feature> = {
 export function createRoleSystem(graph: GraphModel, platform: Platform): RunnableSystem<Feature> {
   return defineSystem(graph, platform, {
     name: "role",
-    description: "External management of role lifecycle — create, cultivate, retire, destroy.",
+    description: roleDesc.system,
     processes: { born, teach, train, retire, kill },
   });
 }

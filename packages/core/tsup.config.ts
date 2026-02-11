@@ -6,10 +6,4 @@ export default defineConfig({
   dts: true,
   clean: true,
   sourcemap: true,
-  esbuildOptions(options) {
-    options.loader = {
-      ...options.loader,
-      ".feature": "text",
-    };
-  },
 });

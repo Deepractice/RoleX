@@ -10,11 +10,13 @@
 
 import type { ProcessDefinition, SystemDefinition } from "@rolexjs/system";
 
+import { role as desc } from "./descriptions/index.js";
+
 // ========== Process ==========
 
 export const BORN: ProcessDefinition = {
   name: "born",
-  description: "Create a role with initial persona.",
+  description: desc.born,
   kind: "create",
   targets: ["Role"],
   inputs: [],
@@ -23,7 +25,7 @@ export const BORN: ProcessDefinition = {
 
 export const TEACH: ProcessDefinition = {
   name: "teach",
-  description: "Transmit declarative knowledge to a role.",
+  description: desc.teach,
   kind: "write",
   targets: ["Role"],
   inputs: [],
@@ -32,7 +34,7 @@ export const TEACH: ProcessDefinition = {
 
 export const TRAIN: ProcessDefinition = {
   name: "train",
-  description: "Train procedural knowledge — teach the role how to do something.",
+  description: desc.train,
   kind: "write",
   targets: ["Role"],
   inputs: [],
@@ -41,7 +43,7 @@ export const TRAIN: ProcessDefinition = {
 
 export const RETIRE: ProcessDefinition = {
   name: "retire",
-  description: "Archive a role — deactivate but preserve all data.",
+  description: desc.retire,
   kind: "write",
   targets: ["Role"],
   inputs: [],
@@ -50,7 +52,7 @@ export const RETIRE: ProcessDefinition = {
 
 export const KILL: ProcessDefinition = {
   name: "kill",
-  description: "Permanently destroy a role and all its data.",
+  description: desc.kill,
   kind: "write",
   targets: ["Role"],
   inputs: [],
@@ -61,7 +63,7 @@ export const KILL: ProcessDefinition = {
 
 export const ROLE_LIFECYCLE: SystemDefinition = {
   name: "role-lifecycle",
-  description: "The external management cycle — create, cultivate, retire, destroy.",
+  description: desc.system,
   processes: ["born", "teach", "train", "retire", "kill"],
   feedback: [],
 };

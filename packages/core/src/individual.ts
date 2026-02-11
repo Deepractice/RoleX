@@ -17,6 +17,8 @@ import type {
   SystemDefinition,
 } from "@rolexjs/system";
 
+import { individual as desc } from "./descriptions/index.js";
+
 // ========== Structure ==========
 
 export const ROLE: StructureDefinition = {
@@ -124,7 +126,7 @@ export const INTENTION: StateDefinition = {
 
 export const WANT: ProcessDefinition = {
   name: "want",
-  description: "Declare a goal for the role.",
+  description: desc.want,
   kind: "write",
   targets: ["Role"],
   inputs: [],
@@ -133,7 +135,7 @@ export const WANT: ProcessDefinition = {
 
 export const DESIGN: ProcessDefinition = {
   name: "design",
-  description: "Write a plan for the current goal.",
+  description: desc.design,
   kind: "write",
   targets: ["Role"],
   inputs: ["goal"],
@@ -142,7 +144,7 @@ export const DESIGN: ProcessDefinition = {
 
 export const TODO: ProcessDefinition = {
   name: "todo",
-  description: "Create a task under the current plan.",
+  description: desc.todo,
   kind: "write",
   targets: ["Role"],
   inputs: ["plan"],
@@ -151,7 +153,7 @@ export const TODO: ProcessDefinition = {
 
 export const FINISH: ProcessDefinition = {
   name: "finish",
-  description: "Mark a task complete. Optionally write a conclusion.",
+  description: desc.finish,
   kind: "write",
   targets: ["Role"],
   inputs: ["task"],
@@ -160,7 +162,7 @@ export const FINISH: ProcessDefinition = {
 
 export const ACHIEVE: ProcessDefinition = {
   name: "achieve",
-  description: "Mark the current goal achieved. Write conclusion and distill insight.",
+  description: desc.achieve,
   kind: "write",
   targets: ["Role"],
   inputs: ["goal"],
@@ -169,7 +171,7 @@ export const ACHIEVE: ProcessDefinition = {
 
 export const ABANDON: ProcessDefinition = {
   name: "abandon",
-  description: "Mark the current goal abandoned. Optionally write conclusion and distill insight.",
+  description: desc.abandon,
   kind: "write",
   targets: ["Role"],
   inputs: ["goal"],
@@ -178,7 +180,7 @@ export const ABANDON: ProcessDefinition = {
 
 export const FORGET: ProcessDefinition = {
   name: "forget",
-  description: "Forget information — remove pattern, procedure, theory, or insight from identity.",
+  description: desc.forget,
   kind: "write",
   targets: ["Role"],
   inputs: ["knowledge.pattern", "knowledge.procedure", "knowledge.theory", "experience.insight"],
@@ -187,7 +189,7 @@ export const FORGET: ProcessDefinition = {
 
 export const REFLECT: ProcessDefinition = {
   name: "reflect",
-  description: "Distill insights into patterns — the cognitive upgrade path.",
+  description: desc.reflect,
   kind: "transform",
   targets: ["Role"],
   inputs: ["experience.insight"],
@@ -196,7 +198,7 @@ export const REFLECT: ProcessDefinition = {
 
 export const CONTEMPLATE: ProcessDefinition = {
   name: "contemplate",
-  description: "Unify patterns into theory — the philosophical upgrade path.",
+  description: desc.contemplate,
   kind: "write",
   targets: ["Role"],
   inputs: ["knowledge.pattern"],
@@ -205,7 +207,7 @@ export const CONTEMPLATE: ProcessDefinition = {
 
 export const IDENTITY: ProcessDefinition = {
   name: "identity",
-  description: "Load the role's complete identity — render cognition frame.",
+  description: desc.identity,
   kind: "query",
   targets: ["Role"],
   inputs: [
@@ -221,7 +223,7 @@ export const IDENTITY: ProcessDefinition = {
 
 export const FOCUS: ProcessDefinition = {
   name: "focus",
-  description: "Load the current goal context — render intention frame.",
+  description: desc.focus,
   kind: "query",
   targets: ["Role"],
   inputs: ["goal", "plan", "task"],
@@ -230,7 +232,7 @@ export const FOCUS: ProcessDefinition = {
 
 export const SKILL: ProcessDefinition = {
   name: "skill",
-  description: "Load a skill — read the procedure summary and load the full SKILL.md instructions.",
+  description: desc.skill,
   kind: "query",
   targets: ["Role"],
   inputs: ["knowledge.procedure"],
@@ -239,7 +241,7 @@ export const SKILL: ProcessDefinition = {
 
 export const EXPLORE: ProcessDefinition = {
   name: "explore",
-  description: "Explore the RoleX world — discover roles, organizations, and relationships.",
+  description: desc.explore,
   kind: "query",
   targets: ["Role"],
   inputs: [],
@@ -248,7 +250,7 @@ export const EXPLORE: ProcessDefinition = {
 
 export const USE: ProcessDefinition = {
   name: "use",
-  description: "Use an external tool — resolve a resource locator and execute it.",
+  description: desc.use,
   kind: "write",
   targets: ["Role"],
   inputs: [],
@@ -259,15 +261,14 @@ export const USE: ProcessDefinition = {
 
 export const GOAL_EXECUTION: SystemDefinition = {
   name: "goal-execution",
-  description: "The doing cycle — set goals, make plans, execute tasks, achieve.",
+  description: desc.system,
   processes: ["identity", "want", "design", "todo", "finish", "achieve"],
   feedback: ["experience.insight"],
 };
 
 export const COGNITIVE_GROWTH: SystemDefinition = {
   name: "cognitive-growth",
-  description:
-    "The learning cycle — achieve distills experience, reflect turns experience into knowledge, contemplate unifies knowledge into theory.",
+  description: desc.system,
   processes: ["achieve", "reflect", "contemplate"],
   feedback: ["knowledge.pattern", "knowledge.theory"],
 };

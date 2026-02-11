@@ -18,6 +18,7 @@ import type { Feature } from "./Feature.js";
 import type { Scenario } from "./Scenario.js";
 import type { ResourceX } from "resourcexjs";
 import { t } from "./i18n/index.js";
+import { individual as individualDesc } from "./descriptions/index.js";
 import {
   WANT,
   DESIGN,
@@ -796,7 +797,7 @@ export function createIndividualSystem(
     platform,
     {
       name: "individual",
-      description: "A single role's cognitive lifecycle — birth, learning, goal pursuit, growth.",
+      description: individualDesc.system,
       processes,
     },
     base
