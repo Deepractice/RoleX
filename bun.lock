@@ -36,9 +36,11 @@
       },
       "dependencies": {
         "@rolexjs/local-platform": "workspace:*",
+        "@rolexjs/system": "workspace:*",
         "citty": "^0.1.6",
         "consola": "^3.4.2",
         "rolexjs": "workspace:*",
+        "zod": "^3.25.0",
       },
     },
     "apps/mcp-server": {

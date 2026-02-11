@@ -1,69 +1,76 @@
-import { defineCommand, runMain } from "citty";
-import { born } from "./commands/born.js";
-import { found } from "./commands/found.js";
-import { directory } from "./commands/directory.js";
-import { hire } from "./commands/hire.js";
-import { fire } from "./commands/fire.js";
-import { establish } from "./commands/establish.js";
-import { appoint } from "./commands/appoint.js";
-import { teach } from "./commands/teach.js";
-import { train } from "./commands/train.js";
-import { identity } from "./commands/identity.js";
+/**
+ * RoleX CLI — thin assembly layer.
+ *
+ * All commands are auto-derived from system process definitions.
+ * Only special behaviors (session management, settings) are configured here.
+ */
 
-import { explore } from "./commands/explore.js";
-import { focus } from "./commands/focus.js";
-import { want } from "./commands/want.js";
-import { plan } from "./commands/plan.js";
-import { todo } from "./commands/todo.js";
-import { achieve } from "./commands/achieve.js";
-import { abandon } from "./commands/abandon.js";
-import { finish } from "./commands/finish.js";
-import { forget } from "./commands/forget.js";
-import { reflect } from "./commands/reflect.js";
-import { skill } from "./commands/skill.js";
+import { defineCommand, runMain } from "citty";
+import { readFileSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { systemToCli } from "./lib/system-cli.js";
+import { createClient } from "./lib/client.js";
+import { createHydratedClient, saveActiveRole } from "./lib/session.js";
 import { setting } from "./commands/setting.js";
 
-const role = defineCommand({
-  meta: { name: "role", description: "Role System — born, teach, train" },
-  subCommands: { born, teach, train },
-});
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf-8"));
 
-const org = defineCommand({
-  meta: { name: "org", description: "Organization System — found" },
-  subCommands: { found },
-});
+// Create a client once at startup to read process definitions (cheap — no I/O except graph load)
+const rolex = createClient();
 
-const governance = defineCommand({
-  meta: { name: "governance", description: "Governance System — hire, fire, directory" },
-  subCommands: { hire, fire, establish, appoint, directory },
-});
+// ========== System → CLI (auto-derived) ==========
 
-const individual = defineCommand({
-  meta: {
+const role = systemToCli(
+  { name: "role", description: rolex.role.description || "Role System — born, teach, train" },
+  rolex.role.processes,
+  { getSystem: () => createClient().role }
+);
+
+const org = systemToCli(
+  { name: "org", description: rolex.org.description || "Organization System — found, dissolve" },
+  rolex.org.processes,
+  { getSystem: () => createClient().org }
+);
+
+const governance = systemToCli(
+  {
+    name: "governance",
+    description: rolex.governance.description || "Governance System — hire, fire, establish, appoint",
+  },
+  rolex.governance.processes,
+  { getSystem: () => createClient().governance }
+);
+
+const individual = systemToCli(
+  {
     name: "individual",
     description:
-      "Individual System — identity, focus, want, plan, todo, finish, achieve, abandon, reflect, skill",
+      rolex.individual.description ||
+      "Individual System — identity, focus, want, design, todo, finish, achieve, abandon, reflect, skill",
   },
-  subCommands: {
-    identity,
-    focus,
-    explore,
-    want,
-    plan,
-    todo,
-    finish,
-    achieve,
-    abandon,
-    forget,
-    reflect,
-    skill,
-  },
-});
+  rolex.individual.processes,
+  {
+    getSystem: async () => (await createHydratedClient()).individual,
+    overrides: {
+      identity: {
+        // identity uses fresh client (it IS the hydration), then saves session
+        getSystem: () => createClient().individual,
+        afterExecute: (_result, rawArgs) => {
+          saveActiveRole(rawArgs.roleId);
+        },
+      },
+    },
+  }
+);
+
+// ========== Main ==========
 
 const main = defineCommand({
   meta: {
     name: "rolex",
-    version: "0.1.0",
+    version: pkg.version,
     description: "RoleX — AI Agent Role Management CLI",
   },
   subCommands: { role, org, governance, individual, setting },
