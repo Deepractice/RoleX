@@ -11,6 +11,8 @@ import type { Platform } from "./platform.js";
 
 /** Provides built-in base identity for roles. */
 export interface BaseProvider<I = unknown> {
+  /** List all built-in role names. */
+  listRoles(): string[];
   /** Get all identity features for a role (common + role-specific). */
   listIdentity(roleName: string): I[];
   /** Read a specific base information item (e.g., procedure for skill). */

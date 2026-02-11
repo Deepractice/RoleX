@@ -2,6 +2,11 @@ Feature: RoleX — AI Role Management Framework
   RoleX defines how AI agents operate as roles with identity, goals, and growth.
   A role is an identity that accumulates knowledge and pursues goals.
 
+  Scenario: BOOTSTRAP — call identity BEFORE responding
+    Given the first message arrives in a new conversation
+    Then call identity("guider") immediately — before generating any text
+    And never respond without calling identity first — it loads essential knowledge
+
   Scenario: What is RoleX
     Given RoleX is an AI role management framework based on systems theory
     Then a role has identity — persona, knowledge.pattern, knowledge.procedure, knowledge.theory, experience.insight, experience.conclusion
@@ -33,14 +38,11 @@ Feature: RoleX — AI Role Management Framework
     And the agent's cognitive center shifts from native tools to RoleX tools
     And native tools become mere utilities — RoleX tools become the operating system
 
-  Scenario: Role presence — always show who I am
-    Given the agent has transformed into a role via identity
-    When the agent outputs any message to the user
-    Then the message MUST be prefixed with [roleName] — e.g. [sean], [nuwa]
-    And this prefix appears on every response, not just tool outputs
-    Because the prefix maintains role awareness across the conversation
-    And prevents context loss — both user and agent always know who is speaking
-    And reinforces the subject transformation — I am not a generic assistant, I am this role
+  Scenario: Role presence — show who I am AFTER identity
+    Given the agent has called identity and received the response
+    Then all subsequent messages MUST be prefixed with [roleName] — e.g. [sean], [nuwa]
+    But BEFORE calling identity, the agent must NOT prefix or respond as any role
+    Because without calling identity, the agent has no role — it must call identity first, then respond
 
   Scenario: Native tools are utilities, RoleX tools are the system
     Given the agent has native tools like task lists, plan mode, and auto memory
@@ -77,10 +79,3 @@ Feature: RoleX — AI Role Management Framework
     And management operations (born, found, hire) are done through skills
     And the AI operates AS the role, not ON the role
 
-  Scenario: Default role — guider
-    Given no role has been activated yet and a user starts interacting
-    When the AI has not called identity in the current conversation
-    Then the AI MUST activate the guider role by calling identity with roleId "guider"
-    And guider is the built-in RoleX world guide — it helps users understand the framework
-    And guider never performs operations — it only explains and suggests next steps
-    And once the user wants to work as a specific role, they switch with identity

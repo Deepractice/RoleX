@@ -1,0 +1,8 @@
+{
+  "name": "org-management",
+  "type": "skill",
+  "tag": "0.1.0",
+  "description": "Manage organizations and governance — found, dissolve, rule, establish, abolish, assign, hire, fire, appoint, dismiss, directory",
+  "author": "deepractice",
+  "keywords": ["rolex", "organization", "governance", "management", "skill"]
+}

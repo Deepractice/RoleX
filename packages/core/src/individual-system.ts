@@ -99,6 +99,23 @@ function focusedGoal(ctx: ProcessContext<Feature>): string {
   return names[0];
 }
 
+/** Consume all task conclusions under a goal: goal → plans → tasks → remove conclusions. */
+function consumeConclusions(ctx: ProcessContext<Feature>, roleName: string, goalName: string): string[] {
+  const consumed: string[] = [];
+  const planNames = ctx.platform.listRelations(`has-plan.${goalName}`, roleName);
+  for (const plan of planNames) {
+    const taskNames = ctx.platform.listRelations(`has-task.${plan}`, roleName);
+    for (const task of taskNames) {
+      const conclusion = ctx.platform.readInformation(roleName, "experience.conclusion", task);
+      if (conclusion) {
+        ctx.platform.removeInformation(roleName, "experience.conclusion", task);
+        consumed.push(task);
+      }
+    }
+  }
+  return consumed;
+}
+
 // ========== Optional experience schema ==========
 
 const experienceSchema = z.object({
@@ -329,10 +346,9 @@ const finish: Process<{ name: string; conclusion?: string }, Feature> = {
   },
 };
 
-const achieve: Process<{ conclusion: string; experience: { name: string; source: string } }, Feature> = {
+const achieve: Process<{ experience: { name: string; source: string } }, Feature> = {
   ...ACHIEVE,
   params: z.object({
-    conclusion: z.string().describe("Gherkin — goal-level summary"),
     experience: z.object({
       name: z.string().describe("Experience name"),
       source: z.string().describe("Gherkin — distilled experience"),
@@ -348,26 +364,26 @@ const achieve: Process<{ conclusion: string; experience: { name: string; source:
     const updated = { ...goal, tags: [...(goal.tags || []), { name: "@done" }] } as Feature;
     ctx.platform.writeInformation(r, "goal", goalName, updated);
 
-    // Write conclusion
-    const conclusionFeature = parseSource(params.conclusion, "experience.conclusion");
-    ctx.platform.writeInformation(r, "experience.conclusion", goalName, conclusionFeature);
-
-    // Write insight
+    // Write insight (synthesized from conclusions)
     const exp = parseSource(params.experience.source, "experience.insight");
     ctx.platform.writeInformation(r, "experience.insight", params.experience.name, exp);
 
+    // Consume all task conclusions under this goal
+    const consumed = consumeConclusions(ctx, r, goalName);
+
     let output = `[${r}] ${t(l, "individual.achieve.done", { name: goalName })}`;
-    output += `\n${t(l, "individual.achieve.conclusion", { name: goalName })}`;
     output += `\n${t(l, "individual.achieve.synthesized", { name: params.experience.name })}`;
+    if (consumed.length > 0) {
+      output += `\n${t(l, "individual.achieve.consumed", { count: String(consumed.length) })}`;
+    }
 
     return output;
   },
 };
 
-const abandon: Process<{ conclusion?: string; experience?: { name: string; source: string } }, Feature> = {
+const abandon: Process<{ experience?: { name: string; source: string } }, Feature> = {
   ...ABANDON,
   params: z.object({
-    conclusion: z.string().optional().describe("Gherkin — why abandoned"),
     experience: experienceSchema,
   }),
   execute(ctx, params) {
@@ -382,16 +398,16 @@ const abandon: Process<{ conclusion?: string; experience?: { name: string; sourc
 
     let output = `[${r}] ${t(l, "individual.abandon.done", { name: goalName })}`;
 
-    if (params.conclusion) {
-      const conclusionFeature = parseSource(params.conclusion, "experience.conclusion");
-      ctx.platform.writeInformation(r, "experience.conclusion", goalName, conclusionFeature);
-      output += `\n${t(l, "individual.abandon.conclusion", { name: goalName })}`;
-    }
-
     if (params.experience) {
       const exp = parseSource(params.experience.source, "experience.insight");
       ctx.platform.writeInformation(r, "experience.insight", params.experience.name, exp);
       output += `\n${t(l, "individual.abandon.synthesized", { name: params.experience.name })}`;
+
+      // Consume conclusions when synthesizing experience
+      const consumed = consumeConclusions(ctx, r, goalName);
+      if (consumed.length > 0) {
+        output += `\n${t(l, "individual.abandon.consumed", { count: String(consumed.length) })}`;
+      }
     }
 
     return output;
@@ -515,6 +531,13 @@ const explore: Process<{ name?: string }, Feature> = {
           roles.push(name);
         }
       }
+      // Merge built-in base roles (deduplicate)
+      const baseRoles = ctx.base?.listRoles?.() ?? [];
+      for (const br of baseRoles) {
+        if (!roles.includes(br) && !orgs.includes(br)) {
+          roles.push(br);
+        }
+      }
 
       // Role-centric view: show roles first (people), then orgs (just names)
       const items = [...roles, ...orgs];
@@ -549,7 +572,9 @@ const explore: Process<{ name?: string }, Feature> = {
     }
 
     // Detail view of a specific structure
-    if (!ctx.platform.hasStructure(params.name)) {
+    const baseRoleNames = ctx.base?.listRoles?.() ?? [];
+    const isBaseRole = baseRoleNames.includes(params.name);
+    if (!ctx.platform.hasStructure(params.name) && !isBaseRole) {
       throw new Error(t(l, "error.roleNotFound", { name: params.name }));
     }
 

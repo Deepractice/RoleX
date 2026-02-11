@@ -20,6 +20,8 @@ import type { BaseProvider } from "@rolexjs/system";
 // ========== nuwa ==========
 
 import nuwaPersona from "./nuwa/persona.feature";
+import nuwaRoleMgmt from "./nuwa/role-management.knowledge.procedure.feature";
+import nuwaOrgMgmt from "./nuwa/org-management.knowledge.procedure.feature";
 
 // ========== guider ==========
 
@@ -49,7 +51,11 @@ function parseFeature(source: string, type: Feature["type"]): Feature {
 const common: Feature[] = [];
 
 const roles: Record<string, Feature[]> = {
-  nuwa: [parseFeature(nuwaPersona, "persona")],
+  nuwa: [
+    parseFeature(nuwaPersona, "persona"),
+    parseFeature(nuwaRoleMgmt, "knowledge.procedure"),
+    parseFeature(nuwaOrgMgmt, "knowledge.procedure"),
+  ],
   guider: [
     parseFeature(guiderPersona, "persona"),
     parseFeature(guiderOverview, "knowledge.pattern"),
@@ -63,6 +69,10 @@ const roles: Record<string, Feature[]> = {
 // ========== BaseProvider ==========
 
 export const base: BaseProvider<Feature> = {
+  listRoles(): string[] {
+    return Object.keys(roles);
+  },
+
   listIdentity(roleName: string): Feature[] {
     return [...common, ...(roles[roleName] ?? [])];
   },

@@ -239,8 +239,6 @@ export class LocalPlatform implements Platform {
   }
 
   private loadIndex(): Index {
-    if (this.index) return this.index;
-
     const indexPath = join(this.rootDir, "index.json");
     if (existsSync(indexPath)) {
       const raw = JSON.parse(readFileSync(indexPath, "utf-8"));
