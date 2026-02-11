@@ -112,6 +112,57 @@ describe("LocalPlatform — content storage", () => {
   });
 });
 
+describe("LocalPlatform — shadow cleanup", () => {
+  const shadowDir = join(tmpdir(), `rolex-shadow-${Date.now()}`);
+  const platform = new LocalPlatform(shadowDir);
+
+  afterAll(() => {
+    rmSync(shadowDir, { recursive: true, force: true });
+  });
+
+  test("saveGraph removes content files for shadowed nodes", () => {
+    // Write content first
+    platform.writeContent("role/task-a", {
+      name: "Task A",
+      tags: [],
+      children: [],
+    } as any);
+    platform.writeContent("role/task-b", {
+      name: "Task B",
+      tags: [],
+      children: [],
+    } as any);
+
+    expect(platform.readContent("role/task-a")).not.toBeNull();
+    expect(platform.readContent("role/task-b")).not.toBeNull();
+
+    // Save graph with task-a shadowed, task-b not
+    platform.saveGraph({
+      nodes: [
+        { key: "role/task-a", attributes: { type: "task", shadow: true, state: {} } },
+        { key: "role/task-b", attributes: { type: "task", shadow: false, state: {} } },
+      ],
+      edges: [],
+    });
+
+    // Shadowed content should be removed
+    expect(platform.readContent("role/task-a")).toBeNull();
+    // Non-shadowed content should remain
+    expect(platform.readContent("role/task-b")).not.toBeNull();
+  });
+
+  test("shadow cleanup is idempotent — missing files are skipped", () => {
+    platform.saveGraph({
+      nodes: [
+        { key: "role/nonexistent", attributes: { type: "task", shadow: true, state: {} } },
+      ],
+      edges: [],
+    });
+    // Should not throw
+    expect(platform.readContent("role/nonexistent")).toBeNull();
+  });
+});
+
 describe("LocalPlatform — settings", () => {
   const settingsDir = join(tmpdir(), `rolex-settings-${Date.now()}`);
   const platform = new LocalPlatform(settingsDir);

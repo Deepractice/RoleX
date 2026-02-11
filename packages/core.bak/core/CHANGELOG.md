@@ -1,0 +1,120 @@
+# @rolexjs/core
+
+## 0.10.0
+
+## 0.9.1
+
+## 0.9.0
+
+### Minor Changes
+
+- 99bcce5: feat: three-entity architecture (Role, Organization, Position)
+  - Role (WHO), Organization (WHERE), Position (WHAT) as independent entities
+  - State machines: free → member → on_duty, vacant → filled
+  - New API: establish(), appoint(), dismiss() for position management
+  - Gherkin-defined duties inject into identity at runtime
+  - New directory structure: roles/<name>/, orgs/<org>/positions/<pos>/
+  - Auto-dismiss on fire, one-to-one constraints
+  - Updated nuwa seed with three-entity knowledge
+
+## 0.8.0
+
+### Minor Changes
+
+- 686ce6f: feat: RolexConfig as CAS source of truth, waiter default role
+  - Add `RolexConfig` and `OrganizationConfig` types to core
+  - rolex.json is now the single source of truth (CAS): `{ roles, organization }`
+  - `born()` registers role in config.roles — no directory scanning needed
+  - `loadConfig()` always returns valid config (auto-creates default)
+  - Organization is optional (`organization: null` when no org founded)
+  - Add waiter/小二 as default onboarding role (auto-activated on MCP startup)
+  - Fix null-safety for `organization()` across Rolex, Organization, MCP server
+  - Remove old seed rolex.json (generate-seed.ts scans directories at build time)
+  - Update tests for new RolexConfig format and focus() multi-goal API
+
+## 0.7.0
+
+### Minor Changes
+
+- 71a8860: feat: unified error handling, society directory fix, workflow hints
+  - Error handling: all tool errors render as structured markdown with
+    tool name, error message, and pattern-matched actionable hints.
+  - Society directory: `directory()` and `find()` now see all born roles,
+    not just hired ones. Added `allBornRoles()` to Platform interface.
+  - Workflow hints: every write operation returns a **Next** hint guiding
+    the AI to the next logical step. Static hints in shared render layer,
+    dynamic hints for `hire(name)` and `finish(remaining)`.
+
+## 0.6.0
+
+### Minor Changes
+
+- e537147: feat: add reflect() — distill experiences into knowledge
+
+  Kantian Reflective Judgment: multiple concrete experiences are consumed
+  and a transferable knowledge principle is created. Experience files are
+  deleted, knowledge file is added to identity.
+
+## 0.5.0
+
+### Minor Changes
+
+- 28b8b97: feat: enhance focus() to support multiple active goals and goal switching
+  - Platform: add allActiveGoals(), getFocusedGoal(), setFocusedGoal()
+  - LocalPlatform: implement goal listing, .focus file for persistence
+  - Role: focus(name?) returns current goal + other active goals
+  - MCP server: focus tool accepts optional name param to switch goals
+
+## 0.4.1
+
+### Patch Changes
+
+- eec37ca: Add bilingual README with MCP installation guide for 7 platforms
+
+## 0.4.0
+
+### Minor Changes
+
+- 8fc5dfd: Extract LocalPlatform, pure bootstrap, fold MCP tools, unify package versions
+
+## 0.3.0
+
+### Minor Changes
+
+- fb2e6c6: feat: extract LocalPlatform, pure bootstrap, folded MCP tools
+  - Extract `@rolexjs/local-platform` as independent package
+  - Pure `bootstrap(platform)` with build-time seed inlining (zero fs dependency)
+  - 女娲 born at society level, not hired into any organization
+  - `Rolex.role(name)` for direct society-level role access
+  - Fold MCP society/organization operations into 2 admin tools (nuwa-only)
+  - Unified Gherkin rendering layer (`renderFeature`/`renderFeatures`)
+  - `teach` moved from Organization to Society (Rolex) level
+  - Default storage at `~/.rolex`
+
+## 0.2.0
+
+### Minor Changes
+
+- a3b4929: refactor: export roleType as BundledType for ResourceX integration
+  - Add src/builtins/role.type.ts with resolve(ctx) logic
+  - Modify build.ts to bundle role type into code string
+  - Auto-generate roleType.ts with BundledType export
+  - Fix loadRole and loadRoleSimple to use extract(rxr.archive)
+  - Fix createResourceResolver to work without registry parameter
+  - Remove old src/resource-type/ directory
+
+  Now RoleX can be integrated with ResourceX via:
+
+  ```typescript
+  import { roleType } from "rolexjs";
+  rx.supportType(roleType);
+  ```
+
+## 0.1.0
+
+### Minor Changes
+
+- 9b6a47b: feat: simplify roleType API
+  - Export static `roleType` object instead of `createRoleType` factory
+  - Remove registry dependency from `loadRoleSimple`
+  - roleType is now stateless and can be used directly with any registry

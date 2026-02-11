@@ -80,13 +80,6 @@
         "@rolexjs/parser": "workspace:*",
       },
     },
-    "packages/model": {
-      "name": "@rolexjs/system",
-      "version": "0.1.0",
-      "dependencies": {
-        "zod": "^3.25.0",
-      },
-    },
     "packages/parser": {
       "name": "@rolexjs/parser",
       "version": "0.10.0",
@@ -103,6 +96,13 @@
         "@rolexjs/core": "workspace:*",
         "@rolexjs/system": "workspace:*",
         "resourcexjs": "^2.6.0",
+      },
+    },
+    "packages/system": {
+      "name": "@rolexjs/system",
+      "version": "0.1.0",
+      "dependencies": {
+        "zod": "^3.25.0",
       },
     },
   },
@@ -399,7 +399,7 @@
 
     "@rolexjs/parser": ["@rolexjs/parser@workspace:packages/parser"],
 
-    "@rolexjs/system": ["@rolexjs/system@workspace:packages/model"],
+    "@rolexjs/system": ["@rolexjs/system@workspace:packages/system"],
 
     "@rollup/rollup-android-arm-eabi": ["@rollup/rollup-android-arm-eabi@4.57.1", "", { "os": "android", "cpu": "arm" }, "sha512-A6ehUVSiSaaliTxai040ZpZ2zTevHYbvu/lDoeAteHI8QnaosIzm4qwtezfRg1jOYaUmnzLX1AOD6Z+UJjtifg=="],
 

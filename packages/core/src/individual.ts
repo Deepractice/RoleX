@@ -1,282 +1,104 @@
 /**
- * Individual System — a role's first-person cognitive lifecycle.
+ * Individual — the structure tree and processes for an agent identity.
  *
- * Everything here is done BY the role itself:
- * identity → focus → want → design → todo → finish → achieve →
- * abandon → reflect → contemplate → skill
+ * Structure tree:
  *
- * External processes (born, teach, train, retire, kill)
- * belong to the Role System.
+ * society
+ * ├── individual
+ * │   ├── persona        — who I am
+ * │   ├── voice          — how I communicate
+ * │   ├── memoir         — my personal history
+ * │   ├── philosophy     — how I think
+ * │   ├── knowledge      — what I know
+ * │   │   ├── pattern       — transferable principles
+ * │   │   ├── procedure     — skills and workflows
+ * │   │   └── theory        — unified principles
+ * │   ├── experience     — what I learned from goals
+ * │   │   ├── insight       — transferable learning (temporary)
+ * │   │   └── conclusion    — completion summaries (permanent)
+ * │   └── goal           — what I am pursuing
+ * │       └── plan
+ * │           └── task
+ * └── organization
+ *
+ * Processes (14 individual system):
+ *
+ *   Read:      identity, focus, explore, skill, use
+ *   Create:    want, design, todo
+ *   Remove:    forget
+ *   Transform: finish, achieve, abandon, reflect, contemplate
  */
+import { structure, create, remove, transform, process } from "@rolexjs/system";
 
-import type {
-  InformationType,
-  StructureDefinition,
-  StateDefinition,
-  ProcessDefinition,
-  SystemDefinition,
-} from "@rolexjs/system";
+// ================================================================
+//  Structure tree
+// ================================================================
 
-import { individual as desc } from "./descriptions/index.js";
+// ===== Root =====
 
-// ========== Structure ==========
+export const society = structure("society", "The RoleX world", null);
 
-export const ROLE: StructureDefinition = {
-  name: "Role",
-  description:
-    "The individual — an identity that accumulates knowledge, experience, and pursues goals.",
-  informationTypes: [
-    "persona",
-    "knowledge.pattern",
-    "knowledge.procedure",
-    "knowledge.theory",
-    "experience.insight",
-    "experience.conclusion",
-    "goal",
-    "plan",
-    "task",
-  ],
-};
+// ===== Level 1 =====
 
-// ========== Information ==========
+export const individual = structure("individual", "An agent identity", society);
+export const organization = structure("organization", "A group of roles", society);
 
-export const PERSONA: InformationType = {
-  type: "persona",
-  description: "Who the role is — personality, values, background.",
-  belongsTo: "Role",
-};
+// ===== Individual — Identity =====
 
-export const PATTERN: InformationType = {
-  type: "knowledge.pattern",
-  description:
-    "Transferable principles — distilled from experience through reflection, or taught directly.",
-  belongsTo: "Role",
-};
+export const persona = structure("persona", "Who I am", individual);
+export const voice = structure("voice", "How I communicate", individual);
+export const memoir = structure("memoir", "My personal history", individual);
 
-export const PROCEDURE: InformationType = {
-  type: "knowledge.procedure",
-  description: "Procedural knowledge — what the role knows how to do (workflows, operations).",
-  belongsTo: "Role",
-};
+// ===== Individual — Thinking =====
 
-export const THEORY: InformationType = {
-  type: "knowledge.theory",
-  description:
-    "Unified principles — the philosophical coherence across all patterns. Produced by contemplate.",
-  belongsTo: "Role",
-};
+export const philosophy = structure("philosophy", "How I think", individual);
 
-export const INSIGHT: InformationType = {
-  type: "experience.insight",
-  description:
-    "A posteriori knowledge — what the role learned from an encounter. Temporary, consumed by reflect.",
-  belongsTo: "Role",
-};
+// ===== Individual — Knowledge =====
 
-export const CONCLUSION: InformationType = {
-  type: "experience.conclusion",
-  description: "Completion summary — what happened, what was the result.",
-  belongsTo: "Role",
-};
+export const knowledge = structure("knowledge", "What I know", individual);
+export const pattern = structure("pattern", "Transferable principles", knowledge);
+export const procedure = structure("procedure", "Skills and workflows", knowledge);
+export const theory = structure("theory", "Unified principles", knowledge);
 
-export const GOAL: InformationType = {
-  type: "goal",
-  description: "What the role wants to achieve — a desired outcome.",
-  belongsTo: "Role",
-  children: ["plan"],
-};
+// ===== Individual — Experience =====
 
-export const PLAN: InformationType = {
-  type: "plan",
-  description: "How to achieve a goal — a decomposition into phases or steps.",
-  belongsTo: "Role",
-  children: ["task"],
-};
+export const experience = structure("experience", "What I learned from goals", individual);
+export const insight = structure("insight", "Transferable learning", experience);
+export const conclusion = structure("conclusion", "Completion summaries", experience);
 
-export const TASK: InformationType = {
-  type: "task",
-  description: "A concrete unit of work within a plan.",
-  belongsTo: "Role",
-  children: ["experience.conclusion"],
-};
+// ===== Individual — Execution =====
 
-// ========== State ==========
+export const goal = structure("goal", "A desired outcome", individual);
+export const plan = structure("plan", "How to achieve a goal", goal);
+export const task = structure("task", "Concrete unit of work", plan);
 
-export const COGNITION: StateDefinition = {
-  name: "cognition",
-  description: "The role's self-awareness — who am I, what do I know.",
-  appliesTo: "Role",
-  producedBy: "identity",
-  includes: [
-    "persona",
-    "knowledge.pattern",
-    "knowledge.procedure",
-    "knowledge.theory",
-    "experience.insight",
-    "experience.conclusion",
-  ],
-};
+// ================================================================
+//  Processes (14 individual system)
+// ================================================================
 
-export const INTENTION: StateDefinition = {
-  name: "intention",
-  description: "The role's current direction — what am I doing, what's next.",
-  appliesTo: "Role",
-  producedBy: "focus",
-  includes: ["goal", "plan", "task"],
-};
+// ===== Read (projection only, no tree ops) =====
 
-// ========== Process (all first-person) ==========
+export const identity = process("identity", "Project the individual's full identity", individual);
+export const focus = process("focus", "Project the current goal focus", goal);
+export const explore = process("explore", "Discover roles and organizations", society);
+export const skill = process("skill", "Load full skill instructions", procedure);
+export const use = process("use", "Execute an external tool", individual);
 
-export const WANT: ProcessDefinition = {
-  name: "want",
-  description: desc.want,
-  kind: "write",
-  targets: ["Role"],
-  inputs: [],
-  outputs: ["goal"],
-};
+// ===== Create =====
 
-export const DESIGN: ProcessDefinition = {
-  name: "design",
-  description: desc.design,
-  kind: "write",
-  targets: ["Role"],
-  inputs: ["goal"],
-  outputs: ["plan"],
-};
+export const want = process("want", "Declare a goal", individual, create(goal));
+export const design = process("design", "Create a plan for a goal", goal, create(plan));
+export const todo = process("todo", "Create a task in a plan", plan, create(task));
 
-export const TODO: ProcessDefinition = {
-  name: "todo",
-  description: desc.todo,
-  kind: "write",
-  targets: ["Role"],
-  inputs: ["plan"],
-  outputs: ["task"],
-};
+// ===== Remove =====
 
-export const FINISH: ProcessDefinition = {
-  name: "finish",
-  description: desc.finish,
-  kind: "write",
-  targets: ["Role"],
-  inputs: ["task"],
-  outputs: ["experience.conclusion"],
-  consumes: ["task"],
-};
+export const forget = process("forget", "Remove knowledge or insight from identity", individual,
+  remove(pattern), remove(procedure), remove(theory), remove(insight));
 
-export const ACHIEVE: ProcessDefinition = {
-  name: "achieve",
-  description: desc.achieve,
-  kind: "write",
-  targets: ["Role"],
-  inputs: ["goal"],
-  outputs: ["experience.insight"],
-  consumes: ["goal"],
-};
+// ===== Transform =====
 
-export const ABANDON: ProcessDefinition = {
-  name: "abandon",
-  description: desc.abandon,
-  kind: "write",
-  targets: ["Role"],
-  inputs: ["goal"],
-  outputs: ["experience.insight"],
-  consumes: ["goal"],
-};
-
-export const FORGET: ProcessDefinition = {
-  name: "forget",
-  description: desc.forget,
-  kind: "write",
-  targets: ["Role"],
-  inputs: ["knowledge.pattern", "knowledge.procedure", "knowledge.theory", "experience.insight"],
-  outputs: [],
-  consumes: ["knowledge.pattern", "knowledge.procedure", "knowledge.theory", "experience.insight"],
-};
-
-export const REFLECT: ProcessDefinition = {
-  name: "reflect",
-  description: desc.reflect,
-  kind: "transform",
-  targets: ["Role"],
-  inputs: ["experience.insight"],
-  outputs: ["knowledge.pattern"],
-  consumes: ["experience.insight"],
-};
-
-export const CONTEMPLATE: ProcessDefinition = {
-  name: "contemplate",
-  description: desc.contemplate,
-  kind: "write",
-  targets: ["Role"],
-  inputs: ["knowledge.pattern"],
-  outputs: ["knowledge.theory"],
-};
-
-export const IDENTITY: ProcessDefinition = {
-  name: "identity",
-  description: desc.identity,
-  kind: "query",
-  targets: ["Role"],
-  inputs: [
-    "persona",
-    "knowledge.pattern",
-    "knowledge.procedure",
-    "knowledge.theory",
-    "experience.insight",
-    "experience.conclusion",
-  ],
-  outputs: [],
-};
-
-export const FOCUS: ProcessDefinition = {
-  name: "focus",
-  description: desc.focus,
-  kind: "query",
-  targets: ["Role"],
-  inputs: ["goal", "plan", "task"],
-  outputs: [],
-};
-
-export const SKILL: ProcessDefinition = {
-  name: "skill",
-  description: desc.skill,
-  kind: "query",
-  targets: ["Role"],
-  inputs: ["knowledge.procedure"],
-  outputs: [],
-};
-
-export const EXPLORE: ProcessDefinition = {
-  name: "explore",
-  description: desc.explore,
-  kind: "query",
-  targets: ["Role"],
-  inputs: [],
-  outputs: [],
-};
-
-export const USE: ProcessDefinition = {
-  name: "use",
-  description: desc.use,
-  kind: "write",
-  targets: ["Role"],
-  inputs: [],
-  outputs: [],
-};
-
-// ========== System (cycles) ==========
-
-export const GOAL_EXECUTION: SystemDefinition = {
-  name: "goal-execution",
-  description: desc.system,
-  processes: ["identity", "want", "design", "todo", "finish", "achieve"],
-  feedback: ["experience.insight"],
-};
-
-export const COGNITIVE_GROWTH: SystemDefinition = {
-  name: "cognitive-growth",
-  description: desc.system,
-  processes: ["achieve", "reflect", "contemplate"],
-  feedback: ["knowledge.pattern", "knowledge.theory"],
-};
+export const finish = process("finish", "Complete a task", task, transform(task, conclusion));
+export const achieve = process("achieve", "Complete a goal, distill experience", goal, transform(goal, conclusion), transform(goal, insight));
+export const abandon = process("abandon", "Abandon a goal", goal, transform(goal, conclusion), transform(goal, insight));
+export const reflect = process("reflect", "Distill insights into knowledge", experience, transform(insight, pattern));
+export const contemplate = process("contemplate", "Unify patterns into theory", knowledge, transform(pattern, theory));

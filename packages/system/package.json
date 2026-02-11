@@ -1,17 +1,18 @@
 {
-  "name": "@rolexjs/core",
-  "version": "0.10.0",
-  "description": "RoleX Core - AI Agent Role Management Framework",
+  "name": "@rolexjs/system",
+  "version": "0.1.0",
+  "description": "RoleX Systems Theory — six primitives + declarative process composition",
   "keywords": [
     "rolex",
-    "role",
-    "agent",
-    "ai"
+    "systems-theory",
+    "system",
+    "process",
+    "define"
   ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Deepractice/RoleX.git",
-    "directory": "packages/core"
+    "directory": "packages/system"
   },
   "license": "MIT",
   "engines": {
@@ -27,19 +28,15 @@
     }
   },
   "files": [
-    "dist",
-    "README.md"
+    "dist"
   ],
   "scripts": {
     "build": "tsup",
-    "test": "bun test || true",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
-  "dependencies": {
-    "@rolexjs/system": "workspace:*"
-  },
+  "dependencies": {},
   "devDependencies": {},
   "publishConfig": {
     "access": "public"

@@ -31,16 +31,23 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsup",
+    "gen:desc": "bun run scripts/gen-descriptions.ts",
+    "build": "bun run gen:desc && tsup",
     "test": "bun test || true",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@rolexjs/system": "workspace:*"
+    "@rolexjs/parser": "workspace:*",
+    "@rolexjs/system": "workspace:*",
+    "graphology": "^0.26.0",
+    "graphology-types": "^0.24.8",
+    "zod": "^3.25.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@cucumber/messages": "^32.0.1"
+  },
   "publishConfig": {
     "access": "public"
   }

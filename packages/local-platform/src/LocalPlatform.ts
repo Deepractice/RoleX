@@ -103,6 +103,13 @@ export class LocalPlatform implements Platform {
       JSON.stringify(graph, null, 2),
       "utf-8",
     );
+
+    // Clean up content files for shadowed nodes
+    for (const node of graph.nodes) {
+      if (node.attributes.shadow) {
+        this.removeContent(node.key);
+      }
+    }
   }
 
   // ===== Content Storage =====
