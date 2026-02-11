@@ -3,25 +3,18 @@
  *
  * RoleX Individual System MCP server.
  *
- * 14 tools — one per Individual System process:
- *   identity, focus, explore, want, design, todo,
- *   finish, achieve, abandon, forget, reflect, contemplate, skill, use
- *
- * Management operations (born, found, hire, etc.) are exposed via skills,
- * not MCP tools. The AI operates AS the role, not ON the role.
+ * All tools are auto-derived from system process definitions.
+ * Only special behaviors (output wrapping, task name) are configured here.
  */
 
 import { FastMCP } from "fastmcp";
-import { join } from "node:path";
-import { homedir } from "node:os";
-import { z } from "zod";
-import { createRolex, world, WORLD_TOPICS, descriptions, wrapOutput } from "rolexjs";
-import { LocalPlatform } from "@rolexjs/local-platform";
+import { createRolex, world, WORLD_TOPICS, wrapOutput } from "rolexjs";
+import { LocalPlatform, resolveDir } from "@rolexjs/local-platform";
+import { systemToMcp } from "./lib/system-mcp.js";
 
 // ========== Platform & System ==========
 
-const rootDir = process.env.ROLEX_ROOT || join(homedir(), ".deepractice", "rolex");
-const platform = new LocalPlatform(rootDir);
+const platform = new LocalPlatform(resolveDir());
 const rolex = createRolex({ platform });
 
 // ========== Instructions ==========
@@ -47,7 +40,7 @@ function activeRole(): string {
 async function run(
   processName: string,
   args: unknown,
-  extra?: { taskName?: string }
+  extra?: Record<string, any>
 ): Promise<string> {
   const result = await rolex.individual.execute(processName, args);
   const roleName = activeRole();
@@ -55,169 +48,15 @@ async function run(
   return wrapOutput(rolex.graph, platform, roleName, processName, result, extra);
 }
 
-// ========== Tools ==========
+// ========== Tools (auto-derived) ==========
 
-// identity
-server.addTool({
-  name: "identity",
-  description: descriptions.identity,
-  parameters: z.object({
-    roleId: z.string().describe("Role name to activate"),
-  }),
-  execute: async (args) => run("identity", args),
-});
-
-// focus
-server.addTool({
-  name: "focus",
-  description: descriptions.focus,
-  parameters: z.object({
-    name: z.string().optional().describe("Goal name to switch focus to"),
-  }),
-  execute: async (args) => run("focus", args),
-});
-
-// explore
-server.addTool({
-  name: "explore",
-  description: descriptions.explore,
-  parameters: z.object({
-    name: z.string().optional().describe("Name of role or organization to explore"),
-  }),
-  execute: async (args) => run("explore", args),
-});
-
-// want
-server.addTool({
-  name: "want",
-  description: descriptions.want,
-  parameters: z.object({
-    name: z.string().describe("Goal name"),
-    source: z.string().describe("Gherkin goal feature source"),
-  }),
-  execute: async (args) => run("want", args),
-});
-
-// design
-server.addTool({
-  name: "design",
-  description: descriptions.design,
-  parameters: z.object({
-    name: z.string().describe("Plan name"),
-    source: z.string().describe("Gherkin plan feature source"),
-  }),
-  execute: async (args) => run("design", args),
-});
-
-// todo
-server.addTool({
-  name: "todo",
-  description: descriptions.todo,
-  parameters: z.object({
-    name: z.string().describe("Task name"),
-    source: z.string().describe("Gherkin task feature source"),
-  }),
-  execute: async (args) => run("todo", args, { taskName: args.name }),
-});
-
-// finish
-server.addTool({
-  name: "finish",
-  description: descriptions.finish,
-  parameters: z.object({
-    name: z.string().describe("Task name to finish"),
-    conclusion: z.string().optional().describe("Gherkin — task completion summary"),
-  }),
-  execute: async (args) => run("finish", args),
-});
-
-// achieve
-server.addTool({
-  name: "achieve",
-  description: descriptions.achieve,
-  parameters: z.object({
-    experience: z
-      .object({
-        name: z.string().describe("Experience name"),
-        source: z.string().describe("Gherkin — distilled experience"),
-      })
-      .describe("Experience to synthesize into identity"),
-  }),
-  execute: async (args) => run("achieve", args),
-});
-
-// abandon
-server.addTool({
-  name: "abandon",
-  description: descriptions.abandon,
-  parameters: z.object({
-    experience: z
-      .object({
-        name: z.string().describe("Experience name"),
-        source: z.string().describe("Gherkin — lessons from failure"),
-      })
-      .optional()
-      .describe("Optional experience to synthesize on abandonment"),
-  }),
-  execute: async (args) => run("abandon", args),
-});
-
-// forget
-server.addTool({
-  name: "forget",
-  description: descriptions.forget,
-  parameters: z.object({
-    type: z
-      .enum(["knowledge.pattern", "knowledge.procedure", "knowledge.theory", "experience.insight"])
-      .describe("Information type to forget"),
-    name: z.string().describe("Name of the information to forget"),
-  }),
-  execute: async (args) => run("forget", args),
-});
-
-// reflect
-server.addTool({
-  name: "reflect",
-  description: descriptions.reflect,
-  parameters: z.object({
-    experienceNames: z.array(z.string()).describe("Experience names to consume"),
-    knowledgeName: z.string().describe("Knowledge name to produce"),
-    knowledgeSource: z.string().describe("Gherkin knowledge feature source"),
-  }),
-  execute: async (args) => run("reflect", args),
-});
-
-// contemplate
-server.addTool({
-  name: "contemplate",
-  description: descriptions.contemplate,
-  parameters: z.object({
-    patternNames: z.array(z.string()).describe("Pattern names to contemplate"),
-    theoryName: z.string().describe("Theory name to produce"),
-    theorySource: z.string().describe("Gherkin theory feature source"),
-  }),
-  execute: async (args) => run("contemplate", args),
-});
-
-// skill
-server.addTool({
-  name: "skill",
-  description: descriptions.skill,
-  parameters: z.object({
-    name: z.string().describe("ResourceX locator (e.g. 'role-management:0.1.0')"),
-  }),
-  execute: async (args) => run("skill", args),
-});
-
-// use
-server.addTool({
-  name: "use",
-  description: descriptions.use,
-  parameters: z.object({
-    locator: z.string().describe("Resource locator (e.g. 'tool-name:1.0.0')"),
-    args: z.unknown().optional().describe("Arguments to pass to the tool"),
-  }),
-  execute: async (args) => run("use", args),
+systemToMcp(server, rolex.individual.processes, {
+  run,
+  overrides: {
+    todo: {
+      execute: async (args, run) => run("todo", args, { taskName: args.name }),
+    },
+  },
 });
 
 // ========== Start ==========

@@ -7,26 +7,17 @@
 
 import { createClient } from "./client.js";
 import type { Rolex } from "rolexjs";
-import { LocalPlatform } from "@rolexjs/local-platform";
-import { join } from "node:path";
-import { homedir } from "node:os";
-
-const DEFAULT_ROLEX_DIR = join(homedir(), ".deepractice", "rolex");
-
-function getPlatform(): LocalPlatform {
-  const dir = process.env.ROLEX_DIR || DEFAULT_ROLEX_DIR;
-  return new LocalPlatform(dir);
-}
+import { LocalPlatform, resolveDir } from "@rolexjs/local-platform";
 
 /** Save the active role to settings. */
 export function saveActiveRole(roleId: string): void {
-  const platform = getPlatform();
+  const platform = new LocalPlatform(resolveDir());
   platform.writeSettings({ activeRole: roleId });
 }
 
 /** Read the active role from settings. */
 export function getActiveRole(): string | undefined {
-  const platform = getPlatform();
+  const platform = new LocalPlatform(resolveDir());
   const settings = platform.readSettings();
   return settings.activeRole as string | undefined;
 }

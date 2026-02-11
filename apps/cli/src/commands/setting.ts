@@ -1,10 +1,6 @@
 import { defineCommand } from "citty";
 import consola from "consola";
-import { join } from "node:path";
-import { homedir } from "node:os";
-import { LocalPlatform } from "@rolexjs/local-platform";
-
-const DEFAULT_ROLEX_DIR = join(homedir(), ".deepractice", "rolex");
+import { LocalPlatform, resolveDir } from "@rolexjs/local-platform";
 
 export const setting = defineCommand({
   meta: {
@@ -25,7 +21,7 @@ export const setting = defineCommand({
   },
   async run({ args }) {
     try {
-      const platform = new LocalPlatform(process.env.ROLEX_DIR || DEFAULT_ROLEX_DIR);
+      const platform = new LocalPlatform(resolveDir());
 
       if (args.value) {
         // Validate known keys
