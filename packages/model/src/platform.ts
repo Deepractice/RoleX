@@ -1,40 +1,60 @@
 /**
- * Platform — storage for the three storable concepts.
+ * Platform — persistence layer for the graph model.
+ *
+ * The graph (topology: nodes + edges) lives in memory as RoleXGraph.
+ * Platform handles two concerns:
+ *   1. Graph persistence — load/save the topology
+ *   2. Content storage — read/write node content on demand
+ *
+ * Graph stores topology only (key, type, shadow, state).
+ * Content (e.g. Gherkin Feature) is heavy and loaded on demand.
  *
  * Of the six system concepts:
- *   Structure, Information, Relation → stored (Platform)
- *   State, Process, System → computed (runtime)
- *
- * In RoleX, all information is Gherkin Feature.
- * Platform is parameterized by Information type so the
- * meta-model stays independent of Gherkin specifics.
+ *   Graph topology (Structure + Relation + State) → in memory (RoleXGraph)
+ *   Content (Information) → on demand via Platform
+ *   Process, System → runtime
  */
 
+export interface SerializedNode {
+  key: string;
+  attributes: {
+    type: string;
+    shadow: boolean;
+    state: Record<string, unknown>;
+  };
+}
+
+export interface SerializedEdge {
+  source: string;
+  target: string;
+  attributes: { type: string };
+  undirected: boolean;
+}
+
+export interface SerializedGraph {
+  nodes: SerializedNode[];
+  edges: SerializedEdge[];
+}
+
 export interface Platform<I = unknown> {
-  // ===== Structure =====
+  // ===== Graph Persistence =====
 
-  createStructure(name: string, parent?: string): void;
-  removeStructure(name: string): void;
-  listStructures(parent?: string): string[];
-  hasStructure(name: string, parent?: string): boolean;
+  /** Load graph topology (nodes + edges, no content). */
+  loadGraph(): SerializedGraph;
 
-  // ===== Information =====
+  /** Save graph topology. */
+  saveGraph(graph: SerializedGraph): void;
 
-  writeInformation(structure: string, type: string, name: string, content: I): I;
-  readInformation(structure: string, type: string, name: string): I | null;
-  listInformation(structure: string, type: string): I[];
-  removeInformation(structure: string, type: string, name: string): void;
+  // ===== Content Storage (on demand) =====
 
-  // ===== Relation (all many-to-many, Process enforces cardinality) =====
+  /** Write content for a node. */
+  writeContent(key: string, content: I): void;
 
-  addRelation(name: string, from: string, to: string): void;
-  listRelations(name: string, from: string): string[];
-  hasRelation(name: string, from: string, to: string): boolean;
-  removeRelation(name: string, from: string, to: string): void;
+  /** Read content for a node. Returns null if not found. */
+  readContent(key: string): I | null;
 
-  // ===== File (arbitrary file read, optional) =====
-
-  readFile?(path: string): string | null;
+  /** Remove content for a node. */
+  removeContent(key: string): void;
 
   // ===== Settings (global key-value, optional) =====
 

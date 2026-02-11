@@ -14,6 +14,11 @@
 
 export type { Platform } from "./Platform.js";
 
+// ========== Graph ==========
+
+export { RoleXGraph } from "./graph/index.js";
+export type { NodeAttributes, EdgeAttributes, GraphModel, SerializedGraph } from "./graph/index.js";
+
 // ========== Types ==========
 
 export type { Feature } from "./Feature.js";
@@ -21,14 +26,7 @@ export type { Scenario } from "./Scenario.js";
 
 // ========== Role System (declarations) ==========
 
-export {
-  BORN,
-  TEACH,
-  TRAIN,
-  RETIRE,
-  KILL,
-  ROLE_LIFECYCLE,
-} from "./Role.js";
+export { BORN, TEACH, TRAIN, RETIRE, KILL, ROLE_LIFECYCLE } from "./Role.js";
 
 // ========== Individual System (declarations) ==========
 

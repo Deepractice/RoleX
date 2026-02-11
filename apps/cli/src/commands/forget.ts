@@ -10,7 +10,8 @@ export const forget = defineCommand({
   args: {
     type: {
       type: "positional",
-      description: "Information type: knowledge.pattern, knowledge.procedure, knowledge.theory, experience.insight",
+      description:
+        "Information type: knowledge.pattern, knowledge.procedure, knowledge.theory, experience.insight",
       required: true,
     },
     name: {

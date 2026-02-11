@@ -40,6 +40,8 @@
   "dependencies": {
     "@rolexjs/parser": "workspace:*",
     "@rolexjs/system": "workspace:*",
+    "graphology": "^0.26.0",
+    "graphology-types": "^0.24.8",
     "zod": "^3.25.0"
   },
   "devDependencies": {

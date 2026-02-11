@@ -10,7 +10,7 @@
 import { z } from "zod";
 import { defineSystem } from "@rolexjs/system";
 import { parse } from "@rolexjs/parser";
-import type { Process, RunnableSystem } from "@rolexjs/system";
+import type { GraphModel, Process, RunnableSystem } from "@rolexjs/system";
 import type { Platform } from "./Platform.js";
 import type { Feature } from "./Feature.js";
 import type { Scenario } from "./Scenario.js";
@@ -46,9 +46,22 @@ const born: Process<{ name: string; source: string }, Feature> = {
     source: z.string().describe("Gherkin persona source"),
   }),
   execute(ctx, params) {
-    ctx.platform.createStructure(params.name);
     const feature = parseSource(params.source, "persona");
-    ctx.platform.writeInformation(params.name, "persona", "persona", feature);
+
+    // Graph topology: role node + persona node + relation
+    ctx.graph.addNode(params.name, "role");
+    const personaKey = `${params.name}/persona`;
+    ctx.graph.addNode(personaKey, "persona");
+    ctx.graph.relateTo(params.name, personaKey, "has-info");
+
+    // Link to society if it exists
+    if (ctx.graph.hasNode("society")) {
+      ctx.graph.relate("society", params.name, "has-role");
+    }
+
+    // Content persistence
+    ctx.platform.writeContent(personaKey, feature);
+
     return `[${params.name}] ${t(ctx.locale, "role.born")}\n\n${renderFeature(feature)}`;
   },
 };
@@ -62,7 +75,15 @@ const teach: Process<{ roleId: string; name: string; source: string }, Feature> 
   }),
   execute(ctx, params) {
     const feature = parseSource(params.source, "knowledge.pattern");
-    ctx.platform.writeInformation(params.roleId, "knowledge.pattern", params.name, feature);
+
+    // Graph topology: knowledge node + relation
+    const key = `${params.roleId}/${params.name}`;
+    ctx.graph.addNode(key, "knowledge.pattern");
+    ctx.graph.relateTo(params.roleId, key, "has-info");
+
+    // Content persistence
+    ctx.platform.writeContent(key, feature);
+
     return `[${params.roleId}] ${t(ctx.locale, "role.taught", { name: params.name })}\n\n${renderFeature(feature)}`;
   },
 };
@@ -76,7 +97,15 @@ const train: Process<{ roleId: string; name: string; source: string }, Feature> 
   }),
   execute(ctx, params) {
     const feature = parseSource(params.source, "knowledge.procedure");
-    ctx.platform.writeInformation(params.roleId, "knowledge.procedure", params.name, feature);
+
+    // Graph topology: procedure node + relation
+    const key = `${params.roleId}/${params.name}`;
+    ctx.graph.addNode(key, "knowledge.procedure");
+    ctx.graph.relateTo(params.roleId, key, "has-info");
+
+    // Content persistence
+    ctx.platform.writeContent(key, feature);
+
     return `[${params.roleId}] ${t(ctx.locale, "role.trained", { name: params.name })}\n\n${renderFeature(feature)}`;
   },
 };
@@ -87,11 +116,20 @@ const retire: Process<{ name: string }, Feature> = {
     name: z.string().describe("Role name to retire"),
   }),
   execute(ctx, params) {
-    // Read persona, add @retired tag, write back
-    const persona = ctx.platform.readInformation(params.name, "persona", "persona");
-    if (!persona) throw new Error(t(ctx.locale, "error.roleNotFound", { name: params.name }));
-    const updated = { ...persona, tags: [...(persona.tags || []), { name: "@retired" }] } as Feature;
-    ctx.platform.writeInformation(params.name, "persona", "persona", updated);
+    // Shadow the role node — cascades to all children
+    ctx.graph.shadow(params.name);
+
+    // Also mark the persona content with @retired tag
+    const personaKey = `${params.name}/persona`;
+    const persona = ctx.platform.readContent(personaKey);
+    if (persona) {
+      const updated = {
+        ...persona,
+        tags: [...(persona.tags || []), { name: "@retired" }],
+      } as Feature;
+      ctx.platform.writeContent(personaKey, updated);
+    }
+
     return `[${params.name}] ${t(ctx.locale, "role.retired")}`;
   },
 };
@@ -102,7 +140,13 @@ const kill: Process<{ name: string }, Feature> = {
     name: z.string().describe("Role name to permanently destroy"),
   }),
   execute(ctx, params) {
-    ctx.platform.removeStructure(params.name);
+    // Drop all children first, then the role node itself
+    const children = ctx.graph.outNeighbors(params.name);
+    for (const child of children) {
+      ctx.graph.dropNode(child);
+    }
+    ctx.graph.dropNode(params.name);
+
     return `[${params.name}] ${t(ctx.locale, "role.killed")}`;
   },
 };
@@ -110,8 +154,8 @@ const kill: Process<{ name: string }, Feature> = {
 // ========== System Factory ==========
 
 /** Create the role system, ready to execute. */
-export function createRoleSystem(platform: Platform): RunnableSystem<Feature> {
-  return defineSystem(platform, {
+export function createRoleSystem(graph: GraphModel, platform: Platform): RunnableSystem<Feature> {
+  return defineSystem(graph, platform, {
     name: "role",
     description: "External management of role lifecycle — create, cultivate, retire, destroy.",
     processes: { born, teach, train, retire, kill },

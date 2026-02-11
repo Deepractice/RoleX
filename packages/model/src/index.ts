@@ -24,12 +24,18 @@ export type { SystemDefinition } from "./system.js";
 
 // ========== Platform (storage for three storable concepts) ==========
 
-export type { Platform } from "./platform.js";
+export type {
+  Platform,
+  SerializedGraph,
+  SerializedNode,
+  SerializedEdge,
+} from "./platform.js";
 
 // ========== Runtime ==========
 
 export { defineSystem } from "./runtime.js";
 export type {
+  GraphModel,
   BaseProvider,
   ProcessContext,
   Process,

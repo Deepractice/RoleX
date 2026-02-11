@@ -4,12 +4,15 @@
  * 2 processes: found, dissolve
  *
  * These are done TO an organization from the outside.
+ *
+ * Graph primitives handle topology (nodes + edges).
+ * Platform handles content persistence (Gherkin features).
  */
 
 import { z } from "zod";
 import { defineSystem } from "@rolexjs/system";
 import { parse } from "@rolexjs/parser";
-import type { Process, RunnableSystem } from "@rolexjs/system";
+import type { GraphModel, Process, RunnableSystem } from "@rolexjs/system";
 import type { Platform } from "./Platform.js";
 import type { Feature } from "./Feature.js";
 import type { Scenario } from "./Scenario.js";
@@ -40,10 +43,28 @@ const found: Process<{ name: string; source: string; parent?: string }, Feature>
     parent: z.string().optional().describe("Parent organization name"),
   }),
   execute(ctx, params) {
-    ctx.platform.createStructure(params.name, params.parent);
-    const feature = parseSource(params.source, "charter");
-    ctx.platform.writeInformation(params.name, "charter", "charter", feature);
-    return `[${params.name}] ${t(ctx.locale, "org.founded")}`;
+    const { name, source, parent } = params;
+
+    // 1. Add organization node to graph
+    ctx.graph.addNode(name, "organization");
+
+    // 2. Link to parent or society
+    if (parent) {
+      ctx.graph.relateTo(parent, name, "has-sub-org");
+    } else if (ctx.graph.hasNode("society")) {
+      ctx.graph.relateTo("society", name, "has-org");
+    }
+
+    // 3. Add charter info node and link to organization
+    const charterKey = `${name}/charter`;
+    ctx.graph.addNode(charterKey, "charter");
+    ctx.graph.relateTo(name, charterKey, "has-info");
+
+    // 4. Persist charter content via platform
+    const feature = parseSource(source, "charter");
+    ctx.platform.writeContent(charterKey, feature);
+
+    return `[${name}] ${t(ctx.locale, "org.founded")}`;
   },
 };
 
@@ -53,7 +74,10 @@ const dissolve: Process<{ name: string }, Feature> = {
     name: z.string().describe("Organization name to dissolve"),
   }),
   execute(ctx, params) {
-    ctx.platform.removeStructure(params.name);
+    // Cascade shadow — marks org node and all outbound descendants
+    // (charter, sub-structures) as shadowed
+    ctx.graph.shadow(params.name);
+
     return `[${params.name}] ${t(ctx.locale, "org.dissolved")}`;
   },
 };
@@ -61,8 +85,8 @@ const dissolve: Process<{ name: string }, Feature> = {
 // ========== System Factory ==========
 
 /** Create the organization system, ready to execute. */
-export function createOrgSystem(platform: Platform): RunnableSystem<Feature> {
-  return defineSystem(platform, {
+export function createOrgSystem(graph: GraphModel, platform: Platform): RunnableSystem<Feature> {
+  return defineSystem(graph, platform, {
     name: "org-lifecycle",
     description: "External management of organization lifecycle — create and dissolve.",
     processes: { found, dissolve },

@@ -176,6 +176,16 @@ export const ORG_LIFECYCLE: SystemDefinition = {
 export const GOVERNANCE: SystemDefinition = {
   name: "governance",
   description: "Internal governance — rules, positions, membership, assignments.",
-  processes: ["rule", "establish", "abolish", "assign", "hire", "fire", "appoint", "dismiss", "directory"],
+  processes: [
+    "rule",
+    "establish",
+    "abolish",
+    "assign",
+    "hire",
+    "fire",
+    "appoint",
+    "dismiss",
+    "directory",
+  ],
   feedback: [],
 };

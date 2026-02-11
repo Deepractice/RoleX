@@ -56,8 +56,12 @@ import directoryFeature from "./descriptions/governance/directory/directory.feat
 
 /** Rolex world description topic names. */
 export const WORLD_TOPICS = [
-  "rolex", "information", "execution",
-  "growth", "capability", "gherkin",
+  "rolex",
+  "information",
+  "execution",
+  "growth",
+  "capability",
+  "gherkin",
 ] as const;
 
 export type WorldTopic = (typeof WORLD_TOPICS)[number];

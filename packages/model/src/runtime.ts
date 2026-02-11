@@ -7,7 +7,28 @@
 
 import { z } from "zod";
 import type { ProcessDefinition } from "./process.js";
-import type { Platform } from "./platform.js";
+import type { Platform, SerializedGraph } from "./platform.js";
+
+/** Graph interface required by ProcessContext. */
+export interface GraphModel {
+  addNode(key: string, type: string): void;
+  getNode(key: string): { type: string; shadow: boolean; state: Record<string, unknown> } | undefined;
+  updateNode(key: string, attrs: Partial<{ type: string; shadow: boolean; state: Record<string, unknown> }>): void;
+  hasNode(key: string): boolean;
+  dropNode(key: string): void;
+  findNodes(filter: (key: string, attrs: { type: string; shadow: boolean; state: Record<string, unknown> }) => boolean): string[];
+  relate(a: string, b: string, type: string): void;
+  relateTo(from: string, to: string, type: string): void;
+  unrelate(a: string, b: string): void;
+  hasEdge(a: string, b: string): boolean;
+  neighbors(key: string, edgeType?: string): string[];
+  outNeighbors(key: string, edgeType?: string): string[];
+  inNeighbors(key: string, edgeType?: string): string[];
+  shadow(key: string, cascade?: boolean): void;
+  restore(key: string): void;
+  export(): SerializedGraph;
+  import(data: SerializedGraph): void;
+}
 
 /** Provides built-in base identity for roles. */
 export interface BaseProvider<I = unknown> {
@@ -21,6 +42,9 @@ export interface BaseProvider<I = unknown> {
 
 /** Runtime context passed to every process. */
 export interface ProcessContext<I = unknown> {
+  /** Graph model — topology in memory. */
+  readonly graph: GraphModel;
+  /** Platform — content persistence (on demand). */
   readonly platform: Platform<I>;
   /** Current active structure name (e.g. role name). */
   structure: string;
@@ -57,9 +81,15 @@ export interface RunnableSystem<I = unknown> {
   list(): string[];
 }
 
-/** Create a runnable system from config + platform. */
-export function defineSystem<I>(platform: Platform<I>, config: SystemConfig<I>, base?: BaseProvider<I>): RunnableSystem<I> {
+/** Create a runnable system from config + platform + graph. */
+export function defineSystem<I>(
+  graph: GraphModel,
+  platform: Platform<I>,
+  config: SystemConfig<I>,
+  base?: BaseProvider<I>
+): RunnableSystem<I> {
   const ctx: ProcessContext<I> = {
+    graph,
     platform,
     structure: "",
     get locale(): string {
@@ -81,7 +111,12 @@ export function defineSystem<I>(platform: Platform<I>, config: SystemConfig<I>, 
       }
 
       const parsed = process.params.parse(params);
-      return process.execute(ctx, parsed);
+      const result = await process.execute(ctx, parsed);
+
+      // Auto-persist graph topology after every mutation
+      platform.saveGraph(graph.export());
+
+      return result;
     },
 
     list(): string[] {

@@ -44,11 +44,15 @@ function activeRole(): string {
 }
 
 /** Execute a process and wrap output with status bar + hint. */
-async function run(processName: string, args: unknown, extra?: { taskName?: string }): Promise<string> {
+async function run(
+  processName: string,
+  args: unknown,
+  extra?: { taskName?: string }
+): Promise<string> {
   const result = await rolex.individual.execute(processName, args);
   const roleName = activeRole();
   if (!roleName) return result;
-  return wrapOutput(platform, roleName, processName, result, extra);
+  return wrapOutput(rolex.graph, platform, roleName, processName, result, extra);
 }
 
 // ========== Tools ==========
@@ -132,11 +136,12 @@ server.addTool({
   name: "achieve",
   description: descriptions.achieve,
   parameters: z.object({
-    conclusion: z.string().describe("Gherkin — goal-level summary"),
-    experience: z.object({
-      name: z.string().describe("Experience name"),
-      source: z.string().describe("Gherkin — distilled experience"),
-    }).describe("Experience to synthesize into identity"),
+    experience: z
+      .object({
+        name: z.string().describe("Experience name"),
+        source: z.string().describe("Gherkin — distilled experience"),
+      })
+      .describe("Experience to synthesize into identity"),
   }),
   execute: async (args) => run("achieve", args),
 });
@@ -146,11 +151,13 @@ server.addTool({
   name: "abandon",
   description: descriptions.abandon,
   parameters: z.object({
-    conclusion: z.string().optional().describe("Gherkin — why abandoned"),
-    experience: z.object({
-      name: z.string().describe("Experience name"),
-      source: z.string().describe("Gherkin — lessons from failure"),
-    }).optional().describe("Optional experience to synthesize on abandonment"),
+    experience: z
+      .object({
+        name: z.string().describe("Experience name"),
+        source: z.string().describe("Gherkin — lessons from failure"),
+      })
+      .optional()
+      .describe("Optional experience to synthesize on abandonment"),
   }),
   execute: async (args) => run("abandon", args),
 });
@@ -160,7 +167,9 @@ server.addTool({
   name: "forget",
   description: descriptions.forget,
   parameters: z.object({
-    type: z.enum(["knowledge.pattern", "knowledge.procedure", "knowledge.theory", "experience.insight"]).describe("Information type to forget"),
+    type: z
+      .enum(["knowledge.pattern", "knowledge.procedure", "knowledge.theory", "experience.insight"])
+      .describe("Information type to forget"),
     name: z.string().describe("Name of the information to forget"),
   }),
   execute: async (args) => run("forget", args),

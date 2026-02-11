@@ -21,8 +21,19 @@ import type {
 
 export const ROLE: StructureDefinition = {
   name: "Role",
-  description: "The individual — an identity that accumulates knowledge, experience, and pursues goals.",
-  informationTypes: ["persona", "knowledge.pattern", "knowledge.procedure", "knowledge.theory", "experience.insight", "experience.conclusion", "goal", "plan", "task"],
+  description:
+    "The individual — an identity that accumulates knowledge, experience, and pursues goals.",
+  informationTypes: [
+    "persona",
+    "knowledge.pattern",
+    "knowledge.procedure",
+    "knowledge.theory",
+    "experience.insight",
+    "experience.conclusion",
+    "goal",
+    "plan",
+    "task",
+  ],
 };
 
 // ========== Information ==========
@@ -35,7 +46,8 @@ export const PERSONA: InformationType = {
 
 export const PATTERN: InformationType = {
   type: "knowledge.pattern",
-  description: "Transferable principles — distilled from experience through reflection, or taught directly.",
+  description:
+    "Transferable principles — distilled from experience through reflection, or taught directly.",
   belongsTo: "Role",
 };
 
@@ -47,13 +59,15 @@ export const PROCEDURE: InformationType = {
 
 export const THEORY: InformationType = {
   type: "knowledge.theory",
-  description: "Unified principles — the philosophical coherence across all patterns. Produced by contemplate.",
+  description:
+    "Unified principles — the philosophical coherence across all patterns. Produced by contemplate.",
   belongsTo: "Role",
 };
 
 export const INSIGHT: InformationType = {
   type: "experience.insight",
-  description: "A posteriori knowledge — what the role learned from an encounter. Temporary, consumed by reflect.",
+  description:
+    "A posteriori knowledge — what the role learned from an encounter. Temporary, consumed by reflect.",
   belongsTo: "Role",
 };
 
@@ -88,7 +102,14 @@ export const COGNITION: StateDefinition = {
   description: "The role's self-awareness — who am I, what do I know.",
   appliesTo: "Role",
   producedBy: "identity",
-  includes: ["persona", "knowledge.pattern", "knowledge.procedure", "knowledge.theory", "experience.insight", "experience.conclusion"],
+  includes: [
+    "persona",
+    "knowledge.pattern",
+    "knowledge.procedure",
+    "knowledge.theory",
+    "experience.insight",
+    "experience.conclusion",
+  ],
 };
 
 export const INTENTION: StateDefinition = {
@@ -187,7 +208,14 @@ export const IDENTITY: ProcessDefinition = {
   description: "Load the role's complete identity — render cognition frame.",
   kind: "query",
   targets: ["Role"],
-  inputs: ["persona", "knowledge.pattern", "knowledge.procedure", "knowledge.theory", "experience.insight", "experience.conclusion"],
+  inputs: [
+    "persona",
+    "knowledge.pattern",
+    "knowledge.procedure",
+    "knowledge.theory",
+    "experience.insight",
+    "experience.conclusion",
+  ],
   outputs: [],
 };
 
@@ -238,7 +266,8 @@ export const GOAL_EXECUTION: SystemDefinition = {
 
 export const COGNITIVE_GROWTH: SystemDefinition = {
   name: "cognitive-growth",
-  description: "The learning cycle — achieve distills experience, reflect turns experience into knowledge, contemplate unifies knowledge into theory.",
+  description:
+    "The learning cycle — achieve distills experience, reflect turns experience into knowledge, contemplate unifies knowledge into theory.",
   processes: ["achieve", "reflect", "contemplate"],
   feedback: ["knowledge.pattern", "knowledge.theory"],
 };

@@ -30,18 +30,19 @@ const en: Messages = {
   "individual.finish.done": "finished: {name}",
   "individual.finish.conclusion": "conclusion: {name}",
   "individual.achieve.done": "achieved: {name}",
-  "individual.achieve.conclusion": "conclusion: {name}",
   "individual.achieve.synthesized": "synthesized: {name}",
+  "individual.achieve.consumed": "consumed {count} conclusion(s)",
   "individual.abandon.done": "abandoned: {name}",
-  "individual.abandon.conclusion": "conclusion: {name}",
   "individual.abandon.synthesized": "synthesized: {name}",
+  "individual.abandon.consumed": "consumed {count} conclusion(s)",
   "individual.forget.done": "forgot {type}: {name}",
   "individual.reflect.done": "reflected: {from} → {to}",
   "individual.contemplate.done": "contemplated: {from} → {to}",
   "individual.skill.done": "skill loaded: {name}",
   "individual.explore.world": "roles: {roles} | organizations: {orgs}",
   "individual.explore.detail": "exploring: {name}",
-  "individual.explore.roleInfo": "knowledge.pattern: {patterns} | knowledge.procedure: {procedures} | knowledge.theory: {theories} | experience.insight: {insights} | active goals: {goals}",
+  "individual.explore.roleInfo":
+    "knowledge.pattern: {patterns} | knowledge.procedure: {procedures} | knowledge.theory: {theories} | experience.insight: {insights} | active goals: {goals}",
   "individual.use.done": "used: {name}",
 
   // --- Role System ---
@@ -79,21 +80,30 @@ const en: Messages = {
   "render.next": "I → {hint}",
 
   // --- Render (hints) — self-directed cognitive cues for the AI role, NOT user-facing advice ---
-  "render.hint.identity.noGoal": "I have no goal yet. I should call `want` to declare one, or `focus` to review existing goals.",
-  "render.hint.identity.hasGoal": "I have an active goal. I should call `focus` to review progress, or `want` to declare a new goal.",
-  "render.hint.identity.canReflect": "I have {count} insight(s) — I can call `reflect` when I see a pattern across them.",
-  "render.hint.identity.canContemplate": "I have {count} pattern(s) — I can call `contemplate` when I see a unifying theory.",
+  "render.hint.identity.noGoal":
+    "I have no goal yet. I should call `want` to declare one, or `focus` to review existing goals.",
+  "render.hint.identity.hasGoal":
+    "I have an active goal. I should call `focus` to review progress, or `want` to declare a new goal.",
+  "render.hint.identity.canReflect":
+    "I have {count} insight(s) — I can call `reflect` when I see a pattern across them.",
+  "render.hint.identity.canContemplate":
+    "I have {count} pattern(s) — I can call `contemplate` when I see a unifying theory.",
   "render.hint.focus.noGoal": "I have no goal. I should call `want` to declare one.",
-  "render.hint.focus.noPlanNoTask": "I have a goal but no plan or tasks. I should call `design` or `todo`.",
-  "render.hint.focus.noTask": "I have a plan but no tasks. I should call `todo` to create concrete tasks.",
-  "render.hint.focus.hasTasks": "I have tasks in progress. I should continue working, call `todo` to add more, or `achieve` when the goal is met.",
+  "render.hint.focus.noPlanNoTask":
+    "I have a goal but no plan or tasks. I should call `design` or `todo`.",
+  "render.hint.focus.noTask":
+    "I have a plan but no tasks. I should call `todo` to create concrete tasks.",
+  "render.hint.focus.hasTasks":
+    "I have tasks in progress. I should continue working, call `todo` to add more, or `achieve` when the goal is met.",
   "render.hint.want": "Goal declared. I should call `design` to plan, or `todo` to create tasks.",
   "render.hint.design": "Plan created. I should call `todo` to create tasks, or start working.",
-  "render.hint.todo": "Task created. I can call `todo` for more, or `finish(\"{name}\")` when this one is done.",
+  "render.hint.todo":
+    'Task created. I can call `todo` for more, or `finish("{name}")` when this one is done.',
   "render.hint.todo.generic": "Task created. I can call `todo` for more, or `finish` when done.",
   "render.hint.finish.allDone": "All tasks done. I should call `achieve` to complete the goal.",
   "render.hint.finish.remaining": "{count} task(s) remaining. I should `finish` the next one.",
-  "render.hint.achieveAbandon": "Goal closed. I can call `want` for a new goal, or `focus` to review others.",
+  "render.hint.achieveAbandon":
+    "Goal closed. I can call `want` for a new goal, or `focus` to review others.",
   "render.hint.forget": "Information removed. I can call `identity` to verify.",
   "render.hint.finish.withConclusion": "Conclusion recorded. {count} task(s) remaining.",
   "render.hint.reflect": "Knowledge produced. I can call `identity` to see my updated knowledge.",
@@ -137,18 +147,19 @@ const zh: Messages = {
   "individual.finish.done": "已完成: {name}",
   "individual.finish.conclusion": "总结: {name}",
   "individual.achieve.done": "已达成: {name}",
-  "individual.achieve.conclusion": "总结: {name}",
   "individual.achieve.synthesized": "已蒸馏: {name}",
+  "individual.achieve.consumed": "已消费 {count} 个经历",
   "individual.abandon.done": "已放弃: {name}",
-  "individual.abandon.conclusion": "总结: {name}",
   "individual.abandon.synthesized": "已蒸馏: {name}",
+  "individual.abandon.consumed": "已消费 {count} 个经历",
   "individual.forget.done": "已忘记 {type}: {name}",
   "individual.reflect.done": "已反思: {from} → {to}",
   "individual.contemplate.done": "已沉思: {from} → {to}",
   "individual.skill.done": "技能已加载: {name}",
   "individual.explore.world": "角色: {roles} | 组织: {orgs}",
   "individual.explore.detail": "探索: {name}",
-  "individual.explore.roleInfo": "知识模式: {patterns} | 知识程序: {procedures} | 知识理论: {theories} | 经验洞察: {insights} | 活跃目标: {goals}",
+  "individual.explore.roleInfo":
+    "知识模式: {patterns} | 知识程序: {procedures} | 知识理论: {theories} | 经验洞察: {insights} | 活跃目标: {goals}",
   "individual.use.done": "已使用: {name}",
 
   // --- Role System ---
@@ -186,21 +197,28 @@ const zh: Messages = {
   "render.next": "我 → {hint}",
 
   // --- Render (hints) — AI 角色的自我认知提示，不是给用户的操作指引 ---
-  "render.hint.identity.noGoal": "我还没有目标。我应该调用 `want` 声明一个，或 `focus` 查看已有目标。",
-  "render.hint.identity.hasGoal": "我有活跃目标。我应该调用 `focus` 查看进展，或 `want` 声明新目标。",
-  "render.hint.identity.canReflect": "我有 {count} 条洞察 — 当我发现其中的规律时，可以调用 `reflect` 提炼为知识。",
-  "render.hint.identity.canContemplate": "我有 {count} 个模式 — 当我发现统一的理论时，可以调用 `contemplate` 升华。",
+  "render.hint.identity.noGoal":
+    "我还没有目标。我应该调用 `want` 声明一个，或 `focus` 查看已有目标。",
+  "render.hint.identity.hasGoal":
+    "我有活跃目标。我应该调用 `focus` 查看进展，或 `want` 声明新目标。",
+  "render.hint.identity.canReflect":
+    "我有 {count} 条洞察 — 当我发现其中的规律时，可以调用 `reflect` 提炼为知识。",
+  "render.hint.identity.canContemplate":
+    "我有 {count} 个模式 — 当我发现统一的理论时，可以调用 `contemplate` 升华。",
   "render.hint.focus.noGoal": "我没有目标。我应该调用 `want` 声明一个。",
   "render.hint.focus.noPlanNoTask": "我有目标但没有计划和任务。我应该调用 `design` 或 `todo`。",
   "render.hint.focus.noTask": "我有计划但没有任务。我应该调用 `todo` 创建具体任务。",
-  "render.hint.focus.hasTasks": "我有进行中的任务。我应该继续工作，调用 `todo` 添加更多，或 `achieve` 完成目标。",
+  "render.hint.focus.hasTasks":
+    "我有进行中的任务。我应该继续工作，调用 `todo` 添加更多，或 `achieve` 完成目标。",
   "render.hint.want": "目标已声明。我应该调用 `design` 制定计划，或 `todo` 创建任务。",
   "render.hint.design": "计划已创建。我应该调用 `todo` 创建任务，或开始工作。",
-  "render.hint.todo": "任务已创建。我可以调用 `todo` 添加更多，或 `finish(\"{name}\")` 完成当前任务。",
+  "render.hint.todo":
+    '任务已创建。我可以调用 `todo` 添加更多，或 `finish("{name}")` 完成当前任务。',
   "render.hint.todo.generic": "任务已创建。我可以调用 `todo` 添加更多，或 `finish` 完成任务。",
   "render.hint.finish.allDone": "所有任务已完成。我应该调用 `achieve` 完成目标。",
   "render.hint.finish.remaining": "剩余 {count} 个任务。我应该 `finish` 下一个。",
-  "render.hint.achieveAbandon": "目标已关闭。我可以调用 `want` 声明新目标，或 `focus` 查看其他目标。",
+  "render.hint.achieveAbandon":
+    "目标已关闭。我可以调用 `want` 声明新目标，或 `focus` 查看其他目标。",
   "render.hint.forget": "信息已移除。我可以调用 `identity` 确认。",
   "render.hint.finish.withConclusion": "总结已记录。剩余 {count} 个任务。",
   "render.hint.reflect": "知识已产出。我可以调用 `identity` 查看更新的知识。",

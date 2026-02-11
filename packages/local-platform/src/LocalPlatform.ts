@@ -1,28 +1,21 @@
 /**
  * LocalPlatform — filesystem implementation of Platform<Feature>.
  *
- * Generic mapping from Platform concepts to filesystem:
+ * New graph-based storage:
  *
- *   Structure  → .rolex/{parent}/{name}/
- *   Information → .rolex/{parent}/{structure}/{info-name}.{info-type}.feature
- *   Relation   → .rolex/{parent}/{structure}/.rel/{rel-name}.{target}
+ *   graph.json        → serialized graph topology (nodes + edges)
+ *   content/{key}.feature → Gherkin content per node (on demand)
+ *   settings.json     → global key-value settings
  *
- * The `parent` parameter in createStructure determines the structure-type
- * grouping directory. This is tracked in .rolex/index.json for lookup.
- *
- * Example:
- *   createStructure("sean", "roles")
- *     → .rolex/roles/sean/
- *   writeInformation("sean", "goal", "ship-v2", feature)
- *     → .rolex/roles/sean/ship-v2.goal.feature
- *   addRelation("focus", "sean", "ship-v2")
- *     → .rolex/roles/sean/.rel/focus.ship-v2
+ * Graph stores topology only. Content is loaded on demand.
+ * Keys use slash notation (e.g. "sean/persona") which maps
+ * to directory paths under content/.
  */
 
-import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from "node:fs";
+import { join, dirname } from "node:path";
 import { parse } from "@rolexjs/parser";
-import type { Feature, Scenario, Platform } from "@rolexjs/core";
+import type { Feature, Scenario, Platform, SerializedGraph } from "@rolexjs/core";
 
 // ========== Gherkin Serializer ==========
 
@@ -84,128 +77,60 @@ function parseFeature(source: string, type: Feature["type"]): Feature {
   return { ...gherkin, type, scenarios };
 }
 
-// ========== Index ==========
-
-interface Index {
-  /** Maps structure name → parent (null = top-level, string = child). */
-  structures: Record<string, string | null>;
-}
-
 // ========== LocalPlatform ==========
 
 export class LocalPlatform implements Platform {
   private readonly rootDir: string;
-  private index: Index | null = null;
 
   constructor(rootDir: string) {
     this.rootDir = rootDir;
   }
 
-  // ===== Structure =====
+  // ===== Graph Persistence =====
 
-  createStructure(name: string, parent?: string): void {
-    const dir = this.structurePath(name, parent);
-    mkdirSync(dir, { recursive: true });
-
-    const idx = this.loadIndex();
-    idx.structures[name] = parent ?? null;
-    this.saveIndex(idx);
+  loadGraph(): SerializedGraph {
+    const graphPath = join(this.rootDir, "graph.json");
+    if (!existsSync(graphPath)) {
+      return { nodes: [], edges: [] };
+    }
+    return JSON.parse(readFileSync(graphPath, "utf-8"));
   }
 
-  removeStructure(name: string): void {
-    const dir = this.resolveStructurePath(name);
-    if (existsSync(dir)) rmSync(dir, { recursive: true });
-
-    const idx = this.loadIndex();
-    delete idx.structures[name];
-    this.saveIndex(idx);
+  saveGraph(graph: SerializedGraph): void {
+    mkdirSync(this.rootDir, { recursive: true });
+    writeFileSync(
+      join(this.rootDir, "graph.json"),
+      JSON.stringify(graph, null, 2),
+      "utf-8",
+    );
   }
 
-  listStructures(parent?: string): string[] {
-    const idx = this.loadIndex();
-    const target = parent ?? null;
-    return Object.entries(idx.structures)
-      .filter(([_, p]) => p === target)
-      .map(([name]) => name)
-      .sort();
-  }
+  // ===== Content Storage =====
 
-  hasStructure(name: string, parent?: string): boolean {
-    const idx = this.loadIndex();
-    if (!(name in idx.structures)) return false;
-    if (parent !== undefined) return idx.structures[name] === parent;
-    return true;
-  }
+  writeContent(key: string, content: Feature): void {
+    const filePath = this.contentPath(key);
+    mkdirSync(dirname(filePath), { recursive: true });
 
-  // ===== Information =====
-
-  writeInformation(structure: string, type: string, name: string, content: Feature): Feature {
-    const dir = this.resolveStructurePath(structure);
-    mkdirSync(dir, { recursive: true });
-
-    const filePath = join(dir, `${name}.${type}.feature`);
+    // Infer type from node key or feature type
     writeFileSync(filePath, featureToGherkin(content), "utf-8");
-    return content;
   }
 
-  readInformation(structure: string, type: string, name: string): Feature | null {
-    const dir = this.resolveStructurePath(structure);
-    const filePath = join(dir, `${name}.${type}.feature`);
+  readContent(key: string): Feature | null {
+    const filePath = this.contentPath(key);
     if (!existsSync(filePath)) return null;
 
-    return parseFeature(readFileSync(filePath, "utf-8"), type as Feature["type"]);
+    // Infer type from filename — last segment before .feature
+    const source = readFileSync(filePath, "utf-8");
+    try {
+      return parseFeature(source, undefined as any);
+    } catch {
+      return null;
+    }
   }
 
-  listInformation(structure: string, type: string): Feature[] {
-    const dir = this.resolveStructurePath(structure);
-    if (!existsSync(dir)) return [];
-
-    const suffix = `.${type}.feature`;
-    return readdirSync(dir)
-      .filter((f) => f.endsWith(suffix))
-      .sort()
-      .map((f) => parseFeature(readFileSync(join(dir, f), "utf-8"), type as Feature["type"]));
-  }
-
-  removeInformation(structure: string, type: string, name: string): void {
-    const dir = this.resolveStructurePath(structure);
-    const filePath = join(dir, `${name}.${type}.feature`);
+  removeContent(key: string): void {
+    const filePath = this.contentPath(key);
     if (existsSync(filePath)) rmSync(filePath);
-  }
-
-  // ===== Relation =====
-
-  addRelation(name: string, from: string, to: string): void {
-    const dir = join(this.resolveStructurePath(from), ".rel");
-    mkdirSync(dir, { recursive: true });
-    writeFileSync(join(dir, `${name}.${to}`), "", "utf-8");
-  }
-
-  listRelations(name: string, from: string): string[] {
-    const dir = join(this.resolveStructurePath(from), ".rel");
-    if (!existsSync(dir)) return [];
-
-    const prefix = `${name}.`;
-    return readdirSync(dir)
-      .filter((f) => f.startsWith(prefix))
-      .map((f) => f.slice(prefix.length))
-      .sort();
-  }
-
-  hasRelation(name: string, from: string, to: string): boolean {
-    return existsSync(join(this.resolveStructurePath(from), ".rel", `${name}.${to}`));
-  }
-
-  removeRelation(name: string, from: string, to: string): void {
-    const filePath = join(this.resolveStructurePath(from), ".rel", `${name}.${to}`);
-    if (existsSync(filePath)) rmSync(filePath);
-  }
-
-  // ===== File =====
-
-  readFile(path: string): string | null {
-    if (!existsSync(path)) return null;
-    return readFileSync(path, "utf-8");
   }
 
   // ===== Settings =====
@@ -220,41 +145,17 @@ export class LocalPlatform implements Platform {
     const existing = this.readSettings();
     const merged = { ...existing, ...settings };
     mkdirSync(this.rootDir, { recursive: true });
-    writeFileSync(join(this.rootDir, "settings.json"), JSON.stringify(merged, null, 2), "utf-8");
+    writeFileSync(
+      join(this.rootDir, "settings.json"),
+      JSON.stringify(merged, null, 2),
+      "utf-8",
+    );
   }
 
   // ===== Internal =====
 
-  /** Build path for a structure given its name and parent. */
-  private structurePath(name: string, parent?: string): string {
-    if (parent) return join(this.rootDir, parent, name);
-    return join(this.rootDir, name);
-  }
-
-  /** Resolve a structure name to its filesystem path via index lookup. */
-  private resolveStructurePath(name: string): string {
-    const idx = this.loadIndex();
-    const parent = idx.structures[name];
-    return this.structurePath(name, parent ?? undefined);
-  }
-
-  private loadIndex(): Index {
-    const indexPath = join(this.rootDir, "index.json");
-    if (existsSync(indexPath)) {
-      const raw = JSON.parse(readFileSync(indexPath, "utf-8"));
-      this.index = { structures: raw.structures ?? {} };
-      return this.index;
-    }
-
-    mkdirSync(this.rootDir, { recursive: true });
-    const idx: Index = { structures: {} };
-    this.saveIndex(idx);
-    return idx;
-  }
-
-  private saveIndex(idx: Index): void {
-    mkdirSync(this.rootDir, { recursive: true });
-    writeFileSync(join(this.rootDir, "index.json"), JSON.stringify(idx, null, 2), "utf-8");
-    this.index = idx;
+  /** Map a node key to its content file path. */
+  private contentPath(key: string): string {
+    return join(this.rootDir, "content", `${key}.feature`);
   }
 }

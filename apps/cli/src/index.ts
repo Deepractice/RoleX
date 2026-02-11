@@ -39,8 +39,25 @@ const governance = defineCommand({
 });
 
 const individual = defineCommand({
-  meta: { name: "individual", description: "Individual System — identity, focus, want, plan, todo, finish, achieve, abandon, reflect, skill" },
-  subCommands: { identity, focus, explore, want, plan, todo, finish, achieve, abandon, forget, reflect, skill },
+  meta: {
+    name: "individual",
+    description:
+      "Individual System — identity, focus, want, plan, todo, finish, achieve, abandon, reflect, skill",
+  },
+  subCommands: {
+    identity,
+    focus,
+    explore,
+    want,
+    plan,
+    todo,
+    finish,
+    achieve,
+    abandon,
+    forget,
+    reflect,
+    skill,
+  },
 });
 
 const main = defineCommand({

@@ -8,10 +8,7 @@
  * retires or destroys roles.
  */
 
-import type {
-  ProcessDefinition,
-  SystemDefinition,
-} from "@rolexjs/system";
+import type { ProcessDefinition, SystemDefinition } from "@rolexjs/system";
 
 // ========== Process ==========
 
