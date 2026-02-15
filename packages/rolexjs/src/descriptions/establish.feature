@@ -9,3 +9,9 @@ Feature: establish — create a position
     Then a new position node is created under the organization
     And the position can be charged with duties
     And members can be appointed to it
+
+  Scenario: Writing the position Gherkin
+    Given the position Feature describes a role within an organization
+    Then the Feature title names the position
+    And the description captures responsibilities, scope, and expectations
+    And Scenarios are optional — use them for distinct aspects of the role

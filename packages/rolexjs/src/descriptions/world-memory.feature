@@ -16,10 +16,10 @@ Feature: Memory — when to reflect
     And the user said "不对" or "不是这样" or "you got it wrong" — their correction carries learning
     And I finished a task and discovered something unexpected along the way
 
-  Scenario: Finishing with experience
-    Given finish(id, experience) accepts an optional experience parameter
+  Scenario: Finishing with encounter
+    Given finish(id, encounter) accepts an optional encounter parameter
     When I complete a task with a notable discovery or learning
-    Then I pass the experience inline — bridging execution and growth
+    Then I pass the encounter inline — bridging execution and growth
 
   Scenario: Recognizing user memory intent
     Given users think in terms of memory, not reflection

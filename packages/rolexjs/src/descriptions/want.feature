@@ -9,3 +9,9 @@ Feature: want — declare a goal
     Then a new goal node is created under the role
     And the goal becomes the current focus
     And subsequent plan and todo operations target this goal
+
+  Scenario: Writing the goal Gherkin
+    Given the goal describes a desired outcome — what success looks like
+    Then the Feature title names the outcome in concrete terms
+    And Scenarios define success criteria — each scenario is a testable condition
+    And the tone is aspirational but specific — "users can log in" not "improve auth"

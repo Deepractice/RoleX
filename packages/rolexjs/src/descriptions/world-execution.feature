@@ -5,20 +5,20 @@ Feature: Execution — the doing cycle
   Scenario: Declare a goal
     Given I know who I am via activate
     When I want something — a desired outcome
-    Then I declare it with want(id, source)
+    Then I declare it with want(id, goal)
     And focus automatically switches to this new goal
 
   Scenario: Plan and create tasks
     Given I have a focused goal
-    Then I call plan(source) to break it into logical phases
-    And I call todo(id, source) to create concrete, actionable tasks
+    Then I call plan(plan) to break it into logical phases
+    And I call todo(id, task) to create concrete, actionable tasks
 
   Scenario: Execute and finish
     Given I have tasks to work on
     When I complete a task
     Then I call finish(id) to mark it done
     And an encounter is created — a raw record of what happened
-    And I optionally capture what was learned via the experience parameter
+    And I optionally capture what happened via the encounter parameter
 
   Scenario: Achieve or abandon
     Given tasks are done or the goal is no longer viable

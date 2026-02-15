@@ -4,9 +4,9 @@ Feature: Cognition — the learning cycle
 
   Scenario: The cognitive upgrade path
     Given finish, achieve, and abandon create encounters
-    Then reflect(ids) selectively consumes chosen encounters and produces experience
-    And realize(ids) distills chosen experiences into a principle — transferable knowledge
-    And master(ids) distills chosen experiences into a skill — procedural knowledge
+    Then reflect(ids, experience) selectively consumes chosen encounters and produces experience
+    And realize(ids, principle) distills chosen experiences into a principle — transferable knowledge
+    And master(ids, skill) distills chosen experiences into a skill — procedural knowledge
     And each level builds on the previous — encounter → experience → principle or skill
 
   Scenario: Selective consumption

@@ -9,3 +9,9 @@ Feature: found — create a new organization
     And positions can be established within it
     And a charter can be defined for it
     And individuals can be hired into it
+
+  Scenario: Writing the organization Gherkin
+    Given the organization Feature describes the group's purpose and structure
+    Then the Feature title names the organization
+    And the description captures mission, domain, and scope
+    And Scenarios are optional — use them for distinct organizational concerns

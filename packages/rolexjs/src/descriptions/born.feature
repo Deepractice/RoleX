@@ -9,3 +9,9 @@ Feature: born — create a new individual
     And the persona is stored as the individual's information
     And the individual can be hired into organizations
     And the individual can be activated to start working
+
+  Scenario: Writing the individual Gherkin
+    Given the individual Feature defines a persona — who this role is
+    Then the Feature title names the individual
+    And the description captures personality, values, expertise, and background
+    And Scenarios are optional — use them for distinct aspects of the persona

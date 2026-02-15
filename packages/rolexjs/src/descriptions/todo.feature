@@ -8,3 +8,9 @@ Feature: todo — add a task to a plan
     When todo is called with the source
     Then a new task node is created under the plan
     And the task can be finished when completed
+
+  Scenario: Writing the task Gherkin
+    Given the task is a concrete, actionable unit of work
+    Then the Feature title names what will be done — a single deliverable
+    And Scenarios describe the steps and expected outcomes of the work
+    And the tone is actionable — clear enough that someone can start immediately
