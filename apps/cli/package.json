@@ -16,9 +16,7 @@
   "dependencies": {
     "citty": "^0.1.6",
     "consola": "^3.4.2",
-    "zod": "^3.25.0",
     "rolexjs": "workspace:*",
-    "@rolexjs/system": "workspace:*",
     "@rolexjs/local-platform": "workspace:*"
   },
   "publishConfig": {

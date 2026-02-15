@@ -1,228 +1,147 @@
 /**
- * render.ts — Presentation layer for RoleX output.
+ * Render — description + hint templates for every process.
  *
- * Two-line status bar + next-step hints.
- * Used by MCP server and CLI for consistent output.
+ * Each operation produces two pieces of text:
+ *   description — what just happened (past tense)
+ *   hint        — what to do next (suggestion)
  *
- * Now uses GraphModel for topology queries and Platform for content/settings.
+ * These are shared by MCP and CLI. The I/O layer just presents them.
  */
+import type { State } from "@rolexjs/system";
 
-import type { Platform, GraphModel } from "@rolexjs/core";
-import { t } from "@rolexjs/core";
+// ================================================================
+//  Description — what happened
+// ================================================================
 
-// ========== Status Bar ==========
+const descriptions: Record<string, (name: string, state: State) => string> = {
+  // Lifecycle
+  born: (n) => `Individual "${n}" is born.`,
+  found: (n) => `Organization "${n}" is founded.`,
+  establish: (n) => `Position "${n}" is established.`,
+  charter: (n) => `Charter defined for "${n}".`,
+  charge: (n) => `Duty "${n}" assigned.`,
+  retire: (n) => `"${n}" retired.`,
+  die: (n) => `"${n}" is gone.`,
+  dissolve: (n) => `Organization "${n}" dissolved.`,
+  abolish: (n) => `Position "${n}" abolished.`,
+  rehire: (n) => `"${n}" is back.`,
 
-interface RoleState {
-  roleName: string;
-  org: string;
-  position: string;
-  goal: string;
-  hasPlan: boolean;
-  tasksDone: number;
-  tasksTotal: number;
-  insightCount: number;
-  patternCount: number;
+  // Organization
+  hire: (n) => `"${n}" hired.`,
+  fire: (n) => `"${n}" fired.`,
+  appoint: (n) => `"${n}" appointed.`,
+  dismiss: (n) => `"${n}" dismissed.`,
+
+  // Role
+  activate: (n) => `Role "${n}" activated.`,
+
+  // Execution
+  want: (n) => `Goal "${n}" declared.`,
+  plan: (n) => `Plan created for "${n}".`,
+  todo: (n) => `Task "${n}" added.`,
+  finish: (n) => `Task "${n}" finished → encounter recorded.`,
+  achieve: (n) => `Goal "${n}" achieved → encounter recorded.`,
+  abandon: (n) => `Goal "${n}" abandoned → encounter recorded.`,
+
+  // Cognition
+  reflect: (n) => `Reflected on "${n}" → experience gained.`,
+  realize: (n) => `Realized principle from "${n}".`,
+  master: (n) => `Mastered skill from "${n}".`,
+};
+
+export function describe(process: string, name: string, state: State): string {
+  const fn = descriptions[process];
+  return fn ? fn(name, state) : `${process} completed.`;
 }
 
-/** Helper: get active (non-shadowed) outbound neighbors by edge type. */
-function activeOut(graph: GraphModel, key: string, edgeType: string): string[] {
-  return graph
-    .outNeighbors(key, edgeType)
-    .filter((k) => {
-      const node = graph.getNode(k);
-      return node && !node.shadow;
-    });
+// ================================================================
+//  Hint — what to do next
+// ================================================================
+
+const hints: Record<string, string> = {
+  // Lifecycle
+  born: "hire into an organization, or activate to start working.",
+  found: "establish positions and define a charter.",
+  establish: "charge with duties, then appoint members.",
+  charter: "establish positions for the organization.",
+  charge: "appoint someone to this position.",
+  retire: "rehire if needed later.",
+  die: "this individual is permanently gone.",
+  dissolve: "the organization no longer exists.",
+  abolish: "the position no longer exists.",
+  rehire: "activate to resume working.",
+
+  // Organization
+  hire: "appoint to a position, or activate to start working.",
+  fire: "the individual is no longer a member.",
+  appoint: "the individual now holds this position.",
+  dismiss: "the position is now vacant.",
+
+  // Role
+  activate: "want a goal, or check the current state.",
+
+  // Execution
+  want: "plan how to achieve it.",
+  plan: "add tasks with todo.",
+  todo: "start working, finish when done.",
+  finish: "continue with remaining tasks, or achieve the goal.",
+  achieve: "reflect on encounters to gain experience.",
+  abandon: "reflect on encounters to learn from the experience.",
+
+  // Cognition
+  reflect: "realize principles or master skills from experience.",
+  realize: "principle added to knowledge.",
+  master: "skill added to knowledge.",
+};
+
+export function hint(process: string): string {
+  const h = hints[process];
+  return h ? `Next: ${h}` : "What would you like to do next?";
 }
 
-/** Read current role state from graph + platform. */
-export function readRoleState(graph: GraphModel, _platform: Platform, roleName: string): RoleState {
-  // Focus goal from role node state
-  const roleNode = graph.getNode(roleName);
-  const focusGoalKey = roleNode?.state?.focus as string | undefined;
+// ================================================================
+//  Detail — longer process descriptions
+// ================================================================
 
-  let goal = "none";
-  let hasPlan = false;
-  if (focusGoalKey) {
-    const goalNode = graph.getNode(focusGoalKey);
-    if (goalNode && !goalNode.shadow) {
-      goal = focusGoalKey.split("/").pop() || focusGoalKey;
-    }
-  }
+const details: Record<string, string> = {
+  // Lifecycle — Creation
+  born: "Create a new individual with persona identity. The persona defines who the role is — personality, values, background. A born individual can be hired into organizations and activated to start working.",
+  found: "Found a new organization. Organizations group individuals and define positions. After founding, establish positions, define a charter, and hire members.",
+  establish: "Create a position within an organization. Positions define roles within the org and can be charged with duties. Members can be appointed to positions.",
+  charter: "Define the charter for an organization. The charter describes the organization's mission, principles, and governance rules.",
+  charge: "Assign a duty to a position. Duties describe the responsibilities and expectations of a position. Appointees inherit these duties as part of their identity.",
 
-  let tasksDone = 0;
-  let tasksTotal = 0;
-  if (goal !== "none" && focusGoalKey) {
-    // Find focused plan from goal node state
-    const goalNode = graph.getNode(focusGoalKey);
-    const focusPlanKey = goalNode?.state?.focusPlan as string | undefined;
+  // Lifecycle — Archival
+  retire: "Archive an individual — deactivate but preserve all data. A retired individual can be rehired later with full history intact.",
+  die: "Permanently remove an individual. Unlike retire, this is irreversible — the individual and all associated data are gone.",
+  dissolve: "Dissolve an organization. All positions, charter entries, and assignments within the organization are cascaded.",
+  abolish: "Abolish a position within an organization. All duties and appointments associated with the position are removed.",
+  rehire: "Rehire a retired individual from the past. Restores the individual with full history and knowledge intact.",
 
-    if (focusPlanKey) {
-      // Count tasks under this plan
-      const tasks = activeOut(graph, focusPlanKey, "has-task");
-      for (const taskKey of tasks) {
-        tasksTotal++;
-        const taskNode = graph.getNode(taskKey);
-        if (taskNode?.state?.done) tasksDone++;
-      }
-    }
+  // Organization
+  hire: "Hire an individual into an organization as a member. Members can then be appointed to positions within the organization.",
+  fire: "Fire an individual from an organization. The individual is dismissed from all positions and removed from the organization.",
+  appoint: "Appoint an individual to a position. The individual must be a member of the organization. Appointed individuals inherit the position's duties.",
+  dismiss: "Dismiss an individual from a position. The individual remains a member of the organization but no longer holds the position.",
 
-    // Check if any plan exists
-    const plans = activeOut(graph, focusGoalKey, "has-plan");
-    hasPlan = plans.length > 0;
-  }
+  // Role
+  activate: "Activate a role — project the individual's full state including identity, knowledge, goals, and organizational context. This is the entry point for working as a role.",
 
-  // Count insights and patterns for growth hints
-  const insights = activeOut(graph, roleName, "has-info")
-    .filter((k) => graph.getNode(k)?.type === "experience.insight");
-  const patterns = activeOut(graph, roleName, "has-info")
-    .filter((k) => graph.getNode(k)?.type === "knowledge.pattern");
-  const insightCount = insights.length;
-  const patternCount = patterns.length;
+  // Execution
+  want: "Declare a new goal. A goal describes a desired outcome with Gherkin scenarios as success criteria. The goal becomes the current focus for subsequent plan and todo operations.",
+  plan: "Create a plan for a goal. The plan breaks the goal into logical phases or stages, each described as a Gherkin scenario. Tasks are then created under the plan.",
+  todo: "Add a task to a plan. A task is a concrete, actionable unit of work — finishable in one session. Each task has Gherkin scenarios describing the steps and expected outcomes.",
+  finish: "Finish a task — marks it done and creates an encounter. The encounter records what happened. Optionally capture what was learned as experience text.",
+  achieve: "Achieve a goal — marks it done and creates an encounter. Call this when the goal's success criteria are met. The encounter can be reflected on for learning.",
+  abandon: "Abandon a goal — marks it dropped and creates an encounter. Call this when a goal is no longer viable. Even failed goals produce learning through the encounter.",
 
-  // Find org membership (undirected "member" edge)
-  let org = "none";
-  const memberOrgs = graph.neighbors(roleName, "member")
-    .filter((k) => {
-      const node = graph.getNode(k);
-      return node && node.type === "organization" && !node.shadow;
-    });
-  if (memberOrgs.length > 0) org = memberOrgs[0];
+  // Cognition
+  reflect: "Reflect on the latest encounter — consumes it and creates an experience. Experience captures what was learned in structured form. This is the first step of the cognition cycle.",
+  realize: "Distill experience into a principle — a transferable piece of knowledge added to the individual's knowledge branch. Principles are general truths discovered through experience.",
+  master: "Distill experience into a skill — a procedural piece of knowledge added to the individual's knowledge branch. Skills represent learned capabilities.",
+};
 
-  // Find position assignments (undirected "assigned" edge)
-  const positions = graph.neighbors(roleName, "assigned")
-    .filter((k) => {
-      const node = graph.getNode(k);
-      return node && node.type === "position" && !node.shadow;
-    });
-  const position = positions.length > 0 ? positions.join(", ") : "none";
-
-  return {
-    roleName,
-    org,
-    position,
-    goal,
-    hasPlan,
-    tasksDone,
-    tasksTotal,
-    insightCount,
-    patternCount,
-  };
-}
-
-/** Render the two-line status bar. */
-export function statusBar(
-  state: RoleState,
-  processName: string,
-  locale: string,
-  extra?: { taskName?: string }
-): string {
-  const now = new Date().toISOString().replace("T", " ").slice(0, 19);
-  const line1Parts = [`[${state.roleName}]`];
-  if (state.org !== "none") {
-    line1Parts.push(t(locale, "render.org", { name: state.org }));
-  }
-  if (state.position !== "none") {
-    line1Parts.push(t(locale, "render.position", { name: state.position }));
-  }
-  line1Parts.push(t(locale, "render.goal", { name: state.goal }));
-  if (state.goal !== "none") {
-    line1Parts.push(t(locale, "render.plan", { status: state.hasPlan ? "\u2713" : "\u2717" }));
-    line1Parts.push(t(locale, "render.tasks", { done: state.tasksDone, total: state.tasksTotal }));
-  }
-  line1Parts.push(now);
-  const line1 = line1Parts.join(" | ");
-  const hint = nextHint(processName, state, locale, extra);
-  const line2 = t(locale, "render.next", { hint });
-  return `${line1}\n${line2}`;
-}
-
-// ========== Next Hints ==========
-
-/** Compute the next-step hint for a given process. */
-function nextHint(
-  processName: string,
-  state: RoleState,
-  locale: string,
-  extra?: { taskName?: string }
-): string {
-  switch (processName) {
-    case "identity": {
-      let hint =
-        state.goal === "none"
-          ? t(locale, "render.hint.identity.noGoal")
-          : t(locale, "render.hint.identity.hasGoal");
-      // Growth hints — only when material exists, emphasize optional
-      if (state.insightCount > 0) {
-        hint += ` ${t(locale, "render.hint.identity.canReflect", { count: state.insightCount })}`;
-      }
-      if (state.patternCount >= 2) {
-        hint += ` ${t(locale, "render.hint.identity.canContemplate", { count: state.patternCount })}`;
-      }
-      return hint;
-    }
-
-    case "focus":
-      if (state.goal === "none") return t(locale, "render.hint.focus.noGoal");
-      if (!state.hasPlan && state.tasksTotal === 0)
-        return t(locale, "render.hint.focus.noPlanNoTask");
-      if (state.tasksTotal === 0) return t(locale, "render.hint.focus.noTask");
-      return t(locale, "render.hint.focus.hasTasks");
-
-    case "want":
-      return t(locale, "render.hint.want");
-
-    case "design":
-      return t(locale, "render.hint.design");
-
-    case "todo":
-      return extra?.taskName
-        ? t(locale, "render.hint.todo", { name: extra.taskName })
-        : t(locale, "render.hint.todo.generic");
-
-    case "finish": {
-      const remaining = state.tasksTotal - state.tasksDone;
-      if (remaining === 0) return t(locale, "render.hint.finish.allDone");
-      return t(locale, "render.hint.finish.remaining", { count: remaining });
-    }
-
-    case "achieve":
-    case "abandon":
-      return t(locale, "render.hint.achieveAbandon");
-
-    case "forget":
-      return t(locale, "render.hint.forget");
-
-    case "reflect":
-      return t(locale, "render.hint.reflect");
-
-    case "contemplate":
-      return t(locale, "render.hint.contemplate");
-
-    case "explore":
-      return t(locale, "render.hint.explore");
-
-    case "skill":
-      return t(locale, "render.hint.skill");
-
-    case "use":
-      return t(locale, "render.hint.use");
-
-    default:
-      return t(locale, "render.hint.default");
-  }
-}
-
-/** Wrap process output with status bar. */
-export function wrapOutput(
-  graph: GraphModel,
-  platform: Platform,
-  roleName: string,
-  processName: string,
-  result: string,
-  extra?: { taskName?: string }
-): string {
-  const locale = (platform.readSettings?.()?.locale as string) ?? "en";
-  const state = readRoleState(graph, platform, roleName);
-  const bar = statusBar(state, processName, locale, extra);
-  return `${bar}\n\n${result}`;
+/** Longer description of what a process does — suitable for help text and documentation. */
+export function detail(process: string): string {
+  return details[process] ?? "";
 }

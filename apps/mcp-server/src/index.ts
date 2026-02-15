@@ -1,61 +1,250 @@
 /**
- * @rolexjs/mcp-server
+ * @rolexjs/mcp-server — individual-level MCP tools.
  *
- * RoleX Individual System MCP server.
+ * Stateful wrapper around the stateless Rolex API.
+ * Holds activeRole, focusedGoal, focusedPlan, and a name registry.
  *
- * All tools are auto-derived from system process definitions.
- * Only special behaviors (output wrapping, task name) are configured here.
+ * Tools:
+ *   identity — activate a role
+ *   focus    — view / switch focused goal
+ *   want     — declare a goal
+ *   plan     — plan for focused goal
+ *   todo     — add task to focused plan
+ *   finish   — finish a task → encounter
+ *   achieve  — achieve focused goal → encounter
+ *   abandon  — abandon focused goal → encounter
+ *   reflect  — encounter → experience
+ *   realize  — experience → principle
+ *   master   — experience → skill
  */
 
 import { FastMCP } from "fastmcp";
-import { createRolex, world, WORLD_TOPICS, wrapOutput } from "rolexjs";
-import { LocalPlatform, resolveDir } from "@rolexjs/local-platform";
-import { systemToMcp } from "./lib/system-mcp.js";
+import { Rolex } from "rolexjs";
+import { createGraphRuntime } from "@rolexjs/local-platform";
+import { z } from "zod";
+import { McpState } from "./state.js";
+import { render } from "./render.js";
+import { instructions } from "./instructions.js";
 
-// ========== Platform & System ==========
+// ========== Setup ==========
 
-const platform = new LocalPlatform(resolveDir());
-const rolex = createRolex({ platform });
-
-// ========== Instructions ==========
-
-const instructions = WORLD_TOPICS.map((t) => world[t]).join("\n\n");
+const rolex = new Rolex({ runtime: createGraphRuntime() });
+const state = new McpState(rolex);
 
 // ========== Server ==========
 
 const server = new FastMCP({
-  name: "RoleX MCP Server",
-  version: "1.0.0",
+  name: "rolex",
+  version: "0.10.0",
   instructions,
 });
 
 // ========== Helpers ==========
 
-/** Get the active role name from the individual system context. */
-function activeRole(): string {
-  return rolex.individual.ctx.structure;
+function fmt(process: string, name: string, result: { state: any; process: string }) {
+  return render({
+    process,
+    name,
+    result,
+    rolex,
+    relationsFor: state.activeRole ?? undefined,
+    cognitiveHint: state.cognitiveHint(process),
+  });
 }
 
-/** Execute a process and wrap output with status bar + hint. */
-async function run(
-  processName: string,
-  args: unknown,
-  extra?: Record<string, any>
-): Promise<string> {
-  const result = await rolex.individual.execute(processName, args);
-  const roleName = activeRole();
-  if (!roleName) return result;
-  return wrapOutput(rolex.graph, platform, roleName, processName, result, extra);
-}
+// ========== Tools: Role ==========
 
-// ========== Tools (auto-derived) ==========
+server.addTool({
+  name: "identity",
+  description:
+    "Activate a role — load identity, knowledge, goals. " +
+    "This must be called first before any other operation.",
+  parameters: z.object({
+    roleId: z.string().describe("Role name to activate"),
+  }),
+  execute: async ({ roleId }) => {
+    const node = state.findIndividual(roleId);
+    if (!node) throw new Error(`Role not found: "${roleId}"`);
+    state.activeRole = node;
+    const result = rolex.activate(node);
+    state.cacheFromActivation(result.state);
+    return fmt("activate", roleId, result);
+  },
+});
 
-systemToMcp(server, rolex.individual.processes, {
-  run,
-  overrides: {
-    todo: {
-      execute: async (args, run) => run("todo", args, { taskName: args.name }),
-    },
+server.addTool({
+  name: "focus",
+  description:
+    "View or switch the currently focused goal. " +
+    "Without a name, shows the current goal's state. " +
+    "With a name, switches focus to that goal.",
+  parameters: z.object({
+    name: z.string().optional().describe("Goal name to switch to. Omit to view current."),
+  }),
+  execute: async ({ name }) => {
+    if (name) {
+      const goal = state.resolve(name);
+      state.focusedGoal = goal;
+      state.focusedPlan = null;
+    }
+    const goal = state.requireGoal();
+    const projection = rolex.project(goal);
+    return render({
+      process: "focus",
+      name: name ?? "current goal",
+      result: { state: projection, process: "focus" },
+    });
+  },
+});
+
+// ========== Tools: Execution ==========
+
+server.addTool({
+  name: "want",
+  description: "Declare a new goal for the active role.",
+  parameters: z.object({
+    name: z.string().describe("Goal name (used for focus/reference)"),
+    source: z.string().describe("Gherkin Feature source describing the goal"),
+  }),
+  execute: async ({ name, source }) => {
+    const role = state.requireRole();
+    const result = rolex.want(role, source);
+    state.register(name, result.state);
+    state.focusedGoal = result.state;
+    state.focusedPlan = null;
+    return fmt("want", name, result);
+  },
+});
+
+server.addTool({
+  name: "plan",
+  description: "Create a plan for the focused goal.",
+  parameters: z.object({
+    source: z.string().describe("Gherkin Feature source describing the plan"),
+  }),
+  execute: async ({ source }) => {
+    const goal = state.requireGoal();
+    const result = rolex.plan(goal, source);
+    state.focusedPlan = result.state;
+    return fmt("plan", "plan", result);
+  },
+});
+
+server.addTool({
+  name: "todo",
+  description: "Add a task to the focused plan.",
+  parameters: z.object({
+    name: z.string().describe("Task name (used for finish/reference)"),
+    source: z.string().describe("Gherkin Feature source describing the task"),
+  }),
+  execute: async ({ name, source }) => {
+    const plan = state.requirePlan();
+    const result = rolex.todo(plan, source);
+    state.register(name, result.state);
+    return fmt("todo", name, result);
+  },
+});
+
+server.addTool({
+  name: "finish",
+  description:
+    "Finish a task — removes the task and creates an encounter. " +
+    "The encounter can later be reflected on for learning.",
+  parameters: z.object({
+    name: z.string().describe("Task name to finish"),
+    experience: z.string().optional().describe("Optional reflection on what was learned"),
+  }),
+  execute: async ({ name, experience }) => {
+    const task = state.resolve(name);
+    const role = state.requireRole();
+    const result = rolex.finish(task, role, experience);
+    state.pushEncounter(result.state);
+    state.unregister(name);
+    return fmt("finish", name, result);
+  },
+});
+
+server.addTool({
+  name: "achieve",
+  description:
+    "Achieve the focused goal — removes the goal and creates an encounter.",
+  parameters: z.object({
+    experience: z.string().optional().describe("Optional reflection on what was learned"),
+  }),
+  execute: async ({ experience }) => {
+    const goal = state.requireGoal();
+    const role = state.requireRole();
+    const result = rolex.achieve(goal, role, experience);
+    state.pushEncounter(result.state);
+    state.focusedGoal = null;
+    state.focusedPlan = null;
+    return fmt("achieve", "goal", result);
+  },
+});
+
+server.addTool({
+  name: "abandon",
+  description:
+    "Abandon the focused goal — removes the goal and creates an encounter.",
+  parameters: z.object({
+    experience: z.string().optional().describe("Optional reflection on what was learned"),
+  }),
+  execute: async ({ experience }) => {
+    const goal = state.requireGoal();
+    const role = state.requireRole();
+    const result = rolex.abandon(goal, role, experience);
+    state.pushEncounter(result.state);
+    state.focusedGoal = null;
+    state.focusedPlan = null;
+    return fmt("abandon", "goal", result);
+  },
+});
+
+// ========== Tools: Cognition ==========
+
+server.addTool({
+  name: "reflect",
+  description:
+    "Reflect on the latest encounter — consumes it and creates an experience.",
+  parameters: z.object({
+    source: z.string().optional().describe("Gherkin Feature source for the experience"),
+  }),
+  execute: async ({ source }) => {
+    const encounter = state.popEncounter();
+    const role = state.requireRole();
+    const result = rolex.reflect(encounter, role, source);
+    state.pushExperience(result.state);
+    return fmt("reflect", "encounter", result);
+  },
+});
+
+server.addTool({
+  name: "realize",
+  description:
+    "Distill the latest experience into a principle under knowledge.",
+  parameters: z.object({
+    source: z.string().optional().describe("Gherkin Feature source for the principle"),
+  }),
+  execute: async ({ source }) => {
+    const exp = state.popExperience();
+    const knowledge = state.requireKnowledge();
+    const result = rolex.realize(exp, knowledge, source);
+    return fmt("realize", "experience", result);
+  },
+});
+
+server.addTool({
+  name: "master",
+  description:
+    "Distill the latest experience into a skill under knowledge.",
+  parameters: z.object({
+    source: z.string().optional().describe("Gherkin Feature source for the skill"),
+  }),
+  execute: async ({ source }) => {
+    const exp = state.popExperience();
+    const knowledge = state.requireKnowledge();
+    const result = rolex.master(exp, knowledge, source);
+    return fmt("master", "experience", result);
   },
 });
 
