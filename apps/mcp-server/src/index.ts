@@ -2,7 +2,7 @@
  * @rolexjs/mcp-server — individual-level MCP tools.
  *
  * Stateful wrapper around the stateless Rolex API.
- * Holds activeRole, focusedGoal, focusedPlan, and a name registry.
+ * Holds activeRole, focusedGoal, focusedPlan, and id registries.
  *
  * Tools:
  *   activate — activate a role
@@ -13,9 +13,9 @@
  *   finish   — finish a task → encounter
  *   achieve  — achieve focused goal → encounter
  *   abandon  — abandon focused goal → encounter
- *   reflect  — encounter → experience
- *   realize  — experience → principle
- *   master   — experience → skill
+ *   reflect  — encounter(s) → experience
+ *   realize  — experience(s) → principle
+ *   master   — experience(s) → skill
  */
 
 import { FastMCP } from "fastmcp";
@@ -35,16 +35,16 @@ const state = new McpState(rolex);
 
 const server = new FastMCP({
   name: "rolex",
-  version: "0.10.0",
+  version: "0.11.0",
   instructions,
 });
 
 // ========== Helpers ==========
 
-function fmt(process: string, name: string, result: { state: any; process: string }) {
+function fmt(process: string, label: string, result: { state: any; process: string }) {
   return render({
     process,
-    name,
+    name: label,
     result,
     cognitiveHint: state.cognitiveHint(process),
   });
@@ -72,17 +72,17 @@ server.addTool({
   name: "focus",
   description: detail("focus"),
   parameters: z.object({
-    name: z.string().optional().describe("Goal name to switch to. Omit to view current."),
+    id: z.string().optional().describe("Goal id to switch to. Omit to view current."),
   }),
-  execute: async ({ name }) => {
-    if (name) {
-      const goal = state.resolve(name);
+  execute: async ({ id }) => {
+    if (id) {
+      const goal = state.resolve(id);
       state.focusedGoal = goal;
       state.focusedPlan = null;
     }
     const goal = state.requireGoal();
     const result = rolex.focus(goal);
-    return fmt("focus", name ?? "current goal", result);
+    return fmt("focus", id ?? "current goal", result);
   },
 });
 
@@ -92,16 +92,16 @@ server.addTool({
   name: "want",
   description: detail("want"),
   parameters: z.object({
-    name: z.string().describe("Goal name (used for focus/reference)"),
+    id: z.string().describe("Goal id (used for focus/reference)"),
     source: z.string().describe("Gherkin Feature source describing the goal"),
   }),
-  execute: async ({ name, source }) => {
+  execute: async ({ id, source }) => {
     const role = state.requireRole();
-    const result = rolex.want(role, source, name);
-    state.register(name, result.state);
+    const result = rolex.want(role, source, id);
+    state.register(id, result.state);
     state.focusedGoal = result.state;
     state.focusedPlan = null;
-    return fmt("want", name, result);
+    return fmt("want", id, result);
   },
 });
 
@@ -123,14 +123,14 @@ server.addTool({
   name: "todo",
   description: detail("todo"),
   parameters: z.object({
-    name: z.string().describe("Task name (used for finish/reference)"),
+    id: z.string().describe("Task id (used for finish/reference)"),
     source: z.string().describe("Gherkin Feature source describing the task"),
   }),
-  execute: async ({ name, source }) => {
+  execute: async ({ id, source }) => {
     const plan = state.requirePlan();
-    const result = rolex.todo(plan, source, name);
-    state.register(name, result.state);
-    return fmt("todo", name, result);
+    const result = rolex.todo(plan, source, id);
+    state.register(id, result.state);
+    return fmt("todo", id, result);
   },
 });
 
@@ -138,16 +138,16 @@ server.addTool({
   name: "finish",
   description: detail("finish"),
   parameters: z.object({
-    name: z.string().describe("Task name to finish"),
+    id: z.string().describe("Task id to finish"),
     experience: z.string().optional().describe("Optional reflection on what was learned"),
   }),
-  execute: async ({ name, experience }) => {
-    const task = state.resolve(name);
+  execute: async ({ id, experience }) => {
+    const task = state.resolve(id);
     const role = state.requireRole();
     const result = rolex.finish(task, role, experience);
-    state.pushEncounter(result.state);
-    state.unregister(name);
-    return fmt("finish", name, result);
+    state.registerEncounter(id, result.state);
+    state.unregister(id);
+    return fmt("finish", id, result);
   },
 });
 
@@ -159,12 +159,13 @@ server.addTool({
   }),
   execute: async ({ experience }) => {
     const goal = state.requireGoal();
+    const goalId = goal.id ?? "goal";
     const role = state.requireRole();
     const result = rolex.achieve(goal, role, experience);
-    state.pushEncounter(result.state);
+    state.registerEncounter(goalId, result.state);
     state.focusedGoal = null;
     state.focusedPlan = null;
-    return fmt("achieve", "goal", result);
+    return fmt("achieve", goalId, result);
   },
 });
 
@@ -176,12 +177,13 @@ server.addTool({
   }),
   execute: async ({ experience }) => {
     const goal = state.requireGoal();
+    const goalId = goal.id ?? "goal";
     const role = state.requireRole();
     const result = rolex.abandon(goal, role, experience);
-    state.pushEncounter(result.state);
+    state.registerEncounter(goalId, result.state);
     state.focusedGoal = null;
     state.focusedPlan = null;
-    return fmt("abandon", "goal", result);
+    return fmt("abandon", goalId, result);
   },
 });
 
@@ -191,14 +193,24 @@ server.addTool({
   name: "reflect",
   description: detail("reflect"),
   parameters: z.object({
+    ids: z.array(z.string()).describe("Encounter ids to reflect on (selective consumption)"),
     source: z.string().optional().describe("Gherkin Feature source for the experience"),
   }),
-  execute: async ({ source }) => {
-    const encounter = state.popEncounter();
+  execute: async ({ ids, source }) => {
+    const encounters = state.resolveEncounters(ids);
     const role = state.requireRole();
-    const result = rolex.reflect(encounter, role, source);
-    state.pushExperience(result.state);
-    return fmt("reflect", "encounter", result);
+    // Use first encounter's information as fallback source
+    const fallbackSource = encounters[0]?.information;
+    const result = rolex.reflect(encounters[0], role, source || fallbackSource);
+    // Remove all selected encounters (first is transformed, rest are consumed)
+    for (let i = 1; i < encounters.length; i++) {
+      rolex.project(encounters[i]); // verify still exists
+      // Additional encounters are just removed — their essence is captured in the experience source
+    }
+    state.consumeEncounters(ids);
+    const expId = ids.join("+");
+    state.registerExperience(expId, result.state);
+    return fmt("reflect", expId, result);
   },
 });
 
@@ -206,13 +218,16 @@ server.addTool({
   name: "realize",
   description: detail("realize"),
   parameters: z.object({
+    ids: z.array(z.string()).describe("Experience ids to distill into a principle"),
     source: z.string().optional().describe("Gherkin Feature source for the principle"),
   }),
-  execute: async ({ source }) => {
-    const exp = state.popExperience();
+  execute: async ({ ids, source }) => {
+    const experiences = state.resolveExperiences(ids);
     const knowledge = state.requireKnowledge();
-    const result = rolex.realize(exp, knowledge, source);
-    return fmt("realize", "experience", result);
+    const fallbackSource = experiences[0]?.information;
+    const result = rolex.realize(experiences[0], knowledge, source || fallbackSource);
+    state.consumeExperiences(ids);
+    return fmt("realize", ids.join("+"), result);
   },
 });
 
@@ -220,13 +235,16 @@ server.addTool({
   name: "master",
   description: detail("master"),
   parameters: z.object({
+    ids: z.array(z.string()).describe("Experience ids to distill into a skill"),
     source: z.string().optional().describe("Gherkin Feature source for the skill"),
   }),
-  execute: async ({ source }) => {
-    const exp = state.popExperience();
+  execute: async ({ ids, source }) => {
+    const experiences = state.resolveExperiences(ids);
     const knowledge = state.requireKnowledge();
-    const result = rolex.master(exp, knowledge, source);
-    return fmt("master", "experience", result);
+    const fallbackSource = experiences[0]?.information;
+    const result = rolex.master(experiences[0], knowledge, source || fallbackSource);
+    state.consumeExperiences(ids);
+    return fmt("master", ids.join("+"), result);
   },
 });
 

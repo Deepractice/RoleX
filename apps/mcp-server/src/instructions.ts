@@ -1,17 +1,16 @@
 /**
  * MCP server instructions — the cognitive framework for AI roles.
  *
- * Assembled from Gherkin .feature files in src/descriptions/.
- * Each feature describes a facet of the RoleX cognitive framework.
- *
- * Run `bun run gen:desc` to regenerate descriptions/index.ts from .feature files.
+ * Assembled from world .feature files in rolexjs descriptions.
+ * Each feature describes one independent concern of the RoleX framework.
  */
-import { world } from "./descriptions/index.js";
+import { world } from "rolexjs";
 
 export const instructions = [
-  world.rolex,
-  world.execution,
-  world.cognition,
-  world.memory,
-  world.gherkin,
+  world["cognitive-priority"],
+  world["role-identity"],
+  world["execution"],
+  world["cognition"],
+  world["memory"],
+  world["gherkin"],
 ].join("\n\n");

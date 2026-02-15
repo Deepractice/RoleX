@@ -105,12 +105,15 @@ export function hint(process: string): string {
 //  Detail — longer process descriptions (from .feature files)
 // ================================================================
 
-import { processes } from "./descriptions/index.js";
+import { processes, world } from "./descriptions/index.js";
 
 /** Full Gherkin feature content for a process — sourced from .feature files. */
 export function detail(process: string): string {
   return processes[process] ?? "";
 }
+
+/** World feature descriptions — framework-level instructions. */
+export { world };
 
 // ================================================================
 //  Generic State renderer — renders any State tree as markdown

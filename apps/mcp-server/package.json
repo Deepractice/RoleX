@@ -34,8 +34,7 @@
     "dist"
   ],
   "scripts": {
-    "gen:desc": "bun run scripts/gen-descriptions.ts",
-    "build": "bun run gen:desc && tsup",
+    "build": "tsup",
     "dev": "bun run src/index.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

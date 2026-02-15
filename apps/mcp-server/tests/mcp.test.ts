@@ -54,17 +54,17 @@ describe("findIndividual", () => {
 
 describe("registry", () => {
   it("register and resolve", () => {
-    const result = rolex.born("Feature: Sean");
+    const result = rolex.born("Feature: Sean", "sean");
     state.register("sean", result.state);
     expect(state.resolve("sean")).toBe(result.state);
   });
 
-  it("resolve throws on unknown name", () => {
+  it("resolve throws on unknown id", () => {
     expect(() => state.resolve("unknown")).toThrow("Not found");
   });
 
   it("unregister removes entry", () => {
-    const result = rolex.born("Feature: Sean");
+    const result = rolex.born("Feature: Sean", "sean");
     state.register("sean", result.state);
     state.unregister("sean");
     expect(() => state.resolve("sean")).toThrow("Not found");
@@ -94,31 +94,60 @@ describe("requirements", () => {
 });
 
 // ================================================================
-//  State: encounter / experience stacks
+//  State: encounter / experience registries (named, selective)
 // ================================================================
 
-describe("cognition stacks", () => {
-  it("push and pop encounter (LIFO)", () => {
+describe("cognition registries", () => {
+  it("register and resolve encounters by id", () => {
     const r1 = rolex.born("Feature: A");
     const r2 = rolex.born("Feature: B");
-    state.pushEncounter(r1.state);
-    state.pushEncounter(r2.state);
-    expect(state.popEncounter()).toBe(r2.state);
-    expect(state.popEncounter()).toBe(r1.state);
+    state.registerEncounter("task-a", r1.state);
+    state.registerEncounter("task-b", r2.state);
+    const resolved = state.resolveEncounters(["task-a", "task-b"]);
+    expect(resolved).toHaveLength(2);
+    expect(resolved[0]).toBe(r1.state);
+    expect(resolved[1]).toBe(r2.state);
   });
 
-  it("popEncounter throws when empty", () => {
-    expect(() => state.popEncounter()).toThrow("No encounters");
-  });
-
-  it("push and pop experience (LIFO)", () => {
+  it("listEncounters returns all ids", () => {
     const r1 = rolex.born("Feature: A");
-    state.pushExperience(r1.state);
-    expect(state.popExperience()).toBe(r1.state);
+    const r2 = rolex.born("Feature: B");
+    state.registerEncounter("task-a", r1.state);
+    state.registerEncounter("task-b", r2.state);
+    expect(state.listEncounters()).toEqual(["task-a", "task-b"]);
   });
 
-  it("popExperience throws when empty", () => {
-    expect(() => state.popExperience()).toThrow("No experiences");
+  it("consumeEncounters removes selected entries", () => {
+    const r1 = rolex.born("Feature: A");
+    const r2 = rolex.born("Feature: B");
+    state.registerEncounter("task-a", r1.state);
+    state.registerEncounter("task-b", r2.state);
+    state.consumeEncounters(["task-a"]);
+    expect(state.listEncounters()).toEqual(["task-b"]);
+  });
+
+  it("resolveEncounters throws on unknown id", () => {
+    expect(() => state.resolveEncounters(["unknown"])).toThrow("Encounter not found");
+  });
+
+  it("register and resolve experiences by id", () => {
+    const r1 = rolex.born("Feature: A");
+    state.registerExperience("exp-a", r1.state);
+    const resolved = state.resolveExperiences(["exp-a"]);
+    expect(resolved).toHaveLength(1);
+  });
+
+  it("consumeExperiences removes selected entries", () => {
+    const r1 = rolex.born("Feature: A");
+    const r2 = rolex.born("Feature: B");
+    state.registerExperience("exp-a", r1.state);
+    state.registerExperience("exp-b", r2.state);
+    state.consumeExperiences(["exp-a"]);
+    expect(state.listExperiences()).toEqual(["exp-b"]);
+  });
+
+  it("resolveExperiences throws on unknown id", () => {
+    expect(() => state.resolveExperiences(["unknown"])).toThrow("Experience not found");
   });
 });
 
@@ -128,7 +157,7 @@ describe("cognition stacks", () => {
 
 describe("cacheFromActivation", () => {
   it("caches knowledge ref", () => {
-    const born = rolex.born("Feature: Sean");
+    const born = rolex.born("Feature: Sean", "sean");
     const activated = rolex.activate(born.state);
     state.cacheFromActivation(activated.state);
     expect(state.knowledgeRef).not.toBeNull();
@@ -142,7 +171,7 @@ describe("cacheFromActivation", () => {
 
 describe("render", () => {
   it("includes status + hint + projection", () => {
-    const result = rolex.born("Feature: Sean");
+    const result = rolex.born("Feature: Sean", "sean");
     const output = render({
       process: "born",
       name: "Sean",
@@ -160,7 +189,7 @@ describe("render", () => {
 
   it("includes bidirectional links in projection", () => {
     // Born + found + hire → individual has "belong" link
-    const sean = rolex.born("Feature: Sean");
+    const sean = rolex.born("Feature: Sean", "sean");
     const org = rolex.found("Feature: Deepractice");
     rolex.hire(org.state, sean.state);
 
@@ -176,7 +205,7 @@ describe("render", () => {
   });
 
   it("includes appointment relation in projection", () => {
-    const sean = rolex.born("Feature: Sean");
+    const sean = rolex.born("Feature: Sean", "sean");
     const org = rolex.found("Feature: Deepractice");
     const pos = rolex.establish(org.state, "Feature: Architect");
     rolex.hire(org.state, sean.state);
@@ -211,7 +240,7 @@ describe("full execution flow", () => {
     state.cacheFromActivation(activated.state);
 
     // 2. Want
-    const goal = rolex.want(state.requireRole(), "Feature: Build Auth\n  Scenario: JWT login");
+    const goal = rolex.want(state.requireRole(), "Feature: Build Auth\n  Scenario: JWT login", "build-auth");
     state.register("build-auth", goal.state);
     state.focusedGoal = goal.state;
 
@@ -222,27 +251,34 @@ describe("full execution flow", () => {
     // 4. Todo
     const task = rolex.todo(
       state.requirePlan(),
-      "Feature: Implement JWT\n  Scenario: Token generation"
+      "Feature: Implement JWT\n  Scenario: Token generation",
+      "impl-jwt"
     );
     state.register("impl-jwt", task.state);
 
-    // 5. Finish → encounter
+    // 5. Finish → encounter (registered by id)
     const taskRef = state.resolve("impl-jwt");
     const finished = rolex.finish(taskRef, state.requireRole(), "JWT refresh is key");
-    state.pushEncounter(finished.state);
+    state.registerEncounter("impl-jwt", finished.state);
     state.unregister("impl-jwt");
     expect(finished.state.name).toBe("encounter");
 
-    // 6. Reflect → experience
-    const encounter = state.popEncounter();
-    const reflected = rolex.reflect(encounter, state.requireRole(), "Token rotation pattern");
-    state.pushExperience(reflected.state);
+    // 6. Reflect → experience (selective: choose which encounters)
+    const encIds = state.listEncounters();
+    expect(encIds).toEqual(["impl-jwt"]);
+    const encounters = state.resolveEncounters(["impl-jwt"]);
+    const reflected = rolex.reflect(encounters[0], state.requireRole(), "Token rotation pattern");
+    state.consumeEncounters(["impl-jwt"]);
+    state.registerExperience("impl-jwt", reflected.state);
     expect(reflected.state.name).toBe("experience");
 
-    // 7. Realize → principle
-    const exp = state.popExperience();
+    // 7. Realize → principle (selective: choose which experiences)
+    const expIds = state.listExperiences();
+    expect(expIds).toEqual(["impl-jwt"]);
+    const experiences = state.resolveExperiences(["impl-jwt"]);
     const knowledge = state.requireKnowledge();
-    const realized = rolex.realize(exp, knowledge, "Always use refresh tokens");
+    const realized = rolex.realize(experiences[0], knowledge, "Always use refresh tokens");
+    state.consumeExperiences(["impl-jwt"]);
     expect(realized.state.name).toBe("principle");
 
     // Verify the knowledge has the principle
@@ -257,20 +293,62 @@ describe("full execution flow", () => {
 // ================================================================
 
 describe("focus", () => {
-  it("switches focused goal by name", () => {
-    const born = rolex.born("Feature: Sean");
+  it("switches focused goal by id", () => {
+    const born = rolex.born("Feature: Sean", "sean");
     state.activeRole = born.state;
 
-    const goal1 = rolex.want(state.requireRole(), "Feature: Goal A");
+    const goal1 = rolex.want(state.requireRole(), "Feature: Goal A", "goal-a");
     state.register("goal-a", goal1.state);
     state.focusedGoal = goal1.state;
 
-    const goal2 = rolex.want(state.requireRole(), "Feature: Goal B");
+    const goal2 = rolex.want(state.requireRole(), "Feature: Goal B", "goal-b");
     state.register("goal-b", goal2.state);
     state.focusedGoal = goal2.state;
 
     // Switch back to goal A
     state.focusedGoal = state.resolve("goal-a");
     expect(state.requireGoal()).toBe(goal1.state);
+  });
+});
+
+// ================================================================
+//  Selective cognition: multiple encounters
+// ================================================================
+
+describe("selective cognition", () => {
+  it("can selectively reflect on chosen encounters", () => {
+    const born = rolex.born("Feature: Sean", "sean");
+    state.activeRole = born.state;
+    state.cacheFromActivation(rolex.activate(born.state).state);
+
+    // Create multiple encounters
+    const goal = rolex.want(state.requireRole(), "Feature: Auth", "auth");
+    state.focusedGoal = goal.state;
+    const plan = rolex.plan(goal.state);
+    state.focusedPlan = plan.state;
+
+    const t1 = rolex.todo(plan.state, "Feature: Login", "login");
+    state.register("login", t1.state);
+    const t2 = rolex.todo(plan.state, "Feature: Signup", "signup");
+    state.register("signup", t2.state);
+
+    const enc1 = rolex.finish(t1.state, state.requireRole(), "Login done");
+    state.registerEncounter("login", enc1.state);
+    const enc2 = rolex.finish(t2.state, state.requireRole(), "Signup done");
+    state.registerEncounter("signup", enc2.state);
+
+    // List encounters — should have both
+    expect(state.listEncounters()).toEqual(["login", "signup"]);
+
+    // Reflect only on "login"
+    const encounters = state.resolveEncounters(["login"]);
+    const reflected = rolex.reflect(encounters[0], state.requireRole(), "Login flow insights");
+    state.consumeEncounters(["login"]);
+    state.registerExperience("login", reflected.state);
+
+    // "signup" encounter still available
+    expect(state.listEncounters()).toEqual(["signup"]);
+    // "login" experience available
+    expect(state.listExperiences()).toEqual(["login"]);
   });
 });

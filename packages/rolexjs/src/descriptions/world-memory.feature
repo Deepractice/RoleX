@@ -17,7 +17,7 @@ Feature: Memory — when to reflect
     And I finished a task and discovered something unexpected along the way
 
   Scenario: Finishing with experience
-    Given finish(name, experience) accepts an optional experience parameter
+    Given finish(id, experience) accepts an optional experience parameter
     When I complete a task with a notable discovery or learning
     Then I pass the experience inline — bridging execution and growth
 

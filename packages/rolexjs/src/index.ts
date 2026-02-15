@@ -19,7 +19,7 @@ export { Rolex, createRoleX } from "./rolex.js";
 export type { RolexResult } from "./rolex.js";
 
 // Render
-export { describe, hint, detail, renderState } from "./render.js";
+export { describe, hint, detail, world, renderState } from "./render.js";
 
 // Feature (Gherkin type + parse/serialize)
 export type { Feature, Scenario, Step, DataTableRow } from "./feature.js";

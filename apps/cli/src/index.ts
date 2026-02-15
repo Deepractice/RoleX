@@ -21,7 +21,8 @@ const rolex = createRoleX(localPlatform());
 
 function resolveSource(args: { source?: string; file?: string }): string | undefined {
   if (args.file) return readFileSync(args.file, "utf-8");
-  return args.source;
+  if (args.source) return args.source.replace(/\\n/g, "\n");
+  return undefined;
 }
 
 function requireSource(args: { source?: string; file?: string }): string {

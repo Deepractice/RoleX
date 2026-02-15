@@ -4,8 +4,8 @@
  * Holds what the stateless Rolex API does not:
  *   - activeRole (which individual is "me")
  *   - focusedGoal / focusedPlan (execution context)
- *   - name → Structure registry (resolve user-facing names to node refs)
- *   - encounter / experience stacks (for cognition flow)
+ *   - id → Structure registry (resolve user-facing ids to node refs)
+ *   - encounter / experience registries (for selective cognition)
  */
 import type { Structure, State } from "rolexjs";
 import type { Rolex } from "rolexjs";
@@ -17,27 +17,27 @@ export class McpState {
   knowledgeRef: Structure | null = null;
 
   private refs = new Map<string, Structure>();
-  private encounters: Structure[] = [];
-  private experiences: Structure[] = [];
+  private encounterRegistry = new Map<string, Structure>();
+  private experienceRegistry = new Map<string, Structure>();
 
   constructor(readonly rolex: Rolex) {}
 
   // ================================================================
-  //  Registry — name → Structure
+  //  Registry — id → Structure
   // ================================================================
 
-  register(name: string, ref: Structure) {
-    this.refs.set(name, ref);
+  register(id: string, ref: Structure) {
+    this.refs.set(id, ref);
   }
 
-  resolve(name: string): Structure {
-    const ref = this.refs.get(name);
-    if (!ref) throw new Error(`Not found: "${name}"`);
+  resolve(id: string): Structure {
+    const ref = this.refs.get(id);
+    if (!ref) throw new Error(`Not found: "${id}"`);
     return ref;
   }
 
-  unregister(name: string) {
-    this.refs.delete(name);
+  unregister(id: string) {
+    this.refs.delete(id);
   }
 
   // ================================================================
@@ -45,7 +45,7 @@ export class McpState {
   // ================================================================
 
   requireRole(): Structure {
-    if (!this.activeRole) throw new Error("No active role. Call identity first.");
+    if (!this.activeRole) throw new Error("No active role. Call activate first.");
     return this.activeRole;
   }
 
@@ -65,31 +65,55 @@ export class McpState {
   }
 
   // ================================================================
-  //  Cognition stacks — encounter / experience
+  //  Cognition registries — encounter / experience (named, selective)
   // ================================================================
 
-  pushEncounter(enc: Structure) {
-    this.encounters.push(enc);
+  registerEncounter(id: string, enc: Structure) {
+    this.encounterRegistry.set(id, enc);
   }
 
-  popEncounter(): Structure {
-    const enc = this.encounters.pop();
-    if (!enc) throw new Error("No encounters to reflect on.");
-    return enc;
+  resolveEncounters(ids: string[]): Structure[] {
+    return ids.map((id) => {
+      const enc = this.encounterRegistry.get(id);
+      if (!enc) throw new Error(`Encounter not found: "${id}"`);
+      return enc;
+    });
   }
 
-  pushExperience(exp: Structure) {
-    this.experiences.push(exp);
+  consumeEncounters(ids: string[]) {
+    for (const id of ids) {
+      this.encounterRegistry.delete(id);
+    }
   }
 
-  popExperience(): Structure {
-    const exp = this.experiences.pop();
-    if (!exp) throw new Error("No experiences available.");
-    return exp;
+  listEncounters(): string[] {
+    return [...this.encounterRegistry.keys()];
+  }
+
+  registerExperience(id: string, exp: Structure) {
+    this.experienceRegistry.set(id, exp);
+  }
+
+  resolveExperiences(ids: string[]): Structure[] {
+    return ids.map((id) => {
+      const exp = this.experienceRegistry.get(id);
+      if (!exp) throw new Error(`Experience not found: "${id}"`);
+      return exp;
+    });
+  }
+
+  consumeExperiences(ids: string[]) {
+    for (const id of ids) {
+      this.experienceRegistry.delete(id);
+    }
+  }
+
+  listExperiences(): string[] {
+    return [...this.experienceRegistry.keys()];
   }
 
   // ================================================================
-  //  Lookup — find individual by roleId
+  //  Lookup — find individual by id/alias
   // ================================================================
 
   findIndividual(roleId: string): Structure | null {
@@ -133,21 +157,27 @@ export class McpState {
       case "todo":
         return "Task created. I can add more with `todo`, or start working and call `finish` when done.";
 
-      case "finish":
-        if (this.encounters.length > 0 && !this.focusedGoal)
-          return "Task finished. No more goals — I can `reflect` on encounters, or `want` a new goal.";
+      case "finish": {
+        const encCount = this.encounterRegistry.size;
+        if (encCount > 0 && !this.focusedGoal)
+          return `Task finished. No more goals — I have ${encCount} encounter(s) to choose from for \`reflect\`, or \`want\` a new goal.`;
         return "Task finished. I should continue with remaining tasks, or call `achieve` when the goal is met.";
+      }
 
       case "achieve":
-      case "abandon":
-        if (this.encounters.length > 0)
-          return "Goal closed. I have encounters to `reflect` on, or I can `want` a new goal.";
+      case "abandon": {
+        const encCount = this.encounterRegistry.size;
+        if (encCount > 0)
+          return `Goal closed. I have ${encCount} encounter(s) to choose from for \`reflect\`, or I can \`want\` a new goal.`;
         return "Goal closed. I can call `want` for a new goal, or `focus` to review others.";
+      }
 
-      case "reflect":
-        if (this.experiences.length > 0)
-          return "Experience gained. I can `realize` principles or `master` skills from this experience.";
+      case "reflect": {
+        const expCount = this.experienceRegistry.size;
+        if (expCount > 0)
+          return `Experience gained. I can \`realize\` principles or \`master\` skills — ${expCount} experience(s) available.`;
         return "Experience gained. I can `realize` a principle, `master` a skill, or continue working.";
+      }
 
       case "realize":
         return "Principle added to knowledge. I should continue working.";
