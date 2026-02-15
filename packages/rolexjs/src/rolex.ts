@@ -141,6 +141,11 @@ export class Rolex {
     return this.ok(individual, "activate");
   }
 
+  /** Focus: project a goal's state (view / switch context). */
+  focus(goal: Structure): RolexResult {
+    return this.ok(goal, "focus");
+  }
+
   // ================================================================
   //  Execution — goal pursuit
   // ================================================================

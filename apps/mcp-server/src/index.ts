@@ -5,7 +5,7 @@
  * Holds activeRole, focusedGoal, focusedPlan, and a name registry.
  *
  * Tools:
- *   identity — activate a role
+ *   activate — activate a role
  *   focus    — view / switch focused goal
  *   want     — declare a goal
  *   plan     — plan for focused goal
@@ -19,7 +19,7 @@
  */
 
 import { FastMCP } from "fastmcp";
-import { Rolex } from "rolexjs";
+import { Rolex, detail } from "rolexjs";
 import { createGraphRuntime } from "@rolexjs/local-platform";
 import { z } from "zod";
 import { McpState } from "./state.js";
@@ -55,10 +55,8 @@ function fmt(process: string, name: string, result: { state: any; process: strin
 // ========== Tools: Role ==========
 
 server.addTool({
-  name: "identity",
-  description:
-    "Activate a role — load identity, knowledge, goals. " +
-    "This must be called first before any other operation.",
+  name: "activate",
+  description: detail("activate"),
   parameters: z.object({
     roleId: z.string().describe("Role name to activate"),
   }),
@@ -74,10 +72,7 @@ server.addTool({
 
 server.addTool({
   name: "focus",
-  description:
-    "View or switch the currently focused goal. " +
-    "Without a name, shows the current goal's state. " +
-    "With a name, switches focus to that goal.",
+  description: detail("focus"),
   parameters: z.object({
     name: z.string().optional().describe("Goal name to switch to. Omit to view current."),
   }),
@@ -88,12 +83,8 @@ server.addTool({
       state.focusedPlan = null;
     }
     const goal = state.requireGoal();
-    const projection = rolex.project(goal);
-    return render({
-      process: "focus",
-      name: name ?? "current goal",
-      result: { state: projection, process: "focus" },
-    });
+    const result = rolex.focus(goal);
+    return fmt("focus", name ?? "current goal", result);
   },
 });
 
@@ -101,7 +92,7 @@ server.addTool({
 
 server.addTool({
   name: "want",
-  description: "Declare a new goal for the active role.",
+  description: detail("want"),
   parameters: z.object({
     name: z.string().describe("Goal name (used for focus/reference)"),
     source: z.string().describe("Gherkin Feature source describing the goal"),
@@ -118,7 +109,7 @@ server.addTool({
 
 server.addTool({
   name: "plan",
-  description: "Create a plan for the focused goal.",
+  description: detail("plan"),
   parameters: z.object({
     source: z.string().describe("Gherkin Feature source describing the plan"),
   }),
@@ -132,7 +123,7 @@ server.addTool({
 
 server.addTool({
   name: "todo",
-  description: "Add a task to the focused plan.",
+  description: detail("todo"),
   parameters: z.object({
     name: z.string().describe("Task name (used for finish/reference)"),
     source: z.string().describe("Gherkin Feature source describing the task"),
@@ -147,9 +138,7 @@ server.addTool({
 
 server.addTool({
   name: "finish",
-  description:
-    "Finish a task — removes the task and creates an encounter. " +
-    "The encounter can later be reflected on for learning.",
+  description: detail("finish"),
   parameters: z.object({
     name: z.string().describe("Task name to finish"),
     experience: z.string().optional().describe("Optional reflection on what was learned"),
@@ -166,8 +155,7 @@ server.addTool({
 
 server.addTool({
   name: "achieve",
-  description:
-    "Achieve the focused goal — removes the goal and creates an encounter.",
+  description: detail("achieve"),
   parameters: z.object({
     experience: z.string().optional().describe("Optional reflection on what was learned"),
   }),
@@ -184,8 +172,7 @@ server.addTool({
 
 server.addTool({
   name: "abandon",
-  description:
-    "Abandon the focused goal — removes the goal and creates an encounter.",
+  description: detail("abandon"),
   parameters: z.object({
     experience: z.string().optional().describe("Optional reflection on what was learned"),
   }),
@@ -204,8 +191,7 @@ server.addTool({
 
 server.addTool({
   name: "reflect",
-  description:
-    "Reflect on the latest encounter — consumes it and creates an experience.",
+  description: detail("reflect"),
   parameters: z.object({
     source: z.string().optional().describe("Gherkin Feature source for the experience"),
   }),
@@ -220,8 +206,7 @@ server.addTool({
 
 server.addTool({
   name: "realize",
-  description:
-    "Distill the latest experience into a principle under knowledge.",
+  description: detail("realize"),
   parameters: z.object({
     source: z.string().optional().describe("Gherkin Feature source for the principle"),
   }),
@@ -235,8 +220,7 @@ server.addTool({
 
 server.addTool({
   name: "master",
-  description:
-    "Distill the latest experience into a skill under knowledge.",
+  description: detail("master"),
   parameters: z.object({
     source: z.string().optional().describe("Gherkin Feature source for the skill"),
   }),
