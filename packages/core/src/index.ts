@@ -1,65 +1,89 @@
 /**
- * @rolexjs/core — RoleX Core Concepts
+ * @rolexjs/core — RoleX Concept World
  *
  * Domain-specific structures and processes built on @rolexjs/system.
- * Includes the individual structure tree, 14 processes, and descriptions.
+ *
+ * Structures — the concept tree (19 concepts, 2 relations)
+ * Processes  — how the world changes (24 processes, 4 layers)
+ *
+ *   Layer 1: Execution   — want, plan, todo, finish, achieve, abandon
+ *   Layer 2: Cognition   — reflect, realize, master
+ *   Layer 3: Organization — hire, fire, appoint, dismiss, charter, charge
+ *   Layer 4: Lifecycle   — born, found, establish, retire, die, dissolve, abolish, rehire
+ *   + Role: activate
  */
 
 // Re-export system primitives
 export {
   type Structure,
+  type Relation,
   type Create,
   type Remove,
   type Transform,
-  type TreeOp,
+  type Link,
+  type Unlink,
+  type GraphOp,
   type Process,
   type State,
   type Runtime,
   structure,
+  relation,
   create,
   remove,
   transform,
+  link,
+  unlink,
   process,
   createRuntime,
 } from "@rolexjs/system";
 
-// ===== Individual structure tree =====
+// ===== Structures =====
 
 export {
+  // Level 0
   society,
+  // Level 1
   individual,
   organization,
-  persona,
-  voice,
-  memoir,
-  philosophy,
-  knowledge,
-  pattern,
-  procedure,
-  theory,
+  past,
+  // Individual — Identity
+  identity,
+  background,
+  tone,
+  mindset,
+  // Individual — Cognition
+  encounter,
   experience,
-  insight,
-  conclusion,
+  // Individual — Knowledge
+  knowledge,
+  principle,
+  skill,
+  // Individual — Execution
   goal,
   plan,
   task,
-} from "./individual.js";
+  // Organization
+  charter,
+  position,
+  duty,
+} from "./structures.js";
 
-// ===== Individual processes =====
+// ===== Processes — Layer 1: Execution =====
 
-export {
-  identity,
-  focus,
-  explore,
-  skill,
-  use,
-  want,
-  design,
-  todo,
-  forget,
-  finish,
-  achieve,
-  abandon,
-  reflect,
-  contemplate,
-} from "./individual.js";
+export { want, planGoal, todo, finish, achieve, abandon } from "./execution.js";
+
+// ===== Processes — Layer 2: Cognition =====
+
+export { reflect, realize, master } from "./cognition.js";
+
+// ===== Processes — Layer 3: Organization =====
+
+export { hire, fire, appoint, dismiss, charterOrg, charge } from "./organization.js";
+
+// ===== Processes — Layer 4: Lifecycle =====
+
+export { born, found, establish, retire, die, dissolve, abolish, rehire } from "./lifecycle.js";
+
+// ===== Role =====
+
+export { activate } from "./role.js";

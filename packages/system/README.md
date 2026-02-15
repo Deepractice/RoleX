@@ -1,209 +1,241 @@
 # @rolexjs/system
 
-Systems Theory meta-model and runtime. Domain-agnostic — knows nothing about roles, Gherkin, or AI agents.
+A concept world engine. Define concepts, build a tree, link them with relations — the world emerges.
 
-## Six Concepts
+This package provides the **rules** of the concept world. It is domain-agnostic — it knows nothing about roles, organizations, or AI agents. The upper layer's job is to **define concepts** and paint the world using these rules.
 
-A system is described by six concepts:
+## The World
+
+The world is a graph made of concepts.
+
+Every node is a **Structure** — simultaneously three things:
+
+- **Concept** — what it is (name + description)
+- **Container** — can have child nodes
+- **Information carrier** — can hold information (e.g. a Gherkin Feature text)
+
+There is no special "container" type or "leaf" type. Every node is all three at once.
 
 ```
-Information  — what exists (content categories)
-Structure    — where it lives (containers)
-Relation     — how they connect (links between structures)
-State        — what it looks like now (snapshot frames)
-Process      — how it changes (the only way information moves)
-System       — why it loops (processes forming a closed cycle)
+world
+├── agent                          ← concept, also a container
+│   ├── knowledge                  ← container (has children)
+│   │   ├── pattern                ← information carrier
+│   │   │      info: "Feature: ..."
+│   │   └── procedure
+│   │          info: "Feature: ..."
+│   ├── experience                 ← information carrier (no children)
+│   │      info: "Feature: I learned..."
+│   └── experience                 ← OR a container (has children)
+│       └── insight
+│              info: "Feature: JWT lesson..."
+└── org
+    └── position ──relation──→ agent    ← cross-branch link
 ```
 
-### Information
+### Tree + Relations = Graph
 
-The fundamental element. Immutable and accumulative — added, never mutated.
+- **Tree** (parent → child) provides the hierarchical backbone
+- **Relations** provide cross-branch associations
+- Together they form a graph
 
-```typescript
-import type { InformationType } from "@rolexjs/system";
+## Four Concepts
 
-const GOAL: InformationType = {
-  type: "goal",
-  description: "A desired outcome.",
-  belongsTo: "Role",
-  children: ["plan"],  // containment hierarchy
-};
 ```
-
-`children` declares what types are nested inside this type. When a parent is consumed, children cascade.
+Structure   — the node          (what exists)
+Relation    — the link          (how they connect)
+Process     — the change        (how it evolves)
+State       — the projection    (what you see)
+```
 
 ### Structure
 
-A container that holds information. Its state is derived, not stored.
+A Structure defines a type of node in the concept world.
 
 ```typescript
-import type { StructureDefinition } from "@rolexjs/system";
+import { structure } from "@rolexjs/system";
 
-const ROLE: StructureDefinition = {
-  name: "Role",
-  description: "An identity that accumulates knowledge and pursues goals.",
-  informationTypes: ["persona", "goal", "knowledge.pattern", "experience.insight"],
-};
+// Root concept
+const world = structure("world", "The concept world", null);
+
+// Child concepts — parent defines where they live in the tree
+const agent = structure("agent", "An agent identity", world);
+const knowledge = structure("knowledge", "What I know", agent);
+const experience = structure("experience", "What I learned", agent);
+const insight = structure("insight", "A specific learning", experience);
 ```
+
+The `parent` parameter establishes the tree backbone: `insight` lives under `experience`, which lives under `agent`, which lives under `world`.
 
 ### Relation
 
-A link between structures. Gives the system its topology.
+A Relation defines a cross-branch link type on a Structure.
 
 ```typescript
-import type { RelationDefinition } from "@rolexjs/system";
+import { structure, relation } from "@rolexjs/system";
 
-const MEMBERSHIP: RelationDefinition = {
-  name: "membership",
-  description: "A role belongs to an organization.",
-  from: "Role",
-  to: "Organization",
-  cardinality: "many-to-many",
-};
+const agent = structure("agent", "An agent identity", world);
+const org = structure("org", "An organization", world);
+
+// position lives under org, and can link to agent
+const position = structure("position", "A role in an organization", org, [
+  relation("appointment", "The individual holding this position", agent),
+]);
+```
+
+Relations are declared on the Structure definition as an array. A Structure can have multiple relations pointing to different concept types.
+
+### Process
+
+A Process defines how the world changes — a named composition of graph operations.
+
+Five graph primitives:
+
+| Primitive         | What it does                                         |
+| ----------------- | ---------------------------------------------------- |
+| `create(s)`       | Add a child node of structure type `s`               |
+| `remove(s)`       | Delete a node of structure type `s` and its subtree  |
+| `transform(a, b)` | Harvest from structure `a`, produce in structure `b` |
+| `link(s, r)`      | Establish relation `r` on structure `s`              |
+| `unlink(s, r)`    | Remove relation `r` on structure `s`                 |
+
+```typescript
+import { process, create, remove, transform, link, unlink } from "@rolexjs/system";
+
+// Read-only process (no ops) — just projects state
+const identity = process("identity", "Project full identity", agent);
+
+// Create process — adds a new concept instance
+const want = process("want", "Declare a goal", agent, create(goal));
+
+// Transform process — converts one concept into another
+const achieve = process("achieve", "Complete a goal", goal, transform(goal, insight));
+
+// Link process — establishes a cross-branch relation
+const appoint = process("appoint", "Assign to position", position, link(position, "appointment"));
+
+// Unlink process — removes a cross-branch relation
+const dismiss = process(
+  "dismiss",
+  "Remove from position",
+  position,
+  unlink(position, "appointment")
+);
 ```
 
 ### State
 
-A snapshot frame produced by a query process. Not stored — computed on demand.
+A State is the projection of a node — a snapshot of its subtree and links.
 
 ```typescript
-import type { StateDefinition } from "@rolexjs/system";
-
-const COGNITION: StateDefinition = {
-  name: "cognition",
-  description: "Everything the role knows about itself.",
-  appliesTo: "Role",
-  producedBy: "identity",
-  includes: ["persona", "knowledge.pattern", "knowledge.procedure"],
-};
-```
-
-### Process
-
-The only way information changes. Categorized by kind:
-
-| Kind | What it does |
-|------|-------------|
-| `create` | Brings a new structure into existence |
-| `write` | Adds information to an existing structure |
-| `transform` | Converts one information type into another |
-| `relate` | Establishes or removes a relationship |
-| `query` | Reads without changing anything |
-
-```typescript
-import type { ProcessDefinition } from "@rolexjs/system";
-
-const ACHIEVE: ProcessDefinition = {
-  name: "achieve",
-  description: "Mark a goal as achieved and distill experience.",
-  kind: "write",
-  targets: ["Role"],
-  inputs: ["goal"],
-  outputs: ["experience.insight"],
-  consumes: ["goal"],  // removed from active state
-};
-```
-
-**`inputs`** — what the process reads.
-**`outputs`** — what the process produces.
-**`consumes`** — what the process removes from active state. Consumed nodes cascade along `children`.
-
-### System
-
-A closed loop of processes. Output feeds back as input for the next cycle.
-
-```typescript
-import type { SystemDefinition } from "@rolexjs/system";
-
-const INDIVIDUAL: SystemDefinition = {
-  name: "individual",
-  description: "A role's first-person cognitive lifecycle.",
-  processes: ["want", "design", "todo", "finish", "achieve", "reflect", "contemplate"],
-  feedback: ["knowledge.pattern", "knowledge.theory"],
-};
-```
-
-## Runtime
-
-`defineSystem()` turns declarations into a runnable graph-based system.
-
-### Platform
-
-Storage abstraction. Graph topology in memory, content on demand.
-
-```typescript
-import type { Platform } from "@rolexjs/system";
-
-// Platform<I> is generic — I is the content type (e.g. Gherkin Feature)
-// Implementors provide: loadGraph, saveGraph, writeContent, readContent, removeContent
-```
-
-### GraphModel
-
-In-memory topology with consume support.
-
-```typescript
-import type { GraphModel } from "@rolexjs/system";
-
-// Key operations:
-// addNode, getNode, updateNode, hasNode, dropNode, findNodes
-// relate, relateTo, unrelate
-// consume(key, cascade?) — mark node as consumed (removed from active state)
-// restore(key) — undo consumption
-// export() / import() — serialization
-```
-
-### defineSystem
-
-```typescript
-import { defineSystem } from "@rolexjs/system";
-import type { Process } from "@rolexjs/system";
-
-// 1. Define executable processes (extend ProcessDefinition with params + execute)
-const achieve: Process<AchieveParams, Feature> = {
-  name: "achieve",
-  kind: "write",
-  targets: ["Role"],
-  inputs: ["goal"],
-  outputs: ["experience.insight"],
-  consumes: ["goal"],
-  params: achieveSchema,  // zod schema for validation
-  execute(ctx, params) {
-    // ctx.graph — topology
-    // ctx.platform — content storage
-    // ctx.structure — current structure name
-    return "achieved";
-  },
-};
-
-// 2. Create the runnable system
-const system = defineSystem(graph, platform, {
-  name: "individual",
-  processes: { achieve, finish, want /* ... */ },
-});
-
-// 3. Execute processes
-await system.execute("achieve", { experience: { name: "...", source: "..." } });
-// Graph is auto-persisted after every execute via platform.saveGraph()
-```
-
-### ProcessContext
-
-Every process receives a context:
-
-```typescript
-interface ProcessContext<I> {
-  readonly graph: GraphModel;       // topology (in memory)
-  readonly platform: Platform<I>;   // content (on demand)
-  structure: string;                // current structure name
-  readonly locale: string;          // from platform settings
+// State extends Structure, adding:
+interface State extends Structure {
+  children?: readonly State[]; // subtree
+  links?: readonly { relation: string; target: State }[]; // cross-branch links
 }
 ```
 
-## Design Principles
+State is never stored — it is computed on demand via `runtime.project(node)`.
 
-1. **Domain-agnostic** — the system layer knows nothing about roles, Gherkin, or AI. It defines how any system works.
-2. **Declarative first** — six concepts describe what the system IS. Runtime makes it executable.
-3. **Graph + Content separation** — topology is lightweight and in-memory. Content is heavy and loaded on demand.
-4. **Consume, not delete** — consumed information is logically removed from the graph but not physically deleted. Platform handles physical cleanup.
-5. **Auto-persist** — `defineSystem()` saves graph after every process execution. No manual save needed.
+## Runtime
+
+The Runtime is the execution engine. It operates on concept instances (nodes with `id`).
+
+```typescript
+import { createRuntime } from "@rolexjs/system";
+
+const rt = createRuntime();
+
+// Create instances
+const root = rt.create(null, world);
+const sean = rt.create(root, agent, "Feature: I am Sean...");
+const dp = rt.create(root, org);
+const arch = rt.create(dp, position);
+
+// Link them
+rt.link(arch, sean, "appointment");
+
+// Project the state
+const state = rt.project(root);
+// → world
+//   ├── agent (Sean)    info: "Feature: I am Sean..."
+//   └── org
+//       └── position
+//             links: [{ relation: "appointment", target: agent(Sean) }]
+
+// Unlink
+rt.unlink(arch, sean, "appointment");
+
+// Remove (cleans up subtree + all related links)
+rt.remove(arch);
+```
+
+### Runtime API
+
+| Method                             | Description                                          |
+| ---------------------------------- | ---------------------------------------------------- |
+| `create(parent, type, info?)`      | Create a node. `parent=null` for root.               |
+| `remove(node)`                     | Remove a node, its subtree, and all related links.   |
+| `transform(source, target, info?)` | Produce a new node in target's branch.               |
+| `link(from, to, relation)`         | Establish a cross-branch relation. Idempotent.       |
+| `unlink(from, to, relation)`       | Remove a cross-branch relation.                      |
+| `project(node)`                    | Compute the current state of a node and its subtree. |
+
+## Defining Your World
+
+This package provides the rules. Your job is to define the concepts.
+
+**Step 1: Define the concept tree** — what kinds of things exist and how they nest.
+
+```typescript
+const society = structure("society", "The world", null);
+const individual = structure("individual", "An agent", society);
+const persona = structure("persona", "Who I am", individual);
+const goal = structure("goal", "What I pursue", individual);
+const plan = structure("plan", "How to achieve it", goal);
+const task = structure("task", "Concrete work", plan);
+```
+
+**Step 2: Define relations** — what connects across branches.
+
+```typescript
+const org = structure("organization", "A group", society);
+const position = structure("position", "A role in the group", org, [
+  relation("appointment", "Who holds this", individual),
+]);
+```
+
+**Step 3: Define processes** — how the world changes.
+
+```typescript
+const want = process("want", "Declare a goal", individual, create(goal));
+const design = process("design", "Plan for a goal", goal, create(plan));
+const achieve = process("achieve", "Complete a goal", goal, transform(goal, conclusion));
+const appoint = process("appoint", "Assign to position", position, link(position, "appointment"));
+```
+
+**Step 4: Run it** — create instances, link them, project state.
+
+```typescript
+const rt = createRuntime();
+const world = rt.create(null, society);
+const sean = rt.create(world, individual, "Feature: I am Sean...");
+const myGoal = rt.create(sean, goal, "Feature: Build auth system...");
+const myPlan = rt.create(myGoal, plan, "Feature: Auth plan...");
+```
+
+The rules are fixed. The world is yours to paint.
+
+## Universal Formula
+
+```
+State = Process(Structure, Information?)
+```
+
+Everything reduces to this: a Process operates on a Structure (optionally with Information), and produces a State.
+
+## Install
+
+```bash
+bun add @rolexjs/system
+```

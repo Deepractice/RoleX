@@ -1,10 +1,12 @@
 /**
- * Runtime — execution engine for the system tree.
+ * Runtime — execution engine for the system graph.
  *
- * Four operations:
+ * Six operations:
  *   create    — add a child node under a parent
  *   remove    — delete a node and its subtree
  *   transform — produce from one branch into another
+ *   link      — establish a cross-branch relation
+ *   unlink    — remove a cross-branch relation
  *   project   — read the current state
  *
  * State = Process(Structure, Information?)
@@ -24,7 +26,13 @@ export interface Runtime {
   /** Produce a new node in target structure's branch, sourced from another branch. */
   transform(source: Structure, target: Structure, information?: string): Structure;
 
-  /** Project the current state of a node and its subtree. */
+  /** Establish a cross-branch relation between two nodes. */
+  link(from: Structure, to: Structure, relation: string): void;
+
+  /** Remove a cross-branch relation between two nodes. */
+  unlink(from: Structure, to: Structure, relation: string): void;
+
+  /** Project the current state of a node and its subtree (including links). */
   project(node: Structure): State;
 }
 
@@ -36,8 +44,14 @@ interface TreeNode {
   children: string[];
 }
 
+interface LinkEntry {
+  toId: string;
+  relation: string;
+}
+
 export const createRuntime = (): Runtime => {
   const nodes = new Map<string, TreeNode>();
+  const links = new Map<string, LinkEntry[]>();
   let counter = 0;
   const nextId = () => `e${++counter}`;
 
@@ -54,21 +68,41 @@ export const createRuntime = (): Runtime => {
     for (const childId of [...treeNode.children]) {
       removeSubtree(childId);
     }
+    // Clean up links from this node
+    links.delete(id);
+    // Clean up links to this node
+    for (const [fromId, fromLinks] of links.entries()) {
+      const filtered = fromLinks.filter((l) => l.toId !== id);
+      if (filtered.length === 0) {
+        links.delete(fromId);
+      } else {
+        links.set(fromId, filtered);
+      }
+    }
     nodes.delete(id);
   };
 
   const projectNode = (id: string): State => {
     const treeNode = nodes.get(id)!;
+    const nodeLinks = links.get(id);
     return {
       ...treeNode.node,
       children: treeNode.children.map(projectNode),
+      ...(nodeLinks && nodeLinks.length > 0
+        ? {
+            links: nodeLinks.map((l) => ({
+              relation: l.relation,
+              target: projectNode(l.toId),
+            })),
+          }
+        : {}),
     };
   };
 
   const createNode = (
     parentId: string | null,
     type: Structure,
-    information?: string,
+    information?: string
   ): Structure => {
     const id = nextId();
     const node: Structure = {
@@ -103,7 +137,7 @@ export const createRuntime = (): Runtime => {
       if (treeNode.parent) {
         const parentTreeNode = nodes.get(treeNode.parent);
         if (parentTreeNode) {
-          parentTreeNode.children = parentTreeNode.children.filter(id => id !== node.id);
+          parentTreeNode.children = parentTreeNode.children.filter((id) => id !== node.id);
         }
       }
 
@@ -122,6 +156,31 @@ export const createRuntime = (): Runtime => {
       }
 
       return createNode(parentTreeNode.node.id!, target, information);
+    },
+
+    link(from, to, relationName) {
+      if (!from.id) throw new Error("Source node has no id");
+      if (!to.id) throw new Error("Target node has no id");
+
+      const fromLinks = links.get(from.id) ?? [];
+      // Idempotent: skip if already linked
+      if (fromLinks.some((l) => l.toId === to.id && l.relation === relationName)) return;
+
+      fromLinks.push({ toId: to.id, relation: relationName });
+      links.set(from.id, fromLinks);
+    },
+
+    unlink(from, to, relationName) {
+      if (!from.id || !to.id) return;
+      const fromLinks = links.get(from.id);
+      if (!fromLinks) return;
+
+      const filtered = fromLinks.filter((l) => !(l.toId === to.id && l.relation === relationName));
+      if (filtered.length === 0) {
+        links.delete(from.id);
+      } else {
+        links.set(from.id, filtered);
+      }
     },
 
     project(node) {
