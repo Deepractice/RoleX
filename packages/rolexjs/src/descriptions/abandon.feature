@@ -9,3 +9,9 @@ Feature: abandon — abandon a goal
     Then the goal is marked abandoned
     And an encounter is created under the role
     And the encounter can be reflected on — failure is also learning
+
+  Scenario: Writing the encounter Gherkin
+    Given the encounter records what happened — even failure is a raw experience
+    Then the Feature title describes what was attempted and why it was abandoned
+    And Scenarios capture what was tried, what went wrong, and what was learned
+    And the tone is concrete and honest — failure produces the richest encounters

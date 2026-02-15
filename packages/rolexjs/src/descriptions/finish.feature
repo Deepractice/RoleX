@@ -13,3 +13,9 @@ Feature: finish — complete a task
     Given a task is completed with a notable learning
     When finish is called with an optional experience parameter
     Then the experience text is attached to the encounter
+
+  Scenario: Writing the encounter Gherkin
+    Given the encounter records what happened — a raw account of the experience
+    Then the Feature title describes what was done
+    And Scenarios capture what was done, what was encountered, and what resulted
+    And the tone is concrete and specific — tied to this particular task

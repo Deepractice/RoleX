@@ -9,3 +9,9 @@ Feature: reflect — encounter to experience
     Then the encounter is consumed
     And an experience is created under the role
     And the experience can be distilled into knowledge via realize or master
+
+  Scenario: Writing the experience Gherkin
+    Given the experience captures insight — what was learned, not what was done
+    Then the Feature title names the cognitive insight or pattern discovered
+    And Scenarios describe the learning points abstracted from the concrete encounter
+    And the tone shifts from event to understanding — no longer tied to a specific task

@@ -9,3 +9,9 @@ Feature: achieve — achieve a goal
     Then the goal is marked done
     And an encounter is created under the role
     And the encounter can be reflected on for learning
+
+  Scenario: Writing the encounter Gherkin
+    Given the encounter records what happened — a raw account of the experience
+    Then the Feature title describes what was achieved
+    And Scenarios capture what was done, what was encountered, and what resulted
+    And the tone is concrete and specific — tied to this particular goal

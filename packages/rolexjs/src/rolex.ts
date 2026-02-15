@@ -6,10 +6,13 @@
  * caller's responsibility (MCP / CLI).
  *
  * Runtime is injected — caller decides storage.
+ *
+ * All textual inputs must be valid Gherkin Feature syntax.
  */
 import type { Runtime, Structure, State } from "@rolexjs/system";
 import type { Platform } from "@rolexjs/core";
 import * as C from "@rolexjs/core";
+import { parse } from "@rolexjs/parser";
 
 export interface RolexResult {
   /** Projection of the primary affected node. */
@@ -43,34 +46,39 @@ export class Rolex {
   // ================================================================
 
   /** Born an individual into society. Scaffolds identity + knowledge. */
-  born(source?: string, id?: string, alias?: readonly string[]): RolexResult {
-    const node = this.rt.create(this.society, C.individual, source, id, alias);
+  born(individual?: string, id?: string, alias?: readonly string[]): RolexResult {
+    this.validateGherkin(individual);
+    const node = this.rt.create(this.society, C.individual, individual, id, alias);
     this.rt.create(node, C.identity);
     this.rt.create(node, C.knowledge);
     return this.ok(node, "born");
   }
 
   /** Found an organization. */
-  found(source?: string, id?: string, alias?: readonly string[]): RolexResult {
-    const org = this.rt.create(this.society, C.organization, source, id, alias);
+  found(organization?: string, id?: string, alias?: readonly string[]): RolexResult {
+    this.validateGherkin(organization);
+    const org = this.rt.create(this.society, C.organization, organization, id, alias);
     return this.ok(org, "found");
   }
 
   /** Establish a position within an organization. */
-  establish(org: Structure, source?: string, id?: string, alias?: readonly string[]): RolexResult {
-    const pos = this.rt.create(org, C.position, source, id, alias);
+  establish(org: Structure, position?: string, id?: string, alias?: readonly string[]): RolexResult {
+    this.validateGherkin(position);
+    const pos = this.rt.create(org, C.position, position, id, alias);
     return this.ok(pos, "establish");
   }
 
   /** Define the charter for an organization. */
-  charter(org: Structure, source: string): RolexResult {
-    const node = this.rt.create(org, C.charter, source);
+  charter(org: Structure, charter: string): RolexResult {
+    this.validateGherkin(charter);
+    const node = this.rt.create(org, C.charter, charter);
     return this.ok(node, "charter");
   }
 
   /** Add a duty to a position. */
-  charge(position: Structure, source: string): RolexResult {
-    const node = this.rt.create(position, C.duty, source);
+  charge(position: Structure, duty: string): RolexResult {
+    this.validateGherkin(duty);
+    const node = this.rt.create(position, C.duty, duty);
     return this.ok(node, "charge");
   }
 
@@ -154,40 +162,46 @@ export class Rolex {
   // ================================================================
 
   /** Declare a goal under an individual. */
-  want(individual: Structure, source?: string, id?: string, alias?: readonly string[]): RolexResult {
-    const goal = this.rt.create(individual, C.goal, source, id, alias);
-    return this.ok(goal, "want");
+  want(individual: Structure, goal?: string, id?: string, alias?: readonly string[]): RolexResult {
+    this.validateGherkin(goal);
+    const node = this.rt.create(individual, C.goal, goal, id, alias);
+    return this.ok(node, "want");
   }
 
   /** Create a plan for a goal. */
-  plan(goal: Structure, source?: string): RolexResult {
-    const node = this.rt.create(goal, C.plan, source);
+  plan(goal: Structure, plan?: string): RolexResult {
+    this.validateGherkin(plan);
+    const node = this.rt.create(goal, C.plan, plan);
     return this.ok(node, "plan");
   }
 
   /** Add a task to a plan. */
-  todo(plan: Structure, source?: string, id?: string, alias?: readonly string[]): RolexResult {
-    const task = this.rt.create(plan, C.task, source, id, alias);
-    return this.ok(task, "todo");
+  todo(plan: Structure, task?: string, id?: string, alias?: readonly string[]): RolexResult {
+    this.validateGherkin(task);
+    const node = this.rt.create(plan, C.task, task, id, alias);
+    return this.ok(node, "todo");
   }
 
   /** Finish a task: consume task, create encounter under individual. */
-  finish(task: Structure, individual: Structure, experience?: string): RolexResult {
-    const enc = this.rt.create(individual, C.encounter, experience);
+  finish(task: Structure, individual: Structure, encounter?: string): RolexResult {
+    this.validateGherkin(encounter);
+    const enc = this.rt.create(individual, C.encounter, encounter);
     this.rt.remove(task);
     return this.ok(enc, "finish");
   }
 
   /** Achieve a goal: consume goal, create encounter under individual. */
-  achieve(goal: Structure, individual: Structure, experience?: string): RolexResult {
-    const enc = this.rt.create(individual, C.encounter, experience);
+  achieve(goal: Structure, individual: Structure, encounter?: string): RolexResult {
+    this.validateGherkin(encounter);
+    const enc = this.rt.create(individual, C.encounter, encounter);
     this.rt.remove(goal);
     return this.ok(enc, "achieve");
   }
 
   /** Abandon a goal: consume goal, create encounter under individual. */
-  abandon(goal: Structure, individual: Structure, experience?: string): RolexResult {
-    const enc = this.rt.create(individual, C.encounter, experience);
+  abandon(goal: Structure, individual: Structure, encounter?: string): RolexResult {
+    this.validateGherkin(encounter);
+    const enc = this.rt.create(individual, C.encounter, encounter);
     this.rt.remove(goal);
     return this.ok(enc, "abandon");
   }
@@ -197,22 +211,25 @@ export class Rolex {
   // ================================================================
 
   /** Reflect: consume encounter, create experience under individual. */
-  reflect(encounter: Structure, individual: Structure, source?: string): RolexResult {
-    const exp = this.rt.create(individual, C.experience, source || encounter.information);
+  reflect(encounter: Structure, individual: Structure, experience?: string): RolexResult {
+    this.validateGherkin(experience);
+    const exp = this.rt.create(individual, C.experience, experience || encounter.information);
     this.rt.remove(encounter);
     return this.ok(exp, "reflect");
   }
 
   /** Realize: consume experience, create principle under knowledge. */
-  realize(experience: Structure, knowledge: Structure, source?: string): RolexResult {
-    const prin = this.rt.create(knowledge, C.principle, source || experience.information);
+  realize(experience: Structure, knowledge: Structure, principle?: string): RolexResult {
+    this.validateGherkin(principle);
+    const prin = this.rt.create(knowledge, C.principle, principle || experience.information);
     this.rt.remove(experience);
     return this.ok(prin, "realize");
   }
 
   /** Master: consume experience, create skill under knowledge. */
-  master(experience: Structure, knowledge: Structure, source?: string): RolexResult {
-    const sk = this.rt.create(knowledge, C.skill, source || experience.information);
+  master(experience: Structure, knowledge: Structure, skill?: string): RolexResult {
+    this.validateGherkin(skill);
+    const sk = this.rt.create(knowledge, C.skill, skill || experience.information);
     this.rt.remove(experience);
     return this.ok(sk, "master");
   }
@@ -236,6 +253,16 @@ export class Rolex {
   // ================================================================
   //  Internals
   // ================================================================
+
+  /** Validate that a string is valid Gherkin Feature syntax. */
+  private validateGherkin(source?: string): void {
+    if (!source) return;
+    try {
+      parse(source);
+    } catch (e: any) {
+      throw new Error(`Invalid Gherkin: ${e.message}`);
+    }
+  }
 
   private findInState(state: State, target: string): Structure | null {
     // Match by id

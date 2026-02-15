@@ -19,16 +19,27 @@ const rolex = createRoleX(localPlatform());
 
 // ========== Helpers ==========
 
-function resolveSource(args: { source?: string; file?: string }): string | undefined {
+/** Build CLI arg definition for a concept's Gherkin content. */
+function contentArg(concept: string) {
+  return {
+    [concept]: { type: "string" as const, description: `Gherkin Feature source for the ${concept}` },
+    file: { type: "string" as const, alias: "f", description: "Path to .feature file" },
+  };
+}
+
+/** Resolve content from either --<concept> or --file. */
+function resolveContent(args: Record<string, any>, concept: string): string | undefined {
   if (args.file) return readFileSync(args.file, "utf-8");
-  if (args.source) return args.source.replace(/\\n/g, "\n");
+  const value = args[concept];
+  if (typeof value === "string") return value.replace(/\\n/g, "\n");
   return undefined;
 }
 
-function requireSource(args: { source?: string; file?: string }): string {
-  const src = resolveSource(args);
-  if (!src) throw new Error("Either --source or --file is required.");
-  return src;
+/** Resolve content, throw if missing. */
+function requireContent(args: Record<string, any>, concept: string): string {
+  const content = resolveContent(args, concept);
+  if (!content) throw new Error(`Either --${concept} or --file is required.`);
+  return content;
 }
 
 function ref(id: string) {
@@ -42,23 +53,18 @@ function output(result: RolexResult, name: string) {
   consola.info(hint(result.process));
 }
 
-const sourceArgs = {
-  source: { type: "string" as const, description: "Gherkin Feature source" },
-  file: { type: "string" as const, alias: "f", description: "Path to .feature file" },
-};
-
 // ========== Lifecycle — Creation ==========
 
 const born = defineCommand({
   meta: { name: "born", description: "Born an individual into society" },
   args: {
-    ...sourceArgs,
+    ...contentArg("individual"),
     id: { type: "string" as const, description: "User-facing identifier (kebab-case)" },
     alias: { type: "string" as const, description: "Comma-separated aliases" },
   },
   run({ args }) {
     const aliasList = args.alias ? args.alias.split(",").map((a: string) => a.trim()) : undefined;
-    const result = rolex.born(resolveSource(args), args.id, aliasList);
+    const result = rolex.born(resolveContent(args, "individual"), args.id, aliasList);
     output(result, args.id ?? result.state.name);
   },
 });
@@ -66,13 +72,13 @@ const born = defineCommand({
 const found = defineCommand({
   meta: { name: "found", description: "Found an organization" },
   args: {
-    ...sourceArgs,
+    ...contentArg("organization"),
     id: { type: "string" as const, description: "User-facing identifier (kebab-case)" },
     alias: { type: "string" as const, description: "Comma-separated aliases" },
   },
   run({ args }) {
     const aliasList = args.alias ? args.alias.split(",").map((a: string) => a.trim()) : undefined;
-    const result = rolex.found(resolveSource(args), args.id, aliasList);
+    const result = rolex.found(resolveContent(args, "organization"), args.id, aliasList);
     output(result, args.id ?? result.state.name);
   },
 });
@@ -81,13 +87,13 @@ const establish = defineCommand({
   meta: { name: "establish", description: "Establish a position within an organization" },
   args: {
     org: { type: "positional" as const, description: "Organization node ref", required: true },
-    ...sourceArgs,
+    ...contentArg("position"),
     id: { type: "string" as const, description: "User-facing identifier (kebab-case)" },
     alias: { type: "string" as const, description: "Comma-separated aliases" },
   },
   run({ args }) {
     const aliasList = args.alias ? args.alias.split(",").map((a: string) => a.trim()) : undefined;
-    const result = rolex.establish(ref(args.org), resolveSource(args), args.id, aliasList);
+    const result = rolex.establish(ref(args.org), resolveContent(args, "position"), args.id, aliasList);
     output(result, args.id ?? result.state.name);
   },
 });
@@ -96,10 +102,10 @@ const charter = defineCommand({
   meta: { name: "charter", description: "Define the charter for an organization" },
   args: {
     org: { type: "positional" as const, description: "Organization node ref", required: true },
-    ...sourceArgs,
+    ...contentArg("charter"),
   },
   run({ args }) {
-    const result = rolex.charter(ref(args.org), requireSource(args));
+    const result = rolex.charter(ref(args.org), requireContent(args, "charter"));
     output(result, result.state.name);
   },
 });
@@ -108,10 +114,10 @@ const charge = defineCommand({
   meta: { name: "charge", description: "Add a duty to a position" },
   args: {
     position: { type: "positional" as const, description: "Position node ref", required: true },
-    ...sourceArgs,
+    ...contentArg("duty"),
   },
   run({ args }) {
-    const result = rolex.charge(ref(args.position), requireSource(args));
+    const result = rolex.charge(ref(args.position), requireContent(args, "duty"));
     output(result, result.state.name);
   },
 });
@@ -232,10 +238,10 @@ const want = defineCommand({
   meta: { name: "want", description: "Declare a new goal" },
   args: {
     individual: { type: "positional" as const, description: "Individual node ref", required: true },
-    ...sourceArgs,
+    ...contentArg("goal"),
   },
   run({ args }) {
-    const result = rolex.want(ref(args.individual), resolveSource(args));
+    const result = rolex.want(ref(args.individual), resolveContent(args, "goal"));
     output(result, result.state.name);
   },
 });
@@ -244,10 +250,10 @@ const plan = defineCommand({
   meta: { name: "plan", description: "Create a plan for a goal" },
   args: {
     goal: { type: "positional" as const, description: "Goal node ref", required: true },
-    ...sourceArgs,
+    ...contentArg("plan"),
   },
   run({ args }) {
-    const result = rolex.plan(ref(args.goal), resolveSource(args));
+    const result = rolex.plan(ref(args.goal), resolveContent(args, "plan"));
     output(result, result.state.name);
   },
 });
@@ -256,10 +262,10 @@ const todo = defineCommand({
   meta: { name: "todo", description: "Add a task to a plan" },
   args: {
     plan: { type: "positional" as const, description: "Plan node ref", required: true },
-    ...sourceArgs,
+    ...contentArg("task"),
   },
   run({ args }) {
-    const result = rolex.todo(ref(args.plan), resolveSource(args));
+    const result = rolex.todo(ref(args.plan), resolveContent(args, "task"));
     output(result, result.state.name);
   },
 });
@@ -269,10 +275,10 @@ const finish = defineCommand({
   args: {
     task: { type: "positional" as const, description: "Task node ref", required: true },
     individual: { type: "positional" as const, description: "Individual node ref", required: true },
-    experience: { type: "string" as const, description: "What was learned" },
+    ...contentArg("encounter"),
   },
   run({ args }) {
-    const result = rolex.finish(ref(args.task), ref(args.individual), args.experience);
+    const result = rolex.finish(ref(args.task), ref(args.individual), resolveContent(args, "encounter"));
     output(result, result.state.name);
   },
 });
@@ -282,10 +288,10 @@ const achieve = defineCommand({
   args: {
     goal: { type: "positional" as const, description: "Goal node ref", required: true },
     individual: { type: "positional" as const, description: "Individual node ref", required: true },
-    experience: { type: "string" as const, description: "What was learned" },
+    ...contentArg("encounter"),
   },
   run({ args }) {
-    const result = rolex.achieve(ref(args.goal), ref(args.individual), args.experience);
+    const result = rolex.achieve(ref(args.goal), ref(args.individual), resolveContent(args, "encounter"));
     output(result, result.state.name);
   },
 });
@@ -295,10 +301,10 @@ const abandon = defineCommand({
   args: {
     goal: { type: "positional" as const, description: "Goal node ref", required: true },
     individual: { type: "positional" as const, description: "Individual node ref", required: true },
-    experience: { type: "string" as const, description: "What was learned" },
+    ...contentArg("encounter"),
   },
   run({ args }) {
-    const result = rolex.abandon(ref(args.goal), ref(args.individual), args.experience);
+    const result = rolex.abandon(ref(args.goal), ref(args.individual), resolveContent(args, "encounter"));
     output(result, result.state.name);
   },
 });
@@ -310,10 +316,10 @@ const reflect = defineCommand({
   args: {
     encounter: { type: "positional" as const, description: "Encounter node ref", required: true },
     individual: { type: "positional" as const, description: "Individual node ref", required: true },
-    ...sourceArgs,
+    ...contentArg("experience"),
   },
   run({ args }) {
-    const result = rolex.reflect(ref(args.encounter), ref(args.individual), resolveSource(args));
+    const result = rolex.reflect(ref(args.encounter), ref(args.individual), resolveContent(args, "experience"));
     output(result, result.state.name);
   },
 });
@@ -323,10 +329,10 @@ const realize = defineCommand({
   args: {
     experience: { type: "positional" as const, description: "Experience node ref", required: true },
     knowledge: { type: "positional" as const, description: "Knowledge node ref", required: true },
-    ...sourceArgs,
+    ...contentArg("principle"),
   },
   run({ args }) {
-    const result = rolex.realize(ref(args.experience), ref(args.knowledge), resolveSource(args));
+    const result = rolex.realize(ref(args.experience), ref(args.knowledge), resolveContent(args, "principle"));
     output(result, result.state.name);
   },
 });
@@ -336,10 +342,10 @@ const master = defineCommand({
   args: {
     experience: { type: "positional" as const, description: "Experience node ref", required: true },
     knowledge: { type: "positional" as const, description: "Knowledge node ref", required: true },
-    ...sourceArgs,
+    ...contentArg("skill"),
   },
   run({ args }) {
-    const result = rolex.master(ref(args.experience), ref(args.knowledge), resolveSource(args));
+    const result = rolex.master(ref(args.experience), ref(args.knowledge), resolveContent(args, "skill"));
     output(result, result.state.name);
   },
 });
@@ -362,7 +368,7 @@ const project = defineCommand({
 const main = defineCommand({
   meta: {
     name: "rolex",
-    version: "0.10.0",
+    version: "0.11.0",
     description: "RoleX — AI Agent Role Management CLI",
   },
   subCommands: {

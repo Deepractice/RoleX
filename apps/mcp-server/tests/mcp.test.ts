@@ -258,7 +258,7 @@ describe("full execution flow", () => {
 
     // 5. Finish → encounter (registered by id)
     const taskRef = state.resolve("impl-jwt");
-    const finished = rolex.finish(taskRef, state.requireRole(), "JWT refresh is key");
+    const finished = rolex.finish(taskRef, state.requireRole(), "Feature: Implemented JWT token generation\n  Scenario: Discovered refresh token pattern\n    Given JWT tokens expire\n    When I implemented token generation\n    Then I discovered refresh tokens are key");
     state.registerEncounter("impl-jwt", finished.state);
     state.unregister("impl-jwt");
     expect(finished.state.name).toBe("encounter");
@@ -267,7 +267,7 @@ describe("full execution flow", () => {
     const encIds = state.listEncounters();
     expect(encIds).toEqual(["impl-jwt"]);
     const encounters = state.resolveEncounters(["impl-jwt"]);
-    const reflected = rolex.reflect(encounters[0], state.requireRole(), "Token rotation pattern");
+    const reflected = rolex.reflect(encounters[0], state.requireRole(), "Feature: Token rotation pattern\n  Scenario: Refresh tokens prevent session loss\n    Given tokens expire periodically\n    When refresh tokens are used\n    Then sessions persist without re-authentication");
     state.consumeEncounters(["impl-jwt"]);
     state.registerExperience("impl-jwt", reflected.state);
     expect(reflected.state.name).toBe("experience");
@@ -277,7 +277,7 @@ describe("full execution flow", () => {
     expect(expIds).toEqual(["impl-jwt"]);
     const experiences = state.resolveExperiences(["impl-jwt"]);
     const knowledge = state.requireKnowledge();
-    const realized = rolex.realize(experiences[0], knowledge, "Always use refresh tokens");
+    const realized = rolex.realize(experiences[0], knowledge, "Feature: Always use refresh tokens\n  Scenario: Short-lived tokens need rotation\n    Given access tokens have limited lifetime\n    When a system relies on long sessions\n    Then refresh tokens must be implemented");
     state.consumeExperiences(["impl-jwt"]);
     expect(realized.state.name).toBe("principle");
 
@@ -332,9 +332,9 @@ describe("selective cognition", () => {
     const t2 = rolex.todo(plan.state, "Feature: Signup", "signup");
     state.register("signup", t2.state);
 
-    const enc1 = rolex.finish(t1.state, state.requireRole(), "Login done");
+    const enc1 = rolex.finish(t1.state, state.requireRole(), "Feature: Login implementation complete\n  Scenario: Built login flow\n    Given login was required\n    When I implemented the login form\n    Then users can authenticate");
     state.registerEncounter("login", enc1.state);
-    const enc2 = rolex.finish(t2.state, state.requireRole(), "Signup done");
+    const enc2 = rolex.finish(t2.state, state.requireRole(), "Feature: Signup implementation complete\n  Scenario: Built signup flow\n    Given signup was required\n    When I implemented the registration form\n    Then users can create accounts");
     state.registerEncounter("signup", enc2.state);
 
     // List encounters — should have both
@@ -342,7 +342,7 @@ describe("selective cognition", () => {
 
     // Reflect only on "login"
     const encounters = state.resolveEncounters(["login"]);
-    const reflected = rolex.reflect(encounters[0], state.requireRole(), "Login flow insights");
+    const reflected = rolex.reflect(encounters[0], state.requireRole(), "Feature: Login flow design insight\n  Scenario: Authentication requires multi-step validation\n    Given a login form submits credentials\n    When validation occurs server-side\n    Then error feedback must be immediate and specific");
     state.consumeEncounters(["login"]);
     state.registerExperience("login", reflected.state);
 
