@@ -15,11 +15,11 @@
  */
 
 // API
-export { Rolex } from "./rolex.js";
-export type { RolexResult, RolexConfig } from "./rolex.js";
+export { Rolex, createRoleX } from "./rolex.js";
+export type { RolexResult } from "./rolex.js";
 
 // Render
-export { describe, hint, detail } from "./render.js";
+export { describe, hint, detail, renderState } from "./render.js";
 
 // Feature (Gherkin type + parse/serialize)
 export type { Feature, Scenario, Step, DataTableRow } from "./feature.js";

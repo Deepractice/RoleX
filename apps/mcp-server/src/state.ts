@@ -9,7 +9,6 @@
  */
 import type { Structure, State } from "rolexjs";
 import type { Rolex } from "rolexjs";
-import { parse } from "rolexjs";
 
 export class McpState {
   activeRole: Structure | null = null;
@@ -94,21 +93,7 @@ export class McpState {
   // ================================================================
 
   findIndividual(roleId: string): Structure | null {
-    const society = this.rolex.project(this.rolex.society);
-    const target = roleId.toLowerCase();
-    for (const child of society.children ?? []) {
-      if (child.name !== "individual") continue;
-      if (!child.information) continue;
-      try {
-        const feature = parse(child.information);
-        if (feature.name.toLowerCase().includes(target)) {
-          return child;
-        }
-      } catch {
-        continue;
-      }
-    }
-    return null;
+    return this.rolex.find(roleId);
   }
 
   // ================================================================

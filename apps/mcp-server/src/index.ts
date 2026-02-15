@@ -19,8 +19,8 @@
  */
 
 import { FastMCP } from "fastmcp";
-import { Rolex, detail } from "rolexjs";
-import { createGraphRuntime } from "@rolexjs/local-platform";
+import { createRoleX, detail } from "rolexjs";
+import { localPlatform } from "@rolexjs/local-platform";
 import { z } from "zod";
 import { McpState } from "./state.js";
 import { render } from "./render.js";
@@ -28,7 +28,7 @@ import { instructions } from "./instructions.js";
 
 // ========== Setup ==========
 
-const rolex = new Rolex({ runtime: createGraphRuntime() });
+const rolex = createRoleX(localPlatform());
 const state = new McpState(rolex);
 
 // ========== Server ==========
@@ -46,8 +46,6 @@ function fmt(process: string, name: string, result: { state: any; process: strin
     process,
     name,
     result,
-    rolex,
-    relationsFor: state.activeRole ?? undefined,
     cognitiveHint: state.cognitiveHint(process),
   });
 }
@@ -99,7 +97,7 @@ server.addTool({
   }),
   execute: async ({ name, source }) => {
     const role = state.requireRole();
-    const result = rolex.want(role, source);
+    const result = rolex.want(role, source, name);
     state.register(name, result.state);
     state.focusedGoal = result.state;
     state.focusedPlan = null;
@@ -130,7 +128,7 @@ server.addTool({
   }),
   execute: async ({ name, source }) => {
     const plan = state.requirePlan();
-    const result = rolex.todo(plan, source);
+    const result = rolex.todo(plan, source, name);
     state.register(name, result.state);
     return fmt("todo", name, result);
   },

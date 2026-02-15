@@ -1,13 +1,14 @@
 import { describe, test, expect } from "bun:test";
-import { createGraphRuntime } from "@rolexjs/local-platform";
-import { Rolex } from "../src/rolex.js";
+import { localPlatform } from "@rolexjs/local-platform";
+import { createRoleX } from "../src/rolex.js";
 import {
   describe as renderDescribe,
   hint as renderHint,
+  renderState,
 } from "../src/render.js";
 
 function setup() {
-  return new Rolex({ runtime: createGraphRuntime() });
+  return createRoleX(localPlatform({ dataDir: null }));
 }
 
 describe("Rolex API (stateless)", () => {
@@ -375,6 +376,185 @@ describe("Rolex API (stateless)", () => {
       for (const p of processes) {
         expect(renderHint(p)).toStartWith("Next:");
       }
+    });
+  });
+
+  // ============================================================
+  //  renderState — generic markdown renderer
+  // ============================================================
+
+  describe("renderState", () => {
+    test("renders individual with heading and information", () => {
+      const rolex = setup();
+      const r = rolex.born("Feature: I am Sean\n  An AI role.");
+      const md = renderState(r.state);
+      expect(md).toContain("# [individual]");
+      expect(md).toContain("Feature: I am Sean");
+      expect(md).toContain("An AI role.");
+    });
+
+    test("renders children at deeper heading levels", () => {
+      const rolex = setup();
+      const r = rolex.born("Feature: Sean");
+      const md = renderState(r.state);
+      // identity and knowledge are children at depth 2
+      expect(md).toContain("## [identity]");
+      expect(md).toContain("## [knowledge]");
+    });
+
+    test("renders links generically", () => {
+      const rolex = setup();
+      const sean = rolex.born("Feature: Sean").state;
+      const org = rolex.found("Feature: Deepractice").state;
+      rolex.hire(org, sean);
+      // Project org — should have membership link
+      const orgState = rolex.project(org);
+      const md = renderState(orgState);
+      expect(md).toContain("membership");
+      expect(md).toContain("[individual]");
+    });
+
+    test("renders bidirectional links", () => {
+      const rolex = setup();
+      const sean = rolex.born("Feature: Sean").state;
+      const org = rolex.found("Feature: Deepractice").state;
+      rolex.hire(org, sean);
+      // Project individual — should have belong link
+      const seanState = rolex.project(sean);
+      const md = renderState(seanState);
+      expect(md).toContain("belong");
+      expect(md).toContain("[organization]");
+      expect(md).toContain("Deepractice");
+    });
+
+    test("renders nested structure (goal → plan → task)", () => {
+      const rolex = setup();
+      const sean = rolex.born().state;
+      const goal = rolex.want(sean, "Feature: Build auth").state;
+      const plan = rolex.plan(goal, "Feature: JWT plan").state;
+      rolex.todo(plan, "Feature: Login endpoint");
+      // Project goal to see full tree
+      const goalState = rolex.project(goal);
+      const md = renderState(goalState);
+      expect(md).toContain("# [goal]");
+      expect(md).toContain("## [plan]");
+      expect(md).toContain("### [task]");
+      expect(md).toContain("Feature: Build auth");
+      expect(md).toContain("Feature: JWT plan");
+      expect(md).toContain("Feature: Login endpoint");
+    });
+
+    test("caps heading depth at 6", () => {
+      const rolex = setup();
+      const sean = rolex.born().state;
+      // individual(1) → identity(2) is the deepest built-in nesting
+      // Manually test with depth parameter
+      const md = renderState(sean, 7);
+      // Should use ###### (6) not ####### (7)
+      expect(md).toStartWith("###### [individual]");
+    });
+
+    test("renders without information gracefully", () => {
+      const rolex = setup();
+      const r = rolex.born();
+      const identity = r.state.children!.find(c => c.name === "identity")!;
+      const md = renderState(identity);
+      expect(md).toBe("# [identity]");
+    });
+  });
+
+  // ============================================================
+  //  id & alias
+  // ============================================================
+
+  describe("id & alias", () => {
+    test("born with id stores it on the node", () => {
+      const rolex = setup();
+      const r = rolex.born("Feature: I am Sean", "sean");
+      expect(r.state.id).toBe("sean");
+      expect(r.state.ref).toBeDefined();
+    });
+
+    test("born with id and alias stores both", () => {
+      const rolex = setup();
+      const r = rolex.born("Feature: I am Sean", "sean", ["Sean", "姜山"]);
+      expect(r.state.id).toBe("sean");
+      expect(r.state.alias).toEqual(["Sean", "姜山"]);
+    });
+
+    test("born without id has no id field", () => {
+      const rolex = setup();
+      const r = rolex.born("Feature: I am Sean");
+      expect(r.state.id).toBeUndefined();
+    });
+
+    test("want with id stores it on the goal", () => {
+      const rolex = setup();
+      const sean = rolex.born("Feature: Sean").state;
+      const r = rolex.want(sean, "Feature: Build auth", "build-auth");
+      expect(r.state.id).toBe("build-auth");
+    });
+
+    test("todo with id stores it on the task", () => {
+      const rolex = setup();
+      const sean = rolex.born("Feature: Sean").state;
+      const goal = rolex.want(sean).state;
+      const plan = rolex.plan(goal).state;
+      const r = rolex.todo(plan, "Feature: Login", "impl-login");
+      expect(r.state.id).toBe("impl-login");
+    });
+
+    test("find by id", () => {
+      const rolex = setup();
+      rolex.born("Feature: I am Sean", "sean");
+      const found = rolex.find("sean");
+      expect(found).not.toBeNull();
+      expect(found!.name).toBe("individual");
+      expect(found!.id).toBe("sean");
+    });
+
+    test("find by alias", () => {
+      const rolex = setup();
+      rolex.born("Feature: I am Sean", "sean", ["Sean", "姜山"]);
+      const found = rolex.find("姜山");
+      expect(found).not.toBeNull();
+      expect(found!.name).toBe("individual");
+    });
+
+    test("find is case insensitive", () => {
+      const rolex = setup();
+      rolex.born("Feature: I am Sean", "sean", ["Sean"]);
+      expect(rolex.find("Sean")).not.toBeNull();
+      expect(rolex.find("SEAN")).not.toBeNull();
+      expect(rolex.find("sean")).not.toBeNull();
+    });
+
+    test("find returns null when not found", () => {
+      const rolex = setup();
+      rolex.born("Feature: I am Sean", "sean");
+      expect(rolex.find("nobody")).toBeNull();
+    });
+
+    test("find searches nested nodes", () => {
+      const rolex = setup();
+      const sean = rolex.born("Feature: Sean", "sean").state;
+      rolex.want(sean, "Feature: Build auth", "build-auth");
+      const found = rolex.find("build-auth");
+      expect(found).not.toBeNull();
+      expect(found!.name).toBe("goal");
+    });
+
+    test("found with id", () => {
+      const rolex = setup();
+      const r = rolex.found("Feature: Deepractice", "deepractice");
+      expect(r.state.id).toBe("deepractice");
+    });
+
+    test("establish with id", () => {
+      const rolex = setup();
+      const org = rolex.found("Feature: Deepractice").state;
+      const r = rolex.establish(org, "Feature: Architect", "architect");
+      expect(r.state.id).toBe("architect");
     });
   });
 });

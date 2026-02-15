@@ -8,6 +8,7 @@
  * Runtime is injected — caller decides storage.
  */
 import type { Runtime, Structure, State } from "@rolexjs/system";
+import type { Platform } from "@rolexjs/core";
 import * as C from "@rolexjs/core";
 
 export interface RolexResult {
@@ -15,10 +16,6 @@ export interface RolexResult {
   state: State;
   /** Which process was executed (for render). */
   process: string;
-}
-
-export interface RolexConfig {
-  runtime: Runtime;
 }
 
 export class Rolex {
@@ -29,10 +26,16 @@ export class Rolex {
   /** Container for archived things. */
   readonly past: Structure;
 
-  constructor(config: RolexConfig) {
-    this.rt = config.runtime;
-    this.society = this.rt.create(null, C.society);
-    this.past = this.rt.create(this.society, C.past);
+  constructor(platform: Platform) {
+    this.rt = platform.runtime;
+
+    // Ensure world roots exist (idempotent — reuse if already created by another process)
+    const roots = this.rt.roots();
+    this.society = roots.find(r => r.name === "society") ?? this.rt.create(null, C.society);
+
+    const societyState = this.rt.project(this.society);
+    const existingPast = societyState.children?.find(c => c.name === "past");
+    this.past = existingPast ?? this.rt.create(this.society, C.past);
   }
 
   // ================================================================
@@ -40,22 +43,22 @@ export class Rolex {
   // ================================================================
 
   /** Born an individual into society. Scaffolds identity + knowledge. */
-  born(source?: string): RolexResult {
-    const node = this.rt.create(this.society, C.individual, source);
+  born(source?: string, id?: string, alias?: readonly string[]): RolexResult {
+    const node = this.rt.create(this.society, C.individual, source, id, alias);
     this.rt.create(node, C.identity);
     this.rt.create(node, C.knowledge);
     return this.ok(node, "born");
   }
 
   /** Found an organization. */
-  found(source?: string): RolexResult {
-    const org = this.rt.create(this.society, C.organization, source);
+  found(source?: string, id?: string, alias?: readonly string[]): RolexResult {
+    const org = this.rt.create(this.society, C.organization, source, id, alias);
     return this.ok(org, "found");
   }
 
   /** Establish a position within an organization. */
-  establish(org: Structure, source?: string): RolexResult {
-    const pos = this.rt.create(org, C.position, source);
+  establish(org: Structure, source?: string, id?: string, alias?: readonly string[]): RolexResult {
+    const pos = this.rt.create(org, C.position, source, id, alias);
     return this.ok(pos, "establish");
   }
 
@@ -110,25 +113,25 @@ export class Rolex {
 
   /** Hire: link individual to organization via membership. */
   hire(org: Structure, individual: Structure): RolexResult {
-    this.rt.link(org, individual, "membership");
+    this.rt.link(org, individual, "membership", "belong");
     return this.ok(org, "hire");
   }
 
   /** Fire: remove membership link. */
   fire(org: Structure, individual: Structure): RolexResult {
-    this.rt.unlink(org, individual, "membership");
+    this.rt.unlink(org, individual, "membership", "belong");
     return this.ok(org, "fire");
   }
 
   /** Appoint: link individual to position via appointment. */
   appoint(position: Structure, individual: Structure): RolexResult {
-    this.rt.link(position, individual, "appointment");
+    this.rt.link(position, individual, "appointment", "serve");
     return this.ok(position, "appoint");
   }
 
   /** Dismiss: remove appointment link. */
   dismiss(position: Structure, individual: Structure): RolexResult {
-    this.rt.unlink(position, individual, "appointment");
+    this.rt.unlink(position, individual, "appointment", "serve");
     return this.ok(position, "dismiss");
   }
 
@@ -151,8 +154,8 @@ export class Rolex {
   // ================================================================
 
   /** Declare a goal under an individual. */
-  want(individual: Structure, source?: string): RolexResult {
-    const goal = this.rt.create(individual, C.goal, source);
+  want(individual: Structure, source?: string, id?: string, alias?: readonly string[]): RolexResult {
+    const goal = this.rt.create(individual, C.goal, source, id, alias);
     return this.ok(goal, "want");
   }
 
@@ -163,8 +166,8 @@ export class Rolex {
   }
 
   /** Add a task to a plan. */
-  todo(plan: Structure, source?: string): RolexResult {
-    const task = this.rt.create(plan, C.task, source);
+  todo(plan: Structure, source?: string, id?: string, alias?: readonly string[]): RolexResult {
+    const task = this.rt.create(plan, C.task, source, id, alias);
     return this.ok(task, "todo");
   }
 
@@ -223,9 +226,37 @@ export class Rolex {
     return this.rt.project(node);
   }
 
+  /** Find a node by id or alias across the entire society tree. */
+  find(id: string): Structure | null {
+    const target = id.toLowerCase();
+    const state = this.rt.project(this.society);
+    return this.findInState(state, target);
+  }
+
   // ================================================================
   //  Internals
   // ================================================================
+
+  private findInState(state: State, target: string): Structure | null {
+    // Match by id
+    if (state.id && state.id.toLowerCase() === target) {
+      return state;
+    }
+    // Match by alias
+    if (state.alias) {
+      for (const a of state.alias) {
+        if (a.toLowerCase() === target) {
+          return state;
+        }
+      }
+    }
+    // Recurse into children
+    for (const child of state.children ?? []) {
+      const found = this.findInState(child, target);
+      if (found) return found;
+    }
+    return null;
+  }
 
   private archive(node: Structure, process: string): RolexResult {
     const archived = this.rt.create(this.past, C.past, node.information);
@@ -239,4 +270,9 @@ export class Rolex {
       process,
     };
   }
+}
+
+/** Create a Rolex instance from a Platform. */
+export function createRoleX(platform: Platform): Rolex {
+  return new Rolex(platform);
 }

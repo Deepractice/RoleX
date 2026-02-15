@@ -1,6 +1,10 @@
 import { describe, test, expect } from "bun:test";
 import { structure, relation } from "@rolexjs/system";
-import { createGraphRuntime } from "../src/runtime.js";
+import { localPlatform } from "../src/index.js";
+
+function createGraphRuntime() {
+  return localPlatform({ dataDir: null }).runtime;
+}
 
 // ================================================================
 //  Concept definitions (mirrors @rolexjs/core structures)
@@ -50,7 +54,7 @@ describe("Graph Runtime", () => {
       const rt = createGraphRuntime();
       const root = rt.create(null, society);
 
-      expect(root.id).toBeDefined();
+      expect(root.ref).toBeDefined();
       expect(root.name).toBe("society");
 
       const state = rt.project(root);
@@ -165,9 +169,9 @@ describe("Graph Runtime", () => {
       expect(state.children).toHaveLength(0);
     });
 
-    test("remove node without id is a no-op", () => {
+    test("remove node without ref is a no-op", () => {
       const rt = createGraphRuntime();
-      rt.remove(individual); // no id, should not throw
+      rt.remove(individual); // no ref, should not throw
     });
   });
 
@@ -268,7 +272,7 @@ describe("Graph Runtime", () => {
       const sean = rt.create(root, individual, "Feature: I am Sean");
       const dp = rt.create(root, organization);
 
-      rt.link(dp, sean, "membership");
+      rt.link(dp, sean, "membership", "belong");
 
       const state = rt.project(dp);
       expect(state.links).toHaveLength(1);
@@ -283,8 +287,8 @@ describe("Graph Runtime", () => {
       const sean = rt.create(root, individual);
       const dp = rt.create(root, organization);
 
-      rt.link(dp, sean, "membership");
-      rt.unlink(dp, sean, "membership");
+      rt.link(dp, sean, "membership", "belong");
+      rt.unlink(dp, sean, "membership", "belong");
 
       const state = rt.project(dp);
       expect(state.links).toBeUndefined();
@@ -297,7 +301,7 @@ describe("Graph Runtime", () => {
       const dp = rt.create(root, organization);
       const arch = rt.create(dp, position);
 
-      rt.link(arch, sean, "appointment");
+      rt.link(arch, sean, "appointment", "serve");
 
       const state = rt.project(arch);
       expect(state.links).toHaveLength(1);
@@ -312,8 +316,8 @@ describe("Graph Runtime", () => {
       const dp = rt.create(root, organization);
       const arch = rt.create(dp, position);
 
-      rt.link(arch, sean, "appointment");
-      rt.unlink(arch, sean, "appointment");
+      rt.link(arch, sean, "appointment", "serve");
+      rt.unlink(arch, sean, "appointment", "serve");
 
       const state = rt.project(arch);
       expect(state.links).toBeUndefined();
@@ -325,8 +329,8 @@ describe("Graph Runtime", () => {
       const sean = rt.create(root, individual);
       const dp = rt.create(root, organization);
 
-      rt.link(dp, sean, "membership");
-      rt.link(dp, sean, "membership"); // duplicate
+      rt.link(dp, sean, "membership", "belong");
+      rt.link(dp, sean, "membership", "belong"); // duplicate
 
       const state = rt.project(dp);
       expect(state.links).toHaveLength(1);
@@ -339,8 +343,8 @@ describe("Graph Runtime", () => {
       const alice = rt.create(root, individual, "Feature: Alice");
       const dp = rt.create(root, organization);
 
-      rt.link(dp, sean, "membership");
-      rt.link(dp, alice, "membership");
+      rt.link(dp, sean, "membership", "belong");
+      rt.link(dp, alice, "membership", "belong");
 
       const state = rt.project(dp);
       expect(state.links).toHaveLength(2);
@@ -353,7 +357,7 @@ describe("Graph Runtime", () => {
       const dp = rt.create(root, organization);
       const arch = rt.create(dp, position);
 
-      rt.link(arch, sean, "appointment");
+      rt.link(arch, sean, "appointment", "serve");
 
       // project from org level
       const state = rt.project(dp);
@@ -369,7 +373,7 @@ describe("Graph Runtime", () => {
       const dp = rt.create(root, organization);
       const arch = rt.create(dp, position);
 
-      rt.link(arch, sean, "appointment");
+      rt.link(arch, sean, "appointment", "serve");
       rt.remove(arch);
 
       const state = rt.project(dp);
@@ -383,25 +387,25 @@ describe("Graph Runtime", () => {
       const dp = rt.create(root, organization);
       const arch = rt.create(dp, position);
 
-      rt.link(arch, sean, "appointment");
+      rt.link(arch, sean, "appointment", "serve");
       rt.remove(sean);
 
       const state = rt.project(arch);
       expect(state.links).toBeUndefined();
     });
 
-    test("link throws if source has no id", () => {
+    test("link throws if source has no ref", () => {
       const rt = createGraphRuntime();
       const root = rt.create(null, society);
       const sean = rt.create(root, individual);
-      expect(() => rt.link(individual, sean, "test")).toThrow("Source node has no id");
+      expect(() => rt.link(individual, sean, "test", "test-rev")).toThrow("Source node has no ref");
     });
 
-    test("link throws if target has no id", () => {
+    test("link throws if target has no ref", () => {
       const rt = createGraphRuntime();
       const root = rt.create(null, society);
       const sean = rt.create(root, individual);
-      expect(() => rt.link(sean, individual, "test")).toThrow("Target node has no id");
+      expect(() => rt.link(sean, individual, "test", "test-rev")).toThrow("Target node has no ref");
     });
 
     test("node without links has no links in projection", () => {
@@ -485,30 +489,78 @@ describe("Graph Runtime", () => {
       const sean = rt.create(root, individual, "Feature: I am Sean");
 
       // hire: link membership
-      rt.link(dp, sean, "membership");
+      rt.link(dp, sean, "membership", "belong");
       let orgState = rt.project(dp);
       expect(orgState.links).toHaveLength(1);
       expect(orgState.links![0].relation).toBe("membership");
 
       // appoint: link appointment
-      rt.link(arch, sean, "appointment");
+      rt.link(arch, sean, "appointment", "serve");
       let posState = rt.project(arch);
       expect(posState.links).toHaveLength(1);
       expect(posState.links![0].relation).toBe("appointment");
 
       // dismiss: unlink appointment
-      rt.unlink(arch, sean, "appointment");
+      rt.unlink(arch, sean, "appointment", "serve");
       posState = rt.project(arch);
       expect(posState.links).toBeUndefined();
 
       // fire: unlink membership
-      rt.unlink(dp, sean, "membership");
+      rt.unlink(dp, sean, "membership", "belong");
       orgState = rt.project(dp);
       expect(orgState.links).toBeUndefined();
 
       // individual still exists
       const seanState = rt.project(sean);
       expect(seanState.name).toBe("individual");
+    });
+  });
+
+  // ============================================================
+  //  id & alias
+  // ============================================================
+
+  describe("id & alias", () => {
+    test("create with id stores it on node", () => {
+      const rt = createGraphRuntime();
+      const root = rt.create(null, society);
+      const sean = rt.create(root, individual, "Feature: Sean", "sean");
+      expect(sean.ref).toBeDefined();
+      expect(sean.id).toBe("sean");
+    });
+
+    test("create with id and alias stores both", () => {
+      const rt = createGraphRuntime();
+      const root = rt.create(null, society);
+      const sean = rt.create(root, individual, "Feature: Sean", "sean", ["Sean", "姜山"]);
+      expect(sean.id).toBe("sean");
+      expect(sean.alias).toEqual(["Sean", "姜山"]);
+    });
+
+    test("id and alias appear in projection", () => {
+      const rt = createGraphRuntime();
+      const root = rt.create(null, society);
+      const sean = rt.create(root, individual, "Feature: Sean", "sean", ["Sean"]);
+      const state = rt.project(sean);
+      expect(state.id).toBe("sean");
+      expect(state.alias).toEqual(["Sean"]);
+    });
+
+    test("create without id has no id field", () => {
+      const rt = createGraphRuntime();
+      const root = rt.create(null, society);
+      const sean = rt.create(root, individual, "Feature: Sean");
+      expect(sean.id).toBeUndefined();
+      expect(sean.alias).toBeUndefined();
+    });
+
+    test("id and alias appear in roots()", () => {
+      const rt = createGraphRuntime();
+      const root = rt.create(null, society, undefined, "world", ["World"]);
+      const roots = rt.roots();
+      expect(roots).toHaveLength(1);
+      expect(roots[0].id).toBe("world");
+      expect(roots[0].alias).toEqual(["World"]);
     });
   });
 });

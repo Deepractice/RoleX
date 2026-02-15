@@ -11,9 +11,14 @@
  * Relations provide cross-branch associations.
  * Together they form a graph.
  *
- * Type definitions have no id (schema).
- * Runtime instances have id (assigned by runtime).
+ * Type definitions have no ref (schema).
+ * Runtime instances have ref (assigned by runtime).
  * Every node can carry information AND have children.
+ *
+ * Identifiers:
+ *   ref   — graph engine internal reference (e.g., "n3", "e5"), assigned by runtime
+ *   id    — user-facing kebab-case identifier (e.g., "sean", "build-auth")
+ *   alias — alternative names for lookup (e.g., ["Sean", "姜山"])
  */
 
 // ===== Relation =====
@@ -33,8 +38,14 @@ export interface Relation {
 // ===== Structure =====
 
 export interface Structure {
-  /** Unique identifier, assigned by runtime for instances. */
+  /** Graph engine internal reference (e.g., "n3", "e5"), assigned by runtime. */
+  readonly ref?: string;
+
+  /** User-facing kebab-case identifier (e.g., "sean", "build-auth"). */
   readonly id?: string;
+
+  /** Alternative names for lookup (e.g., ["Sean", "姜山"]). */
+  readonly alias?: readonly string[];
 
   /** The structure name (e.g., "goal", "persona", "task"). */
   readonly name: string;

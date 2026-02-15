@@ -21,7 +21,7 @@ describe("Structure", () => {
     expect(world.name).toBe("world");
     expect(world.description).toBe("The root concept");
     expect(world.parent).toBeNull();
-    expect(world.id).toBeUndefined();
+    expect(world.ref).toBeUndefined();
   });
 
   test("define a child structure", () => {
@@ -135,7 +135,7 @@ describe("Runtime", () => {
     test("create root and project it", () => {
       const rt = createRuntime();
       const root = rt.create(null, world);
-      expect(root.id).toBeDefined();
+      expect(root.ref).toBeDefined();
       expect(root.name).toBe("world");
 
       const state = rt.project(root);
@@ -225,9 +225,9 @@ describe("Runtime", () => {
       expect(state.children).toHaveLength(0);
     });
 
-    test("remove node without id is a no-op", () => {
+    test("remove node without ref is a no-op", () => {
       const rt = createRuntime();
-      rt.remove(agent); // no id, should not throw
+      rt.remove(agent); // no ref, should not throw
     });
   });
 
@@ -358,18 +358,18 @@ describe("Runtime", () => {
       expect(state.links).toBeUndefined(); // link should be cleaned up
     });
 
-    test("link throws if source has no id", () => {
+    test("link throws if source has no ref", () => {
       const rt = createRuntime();
       const root = rt.create(null, world);
       const sean = rt.create(root, agent);
-      expect(() => rt.link(agent, sean, "test")).toThrow("Source node has no id");
+      expect(() => rt.link(agent, sean, "test")).toThrow("Source node has no ref");
     });
 
-    test("link throws if target has no id", () => {
+    test("link throws if target has no ref", () => {
       const rt = createRuntime();
       const root = rt.create(null, world);
       const sean = rt.create(root, agent);
-      expect(() => rt.link(sean, agent, "test")).toThrow("Target node has no id");
+      expect(() => rt.link(sean, agent, "test")).toThrow("Target node has no ref");
     });
 
     test("parent projection includes child links", () => {

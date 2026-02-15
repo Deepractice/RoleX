@@ -5,8 +5,8 @@
  * Does not test FastMCP transport — only the logic behind each tool.
  */
 import { describe, it, expect, beforeEach } from "bun:test";
-import { Rolex } from "rolexjs";
-import { createGraphRuntime } from "@rolexjs/local-platform";
+import { createRoleX, Rolex } from "rolexjs";
+import { localPlatform } from "@rolexjs/local-platform";
 import { McpState } from "../src/state.js";
 import { render } from "../src/render.js";
 
@@ -14,7 +14,7 @@ let rolex: Rolex;
 let state: McpState;
 
 beforeEach(() => {
-  rolex = new Rolex({ runtime: createGraphRuntime() });
+  rolex = createRoleX(localPlatform({ dataDir: null }));
   state = new McpState(rolex);
 });
 
@@ -23,8 +23,8 @@ beforeEach(() => {
 // ================================================================
 
 describe("findIndividual", () => {
-  it("finds an individual by name (case insensitive)", () => {
-    rolex.born("Feature: Sean\n  A backend architect");
+  it("finds an individual by id (case insensitive)", () => {
+    rolex.born("Feature: Sean\n  A backend architect", "sean");
     const found = state.findIndividual("sean");
     expect(found).not.toBeNull();
     expect(found!.name).toBe("individual");
@@ -34,9 +34,16 @@ describe("findIndividual", () => {
     expect(state.findIndividual("nobody")).toBeNull();
   });
 
-  it("finds by partial match", () => {
-    rolex.born("Feature: I am Sean the Architect");
-    const found = state.findIndividual("sean");
+  it("finds by alias", () => {
+    rolex.born("Feature: I am Sean the Architect", "sean", ["Sean", "姜山"]);
+    const found = state.findIndividual("姜山");
+    expect(found).not.toBeNull();
+    expect(found!.name).toBe("individual");
+  });
+
+  it("finds by alias case insensitive", () => {
+    rolex.born("Feature: Sean", "sean", ["Sean"]);
+    const found = state.findIndividual("SEAN");
     expect(found).not.toBeNull();
   });
 });
@@ -130,7 +137,7 @@ describe("cacheFromActivation", () => {
 });
 
 // ================================================================
-//  Render: 4-layer output
+//  Render: 3-layer output
 // ================================================================
 
 describe("render", () => {
@@ -145,14 +152,14 @@ describe("render", () => {
     expect(output).toContain('Individual "Sean" is born.');
     // Layer 2: Hint
     expect(output).toContain("Next:");
-    // Layer 3: Projection
-    expect(output).toContain("[individual]");
-    expect(output).toContain("[identity]");
-    expect(output).toContain("[knowledge]");
+    // Layer 3: Projection (generic markdown)
+    expect(output).toContain("# [individual]");
+    expect(output).toContain("## [identity]");
+    expect(output).toContain("## [knowledge]");
   });
 
-  it("includes relations when provided", () => {
-    // Born + found + hire
+  it("includes bidirectional links in projection", () => {
+    // Born + found + hire → individual has "belong" link
     const sean = rolex.born("Feature: Sean");
     const org = rolex.found("Feature: Deepractice");
     rolex.hire(org.state, sean.state);
@@ -162,15 +169,13 @@ describe("render", () => {
       process: "activate",
       name: "Sean",
       result: activated,
-      rolex,
-      relationsFor: sean.state,
     });
-    // Layer 4: Relations
-    expect(output).toContain("membership");
+    // Individual should have belong → organization via bidirectional link
+    expect(output).toContain("belong");
     expect(output).toContain("Deepractice");
   });
 
-  it("includes appointment relation", () => {
+  it("includes appointment relation in projection", () => {
     const sean = rolex.born("Feature: Sean");
     const org = rolex.found("Feature: Deepractice");
     const pos = rolex.establish(org.state, "Feature: Architect");
@@ -182,10 +187,9 @@ describe("render", () => {
       process: "activate",
       name: "Sean",
       result: activated,
-      rolex,
-      relationsFor: sean.state,
     });
-    expect(output).toContain("appointment");
+    // Individual should have serve → position via bidirectional link
+    expect(output).toContain("serve");
     expect(output).toContain("Architect");
   });
 });
@@ -196,8 +200,8 @@ describe("render", () => {
 
 describe("full execution flow", () => {
   it("completes identity → want → plan → todo → finish → reflect → realize", () => {
-    // Setup: born externally
-    const born = rolex.born("Feature: Sean");
+    // Setup: born externally with id
+    const born = rolex.born("Feature: Sean", "sean");
 
     // 1. Identity (activate)
     const individual = state.findIndividual("sean");

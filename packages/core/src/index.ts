@@ -37,6 +37,9 @@ export {
   createRuntime,
 } from "@rolexjs/system";
 
+// Platform
+export type { Platform } from "./platform.js";
+
 // ===== Structures =====
 
 export {

@@ -111,3 +111,61 @@ import { processes } from "./descriptions/index.js";
 export function detail(process: string): string {
   return processes[process] ?? "";
 }
+
+// ================================================================
+//  Generic State renderer — renders any State tree as markdown
+// ================================================================
+
+/**
+ * renderState — generic markdown renderer for any State tree.
+ *
+ * Rules:
+ *   - Heading: "#" repeated to depth + " [name]"
+ *   - Body: raw information field as-is (full Gherkin preserved)
+ *   - Links: "> → relation [target.name]" with target feature name
+ *   - Children: recursive at depth+1
+ *
+ * No concept-specific knowledge — purely structural.
+ * Markdown heading depth caps at 6 (######).
+ */
+export function renderState(state: State, depth = 1): string {
+  const lines: string[] = [];
+  const level = Math.min(depth, 6);
+  const heading = "#".repeat(level);
+
+  // Heading
+  lines.push(`${heading} [${state.name}]`);
+
+  // Body: full information as-is
+  if (state.information) {
+    lines.push("");
+    lines.push(state.information);
+  }
+
+  // Links
+  if (state.links && state.links.length > 0) {
+    lines.push("");
+    for (const link of state.links) {
+      const targetLabel = extractLabel(link.target);
+      lines.push(`> ${link.relation} → ${targetLabel}`);
+    }
+  }
+
+  // Children
+  if (state.children && state.children.length > 0) {
+    for (const child of state.children) {
+      lines.push("");
+      lines.push(renderState(child, depth + 1));
+    }
+  }
+
+  return lines.join("\n");
+}
+
+/** Extract a display label from a State: "[name] FeatureTitle" or just "[name]". */
+function extractLabel(state: State): string {
+  if (!state.information) return `[${state.name}]`;
+  const match = state.information.match(/^Feature:\s*(.+)/m);
+  const title = match ? match[1].trim() : state.information.split("\n")[0].trim();
+  return `[${state.name}] ${title}`;
+}
