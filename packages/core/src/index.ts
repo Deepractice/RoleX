@@ -60,7 +60,7 @@ export {
   // Individual — Knowledge
   knowledge,
   principle,
-  skill,
+  procedure,
   // Individual — Execution
   goal,
   plan,

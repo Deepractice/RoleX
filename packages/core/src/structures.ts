@@ -16,7 +16,7 @@
  * │ │   ├── experience      "What I learned from encounters" │
  * │ │   ├── knowledge       "What I know"                   │
  * │ │   │   ├── principle   "My rules of conduct"           │
- * │ │   │   └── skill       "My abilities and how-to"       │
+ * │ │   │   └── procedure   "My skill references and metadata"│
  * │ │   └── goal            "What I am pursuing"            │
  * │ │       └── plan        "How to achieve a goal"         │
  * │ │           └── task    "Concrete unit of work"         │
@@ -69,7 +69,7 @@ export const experience = structure("experience", "What I learned from encounter
 
 export const knowledge = structure("knowledge", "What I know", individual);
 export const principle = structure("principle", "My rules of conduct", knowledge);
-export const skill = structure("skill", "My abilities and how-to", knowledge);
+export const procedure = structure("procedure", "My skill references and metadata", knowledge);
 
 // ================================================================
 //  Individual — Execution

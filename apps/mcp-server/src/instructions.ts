@@ -13,4 +13,5 @@ export const instructions = [
   world["cognition"],
   world["memory"],
   world["gherkin"],
+  world["communication"],
 ].join("\n\n");

@@ -2,14 +2,14 @@
  * Cognition cycle — the learning loop.
  *
  * encounter → reflect → experience → realize → principle
- *                                   → master  → skill
+ *                                   → master  → procedure
  *
  * Encounters are raw events (produced by the execution cycle).
  * Reflection distills them into experience. From experience,
- * principles are realized and skills are mastered.
+ * principles are realized and procedures are mastered.
  */
 import { process, transform } from "@rolexjs/system";
-import { encounter, experience, principle, skill } from "./structures.js";
+import { encounter, experience, principle, procedure } from "./structures.js";
 
 export const reflect = process(
   "reflect",
@@ -25,7 +25,7 @@ export const realize = process(
 );
 export const master = process(
   "master",
-  "Master a skill from experience",
+  "Master a procedure from experience",
   experience,
-  transform(experience, skill)
+  transform(experience, procedure)
 );

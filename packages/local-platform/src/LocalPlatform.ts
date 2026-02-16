@@ -14,6 +14,8 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 import type { Platform } from "@rolexjs/core";
 import type { Runtime, Structure, State } from "@rolexjs/system";
+import { createResourceX, setProvider } from "resourcexjs";
+import { NodeProvider } from "@resourcexjs/node-provider";
 
 interface NodeAttributes {
   type: string;
@@ -31,6 +33,8 @@ interface EdgeAttributes {
 export interface LocalPlatformConfig {
   /** Directory for persistent storage. Defaults to ~/.deepractice/rolex. Set to null for in-memory only. */
   dataDir?: string | null;
+  /** Directory for ResourceX storage. Defaults to ~/.deepractice/resourcex. Set to null to disable. */
+  resourceDir?: string | null;
 }
 
 /** Create a local Platform. Persistent by default (~/.deepractice/rolex), in-memory if dataDir is null. */
@@ -294,5 +298,15 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
     },
   };
 
-  return { runtime };
+  // ===== ResourceX =====
+
+  let resourcex: ReturnType<typeof createResourceX> | undefined;
+  if (config.resourceDir !== null) {
+    setProvider(new NodeProvider());
+    resourcex = createResourceX({
+      path: config.resourceDir ?? join(homedir(), ".deepractice", "resourcex"),
+    });
+  }
+
+  return { runtime, resourcex };
 }

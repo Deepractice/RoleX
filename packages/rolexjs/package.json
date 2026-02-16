@@ -42,7 +42,8 @@
   "dependencies": {
     "@rolexjs/core": "workspace:*",
     "@rolexjs/system": "workspace:*",
-    "@rolexjs/parser": "workspace:*"
+    "@rolexjs/parser": "workspace:*",
+    "resourcexjs": "^2.7.0"
   },
   "devDependencies": {
     "@rolexjs/local-platform": "workspace:*"

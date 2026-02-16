@@ -15,7 +15,8 @@
  *   abandon  — abandon focused goal → encounter
  *   reflect  — encounter(s) → experience
  *   realize  — experience(s) → principle
- *   master   — experience(s) → skill
+ *   master   — experience(s) → procedure
+ *   skill    — load full skill content by locator
  */
 
 import { FastMCP } from "fastmcp";
@@ -62,7 +63,7 @@ server.addTool({
     const node = state.findIndividual(roleId);
     if (!node) throw new Error(`Role not found: "${roleId}"`);
     state.activeRole = node;
-    const result = rolex.activate(node);
+    const result = rolex.role.activate(node);
     state.cacheFromActivation(result.state);
     return fmt("activate", roleId, result);
   },
@@ -81,7 +82,7 @@ server.addTool({
       state.focusedPlan = null;
     }
     const goal = state.requireGoal();
-    const result = rolex.focus(goal);
+    const result = rolex.role.focus(goal);
     return fmt("focus", id ?? "current goal", result);
   },
 });
@@ -97,7 +98,7 @@ server.addTool({
   }),
   execute: async ({ id, goal }) => {
     const role = state.requireRole();
-    const result = rolex.want(role, goal, id);
+    const result = rolex.role.want(role, goal, id);
     state.register(id, result.state);
     state.focusedGoal = result.state;
     state.focusedPlan = null;
@@ -113,7 +114,7 @@ server.addTool({
   }),
   execute: async ({ plan }) => {
     const goal = state.requireGoal();
-    const result = rolex.plan(goal, plan);
+    const result = rolex.role.plan(goal, plan);
     state.focusedPlan = result.state;
     return fmt("plan", "plan", result);
   },
@@ -128,7 +129,7 @@ server.addTool({
   }),
   execute: async ({ id, task }) => {
     const plan = state.requirePlan();
-    const result = rolex.todo(plan, task, id);
+    const result = rolex.role.todo(plan, task, id);
     state.register(id, result.state);
     return fmt("todo", id, result);
   },
@@ -144,7 +145,7 @@ server.addTool({
   execute: async ({ id, encounter }) => {
     const task = state.resolve(id);
     const role = state.requireRole();
-    const result = rolex.finish(task, role, encounter);
+    const result = rolex.role.finish(task, role, encounter);
     state.registerEncounter(id, result.state);
     state.unregister(id);
     return fmt("finish", id, result);
@@ -161,7 +162,7 @@ server.addTool({
     const goal = state.requireGoal();
     const goalId = goal.id ?? "goal";
     const role = state.requireRole();
-    const result = rolex.achieve(goal, role, encounter);
+    const result = rolex.role.achieve(goal, role, encounter);
     state.registerEncounter(goalId, result.state);
     state.focusedGoal = null;
     state.focusedPlan = null;
@@ -179,7 +180,7 @@ server.addTool({
     const goal = state.requireGoal();
     const goalId = goal.id ?? "goal";
     const role = state.requireRole();
-    const result = rolex.abandon(goal, role, encounter);
+    const result = rolex.role.abandon(goal, role, encounter);
     state.registerEncounter(goalId, result.state);
     state.focusedGoal = null;
     state.focusedPlan = null;
@@ -200,10 +201,7 @@ server.addTool({
     const encounters = state.resolveEncounters(ids);
     const role = state.requireRole();
     const fallbackSource = encounters[0]?.information;
-    const result = rolex.reflect(encounters[0], role, experience || fallbackSource);
-    for (let i = 1; i < encounters.length; i++) {
-      rolex.project(encounters[i]);
-    }
+    const result = rolex.role.reflect(encounters[0], role, experience || fallbackSource);
     state.consumeEncounters(ids);
     const expId = ids.join("+");
     state.registerExperience(expId, result.state);
@@ -222,7 +220,7 @@ server.addTool({
     const experiences = state.resolveExperiences(ids);
     const knowledge = state.requireKnowledge();
     const fallbackSource = experiences[0]?.information;
-    const result = rolex.realize(experiences[0], knowledge, principle || fallbackSource);
+    const result = rolex.role.realize(experiences[0], knowledge, principle || fallbackSource);
     state.consumeExperiences(ids);
     return fmt("realize", ids.join("+"), result);
   },
@@ -232,16 +230,30 @@ server.addTool({
   name: "master",
   description: detail("master"),
   parameters: z.object({
-    ids: z.array(z.string()).describe("Experience ids to distill into a skill"),
-    skill: z.string().optional().describe("Gherkin Feature source for the skill"),
+    ids: z.array(z.string()).describe("Experience ids to distill into a procedure"),
+    procedure: z.string().optional().describe("Gherkin Feature source for the procedure"),
   }),
-  execute: async ({ ids, skill }) => {
+  execute: async ({ ids, procedure }) => {
     const experiences = state.resolveExperiences(ids);
     const knowledge = state.requireKnowledge();
     const fallbackSource = experiences[0]?.information;
-    const result = rolex.master(experiences[0], knowledge, skill || fallbackSource);
+    const result = rolex.role.master(experiences[0], knowledge, procedure || fallbackSource);
     state.consumeExperiences(ids);
     return fmt("master", ids.join("+"), result);
+  },
+});
+
+// ========== Tools: Skill loading ==========
+
+server.addTool({
+  name: "skill",
+  description: detail("skill"),
+  parameters: z.object({
+    locator: z.string().describe("ResourceX locator for the skill (e.g. deepractice/role-management:1.0.0)"),
+  }),
+  execute: async ({ locator }) => {
+    const content = await rolex.role.skill(locator);
+    return content;
   },
 });
 

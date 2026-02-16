@@ -39,7 +39,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@rolexjs/system": "workspace:*"
+    "@rolexjs/system": "workspace:*",
+    "resourcexjs": "^2.7.0"
   },
   "devDependencies": {},
   "publishConfig": {

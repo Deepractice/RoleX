@@ -1,16 +1,17 @@
-Feature: master — experience to skill
-  Distill experience into a skill — procedural knowledge.
-  Skills represent learned capabilities.
+Feature: master — experience to procedure
+  Distill experience into a procedure — skill metadata and reference.
+  Procedures record what was learned as a reusable capability reference.
 
-  Scenario: Master a skill
+  Scenario: Master a procedure
     Given an experience exists from reflection
     When master is called on the experience
     Then the experience is consumed
-    And a skill is added to the role's knowledge
-    And the skill represents a learned procedural capability
+    And a procedure is added to the role's knowledge
+    And the procedure stores skill metadata and ResourceX locator
 
-  Scenario: Writing the skill Gherkin
-    Given a skill is procedural knowledge — how to do something
-    Then the Feature title names the capability as an actionable procedure
-    And Scenarios describe concrete steps or different situations for applying the skill
-    And the tone is instructional — someone reading it can follow the steps
+  Scenario: Writing the procedure Gherkin
+    Given a procedure is skill metadata — a reference to full skill content
+    Then the Feature title names the capability
+    And the description includes the ResourceX locator for full skill loading
+    And Scenarios describe when and why to apply this skill
+    And the tone is referential — pointing to the full skill, not containing it

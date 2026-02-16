@@ -6,8 +6,8 @@ Feature: Cognition — the learning cycle
     Given finish, achieve, and abandon create encounters
     Then reflect(ids, experience) selectively consumes chosen encounters and produces experience
     And realize(ids, principle) distills chosen experiences into a principle — transferable knowledge
-    And master(ids, skill) distills chosen experiences into a skill — procedural knowledge
-    And each level builds on the previous — encounter → experience → principle or skill
+    And master(ids, procedure) distills chosen experiences into a procedure — skill metadata
+    And each level builds on the previous — encounter → experience → principle or procedure
 
   Scenario: Selective consumption
     Given multiple encounters or experiences exist

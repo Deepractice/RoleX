@@ -175,15 +175,15 @@ export class McpState {
       case "reflect": {
         const expCount = this.experienceRegistry.size;
         if (expCount > 0)
-          return `Experience gained. I can \`realize\` principles or \`master\` skills — ${expCount} experience(s) available.`;
-        return "Experience gained. I can `realize` a principle, `master` a skill, or continue working.";
+          return `Experience gained. I can \`realize\` principles or \`master\` procedures — ${expCount} experience(s) available.`;
+        return "Experience gained. I can `realize` a principle, `master` a procedure, or continue working.";
       }
 
       case "realize":
         return "Principle added to knowledge. I should continue working.";
 
       case "master":
-        return "Skill added to knowledge. I should continue working.";
+        return "Procedure added to knowledge. I should continue working.";
 
       default:
         return null;

@@ -22,7 +22,9 @@
   "dependencies": {
     "@rolexjs/system": "workspace:*",
     "@rolexjs/core": "workspace:*",
-    "graphology": "^0.25.4"
+    "graphology": "^0.25.4",
+    "resourcexjs": "^2.7.0",
+    "@resourcexjs/node-provider": "^2.7.0"
   },
   "devDependencies": {},
   "publishConfig": {

@@ -47,7 +47,7 @@ const descriptions: Record<string, (name: string, state: State) => string> = {
   // Cognition
   reflect: (n) => `Reflected on "${n}" → experience gained.`,
   realize: (n) => `Realized principle from "${n}".`,
-  master: (n) => `Mastered skill from "${n}".`,
+  master: (n) => `Mastered procedure from "${n}".`,
 };
 
 export function describe(process: string, name: string, state: State): string {
@@ -91,9 +91,9 @@ const hints: Record<string, string> = {
   abandon: "reflect on encounters to learn from the experience.",
 
   // Cognition
-  reflect: "realize principles or master skills from experience.",
+  reflect: "realize principles or master procedures from experience.",
   realize: "principle added to knowledge.",
-  master: "skill added to knowledge.",
+  master: "procedure added to knowledge.",
 };
 
 export function hint(process: string): string {
