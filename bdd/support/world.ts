@@ -5,14 +5,14 @@
  */
 
 import { setWorldConstructor, World } from "@deepractice/bdd";
+import type { Feature, Platform, SerializedGraph } from "@rolexjs/core";
 import {
-  RoleXGraph,
-  createRoleSystem,
+  createGovernanceSystem,
   createIndividualSystem,
   createOrgSystem,
-  createGovernanceSystem,
+  createRoleSystem,
+  RoleXGraph,
 } from "@rolexjs/core";
-import type { Feature, Platform, SerializedGraph } from "@rolexjs/core";
 import type { RunnableSystem } from "@rolexjs/system";
 
 // ========== MemoryPlatform ==========

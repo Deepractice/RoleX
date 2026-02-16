@@ -7,29 +7,29 @@
  * Own the interface, delegate the implementation.
  */
 
-import { Parser, AstBuilder, GherkinClassicTokenMatcher } from "@cucumber/gherkin";
-import { IdGenerator } from "@cucumber/messages";
+import { AstBuilder, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherkin";
 import type { GherkinDocument } from "@cucumber/messages";
+import { IdGenerator } from "@cucumber/messages";
 
 // ========== Re-export Gherkin Document Types ==========
 
 export type {
-  GherkinDocument,
-  Feature,
-  Scenario,
-  Step,
+  Background,
+  Comment,
   DataTable,
   DocString,
-  TableRow,
-  TableCell,
-  Tag,
-  Comment,
+  Examples,
+  Feature,
+  FeatureChild,
+  GherkinDocument,
   Location,
-  Background,
   Rule,
   RuleChild,
-  FeatureChild,
-  Examples,
+  Scenario,
+  Step,
+  TableCell,
+  TableRow,
+  Tag,
 } from "@cucumber/messages";
 
 export { StepKeywordType } from "@cucumber/messages";

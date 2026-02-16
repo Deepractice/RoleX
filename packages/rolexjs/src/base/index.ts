@@ -9,8 +9,8 @@
  * Upgrade = upgrade the package. Local growth is never touched.
  */
 
-import { parse } from "@rolexjs/parser";
 import type { Feature, Scenario } from "@rolexjs/core";
+import { parse } from "@rolexjs/parser";
 import type { BaseProvider } from "@rolexjs/system";
 
 // ========== _common ==========
@@ -19,18 +19,18 @@ import type { BaseProvider } from "@rolexjs/system";
 
 // ========== nuwa ==========
 
+import nuwaOrgMgmt from "./nuwa/org-management.knowledge.procedure.feature";
 import nuwaPersona from "./nuwa/persona.feature";
 import nuwaRoleMgmt from "./nuwa/role-management.knowledge.procedure.feature";
-import nuwaOrgMgmt from "./nuwa/org-management.knowledge.procedure.feature";
 
 // ========== guider ==========
 
+import guiderCapability from "./guider/capability-system.knowledge.pattern.feature";
+import guiderExecution from "./guider/execution-cycle.knowledge.pattern.feature";
+import guiderGherkin from "./guider/gherkin-basics.knowledge.pattern.feature";
+import guiderGrowth from "./guider/growth-cycle.knowledge.pattern.feature";
 import guiderPersona from "./guider/persona.feature";
 import guiderOverview from "./guider/rolex-overview.knowledge.pattern.feature";
-import guiderExecution from "./guider/execution-cycle.knowledge.pattern.feature";
-import guiderGrowth from "./guider/growth-cycle.knowledge.pattern.feature";
-import guiderCapability from "./guider/capability-system.knowledge.pattern.feature";
-import guiderGherkin from "./guider/gherkin-basics.knowledge.pattern.feature";
 
 // ========== Parser ==========
 

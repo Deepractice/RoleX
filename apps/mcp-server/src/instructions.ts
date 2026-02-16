@@ -9,9 +9,9 @@ import { world } from "rolexjs";
 export const instructions = [
   world["cognitive-priority"],
   world["role-identity"],
-  world["execution"],
-  world["cognition"],
-  world["memory"],
-  world["gherkin"],
-  world["communication"],
+  world.execution,
+  world.cognition,
+  world.memory,
+  world.gherkin,
+  world.communication,
 ].join("\n\n");

@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import { readdir, readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { createRegistry, createRXM, createRXC, parseRXL } from "resourcexjs";
+import { createRegistry, createRXC, createRXM, parseRXL } from "resourcexjs";
 import { createRoleType } from "../dist/index.js";
 
 async function readDirRecursive(dir: string, baseDir: string = dir): Promise<Map<string, string>> {
@@ -15,7 +15,7 @@ async function readDirRecursive(dir: string, baseDir: string = dir): Promise<Map
         files.set(path, content);
       }
     } else {
-      const relativePath = fullPath.replace(baseDir + "/", "");
+      const relativePath = fullPath.replace(`${baseDir}/`, "");
       const content = await readFile(fullPath, "utf-8");
       files.set(relativePath, content);
     }

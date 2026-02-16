@@ -14,16 +14,13 @@
  *   console.log(hint("born"));
  */
 
-// API
-export { Rolex, createRoleX } from "./rolex.js";
-export type { RolexResult } from "./rolex.js";
-
-// Render
-export { describe, hint, detail, world, renderState } from "./render.js";
-
-// Feature (Gherkin type + parse/serialize)
-export type { Feature, Scenario, Step, DataTableRow } from "./feature.js";
-export { parse, serialize } from "./feature.js";
-
 // Re-export core (structures + processes)
 export * from "@rolexjs/core";
+// Feature (Gherkin type + parse/serialize)
+export type { DataTableRow, Feature, Scenario, Step } from "./feature.js";
+export { parse, serialize } from "./feature.js";
+// Render
+export { describe, detail, hint, renderState, world } from "./render.js";
+export type { RolexResult } from "./rolex.js";
+// API
+export { createRoleX, Rolex } from "./rolex.js";

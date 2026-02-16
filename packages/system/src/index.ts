@@ -19,22 +19,22 @@
 
 // ===== Structure + Relation =====
 
-export type { Structure, Relation } from "./structure.js";
-export { structure, relation } from "./structure.js";
+export type { Relation, Structure } from "./structure.js";
+export { relation, structure } from "./structure.js";
 
 // ===== Process + State =====
 
 export type {
   Create,
-  Remove,
-  Transform,
-  Link,
-  Unlink,
   GraphOp,
+  Link,
   Process,
+  Remove,
   State,
+  Transform,
+  Unlink,
 } from "./process.js";
-export { create, remove, transform, link, unlink, process } from "./process.js";
+export { create, link, process, remove, transform, unlink } from "./process.js";
 
 // ===== Runtime =====
 

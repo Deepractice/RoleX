@@ -15,26 +15,26 @@
 
 // Re-export system primitives
 export {
-  type Structure,
-  type Relation,
   type Create,
-  type Remove,
-  type Transform,
-  type Link,
-  type Unlink,
-  type GraphOp,
-  type Process,
-  type State,
-  type Runtime,
-  structure,
-  relation,
   create,
-  remove,
-  transform,
-  link,
-  unlink,
-  process,
   createRuntime,
+  type GraphOp,
+  type Link,
+  link,
+  type Process,
+  process,
+  type Relation,
+  type Remove,
+  type Runtime,
+  relation,
+  remove,
+  type State,
+  type Structure,
+  structure,
+  type Transform,
+  transform,
+  type Unlink,
+  unlink,
 } from "@rolexjs/system";
 
 // Platform
@@ -43,49 +43,49 @@ export type { Platform } from "./platform.js";
 // ===== Structures =====
 
 export {
-  // Level 0
-  society,
-  // Level 1
-  individual,
-  organization,
-  past,
-  // Individual — Identity
-  identity,
   background,
-  tone,
-  mindset,
+  // Organization
+  charter,
+  duty,
   // Individual — Cognition
   encounter,
   experience,
-  // Individual — Knowledge
-  knowledge,
-  principle,
-  procedure,
   // Individual — Execution
   goal,
+  // Individual — Identity
+  identity,
+  // Level 1
+  individual,
+  // Individual — Knowledge
+  knowledge,
+  mindset,
+  organization,
+  past,
   plan,
-  task,
-  // Organization
-  charter,
   position,
-  duty,
+  principle,
+  procedure,
+  // Level 0
+  society,
+  task,
+  tone,
 } from "./structures.js";
 
 // ===== Processes — Layer 1: Execution =====
 
-export { want, planGoal, todo, finish, achieve, abandon } from "./execution.js";
+export { abandon, achieve, finish, planGoal, todo, want } from "./execution.js";
 
 // ===== Processes — Layer 2: Cognition =====
 
-export { reflect, realize, master } from "./cognition.js";
+export { master, realize, reflect } from "./cognition.js";
 
 // ===== Processes — Layer 3: Organization =====
 
-export { hire, fire, appoint, dismiss, charterOrg, charge } from "./organization.js";
+export { appoint, charge, charterOrg, dismiss, fire, hire } from "./organization.js";
 
 // ===== Processes — Layer 4: Lifecycle =====
 
-export { born, found, establish, retire, die, dissolve, abolish, rehire } from "./lifecycle.js";
+export { abolish, born, die, dissolve, establish, found, rehire, retire } from "./lifecycle.js";
 
 // ===== Role =====
 

@@ -9,8 +9,8 @@
  *
  * No real deletion — everything transforms to the "past" branch.
  */
-import { process, create, transform } from "@rolexjs/system";
-import { society, individual, organization, position, past } from "./structures.js";
+import { create, process, transform } from "@rolexjs/system";
+import { individual, organization, past, position, society } from "./structures.js";
 
 // Creation
 export const born = process(

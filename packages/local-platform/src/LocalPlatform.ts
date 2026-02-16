@@ -8,14 +8,15 @@
  * This ensures cross-process consistency (CLI writes, MCP reads immediately).
  * When dataDir is null, runs purely in-memory (useful for tests).
  */
-import { MultiDirectedGraph as DirectedGraph } from "graphology";
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
-import { join } from "node:path";
+
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import type { Platform } from "@rolexjs/core";
-import type { Runtime, Structure, State } from "@rolexjs/system";
-import { createResourceX, setProvider } from "resourcexjs";
+import { join } from "node:path";
 import { NodeProvider } from "@resourcexjs/node-provider";
+import type { Platform } from "@rolexjs/core";
+import type { Runtime, State, Structure } from "@rolexjs/system";
+import { MultiDirectedGraph as DirectedGraph } from "graphology";
+import { createResourceX, setProvider } from "resourcexjs";
 
 interface NodeAttributes {
   type: string;
@@ -39,9 +40,10 @@ export interface LocalPlatformConfig {
 
 /** Create a local Platform. Persistent by default (~/.deepractice/rolex), in-memory if dataDir is null. */
 export function localPlatform(config: LocalPlatformConfig = {}): Platform {
-  const dataDir = config.dataDir === null
-    ? undefined
-    : config.dataDir ?? join(homedir(), ".deepractice", "rolex");
+  const dataDir =
+    config.dataDir === null
+      ? undefined
+      : (config.dataDir ?? join(homedir(), ".deepractice", "rolex"));
   const graph = new DirectedGraph<NodeAttributes, EdgeAttributes>();
 
   // ===== Persistence =====
@@ -66,11 +68,7 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
   const save = () => {
     if (!dataDir) return;
     mkdirSync(dataDir, { recursive: true });
-    writeFileSync(
-      join(dataDir, "graph.json"),
-      JSON.stringify(graph.export(), null, 2),
-      "utf-8",
-    );
+    writeFileSync(join(dataDir, "graph.json"), JSON.stringify(graph.export(), null, 2), "utf-8");
   };
 
   const nextRef = () => `n${++counter}`;
@@ -135,7 +133,7 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
     type: Structure,
     information?: string,
     id?: string,
-    alias?: readonly string[],
+    alias?: readonly string[]
   ): Structure => {
     const ref = nextRef();
 

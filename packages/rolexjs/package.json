@@ -35,7 +35,7 @@
   "scripts": {
     "gen:desc": "bun run scripts/gen-descriptions.ts",
     "build": "bun run gen:desc && tsup",
-    "lint": "eslint .",
+    "lint": "biome lint .",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
@@ -43,7 +43,7 @@
     "@rolexjs/core": "workspace:*",
     "@rolexjs/system": "workspace:*",
     "@rolexjs/parser": "workspace:*",
-    "resourcexjs": "^2.7.0"
+    "resourcexjs": "^2.8.0"
   },
   "devDependencies": {
     "@rolexjs/local-platform": "workspace:*"

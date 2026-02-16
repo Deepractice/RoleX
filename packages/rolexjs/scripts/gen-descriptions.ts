@@ -9,7 +9,7 @@
  * Usage: bun run scripts/gen-descriptions.ts
  */
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join, basename } from "node:path";
+import { basename, join } from "node:path";
 
 const descDir = join(import.meta.dirname, "..", "src", "descriptions");
 const outFile = join(descDir, "index.ts");
@@ -44,4 +44,6 @@ ${toEntries(worldFiles, "world-").join("\n")}
 `;
 
 writeFileSync(outFile, output, "utf-8");
-console.log(`Generated descriptions/index.ts (${processFiles.length} processes, ${worldFiles.length} world features inlined)`);
+console.log(
+  `Generated descriptions/index.ts (${processFiles.length} processes, ${worldFiles.length} world features inlined)`
+);

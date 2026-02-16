@@ -29,7 +29,7 @@
  * │ └── past                "Things no longer active"        │
  * └─────────────────────────────────────────────────────────┘
  */
-import { structure, relation } from "@rolexjs/system";
+import { relation, structure } from "@rolexjs/system";
 
 // ================================================================
 //  Level 0 — Root

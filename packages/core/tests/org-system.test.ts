@@ -1,5 +1,10 @@
-import { describe, test, expect } from "bun:test";
-import { RoleXGraph, createRoleSystem, createOrgSystem, createGovernanceSystem } from "@rolexjs/core";
+import { describe, expect, test } from "bun:test";
+import {
+  createGovernanceSystem,
+  createOrgSystem,
+  createRoleSystem,
+  RoleXGraph,
+} from "@rolexjs/core";
 import { MemoryPlatform } from "./memory-platform";
 
 describe("Organization System + Governance System — full lifecycle", () => {
@@ -98,8 +103,14 @@ describe("Organization System + Governance System — full lifecycle", () => {
   });
 
   test("appoint — assign role to position", async () => {
-    const r1 = await govSystem.execute("appoint", { roleName: "alice", positionName: "deepractice/cto" });
-    const r2 = await govSystem.execute("appoint", { roleName: "bob", positionName: "deepractice/engineer" });
+    const r1 = await govSystem.execute("appoint", {
+      roleName: "alice",
+      positionName: "deepractice/cto",
+    });
+    const r2 = await govSystem.execute("appoint", {
+      roleName: "bob",
+      positionName: "deepractice/engineer",
+    });
     expect(r1).toContain("[alice] appointed to: deepractice/cto");
     expect(r2).toContain("[bob] appointed to: deepractice/engineer");
     // Assignment is undirected edge

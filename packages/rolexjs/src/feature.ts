@@ -104,5 +104,5 @@ export function serialize(feature: Feature): string {
     }
   }
 
-  return lines.join("\n") + "\n";
+  return `${lines.join("\n")}\n`;
 }

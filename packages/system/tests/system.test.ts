@@ -1,14 +1,13 @@
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import {
-  structure,
-  relation,
   create,
-  remove,
-  transform,
-  link,
-  unlink,
-  process,
   createRuntime,
+  link,
+  process,
+  relation,
+  structure,
+  transform,
+  unlink,
 } from "../src/index.js";
 
 // ================================================================
@@ -106,7 +105,7 @@ describe("Process", () => {
 
   test("define a process with unlink op", () => {
     const world = structure("world", "Root", null);
-    const agent = structure("agent", "An agent", world);
+    const _agent = structure("agent", "An agent", world);
     const position = structure("position", "Position", world);
     const dismiss = process(
       "dismiss",
@@ -176,7 +175,7 @@ describe("Runtime", () => {
 
       // experience as container (has children, no information)
       const exp2 = rt.create(a, experience);
-      const ins = rt.create(exp2, insight, "Feature: JWT refresh is key");
+      const _ins = rt.create(exp2, insight, "Feature: JWT refresh is key");
       const s2 = rt.project(exp2);
       expect(s2.information).toBeUndefined();
       expect(s2.children).toHaveLength(1);
@@ -188,9 +187,9 @@ describe("Runtime", () => {
       const rt = createRuntime();
       const root = rt.create(null, world);
       const a = rt.create(root, agent);
-      const k = rt.create(a, knowledge);
+      const _k = rt.create(a, knowledge);
       const exp = rt.create(a, experience);
-      const ins = rt.create(exp, insight, "Feature: learned something");
+      const _ins = rt.create(exp, insight, "Feature: learned something");
 
       const state = rt.project(root);
       expect(state.children).toHaveLength(1); // agent
@@ -218,7 +217,7 @@ describe("Runtime", () => {
       const root = rt.create(null, world);
       const a = rt.create(root, agent);
       const exp = rt.create(a, experience);
-      const ins = rt.create(exp, insight, "data");
+      const _ins = rt.create(exp, insight, "data");
 
       rt.remove(exp); // removes experience + insight
       const state = rt.project(a);

@@ -1,11 +1,7 @@
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { localPlatform } from "@rolexjs/local-platform";
+import { describe as renderDescribe, hint as renderHint, renderState } from "../src/render.js";
 import { createRoleX } from "../src/rolex.js";
-import {
-  describe as renderDescribe,
-  hint as renderHint,
-  renderState,
-} from "../src/render.js";
 
 function setup() {
   return createRoleX(localPlatform({ dataDir: null }));
@@ -331,7 +327,7 @@ describe("Rolex API (stateless)", () => {
       const t2 = rolex.todo(plan, "Feature: Refresh endpoint").state;
 
       const enc1 = rolex.finish(t1, sean, "Feature: Login done").state;
-      const enc2 = rolex.finish(t2, sean, "Feature: Refresh done").state;
+      const _enc2 = rolex.finish(t2, sean, "Feature: Refresh done").state;
       rolex.achieve(goal, sean, "Feature: Auth complete");
 
       // Cognition cycle
@@ -366,12 +362,30 @@ describe("Rolex API (stateless)", () => {
 
     test("every process has a hint", () => {
       const processes = [
-        "born", "found", "establish", "charter", "charge",
-        "retire", "die", "dissolve", "abolish", "rehire",
-        "hire", "fire", "appoint", "dismiss",
+        "born",
+        "found",
+        "establish",
+        "charter",
+        "charge",
+        "retire",
+        "die",
+        "dissolve",
+        "abolish",
+        "rehire",
+        "hire",
+        "fire",
+        "appoint",
+        "dismiss",
         "activate",
-        "want", "plan", "todo", "finish", "achieve", "abandon",
-        "reflect", "realize", "master",
+        "want",
+        "plan",
+        "todo",
+        "finish",
+        "achieve",
+        "abandon",
+        "reflect",
+        "realize",
+        "master",
       ];
       for (const p of processes) {
         expect(renderHint(p)).toStartWith("Next:");
@@ -457,7 +471,7 @@ describe("Rolex API (stateless)", () => {
     test("renders without information gracefully", () => {
       const rolex = setup();
       const r = rolex.born();
-      const identity = r.state.children!.find(c => c.name === "identity")!;
+      const identity = r.state.children!.find((c) => c.name === "identity")!;
       const md = renderState(identity);
       expect(md).toBe("# [identity]");
     });
@@ -504,31 +518,51 @@ describe("Rolex API (stateless)", () => {
       const goal = rolex.want(sean, "Feature: Auth").state;
       const plan = rolex.plan(goal).state;
       const task = rolex.todo(plan, "Feature: Login").state;
-      const enc = rolex.finish(task, sean, "Feature: Done\n  Scenario: It worked\n    Given login\n    Then success").state;
+      const enc = rolex.finish(
+        task,
+        sean,
+        "Feature: Done\n  Scenario: It worked\n    Given login\n    Then success"
+      ).state;
       expect(() => rolex.reflect(enc, sean, "not gherkin")).toThrow("Invalid Gherkin");
     });
 
     test("realize rejects non-Gherkin principle", () => {
       const rolex = setup();
       const sean = rolex.born("Feature: Sean").state;
-      const knowledge = sean.children!.find(c => c.name === "knowledge")!;
+      const knowledge = sean.children!.find((c) => c.name === "knowledge")!;
       const goal = rolex.want(sean, "Feature: Auth").state;
       const plan = rolex.plan(goal).state;
       const task = rolex.todo(plan, "Feature: Login").state;
-      const enc = rolex.finish(task, sean, "Feature: Done\n  Scenario: OK\n    Given x\n    Then y").state;
-      const exp = rolex.reflect(enc, sean, "Feature: Insight\n  Scenario: Learned\n    Given practice\n    Then understanding").state;
+      const enc = rolex.finish(
+        task,
+        sean,
+        "Feature: Done\n  Scenario: OK\n    Given x\n    Then y"
+      ).state;
+      const exp = rolex.reflect(
+        enc,
+        sean,
+        "Feature: Insight\n  Scenario: Learned\n    Given practice\n    Then understanding"
+      ).state;
       expect(() => rolex.realize(exp, knowledge, "not gherkin")).toThrow("Invalid Gherkin");
     });
 
     test("master rejects non-Gherkin skill", () => {
       const rolex = setup();
       const sean = rolex.born("Feature: Sean").state;
-      const knowledge = sean.children!.find(c => c.name === "knowledge")!;
+      const knowledge = sean.children!.find((c) => c.name === "knowledge")!;
       const goal = rolex.want(sean, "Feature: Auth").state;
       const plan = rolex.plan(goal).state;
       const task = rolex.todo(plan, "Feature: Login").state;
-      const enc = rolex.finish(task, sean, "Feature: Done\n  Scenario: OK\n    Given x\n    Then y").state;
-      const exp = rolex.reflect(enc, sean, "Feature: Insight\n  Scenario: Learned\n    Given practice\n    Then understanding").state;
+      const enc = rolex.finish(
+        task,
+        sean,
+        "Feature: Done\n  Scenario: OK\n    Given x\n    Then y"
+      ).state;
+      const exp = rolex.reflect(
+        enc,
+        sean,
+        "Feature: Insight\n  Scenario: Learned\n    Given practice\n    Then understanding"
+      ).state;
       expect(() => rolex.master(exp, knowledge, "not gherkin")).toThrow("Invalid Gherkin");
     });
   });

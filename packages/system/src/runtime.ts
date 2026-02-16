@@ -11,14 +11,21 @@
  *
  * State = Process(Structure, Information?)
  */
-import type { Structure } from "./structure.js";
+
 import type { State } from "./process.js";
+import type { Structure } from "./structure.js";
 
 // ===== Runtime interface =====
 
 export interface Runtime {
   /** Create a child node (parent=null for root). Type is the structure template. */
-  create(parent: Structure | null, type: Structure, information?: string, id?: string, alias?: readonly string[]): Structure;
+  create(
+    parent: Structure | null,
+    type: Structure,
+    information?: string,
+    id?: string,
+    alias?: readonly string[]
+  ): Structure;
 
   /** Remove a node and its subtree. */
   remove(node: Structure): void;
@@ -112,7 +119,7 @@ export const createRuntime = (): Runtime => {
     type: Structure,
     information?: string,
     id?: string,
-    alias?: readonly string[],
+    alias?: readonly string[]
   ): Structure => {
     const ref = nextRef();
     const node: Structure = {
@@ -195,7 +202,9 @@ export const createRuntime = (): Runtime => {
       // Forward
       const fromLinks = links.get(from.ref);
       if (fromLinks) {
-        const filtered = fromLinks.filter((l) => !(l.toId === to.ref && l.relation === relationName));
+        const filtered = fromLinks.filter(
+          (l) => !(l.toId === to.ref && l.relation === relationName)
+        );
         if (filtered.length === 0) links.delete(from.ref);
         else links.set(from.ref, filtered);
       }
@@ -203,7 +212,9 @@ export const createRuntime = (): Runtime => {
       // Reverse
       const toLinks = links.get(to.ref);
       if (toLinks) {
-        const filtered = toLinks.filter((l) => !(l.toId === from.ref && l.relation === reverseName));
+        const filtered = toLinks.filter(
+          (l) => !(l.toId === from.ref && l.relation === reverseName)
+        );
         if (filtered.length === 0) links.delete(to.ref);
         else links.set(to.ref, filtered);
       }

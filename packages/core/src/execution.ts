@@ -9,8 +9,8 @@
  * complete, they transform into encounters — feeding the
  * cognition cycle.
  */
-import { process, create, transform } from "@rolexjs/system";
-import { individual, goal, plan, task, encounter } from "./structures.js";
+import { create, process, transform } from "@rolexjs/system";
+import { encounter, goal, individual, plan, task } from "./structures.js";
 
 export const want = process("want", "Declare a goal", individual, create(goal));
 export const planGoal = process("plan", "Create a plan for a goal", goal, create(plan));

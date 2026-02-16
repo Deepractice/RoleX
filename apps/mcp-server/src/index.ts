@@ -19,13 +19,13 @@
  *   skill    — load full skill content by locator
  */
 
+import { localPlatform } from "@rolexjs/local-platform";
 import { FastMCP } from "fastmcp";
 import { createRoleX, detail } from "rolexjs";
-import { localPlatform } from "@rolexjs/local-platform";
 import { z } from "zod";
-import { McpState } from "./state.js";
-import { render } from "./render.js";
 import { instructions } from "./instructions.js";
+import { render } from "./render.js";
+import { McpState } from "./state.js";
 
 // ========== Setup ==========
 
@@ -249,7 +249,9 @@ server.addTool({
   name: "skill",
   description: detail("skill"),
   parameters: z.object({
-    locator: z.string().describe("ResourceX locator for the skill (e.g. deepractice/role-management:1.0.0)"),
+    locator: z
+      .string()
+      .describe("ResourceX locator for the skill (e.g. deepractice/role-management:1.0.0)"),
   }),
   execute: async ({ locator }) => {
     const content = await rolex.role.skill(locator);

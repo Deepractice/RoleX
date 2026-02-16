@@ -1,5 +1,5 @@
-import { describe, test, expect } from "bun:test";
-import { structure, relation } from "@rolexjs/system";
+import { describe, expect, test } from "bun:test";
+import { relation, structure } from "@rolexjs/system";
 import { localPlatform } from "../src/index.js";
 
 function createGraphRuntime() {
@@ -28,13 +28,13 @@ const experience = structure("experience", "What I learned from encounters", ind
 
 const knowledge = structure("knowledge", "What I know", individual);
 const principle = structure("principle", "My rules of conduct", knowledge);
-const skill = structure("skill", "My abilities and how-to", knowledge);
+const _skill = structure("skill", "My abilities and how-to", knowledge);
 
 const goal = structure("goal", "What I am pursuing", individual);
 const plan = structure("plan", "How to achieve a goal", goal);
 const task = structure("task", "Concrete unit of work", plan);
 
-const charter = structure("charter", "The rules and mission", organization);
+const _charter = structure("charter", "The rules and mission", organization);
 const position = structure("position", "A role held by an individual", organization, [
   relation("appointment", "Who holds this position", individual),
 ]);
@@ -96,7 +96,7 @@ describe("Graph Runtime", () => {
 
       // experience as container (has children)
       const exp2 = rt.create(sean, experience);
-      const child = rt.create(exp2, encounter, "Feature: JWT incident");
+      const _child = rt.create(exp2, encounter, "Feature: JWT incident");
       const s2 = rt.project(exp2);
       expect(s2.information).toBeUndefined();
       expect(s2.children).toHaveLength(1);
@@ -108,7 +108,7 @@ describe("Graph Runtime", () => {
       const root = rt.create(null, society);
       const sean = rt.create(root, individual);
       const id = rt.create(sean, identity);
-      const bg = rt.create(id, background, "Feature: CS from MIT");
+      const _bg = rt.create(id, background, "Feature: CS from MIT");
 
       const state = rt.project(root);
       expect(state.children).toHaveLength(1);
@@ -483,7 +483,7 @@ describe("Graph Runtime", () => {
 
       // establish: create position
       const arch = rt.create(dp, position);
-      const archDuty = rt.create(arch, duty, "Feature: Design system architecture");
+      const _archDuty = rt.create(arch, duty, "Feature: Design system architecture");
 
       // born: create individual
       const sean = rt.create(root, individual, "Feature: I am Sean");
@@ -556,7 +556,7 @@ describe("Graph Runtime", () => {
 
     test("id and alias appear in roots()", () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society, undefined, "world", ["World"]);
+      const _root = rt.create(null, society, undefined, "world", ["World"]);
       const roots = rt.roots();
       expect(roots).toHaveLength(1);
       expect(roots[0].id).toBe("world");

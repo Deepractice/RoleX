@@ -34,15 +34,15 @@ async function main() {
   console.log("=".repeat(80));
   console.log("\n【Personality】(first 800 chars)");
   console.log("-".repeat(80));
-  console.log(role.personality.substring(0, 800) + "...\n");
+  console.log(`${role.personality.substring(0, 800)}...\n`);
 
   console.log("【Principle】(first 500 chars)");
   console.log("-".repeat(80));
-  console.log(role.principle.substring(0, 500) + "...\n");
+  console.log(`${role.principle.substring(0, 500)}...\n`);
 
   console.log("【Knowledge】(first 500 chars)");
   console.log("-".repeat(80));
-  console.log(role.knowledge.substring(0, 500) + "...\n");
+  console.log(`${role.knowledge.substring(0, 500)}...\n`);
 
   console.log("【Statistics】");
   console.log("-".repeat(80));

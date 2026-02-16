@@ -1,4 +1,4 @@
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { RoleXGraph } from "../../src/graph/RoleXGraph.js";
 
 describe("RoleXGraph", () => {
@@ -396,8 +396,9 @@ describe("RoleXGraph", () => {
       expect(g.getNode("sean")!.shadow).toBe(false);
 
       // Active goals for sean: none (all shadowed)
-      const activeGoals = g.outNeighbors("sean", "has-goal")
-        .filter(key => !g.getNode(key)!.shadow);
+      const activeGoals = g
+        .outNeighbors("sean", "has-goal")
+        .filter((key) => !g.getNode(key)!.shadow);
       expect(activeGoals).toEqual([]);
     });
 
@@ -447,8 +448,9 @@ describe("RoleXGraph", () => {
       expect(g.getNode("api-design-pattern")!.shadow).toBe(false);
 
       // active insights: none
-      const activeInsights = g.outNeighbors("sean", "has-insight")
-        .filter(key => !g.getNode(key)!.shadow);
+      const activeInsights = g
+        .outNeighbors("sean", "has-insight")
+        .filter((key) => !g.getNode(key)!.shadow);
       expect(activeInsights).toEqual([]);
     });
   });

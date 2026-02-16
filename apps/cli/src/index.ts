@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /**
  * RoleX CLI — stateless command layer over the Rolex API.
  *
@@ -9,12 +10,12 @@
  *   rolex resource    — ResourceX (use, search, has, info, add, remove, push, pull)
  */
 
+import { readFileSync } from "node:fs";
+import { localPlatform } from "@rolexjs/local-platform";
 import { defineCommand, runMain } from "citty";
 import consola from "consola";
-import { readFileSync } from "node:fs";
-import { createRoleX, describe, hint } from "rolexjs";
 import type { RolexResult } from "rolexjs";
-import { localPlatform } from "@rolexjs/local-platform";
+import { createRoleX, describe, hint } from "rolexjs";
 
 // ========== Setup ==========
 
@@ -25,7 +26,10 @@ const rolex = createRoleX(localPlatform());
 /** Build CLI arg definition for a concept's Gherkin content. */
 function contentArg(concept: string) {
   return {
-    [concept]: { type: "string" as const, description: `Gherkin Feature source for the ${concept}` },
+    [concept]: {
+      type: "string" as const,
+      description: `Gherkin Feature source for the ${concept}`,
+    },
     file: { type: "string" as const, alias: "f", description: "Path to .feature file" },
   };
 }
@@ -57,7 +61,8 @@ function output(result: RolexResult, name: string) {
 }
 
 function requireResource() {
-  if (!rolex.resource) throw new Error("ResourceX is not available. Check your platform configuration.");
+  if (!rolex.resource)
+    throw new Error("ResourceX is not available. Check your platform configuration.");
   return rolex.resource;
 }
 
@@ -150,7 +155,12 @@ const want = defineCommand({
   },
   run({ args }) {
     const aliasList = args.alias ? args.alias.split(",").map((a: string) => a.trim()) : undefined;
-    const result = rolex.role.want(ref(args.individual), resolveContent(args, "goal"), args.id, aliasList);
+    const result = rolex.role.want(
+      ref(args.individual),
+      resolveContent(args, "goal"),
+      args.id,
+      aliasList
+    );
     output(result, result.state.name);
   },
 });
@@ -177,7 +187,12 @@ const todo = defineCommand({
   },
   run({ args }) {
     const aliasList = args.alias ? args.alias.split(",").map((a: string) => a.trim()) : undefined;
-    const result = rolex.role.todo(ref(args.plan), resolveContent(args, "task"), args.id, aliasList);
+    const result = rolex.role.todo(
+      ref(args.plan),
+      resolveContent(args, "task"),
+      args.id,
+      aliasList
+    );
     output(result, result.state.name);
   },
 });
@@ -190,7 +205,11 @@ const finish = defineCommand({
     ...contentArg("encounter"),
   },
   run({ args }) {
-    const result = rolex.role.finish(ref(args.task), ref(args.individual), resolveContent(args, "encounter"));
+    const result = rolex.role.finish(
+      ref(args.task),
+      ref(args.individual),
+      resolveContent(args, "encounter")
+    );
     output(result, result.state.name);
   },
 });
@@ -203,7 +222,11 @@ const achieve = defineCommand({
     ...contentArg("encounter"),
   },
   run({ args }) {
-    const result = rolex.role.achieve(ref(args.goal), ref(args.individual), resolveContent(args, "encounter"));
+    const result = rolex.role.achieve(
+      ref(args.goal),
+      ref(args.individual),
+      resolveContent(args, "encounter")
+    );
     output(result, result.state.name);
   },
 });
@@ -216,7 +239,11 @@ const abandon = defineCommand({
     ...contentArg("encounter"),
   },
   run({ args }) {
-    const result = rolex.role.abandon(ref(args.goal), ref(args.individual), resolveContent(args, "encounter"));
+    const result = rolex.role.abandon(
+      ref(args.goal),
+      ref(args.individual),
+      resolveContent(args, "encounter")
+    );
     output(result, result.state.name);
   },
 });
@@ -229,7 +256,11 @@ const reflect = defineCommand({
     ...contentArg("experience"),
   },
   run({ args }) {
-    const result = rolex.role.reflect(ref(args.encounter), ref(args.individual), resolveContent(args, "experience"));
+    const result = rolex.role.reflect(
+      ref(args.encounter),
+      ref(args.individual),
+      resolveContent(args, "experience")
+    );
     output(result, result.state.name);
   },
 });
@@ -242,7 +273,11 @@ const realize = defineCommand({
     ...contentArg("principle"),
   },
   run({ args }) {
-    const result = rolex.role.realize(ref(args.experience), ref(args.knowledge), resolveContent(args, "principle"));
+    const result = rolex.role.realize(
+      ref(args.experience),
+      ref(args.knowledge),
+      resolveContent(args, "principle")
+    );
     output(result, result.state.name);
   },
 });
@@ -255,7 +290,11 @@ const master = defineCommand({
     ...contentArg("procedure"),
   },
   run({ args }) {
-    const result = rolex.role.master(ref(args.experience), ref(args.knowledge), resolveContent(args, "procedure"));
+    const result = rolex.role.master(
+      ref(args.experience),
+      ref(args.knowledge),
+      resolveContent(args, "procedure")
+    );
     output(result, result.state.name);
   },
 });
@@ -263,11 +302,14 @@ const master = defineCommand({
 const use = defineCommand({
   meta: { name: "use", description: "Use a resource — interact with external resources" },
   args: {
-    locator: { type: "positional" as const, description: "Resource locator (e.g. hello:1.0.0)", required: true },
+    locator: {
+      type: "positional" as const,
+      description: "Resource locator (e.g. hello:1.0.0)",
+      required: true,
+    },
   },
   async run({ args }) {
-    const executable = await rolex.role.use(args.locator);
-    const result = await executable.execute();
+    const result = await rolex.role.use(args.locator);
     if (typeof result === "string") {
       console.log(result);
     } else if (result instanceof Uint8Array) {
@@ -322,7 +364,12 @@ const establish = defineCommand({
   },
   run({ args }) {
     const aliasList = args.alias ? args.alias.split(",").map((a: string) => a.trim()) : undefined;
-    const result = rolex.org.establish(ref(args.org), resolveContent(args, "position"), args.id, aliasList);
+    const result = rolex.org.establish(
+      ref(args.org),
+      resolveContent(args, "position"),
+      args.id,
+      aliasList
+    );
     output(result, args.id ?? result.state.name);
   },
 });
@@ -479,7 +526,11 @@ const rxInfo = defineCommand({
 const rxAdd = defineCommand({
   meta: { name: "add", description: "Add a resource from a local directory" },
   args: {
-    path: { type: "positional" as const, description: "Path to resource directory", required: true },
+    path: {
+      type: "positional" as const,
+      description: "Path to resource directory",
+      required: true,
+    },
   },
   async run({ args }) {
     const rx = requireResource();

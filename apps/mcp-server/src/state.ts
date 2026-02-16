@@ -7,8 +7,7 @@
  *   - id → Structure registry (resolve user-facing ids to node refs)
  *   - encounter / experience registries (for selective cognition)
  */
-import type { Structure, State } from "rolexjs";
-import type { Rolex } from "rolexjs";
+import type { Rolex, State, Structure } from "rolexjs";
 
 export class McpState {
   activeRole: Structure | null = null;
@@ -127,8 +126,7 @@ export class McpState {
   /** Cache child refs from an activation projection. */
   cacheFromActivation(state: State) {
     const children = (state as State & { children?: readonly State[] }).children;
-    this.knowledgeRef =
-      children?.find((c: State) => c.name === "knowledge") ?? null;
+    this.knowledgeRef = children?.find((c: State) => c.name === "knowledge") ?? null;
   }
 
   // ================================================================

@@ -1,25 +1,24 @@
-import { describe, test, expect } from "bun:test";
-import {
-  createRuntime,
-  society,
-  individual,
-  organization,
-  persona,
-  voice,
-  memoir,
-  philosophy,
-  knowledge,
-  pattern,
-  procedure,
-  theory,
-  experience,
-  insight,
-  conclusion,
-  goal,
-  plan,
-  task,
-} from "../src/index.js";
+import { describe, expect, test } from "bun:test";
 import type { State } from "../src/index.js";
+import {
+  conclusion,
+  createRuntime,
+  experience,
+  goal,
+  individual,
+  insight,
+  knowledge,
+  memoir,
+  pattern,
+  persona,
+  philosophy,
+  plan,
+  procedure,
+  society,
+  task,
+  theory,
+  voice,
+} from "../src/index.js";
 
 // Helper: collect all structure names from a state tree
 const names = (state: State): string[] => {
@@ -32,7 +31,7 @@ const names = (state: State): string[] => {
 
 // Helper: find a child state by structure name
 const findChild = (state: State, name: string): State | undefined =>
-  (state.children ?? []).find(c => c.name === name);
+  (state.children ?? []).find((c) => c.name === name);
 
 describe("Individual — structure tree in memory", () => {
   test("bootstrap: create the full individual structure tree", () => {
@@ -189,7 +188,7 @@ describe("Individual — structure tree in memory", () => {
 
     // teach: create patterns directly
     const pat1 = rt.create(kn, pattern, "Types prevent bugs");
-    const pat2 = rt.create(kn, pattern, "Immutability reduces complexity");
+    const _pat2 = rt.create(kn, pattern, "Immutability reduces complexity");
 
     // contemplate: transform patterns → theory
     const th = rt.transform(pat1, theory, "Constraints liberate");
@@ -212,7 +211,7 @@ describe("Individual — structure tree in memory", () => {
     const kn = rt.create(ind, knowledge);
 
     const pat = rt.create(kn, pattern, "Some principle");
-    const proc = rt.create(kn, procedure, "Some workflow");
+    const _proc = rt.create(kn, procedure, "Some workflow");
 
     expect(rt.project(kn).children).toHaveLength(2);
 
@@ -248,8 +247,8 @@ describe("Individual — structure tree in memory", () => {
     const soc = rt.create(null, society);
     const ind = rt.create(soc, individual);
     rt.create(ind, persona, "I am a learner");
-    const kn = rt.create(ind, knowledge);
-    const exp = rt.create(ind, experience);
+    const _kn = rt.create(ind, knowledge);
+    const _exp = rt.create(ind, experience);
 
     // === Execution cycle ===
 
@@ -292,8 +291,8 @@ describe("Individual — structure tree in memory", () => {
 
     // experience should have: 3 conclusions (2 finish + 1 achieve), no insights (consumed)
     const expState = findChild(state, "experience")!;
-    const conclusions = (expState.children ?? []).filter(c => c.name === "conclusion");
-    const insights = (expState.children ?? []).filter(c => c.name === "insight");
+    const conclusions = (expState.children ?? []).filter((c) => c.name === "conclusion");
+    const insights = (expState.children ?? []).filter((c) => c.name === "insight");
     expect(conclusions).toHaveLength(3);
     expect(insights).toHaveLength(0);
 

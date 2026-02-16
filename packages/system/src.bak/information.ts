@@ -12,5 +12,7 @@ export interface InformationType {
   readonly description: string;
 }
 
-export const define = (name: string, description: string): InformationType =>
-  ({ name, description });
+export const define = (name: string, description: string): InformationType => ({
+  name,
+  description,
+});

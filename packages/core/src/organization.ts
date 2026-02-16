@@ -6,8 +6,8 @@
  * charter             — define org rules and mission
  * charge              — add duties to a position
  */
-import { process, create, link, unlink } from "@rolexjs/system";
-import { organization, position, charter, duty } from "./structures.js";
+import { create, link, process, unlink } from "@rolexjs/system";
+import { charter, duty, organization, position } from "./structures.js";
 
 // Membership
 export const hire = process(

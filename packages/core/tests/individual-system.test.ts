@@ -1,5 +1,10 @@
-import { describe, test, expect } from "bun:test";
-import { RoleXGraph, createRoleSystem, createIndividualSystem, createOrgSystem } from "@rolexjs/core";
+import { describe, expect, test } from "bun:test";
+import {
+  createIndividualSystem,
+  createOrgSystem,
+  createRoleSystem,
+  RoleXGraph,
+} from "@rolexjs/core";
 import { MemoryPlatform } from "./memory-platform";
 
 describe("Role System + Individual System — full lifecycle", () => {

@@ -11,8 +11,7 @@
  * No runtime, no graph, no I/O — pure functions, pure data.
  */
 
+export { add, feed, find, link, pipe, read, unlink } from "./combinators.js";
+export type { Effect, Process } from "./effect.js";
 export type { InformationType } from "./information.js";
 export { define } from "./information.js";
-
-export type { Effect, Process } from "./effect.js";
-export { add, read, find, link, unlink, feed, pipe } from "./combinators.js";

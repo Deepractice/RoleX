@@ -4,7 +4,7 @@
  */
 
 import { When } from "@deepractice/bdd";
-import { RoleXWorld } from "../support/world";
+import type { RoleXWorld } from "../support/world";
 
 // ===== identity =====
 
@@ -14,12 +14,9 @@ When("I call identity for {string}", async function (this: RoleXWorld, name: str
 
 // ===== want =====
 
-When(
-  "I want {string} with:",
-  async function (this: RoleXWorld, name: string, source: string) {
-    await this.run(this.individualSystem, "want", { name, source });
-  },
-);
+When("I want {string} with:", async function (this: RoleXWorld, name: string, source: string) {
+  await this.run(this.individualSystem, "want", { name, source });
+});
 
 // ===== focus =====
 
@@ -43,21 +40,15 @@ When("I call explore with name {string}", async function (this: RoleXWorld, name
 
 // ===== design =====
 
-When(
-  "I design {string} with:",
-  async function (this: RoleXWorld, name: string, source: string) {
-    await this.run(this.individualSystem, "design", { name, source });
-  },
-);
+When("I design {string} with:", async function (this: RoleXWorld, name: string, source: string) {
+  await this.run(this.individualSystem, "design", { name, source });
+});
 
 // ===== todo =====
 
-When(
-  "I todo {string} with:",
-  async function (this: RoleXWorld, name: string, source: string) {
-    await this.run(this.individualSystem, "todo", { name, source });
-  },
-);
+When("I todo {string} with:", async function (this: RoleXWorld, name: string, source: string) {
+  await this.run(this.individualSystem, "todo", { name, source });
+});
 
 // ===== finish =====
 
@@ -69,7 +60,7 @@ When(
   "I finish {string} with conclusion:",
   async function (this: RoleXWorld, name: string, conclusion: string) {
     await this.run(this.individualSystem, "finish", { name, conclusion });
-  },
+  }
 );
 
 // ===== achieve =====
@@ -80,7 +71,7 @@ When(
     await this.run(this.individualSystem, "achieve", {
       experience: { name, source },
     });
-  },
+  }
 );
 
 // ===== abandon =====
@@ -95,7 +86,7 @@ When(
     await this.run(this.individualSystem, "abandon", {
       experience: { name, source },
     });
-  },
+  }
 );
 
 // ===== reflect =====
@@ -109,7 +100,7 @@ When(
       knowledgeName,
       knowledgeSource: source,
     });
-  },
+  }
 );
 
 // Two insights (comma-separated)
@@ -120,14 +111,14 @@ When(
     insight1: string,
     insight2: string,
     knowledgeName: string,
-    source: string,
+    source: string
   ) {
     await this.run(this.individualSystem, "reflect", {
       experienceNames: [insight1, insight2],
       knowledgeName,
       knowledgeSource: source,
     });
-  },
+  }
 );
 
 // ===== contemplate =====
@@ -139,28 +130,22 @@ When(
     pattern1: string,
     pattern2: string,
     theoryName: string,
-    source: string,
+    source: string
   ) {
     await this.run(this.individualSystem, "contemplate", {
       patternNames: [pattern1, pattern2],
       theoryName,
       theorySource: source,
     });
-  },
+  }
 );
 
 // ===== forget =====
 
-When(
-  /^I forget knowledge\.pattern "([^"]*)"$/,
-  async function (this: RoleXWorld, name: string) {
-    await this.run(this.individualSystem, "forget", { type: "knowledge.pattern", name });
-  },
-);
+When(/^I forget knowledge\.pattern "([^"]*)"$/, async function (this: RoleXWorld, name: string) {
+  await this.run(this.individualSystem, "forget", { type: "knowledge.pattern", name });
+});
 
-When(
-  /^I forget experience\.insight "([^"]*)"$/,
-  async function (this: RoleXWorld, name: string) {
-    await this.run(this.individualSystem, "forget", { type: "experience.insight", name });
-  },
-);
+When(/^I forget experience\.insight "([^"]*)"$/, async function (this: RoleXWorld, name: string) {
+  await this.run(this.individualSystem, "forget", { type: "experience.insight", name });
+});

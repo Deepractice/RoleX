@@ -2,8 +2,8 @@
  * Common Given steps — platform setup, role/org creation, identity activation.
  */
 
-import { Given, Before } from "@deepractice/bdd";
-import { RoleXWorld } from "../support/world";
+import { Given } from "@deepractice/bdd";
+import type { RoleXWorld } from "../support/world";
 
 // ========== Fresh Platform ==========
 
@@ -29,7 +29,7 @@ Given(
       name,
       source: `Feature: ${name}\n  Scenario: Identity\n    Given ${persona}`,
     });
-  },
+  }
 );
 
 Given(
@@ -40,7 +40,7 @@ Given(
       name,
       source: `Feature: ${name}\n  Scenario: Knowledge\n    Given I know ${name}`,
     });
-  },
+  }
 );
 
 Given(
@@ -51,7 +51,7 @@ Given(
       name,
       source: `Feature: ${name}\n  Scenario: Procedure\n    Given I can do ${name}`,
     });
-  },
+  }
 );
 
 // ========== Identity Activation ==========
@@ -80,7 +80,7 @@ Given(
       name: plan,
       source: `Feature: ${plan}\n  Scenario: Plan\n    Given plan for ${goal}`,
     });
-  },
+  }
 );
 
 Given(
@@ -98,86 +98,72 @@ Given(
       name: task,
       source: `Feature: ${task}\n  Scenario: Task\n    Given do ${task}`,
     });
-  },
+  }
 );
 
-Given(
-  "I have goal {string} without plan",
-  async function (this: RoleXWorld, goal: string) {
-    await this.individualSystem.execute("want", {
-      name: goal,
-      source: `Feature: ${goal}\n  Scenario: Goal\n    Given I want ${goal}`,
-    });
-  },
-);
+Given("I have goal {string} without plan", async function (this: RoleXWorld, goal: string) {
+  await this.individualSystem.execute("want", {
+    name: goal,
+    source: `Feature: ${goal}\n  Scenario: Goal\n    Given I want ${goal}`,
+  });
+});
 
-Given(
-  "I have a finished goal {string}",
-  async function (this: RoleXWorld, goal: string) {
-    await this.individualSystem.execute("want", {
-      name: goal,
-      source: `Feature: ${goal}\n  Scenario: Goal\n    Given I want ${goal}`,
-    });
-    await this.individualSystem.execute("design", {
-      name: `${goal}-plan`,
-      source: `Feature: ${goal} Plan\n  Scenario: Plan\n    Given plan it`,
-    });
-    await this.individualSystem.execute("todo", {
-      name: `${goal}-task`,
-      source: `Feature: ${goal} Task\n  Scenario: Task\n    Given do it`,
-    });
-    await this.individualSystem.execute("finish", {
-      name: `${goal}-task`,
-      conclusion: `Feature: Done\n  Scenario: Result\n    Given completed`,
-    });
-  },
-);
+Given("I have a finished goal {string}", async function (this: RoleXWorld, goal: string) {
+  await this.individualSystem.execute("want", {
+    name: goal,
+    source: `Feature: ${goal}\n  Scenario: Goal\n    Given I want ${goal}`,
+  });
+  await this.individualSystem.execute("design", {
+    name: `${goal}-plan`,
+    source: `Feature: ${goal} Plan\n  Scenario: Plan\n    Given plan it`,
+  });
+  await this.individualSystem.execute("todo", {
+    name: `${goal}-task`,
+    source: `Feature: ${goal} Task\n  Scenario: Task\n    Given do it`,
+  });
+  await this.individualSystem.execute("finish", {
+    name: `${goal}-task`,
+    conclusion: `Feature: Done\n  Scenario: Result\n    Given completed`,
+  });
+});
 
 // ========== Knowledge & Experience Helpers ==========
 
-Given(
-  "I have experience.insight {string}",
-  async function (this: RoleXWorld, name: string) {
-    // Create insight via a quick goal cycle
-    const goalName = `_insight-goal-${name}`;
-    await this.individualSystem.execute("want", {
-      name: goalName,
-      source: `Feature: ${goalName}\n  Scenario: Temp\n    Given temp goal for insight`,
-    });
-    await this.individualSystem.execute("design", {
-      name: `${goalName}-plan`,
-      source: `Feature: Plan\n  Scenario: Plan\n    Given plan`,
-    });
-    await this.individualSystem.execute("todo", {
-      name: `${goalName}-task`,
-      source: `Feature: Task\n  Scenario: Task\n    Given task`,
-    });
-    await this.individualSystem.execute("finish", { name: `${goalName}-task` });
-    await this.individualSystem.execute("achieve", {
-      experience: {
-        name,
-        source: `Feature: ${name}\n  Scenario: Insight\n    Given learned from ${name}`,
-      },
-    });
-  },
-);
+Given("I have experience.insight {string}", async function (this: RoleXWorld, name: string) {
+  // Create insight via a quick goal cycle
+  const goalName = `_insight-goal-${name}`;
+  await this.individualSystem.execute("want", {
+    name: goalName,
+    source: `Feature: ${goalName}\n  Scenario: Temp\n    Given temp goal for insight`,
+  });
+  await this.individualSystem.execute("design", {
+    name: `${goalName}-plan`,
+    source: `Feature: Plan\n  Scenario: Plan\n    Given plan`,
+  });
+  await this.individualSystem.execute("todo", {
+    name: `${goalName}-task`,
+    source: `Feature: Task\n  Scenario: Task\n    Given task`,
+  });
+  await this.individualSystem.execute("finish", { name: `${goalName}-task` });
+  await this.individualSystem.execute("achieve", {
+    experience: {
+      name,
+      source: `Feature: ${name}\n  Scenario: Insight\n    Given learned from ${name}`,
+    },
+  });
+});
 
-Given(
-  /^I have knowledge\.pattern "([^"]*)"$/,
-  async function (this: RoleXWorld, name: string) {
-    // Get active role from graph
-    const roleKey = this.graph.getNode("society")
-      ? this.individualSystem.ctx?.structure
-      : undefined;
-    if (roleKey) {
-      await this.roleSystem.execute("teach", {
-        roleId: roleKey,
-        name,
-        source: `Feature: ${name}\n  Scenario: Pattern\n    Given ${name} principle`,
-      });
-    }
-  },
-);
+Given(/^I have knowledge\.pattern "([^"]*)"$/, async function (this: RoleXWorld, name: string) {
+  // Get active role from graph
+  const roleKey = this.graph.getNode("society") ? this.individualSystem.ctx?.structure : undefined;
+  if (roleKey) {
+    await this.roleSystem.execute("teach", {
+      roleId: roleKey,
+      name,
+      source: `Feature: ${name}\n  Scenario: Pattern\n    Given ${name} principle`,
+    });
+  }
+});
 
 Given(
   /^I have knowledge\.pattern "([^"]*)" with:$/,
@@ -190,7 +176,7 @@ Given(
         source,
       });
     }
-  },
+  }
 );
 
 // ========== Org Helpers ==========
@@ -209,7 +195,7 @@ Given(
       name,
       source: `Feature: ${name}\n  Scenario: Charter\n    Given ${charter}`,
     });
-  },
+  }
 );
 
 Given(
@@ -232,7 +218,7 @@ Given(
       });
     }
     await this.govSystem.execute("hire", { orgName: org, roleName: member });
-  },
+  }
 );
 
 Given(
@@ -245,7 +231,7 @@ Given(
         source: `Feature: ${position}\n  Scenario: Duties\n    Given ${position} duties`,
       });
     }
-  },
+  }
 );
 
 Given(
@@ -254,7 +240,7 @@ Given(
     if (!this.graph.hasEdge(org, role)) {
       await this.govSystem.execute("hire", { orgName: org, roleName: role });
     }
-  },
+  }
 );
 
 Given(
@@ -268,5 +254,5 @@ Given(
     if (!this.graph.hasEdge(position, role)) {
       await this.govSystem.execute("appoint", { roleName: role, positionName: position });
     }
-  },
+  }
 );

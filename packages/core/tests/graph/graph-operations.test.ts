@@ -7,7 +7,7 @@
  * it would be loaded on demand via Platform.readContent().
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { RoleXGraph } from "../../src/graph/RoleXGraph.js";
 
 // ===== Helper: simulate content storage (Platform responsibility) =====
@@ -45,7 +45,7 @@ function activeNeighbors(g: RoleXGraph, key: string, edgeType?: string): string[
 }
 
 /** Get active nodes by type. */
-function activeByType(g: RoleXGraph, type: string): string[] {
+function _activeByType(g: RoleXGraph, type: string): string[] {
   return g.findNodes((_k, a) => a.type === type && !a.shadow);
 }
 
@@ -100,7 +100,7 @@ describe("Graph-based RoleX operations", () => {
       content.write("sean/code-review", { name: "Code Review", type: "knowledge.procedure" });
 
       const procedures = activeOut(g, "sean", "has-info").filter(
-        (k) => g.getNode(k)!.type === "knowledge.procedure",
+        (k) => g.getNode(k)!.type === "knowledge.procedure"
       );
       expect(procedures).toEqual(["sean/code-review"]);
     });
@@ -175,7 +175,7 @@ describe("Graph-based RoleX operations", () => {
         byType[type].push(key);
       }
 
-      expect(byType["persona"]).toHaveLength(1);
+      expect(byType.persona).toHaveLength(1);
       expect(byType["knowledge.pattern"]).toHaveLength(1);
       expect(byType["knowledge.procedure"]).toHaveLength(1);
     });
@@ -348,9 +348,9 @@ describe("Graph-based RoleX operations", () => {
 
       // Verify
       expect(g.getNode("sean/build-mvp")!.state.done).toBe(true);
-      expect(activeOut(g, "sean", "has-info").filter(
-        (k) => g.getNode(k)!.type === "experience.insight",
-      )).toContain("sean/mvp-insight");
+      expect(
+        activeOut(g, "sean", "has-info").filter((k) => g.getNode(k)!.type === "experience.insight")
+      ).toContain("sean/mvp-insight");
       expect(g.getNode("sean/task1-conclusion")!.shadow).toBe(true);
     });
 
@@ -485,7 +485,7 @@ describe("Graph-based RoleX operations", () => {
       expect(orgs).toContain("deepractice");
 
       // explore("sean") — role detail
-      const seanInfo = activeOut(g, "sean", "has-info");
+      const _seanInfo = activeOut(g, "sean", "has-info");
       const seanOrgs = activeNeighbors(g, "sean", "member");
       expect(seanOrgs).toContain("deepractice");
 
@@ -649,9 +649,9 @@ describe("Graph-based RoleX operations", () => {
 
       // Verify achieve
       expect(g.getNode("sean/build-api")!.state.done).toBe(true);
-      expect(activeOut(g, "sean", "has-info").filter(
-        (k) => g.getNode(k)!.type === "experience.insight",
-      )).toContain("sean/api-insight");
+      expect(
+        activeOut(g, "sean", "has-info").filter((k) => g.getNode(k)!.type === "experience.insight")
+      ).toContain("sean/api-insight");
 
       // === reflect ===
       g.addNode("sean/api-design-pattern", "knowledge.pattern");

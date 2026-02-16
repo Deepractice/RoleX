@@ -15,11 +15,12 @@
  *   org        — organization management (found, hire, appoint, ...)
  *   resource   — ResourceX instance (optional)
  */
-import type { Runtime, Structure, State } from "@rolexjs/system";
+
 import type { Platform } from "@rolexjs/core";
-import type { ResourceX } from "resourcexjs";
 import * as C from "@rolexjs/core";
 import { parse } from "@rolexjs/parser";
+import type { Runtime, State, Structure } from "@rolexjs/system";
+import type { ResourceX } from "resourcexjs";
 
 export interface RolexResult {
   /** Projection of the primary affected node. */
@@ -50,10 +51,10 @@ export class Rolex {
 
     // Ensure world roots exist (idempotent — reuse if already created by another process)
     const roots = this.rt.roots();
-    this.society = roots.find(r => r.name === "society") ?? this.rt.create(null, C.society);
+    this.society = roots.find((r) => r.name === "society") ?? this.rt.create(null, C.society);
 
     const societyState = this.rt.project(this.society);
-    const existingPast = societyState.children?.find(c => c.name === "past");
+    const existingPast = societyState.children?.find((c) => c.name === "past");
     this.past = existingPast ?? this.rt.create(this.society, C.past);
 
     // Namespaces
@@ -79,7 +80,7 @@ class IndividualNamespace {
   constructor(
     private rt: Runtime,
     private society: Structure,
-    private past: Structure,
+    private past: Structure
   ) {}
 
   /** Born an individual into society. Scaffolds identity + knowledge. */
@@ -116,7 +117,10 @@ class IndividualNamespace {
 // ================================================================
 
 class RoleNamespace {
-  constructor(private rt: Runtime, private resourcex?: ResourceX) {}
+  constructor(
+    private rt: Runtime,
+    private resourcex?: ResourceX
+  ) {}
 
   // ---- Activation ----
 
@@ -208,16 +212,15 @@ class RoleNamespace {
   /** Skill: load full skill content by locator — for context injection (progressive disclosure layer 2). */
   async skill(locator: string): Promise<string> {
     if (!this.resourcex) throw new Error("ResourceX is not available.");
-    const executable = await this.resourcex.use(locator);
-    const content = await executable.execute();
+    const content = await this.resourcex.ingest<string>(locator);
     if (typeof content === "string") return content;
     return JSON.stringify(content, null, 2);
   }
 
   /** Use a resource — role's entry point for interacting with external resources. */
-  use(locator: string) {
+  use<T = unknown>(locator: string): Promise<T> {
     if (!this.resourcex) throw new Error("ResourceX is not available.");
-    return this.resourcex.use(locator);
+    return this.resourcex.ingest<T>(locator);
   }
 }
 
@@ -229,7 +232,7 @@ class OrgNamespace {
   constructor(
     private rt: Runtime,
     private society: Structure,
-    private past: Structure,
+    private past: Structure
   ) {}
 
   // ---- Structure ----
@@ -242,7 +245,12 @@ class OrgNamespace {
   }
 
   /** Establish a position within an organization. */
-  establish(org: Structure, position?: string, id?: string, alias?: readonly string[]): RolexResult {
+  establish(
+    org: Structure,
+    position?: string,
+    id?: string,
+    alias?: readonly string[]
+  ): RolexResult {
     validateGherkin(position);
     const pos = this.rt.create(org, C.position, position, id, alias);
     return ok(this.rt, pos, "establish");
