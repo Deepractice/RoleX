@@ -13,9 +13,7 @@ pre-commit:
       run: bun biome check --write {staged_files} && git add {staged_files}
 
 pre-push:
-  parallel: true
   commands:
     check:
       run: bun biome check .
-    typecheck:
-      run: bun run typecheck
+    # typecheck moved to CI — too slow for pre-push, causes SSH timeout
