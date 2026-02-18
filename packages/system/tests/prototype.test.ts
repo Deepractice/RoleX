@@ -15,12 +15,12 @@ const state = (
 });
 
 describe("Prototype", () => {
-  test("resolve returns undefined when no prototype registered", () => {
+  test("resolve returns undefined when no prototype registered", async () => {
     const proto = createPrototype();
-    expect(proto.resolve("sean")).toBeUndefined();
+    expect(await proto.resolve("sean")).toBeUndefined();
   });
 
-  test("register and resolve a prototype by id", () => {
+  test("register and resolve a prototype by id", async () => {
     const proto = createPrototype();
     const template = state("individual", {
       id: "sean",
@@ -30,7 +30,7 @@ describe("Prototype", () => {
       ],
     });
     proto.register(template);
-    const resolved = proto.resolve("sean");
+    const resolved = await proto.resolve("sean");
     expect(resolved).toBeDefined();
     expect(resolved!.id).toBe("sean");
     expect(resolved!.children).toHaveLength(2);
@@ -42,19 +42,19 @@ describe("Prototype", () => {
     expect(() => proto.register(template)).toThrow("must have an id");
   });
 
-  test("later registration overwrites earlier one", () => {
+  test("later registration overwrites earlier one", async () => {
     const proto = createPrototype();
     proto.register(state("individual", { id: "sean", information: "v1" }));
     proto.register(state("individual", { id: "sean", information: "v2" }));
-    expect(proto.resolve("sean")!.information).toBe("v2");
+    expect((await proto.resolve("sean"))!.information).toBe("v2");
   });
 
-  test("different ids resolve independently", () => {
+  test("different ids resolve independently", async () => {
     const proto = createPrototype();
     proto.register(state("individual", { id: "sean", information: "Sean" }));
     proto.register(state("individual", { id: "nuwa", information: "Nuwa" }));
-    expect(proto.resolve("sean")!.information).toBe("Sean");
-    expect(proto.resolve("nuwa")!.information).toBe("Nuwa");
-    expect(proto.resolve("unknown")).toBeUndefined();
+    expect((await proto.resolve("sean"))!.information).toBe("Sean");
+    expect((await proto.resolve("nuwa"))!.information).toBe("Nuwa");
+    expect(await proto.resolve("unknown")).toBeUndefined();
   });
 });

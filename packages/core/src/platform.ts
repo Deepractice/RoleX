@@ -22,4 +22,7 @@ export interface Platform {
 
   /** Resource management capability (optional — requires resourcexjs). */
   readonly resourcex?: ResourceX;
+
+  /** Register a prototype: bind id to a ResourceX source (path or locator). */
+  registerPrototype?(id: string, source: string): void;
 }

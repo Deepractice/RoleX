@@ -17,7 +17,7 @@ import type { State } from "./process.js";
 /** A source that resolves prototype State trees by id. */
 export interface Prototype {
   /** Resolve a prototype State by id. Returns undefined if no prototype exists. */
-  resolve(id: string): State | undefined;
+  resolve(id: string): Promise<State | undefined>;
 }
 
 // ===== In-memory implementation =====
@@ -30,7 +30,7 @@ export const createPrototype = (): Prototype & {
   const prototypes = new Map<string, State>();
 
   return {
-    resolve(id) {
+    async resolve(id) {
       return prototypes.get(id);
     },
 

@@ -129,8 +129,8 @@ const activate = defineCommand({
   args: {
     individual: { type: "positional" as const, description: "Individual node ref", required: true },
   },
-  run({ args }) {
-    output(rolex.role.activate(ref(args.individual)), "individual");
+  async run({ args }) {
+    output(await rolex.role.activate(ref(args.individual)), "individual");
   },
 });
 

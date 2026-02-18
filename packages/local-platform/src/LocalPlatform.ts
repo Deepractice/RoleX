@@ -29,6 +29,7 @@ import { join } from "node:path";
 import { NodeProvider } from "@resourcexjs/node-provider";
 import type { Platform } from "@rolexjs/core";
 import type { Prototype, Runtime, State, Structure } from "@rolexjs/system";
+import { organizationType, roleType } from "@rolexjs/resourcex-types";
 import { createResourceX, setProvider } from "resourcexjs";
 import { type Manifest, filesToState, stateToFiles } from "./manifest.js";
 
@@ -447,42 +448,6 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
     },
   };
 
-  // ===== Prototype =====
-
-  const readStateFrom = (dir: string, manifestName: string): State | undefined => {
-    const manifestPath = join(dir, manifestName);
-    if (!existsSync(manifestPath)) return undefined;
-
-    const manifest: Manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
-    const featureFiles: Record<string, string> = {};
-    for (const file of readdirSync(dir)) {
-      if (file.endsWith(".feature")) {
-        featureFiles[file] = readFileSync(join(dir, file), "utf-8");
-      }
-    }
-    return filesToState(manifest, featureFiles);
-  };
-
-  const prototype: Prototype = {
-    resolve(id) {
-      if (!dataDir) return undefined;
-      const protoDir = join(dataDir, "prototype");
-
-      // Try role first
-      const roleState = readStateFrom(
-        join(protoDir, "role", id),
-        "individual.json"
-      );
-      if (roleState) return roleState;
-
-      // Try organization
-      return readStateFrom(
-        join(protoDir, "organization", id),
-        "organization.json"
-      );
-    },
-  };
-
   // ===== ResourceX =====
 
   let resourcex: ReturnType<typeof createResourceX> | undefined;
@@ -490,8 +455,40 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
     setProvider(new NodeProvider());
     resourcex = createResourceX({
       path: config.resourceDir ?? join(homedir(), ".deepractice", "resourcex"),
+      types: [roleType, organizationType],
     });
   }
 
-  return { runtime, prototype, resourcex };
+  // ===== Prototype registry =====
+
+  const registryPath = dataDir ? join(dataDir, "prototype.json") : undefined;
+
+  const readRegistry = (): Record<string, string> => {
+    if (!registryPath || !existsSync(registryPath)) return {};
+    return JSON.parse(readFileSync(registryPath, "utf-8"));
+  };
+
+  const registerPrototype = (id: string, source: string): void => {
+    if (!registryPath) return;
+    const registry = readRegistry();
+    registry[id] = source;
+    mkdirSync(dataDir!, { recursive: true });
+    writeFileSync(registryPath, JSON.stringify(registry, null, 2), "utf-8");
+  };
+
+  const prototype: Prototype = {
+    async resolve(id) {
+      if (!resourcex) return undefined;
+      const registry = readRegistry();
+      const source = registry[id];
+      if (!source) return undefined;
+      try {
+        return await resourcex.ingest<State>(source);
+      } catch {
+        return undefined;
+      }
+    },
+  };
+
+  return { runtime, prototype, resourcex, registerPrototype };
 }

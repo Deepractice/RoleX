@@ -60,10 +60,14 @@ server.addTool({
     roleId: z.string().describe("Role name to activate"),
   }),
   execute: async ({ roleId }) => {
-    const node = state.findIndividual(roleId);
-    if (!node) throw new Error(`Role not found: "${roleId}"`);
+    let node = state.findIndividual(roleId);
+    if (!node) {
+      // Auto-born if prototype is registered
+      const born = rolex.individual.born(undefined, roleId);
+      node = born.state;
+    }
     state.activeRole = node;
-    const result = rolex.role.activate(node);
+    const result = await rolex.role.activate(node);
     state.cacheFromActivation(result.state);
     return fmt("activate", roleId, result);
   },

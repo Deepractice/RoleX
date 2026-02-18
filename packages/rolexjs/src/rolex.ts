@@ -31,6 +31,8 @@ export interface RolexResult {
 
 export class Rolex {
   private rt: Runtime;
+  private resourcex?: ResourceX;
+  private _registerPrototype?: (id: string, source: string) => void;
 
   /** Root of the world. */
   readonly society: Structure;
@@ -48,6 +50,8 @@ export class Rolex {
 
   constructor(platform: Platform) {
     this.rt = platform.runtime;
+    this.resourcex = platform.resourcex;
+    this._registerPrototype = platform.registerPrototype;
 
     // Ensure world roots exist (idempotent — reuse if already created by another process)
     const roots = this.rt.roots();
@@ -62,6 +66,16 @@ export class Rolex {
     this.role = new RoleNamespace(this.rt, platform.prototype, platform.resourcex);
     this.org = new OrgNamespace(this.rt, this.society, this.past);
     this.resource = platform.resourcex;
+  }
+
+  /** Register a ResourceX source as a prototype. Ingests to extract id, stores id → source mapping. */
+  async prototype(source: string): Promise<RolexResult> {
+    if (!this.resourcex) throw new Error("ResourceX is not available.");
+    if (!this._registerPrototype) throw new Error("Platform does not support prototype registration.");
+    const state = await this.resourcex.ingest<State>(source);
+    if (!state.id) throw new Error("Prototype resource must have an id.");
+    this._registerPrototype(state.id, source);
+    return { state, process: "prototype" };
   }
 
   /** Find a node by id or alias across the entire society tree. */
@@ -83,12 +97,10 @@ class IndividualNamespace {
     private past: Structure
   ) {}
 
-  /** Born an individual into society. Scaffolds identity + knowledge. */
+  /** Born an individual into society. */
   born(individual?: string, id?: string, alias?: readonly string[]): RolexResult {
     validateGherkin(individual);
     const node = this.rt.create(this.society, C.individual, individual, id, alias);
-    this.rt.create(node, C.identity);
-    this.rt.create(node, C.knowledge);
     return ok(this.rt, node, "born");
   }
 
@@ -106,8 +118,6 @@ class IndividualNamespace {
   rehire(pastNode: Structure): RolexResult {
     const individual = this.rt.create(this.society, C.individual, pastNode.information);
     this.rt.remove(pastNode);
-    this.rt.create(individual, C.identity);
-    this.rt.create(individual, C.knowledge);
     return ok(this.rt, individual, "rehire");
   }
 }
@@ -126,10 +136,10 @@ class RoleNamespace {
   // ---- Activation ----
 
   /** Activate: merge prototype (if any) with instance state. */
-  activate(individual: Structure): RolexResult {
+  async activate(individual: Structure): Promise<RolexResult> {
     const instanceState = this.rt.project(individual);
     const protoState = instanceState.id
-      ? this.prototype?.resolve(instanceState.id)
+      ? await this.prototype?.resolve(instanceState.id)
       : undefined;
     const state = protoState
       ? mergeState(protoState, instanceState)
