@@ -2,34 +2,50 @@
  * localPlatform — create a Platform backed by local filesystem.
  *
  * Storage layout:
- *   {dataDir}/graph.json — serialized graph (nodes + edges + attributes)
+ *   {dataDir}/
+ *     role/<id>/
+ *       individual.json          — manifest (tree structure + links)
+ *       <id>.<type>.feature      — node information (Gherkin)
+ *     organization/<id>/
+ *       organization.json        — manifest (tree structure + links)
+ *       <id>.<type>.feature      — node information (Gherkin)
  *
- * Every operation reads from disk first, every mutation saves after.
- * This ensures cross-process consistency (CLI writes, MCP reads immediately).
+ * In-memory: Map-based tree (same model as @rolexjs/system createRuntime).
+ * Persistence: loaded before every operation, saved after every mutation.
+ * Refs are stored in manifests to ensure stability across reload cycles.
  * When dataDir is null, runs purely in-memory (useful for tests).
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { NodeProvider } from "@resourcexjs/node-provider";
 import type { Platform } from "@rolexjs/core";
-import type { Runtime, State, Structure } from "@rolexjs/system";
-import { MultiDirectedGraph as DirectedGraph } from "graphology";
+import type { Prototype, Runtime, State, Structure } from "@rolexjs/system";
 import { createResourceX, setProvider } from "resourcexjs";
+import { type Manifest, filesToState, stateToFiles } from "./manifest.js";
 
-interface NodeAttributes {
-  type: string;
-  description: string;
-  parent: Structure | null;
-  information?: string;
-  id?: string;
-  alias?: readonly string[];
+// ===== Internal types =====
+
+interface TreeNode {
+  node: Structure;
+  parent: string | null;
+  children: string[];
 }
 
-interface EdgeAttributes {
-  type: string; // "child" for tree edges, relation name for cross-branch
+interface LinkEntry {
+  toId: string;
+  relation: string;
 }
+
+// ===== Config =====
 
 export interface LocalPlatformConfig {
   /** Directory for persistent storage. Defaults to ~/.deepractice/rolex. Set to null for in-memory only. */
@@ -44,87 +60,59 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
     config.dataDir === null
       ? undefined
       : (config.dataDir ?? join(homedir(), ".deepractice", "rolex"));
-  const graph = new DirectedGraph<NodeAttributes, EdgeAttributes>();
 
-  // ===== Persistence =====
-
+  const nodes = new Map<string, TreeNode>();
+  const links = new Map<string, LinkEntry[]>();
   let counter = 0;
 
-  const load = () => {
-    if (!dataDir) return;
-    const graphPath = join(dataDir, "graph.json");
-    if (existsSync(graphPath)) {
-      graph.clear();
-      const data = JSON.parse(readFileSync(graphPath, "utf-8"));
-      graph.import(data);
-      counter = 0;
-      graph.forEachNode((ref) => {
-        const n = parseInt(ref.slice(1), 10);
-        if (n > counter) counter = n;
-      });
-    }
-  };
-
-  const save = () => {
-    if (!dataDir) return;
-    mkdirSync(dataDir, { recursive: true });
-    writeFileSync(join(dataDir, "graph.json"), JSON.stringify(graph.export(), null, 2), "utf-8");
-  };
+  // ===== Internal helpers =====
 
   const nextRef = () => `n${++counter}`;
 
-  // ===== Graph operations =====
-
-  const collectSubtree = (ref: string): string[] => {
-    const refs: string[] = [ref];
-    graph.forEachOutEdge(ref, (_edge, attrs, _source, target) => {
-      if (attrs.type === "child") {
-        refs.push(...collectSubtree(target));
-      }
-    });
-    return refs;
+  const findByStructure = (s: Structure): TreeNode | undefined => {
+    for (const treeNode of nodes.values()) {
+      if (treeNode.node.name === s.name) return treeNode;
+    }
+    return undefined;
   };
 
-  const projectNodeRef = (ref: string): State => {
-    const attrs = graph.getNodeAttributes(ref);
-    return {
-      ref,
-      ...(attrs.id ? { id: attrs.id } : {}),
-      ...(attrs.alias && attrs.alias.length > 0 ? { alias: attrs.alias } : {}),
-      name: attrs.type,
-      description: attrs.description,
-      parent: attrs.parent,
-      ...(attrs.information ? { information: attrs.information } : {}),
-      children: [],
-    };
+  const removeSubtree = (ref: string): void => {
+    const treeNode = nodes.get(ref);
+    if (!treeNode) return;
+    for (const childRef of [...treeNode.children]) {
+      removeSubtree(childRef);
+    }
+    links.delete(ref);
+    for (const [fromRef, fromLinks] of links.entries()) {
+      const filtered = fromLinks.filter((l) => l.toId !== ref);
+      if (filtered.length === 0) {
+        links.delete(fromRef);
+      } else {
+        links.set(fromRef, filtered);
+      }
+    }
+    nodes.delete(ref);
+  };
+
+  const projectRef = (ref: string): State => {
+    const treeNode = nodes.get(ref)!;
+    return { ...treeNode.node, children: [] };
   };
 
   const projectNode = (ref: string): State => {
-    const attrs = graph.getNodeAttributes(ref);
-    const children: State[] = [];
-    const links: { relation: string; target: State }[] = [];
-
-    graph.forEachOutEdge(ref, (_edge, edgeAttrs, _source, target) => {
-      if (edgeAttrs.type === "child") {
-        children.push(projectNode(target));
-      } else {
-        links.push({
-          relation: edgeAttrs.type,
-          target: projectNodeRef(target),
-        });
-      }
-    });
-
+    const treeNode = nodes.get(ref)!;
+    const nodeLinks = links.get(ref);
     return {
-      ref,
-      ...(attrs.id ? { id: attrs.id } : {}),
-      ...(attrs.alias && attrs.alias.length > 0 ? { alias: attrs.alias } : {}),
-      name: attrs.type,
-      description: attrs.description,
-      parent: attrs.parent,
-      ...(attrs.information ? { information: attrs.information } : {}),
-      children,
-      ...(links.length > 0 ? { links } : {}),
+      ...treeNode.node,
+      children: treeNode.children.map(projectNode),
+      ...(nodeLinks && nodeLinks.length > 0
+        ? {
+            links: nodeLinks.map((l) => ({
+              relation: l.relation,
+              target: projectRef(l.toId),
+            })),
+          }
+        : {}),
     };
   };
 
@@ -136,22 +124,7 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
     alias?: readonly string[]
   ): Structure => {
     const ref = nextRef();
-
-    graph.addNode(ref, {
-      type: type.name,
-      description: type.description,
-      parent: type.parent,
-      information,
-      ...(id ? { id } : {}),
-      ...(alias && alias.length > 0 ? { alias } : {}),
-    });
-
-    if (parentRef) {
-      if (!graph.hasNode(parentRef)) throw new Error(`Parent not found: ${parentRef}`);
-      graph.addDirectedEdge(parentRef, ref, { type: "child" });
-    }
-
-    return {
+    const node: Structure = {
       ref,
       ...(id ? { id } : {}),
       ...(alias && alias.length > 0 ? { alias } : {}),
@@ -160,9 +133,202 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
       parent: type.parent,
       information,
     };
+    const treeNode: TreeNode = { node, parent: parentRef, children: [] };
+    nodes.set(ref, treeNode);
+
+    if (parentRef) {
+      const parentTreeNode = nodes.get(parentRef);
+      if (!parentTreeNode) throw new Error(`Parent not found: ${parentRef}`);
+      parentTreeNode.children.push(ref);
+    }
+
+    return node;
   };
 
-  // ===== Runtime: load before every op, save after every mutation =====
+  // ===== Persistence =====
+
+  /** Use a stored ref, updating counter to avoid future collisions. */
+  const useRef = (storedRef: string): string => {
+    const n = parseInt(storedRef.slice(1), 10);
+    if (!isNaN(n) && n > counter) counter = n;
+    return storedRef;
+  };
+
+  /** Replay a State tree into the in-memory Maps. Returns the root ref. */
+  const replayState = (state: State, parentRef: string | null): string => {
+    const ref = state.ref ? useRef(state.ref) : nextRef();
+    const node: Structure = {
+      ref,
+      ...(state.id ? { id: state.id } : {}),
+      ...(state.alias ? { alias: state.alias } : {}),
+      name: state.name,
+      description: state.description ?? "",
+      parent: null,
+      ...(state.information ? { information: state.information } : {}),
+    };
+    const treeNode: TreeNode = { node, parent: parentRef, children: [] };
+    nodes.set(ref, treeNode);
+
+    if (parentRef) {
+      nodes.get(parentRef)!.children.push(ref);
+    }
+
+    if (state.children) {
+      for (const child of state.children) {
+        replayState(child, ref);
+      }
+    }
+
+    return ref;
+  };
+
+  const loadEntitiesFrom = (
+    dir: string,
+    manifestName: string,
+    parentRef: string
+  ): { ref: string; manifest: Manifest }[] => {
+    const results: { ref: string; manifest: Manifest }[] = [];
+    if (!existsSync(dir)) return results;
+
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const entityDir = join(dir, entry.name);
+      const manifestPath = join(entityDir, manifestName);
+      if (!existsSync(manifestPath)) continue;
+
+      const manifest: Manifest = JSON.parse(
+        readFileSync(manifestPath, "utf-8")
+      );
+      const featureFiles: Record<string, string> = {};
+      for (const file of readdirSync(entityDir)) {
+        if (file.endsWith(".feature")) {
+          featureFiles[file] = readFileSync(join(entityDir, file), "utf-8");
+        }
+      }
+      const state = filesToState(manifest, featureFiles);
+      const entityRef = replayState(state, parentRef);
+      results.push({ ref: entityRef, manifest });
+    }
+
+    return results;
+  };
+
+  const load = () => {
+    if (!dataDir) return;
+
+    // Clear and rebuild from disk
+    nodes.clear();
+    links.clear();
+    counter = 0;
+
+    // Create implicit society root
+    const societyRef = nextRef();
+    nodes.set(societyRef, {
+      node: {
+        ref: societyRef,
+        name: "society",
+        description: "",
+        parent: null,
+      },
+      parent: null,
+      children: [],
+    });
+
+    // Load entities
+    const entityRefs = [
+      ...loadEntitiesFrom(
+        join(dataDir, "role"),
+        "individual.json",
+        societyRef
+      ),
+      ...loadEntitiesFrom(
+        join(dataDir, "organization"),
+        "organization.json",
+        societyRef
+      ),
+    ];
+
+    // Build id → ref index for link resolution
+    const idToRef = new Map<string, string>();
+    for (const [ref, treeNode] of nodes) {
+      if (treeNode.node.id) {
+        idToRef.set(treeNode.node.id, ref);
+      }
+    }
+
+    // Resolve links from manifests
+    for (const { ref, manifest } of entityRefs) {
+      if (!manifest.links) continue;
+      const entityLinks: LinkEntry[] = [];
+      for (const [relation, targetIds] of Object.entries(manifest.links)) {
+        for (const targetId of targetIds) {
+          const targetRef = idToRef.get(targetId);
+          if (targetRef) {
+            entityLinks.push({ toId: targetRef, relation });
+          }
+        }
+      }
+      if (entityLinks.length > 0) {
+        links.set(ref, entityLinks);
+      }
+    }
+  };
+
+  const saveEntity = (
+    baseDir: string,
+    entityId: string,
+    manifestName: string,
+    state: State
+  ) => {
+    const entityDir = join(baseDir, entityId);
+    mkdirSync(entityDir, { recursive: true });
+    const { manifest, files } = stateToFiles(state);
+    writeFileSync(
+      join(entityDir, manifestName),
+      JSON.stringify(manifest, null, 2),
+      "utf-8"
+    );
+    for (const file of files) {
+      writeFileSync(join(entityDir, file.path), file.content, "utf-8");
+    }
+  };
+
+  const save = () => {
+    if (!dataDir) return;
+    mkdirSync(dataDir, { recursive: true });
+
+    // Find society root
+    let societyTreeNode: TreeNode | undefined;
+    for (const treeNode of nodes.values()) {
+      if (treeNode.parent === null && treeNode.node.name === "society") {
+        societyTreeNode = treeNode;
+        break;
+      }
+    }
+    if (!societyTreeNode) return;
+
+    // Clean up existing entity directories
+    const roleDir = join(dataDir, "role");
+    const orgDir = join(dataDir, "organization");
+    if (existsSync(roleDir)) rmSync(roleDir, { recursive: true });
+    if (existsSync(orgDir)) rmSync(orgDir, { recursive: true });
+
+    // Save each entity child of society
+    for (const childRef of societyTreeNode.children) {
+      if (!nodes.has(childRef)) continue;
+      const state = projectNode(childRef);
+      const entityId = state.id ?? state.name;
+
+      if (state.name === "individual") {
+        saveEntity(roleDir, entityId, "individual.json", state);
+      } else if (state.name === "organization") {
+        saveEntity(orgDir, entityId, "organization.json", state);
+      }
+      // Other types (past, etc.) are not persisted yet
+    }
+  };
+
+  // ===== Runtime =====
 
   const runtime: Runtime = {
     create(parent, type, information, id, alias) {
@@ -174,14 +340,20 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
 
     remove(node) {
       load();
-      if (!node.ref || !graph.hasNode(node.ref)) return;
-      const subtreeRefs = collectSubtree(node.ref);
-      graph.forEachInEdge(node.ref, (edge, attrs) => {
-        if (attrs.type === "child") graph.dropEdge(edge);
-      });
-      for (const r of subtreeRefs.reverse()) {
-        graph.dropNode(r);
+      if (!node.ref) return;
+      const treeNode = nodes.get(node.ref);
+      if (!treeNode) return;
+
+      if (treeNode.parent) {
+        const parentTreeNode = nodes.get(treeNode.parent);
+        if (parentTreeNode) {
+          parentTreeNode.children = parentTreeNode.children.filter(
+            (r) => r !== node.ref
+          );
+        }
       }
+
+      removeSubtree(node.ref);
       save();
     },
 
@@ -191,82 +363,73 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
       if (!targetParent) {
         throw new Error(`Cannot transform to root structure: ${target.name}`);
       }
-      let parentRef: string | undefined;
-      graph.forEachNode((ref, attrs) => {
-        if (!parentRef && attrs.type === targetParent.name) {
-          parentRef = ref;
-        }
-      });
-      if (!parentRef) {
+
+      const parentTreeNode = findByStructure(targetParent);
+      if (!parentTreeNode) {
         throw new Error(`No node found for structure: ${targetParent.name}`);
       }
-      const node = createNode(parentRef, target, information);
+
+      const node = createNode(parentTreeNode.node.ref!, target, information);
       save();
       return node;
     },
 
-    link(from, to, relation, reverse) {
+    link(from, to, relationName, reverseName) {
       load();
       if (!from.ref) throw new Error("Source node has no ref");
       if (!to.ref) throw new Error("Target node has no ref");
 
-      let changed = false;
-
-      // Forward: from → to
-      let fwdExists = false;
-      graph.forEachOutEdge(from.ref, (_edge, attrs, _source, target) => {
-        if (target === to.ref && attrs.type === relation) fwdExists = true;
-      });
-      if (!fwdExists) {
-        graph.addDirectedEdge(from.ref, to.ref, { type: relation });
-        changed = true;
+      const fromLinks = links.get(from.ref) ?? [];
+      if (
+        !fromLinks.some(
+          (l) => l.toId === to.ref && l.relation === relationName
+        )
+      ) {
+        fromLinks.push({ toId: to.ref, relation: relationName });
+        links.set(from.ref, fromLinks);
       }
 
-      // Reverse: to → from
-      let revExists = false;
-      graph.forEachOutEdge(to.ref, (_edge, attrs, _source, target) => {
-        if (target === from.ref && attrs.type === reverse) revExists = true;
-      });
-      if (!revExists) {
-        graph.addDirectedEdge(to.ref, from.ref, { type: reverse });
-        changed = true;
+      const toLinks = links.get(to.ref) ?? [];
+      if (
+        !toLinks.some(
+          (l) => l.toId === from.ref && l.relation === reverseName
+        )
+      ) {
+        toLinks.push({ toId: from.ref, relation: reverseName });
+        links.set(to.ref, toLinks);
       }
 
-      if (changed) save();
+      save();
     },
 
-    unlink(from, to, relation, reverse) {
+    unlink(from, to, relationName, reverseName) {
       load();
       if (!from.ref || !to.ref) return;
 
-      let changed = false;
-
-      // Forward
-      let fwdEdge: string | undefined;
-      graph.forEachOutEdge(from.ref, (edge, attrs, _source, target) => {
-        if (target === to.ref && attrs.type === relation) fwdEdge = edge;
-      });
-      if (fwdEdge) {
-        graph.dropEdge(fwdEdge);
-        changed = true;
+      const fromLinks = links.get(from.ref);
+      if (fromLinks) {
+        const filtered = fromLinks.filter(
+          (l) => !(l.toId === to.ref && l.relation === relationName)
+        );
+        if (filtered.length === 0) links.delete(from.ref);
+        else links.set(from.ref, filtered);
       }
 
-      // Reverse
-      let revEdge: string | undefined;
-      graph.forEachOutEdge(to.ref, (edge, attrs, _source, target) => {
-        if (target === from.ref && attrs.type === reverse) revEdge = edge;
-      });
-      if (revEdge) {
-        graph.dropEdge(revEdge);
-        changed = true;
+      const toLinks = links.get(to.ref);
+      if (toLinks) {
+        const filtered = toLinks.filter(
+          (l) => !(l.toId === from.ref && l.relation === reverseName)
+        );
+        if (filtered.length === 0) links.delete(to.ref);
+        else links.set(to.ref, filtered);
       }
 
-      if (changed) save();
+      save();
     },
 
     project(node) {
       load();
-      if (!node.ref || !graph.hasNode(node.ref)) {
+      if (!node.ref || !nodes.has(node.ref)) {
         throw new Error(`Node not found: ${node.ref}`);
       }
       return projectNode(node.ref);
@@ -275,24 +438,48 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
     roots() {
       load();
       const result: Structure[] = [];
-      graph.forEachNode((ref, attrs) => {
-        let isRoot = true;
-        graph.forEachInEdge(ref, (_edge, edgeAttrs) => {
-          if (edgeAttrs.type === "child") isRoot = false;
-        });
-        if (isRoot) {
-          result.push({
-            ref,
-            ...(attrs.id ? { id: attrs.id } : {}),
-            ...(attrs.alias && attrs.alias.length > 0 ? { alias: attrs.alias } : {}),
-            name: attrs.type,
-            description: attrs.description,
-            parent: attrs.parent,
-            information: attrs.information,
-          });
+      for (const treeNode of nodes.values()) {
+        if (treeNode.parent === null) {
+          result.push(treeNode.node);
         }
-      });
+      }
       return result;
+    },
+  };
+
+  // ===== Prototype =====
+
+  const readStateFrom = (dir: string, manifestName: string): State | undefined => {
+    const manifestPath = join(dir, manifestName);
+    if (!existsSync(manifestPath)) return undefined;
+
+    const manifest: Manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
+    const featureFiles: Record<string, string> = {};
+    for (const file of readdirSync(dir)) {
+      if (file.endsWith(".feature")) {
+        featureFiles[file] = readFileSync(join(dir, file), "utf-8");
+      }
+    }
+    return filesToState(manifest, featureFiles);
+  };
+
+  const prototype: Prototype = {
+    resolve(id) {
+      if (!dataDir) return undefined;
+      const protoDir = join(dataDir, "prototype");
+
+      // Try role first
+      const roleState = readStateFrom(
+        join(protoDir, "role", id),
+        "individual.json"
+      );
+      if (roleState) return roleState;
+
+      // Try organization
+      return readStateFrom(
+        join(protoDir, "organization", id),
+        "organization.json"
+      );
     },
   };
 
@@ -306,5 +493,5 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
     });
   }
 
-  return { runtime, resourcex };
+  return { runtime, prototype, resourcex };
 }

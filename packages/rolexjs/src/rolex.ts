@@ -19,7 +19,7 @@
 import type { Platform } from "@rolexjs/core";
 import * as C from "@rolexjs/core";
 import { parse } from "@rolexjs/parser";
-import type { Runtime, State, Structure } from "@rolexjs/system";
+import { type Prototype, type Runtime, type State, type Structure, mergeState } from "@rolexjs/system";
 import type { ResourceX } from "resourcexjs";
 
 export interface RolexResult {
@@ -59,7 +59,7 @@ export class Rolex {
 
     // Namespaces
     this.individual = new IndividualNamespace(this.rt, this.society, this.past);
-    this.role = new RoleNamespace(this.rt, platform.resourcex);
+    this.role = new RoleNamespace(this.rt, platform.prototype, platform.resourcex);
     this.org = new OrgNamespace(this.rt, this.society, this.past);
     this.resource = platform.resourcex;
   }
@@ -119,14 +119,22 @@ class IndividualNamespace {
 class RoleNamespace {
   constructor(
     private rt: Runtime,
+    private prototype?: Prototype,
     private resourcex?: ResourceX
   ) {}
 
   // ---- Activation ----
 
-  /** Activate: project an individual's full state. */
+  /** Activate: merge prototype (if any) with instance state. */
   activate(individual: Structure): RolexResult {
-    return ok(this.rt, individual, "activate");
+    const instanceState = this.rt.project(individual);
+    const protoState = instanceState.id
+      ? this.prototype?.resolve(instanceState.id)
+      : undefined;
+    const state = protoState
+      ? mergeState(protoState, instanceState)
+      : instanceState;
+    return { state, process: "activate" };
   }
 
   /** Focus: project a goal's state (view / switch context). */
