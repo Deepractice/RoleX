@@ -1,8 +1,0 @@
-{
-  "name": "role-management",
-  "type": "skill",
-  "tag": "0.2.0",
-  "description": "Manage role lifecycle — born, teach, train, retire, kill",
-  "author": "deepractice",
-  "keywords": ["rolex", "role", "management", "skill"]
-}

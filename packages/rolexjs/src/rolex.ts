@@ -1,7 +1,7 @@
 /**
  * Rolex — stateless API layer.
  *
- * Every method takes explicit node references and returns a RolexResult.
+ * Every method takes string ids for existing nodes and resolves internally.
  * No internal state — name registry, active role, session are the
  * caller's responsibility (MCP / CLI).
  *
@@ -10,7 +10,7 @@
  * All textual inputs must be valid Gherkin Feature syntax.
  *
  * Namespaces:
- *   individual — lifecycle (born, retire, die, rehire)
+ *   individual — lifecycle (born, retire, die, rehire) + external injection (teach, train)
  *   role       — execution + cognition + use (activate → achieve, reflect → master, use)
  *   org        — organization management (found, hire, appoint, ...)
  *   resource   — ResourceX instance (optional)
@@ -29,6 +29,9 @@ export interface RolexResult {
   process: string;
 }
 
+/** Resolve an id to a Structure node, throws if not found. */
+type Resolve = (id: string) => Structure;
+
 export class Rolex {
   private rt: Runtime;
   private resourcex?: ResourceX;
@@ -39,7 +42,7 @@ export class Rolex {
   /** Container for archived things. */
   readonly past: Structure;
 
-  /** Individual lifecycle — create, archive, restore. */
+  /** Individual lifecycle — create, archive, restore, external injection. */
   readonly individual: IndividualNamespace;
   /** Role inner cycle — execution + cognition. */
   readonly role: RoleNamespace;
@@ -61,10 +64,17 @@ export class Rolex {
     const existingPast = societyState.children?.find((c) => c.name === "past");
     this.past = existingPast ?? this.rt.create(this.society, C.past);
 
+    // Shared resolver — all namespaces use this to look up nodes by id
+    const resolve: Resolve = (id: string) => {
+      const node = this.find(id);
+      if (!node) throw new Error(`"${id}" not found.`);
+      return node;
+    };
+
     // Namespaces
-    this.individual = new IndividualNamespace(this.rt, this.society, this.past);
-    this.role = new RoleNamespace(this.rt, platform.prototype, platform.resourcex);
-    this.org = new OrgNamespace(this.rt, this.society, this.past);
+    this.individual = new IndividualNamespace(this.rt, this.society, this.past, resolve);
+    this.role = new RoleNamespace(this.rt, resolve, platform.prototype, platform.resourcex);
+    this.org = new OrgNamespace(this.rt, this.society, this.past, resolve);
     this.resource = platform.resourcex;
   }
 
@@ -87,14 +97,15 @@ export class Rolex {
 }
 
 // ================================================================
-//  Individual — lifecycle
+//  Individual — lifecycle + external injection
 // ================================================================
 
 class IndividualNamespace {
   constructor(
     private rt: Runtime,
     private society: Structure,
-    private past: Structure
+    private past: Structure,
+    private resolve: Resolve
   ) {}
 
   /** Born an individual into society. */
@@ -105,20 +116,37 @@ class IndividualNamespace {
   }
 
   /** Retire an individual (can rehire later). */
-  retire(individual: Structure): RolexResult {
-    return archive(this.rt, this.past, individual, "retire");
+  retire(individual: string): RolexResult {
+    return archive(this.rt, this.past, this.resolve(individual), "retire");
   }
 
   /** An individual dies (permanent). */
-  die(individual: Structure): RolexResult {
-    return archive(this.rt, this.past, individual, "die");
+  die(individual: string): RolexResult {
+    return archive(this.rt, this.past, this.resolve(individual), "die");
   }
 
   /** Rehire a retired individual from past. */
-  rehire(pastNode: Structure): RolexResult {
-    const individual = this.rt.create(this.society, C.individual, pastNode.information);
-    this.rt.remove(pastNode);
+  rehire(pastNode: string): RolexResult {
+    const past = this.resolve(pastNode);
+    const individual = this.rt.create(this.society, C.individual, past.information);
+    this.rt.remove(past);
     return ok(this.rt, individual, "rehire");
+  }
+
+  // ---- External injection ----
+
+  /** Teach: directly inject a principle into an individual — no experience consumed. */
+  teach(individual: string, principle: string, id?: string): RolexResult {
+    validateGherkin(principle);
+    const prin = this.rt.create(this.resolve(individual), C.principle, principle, id);
+    return ok(this.rt, prin, "teach");
+  }
+
+  /** Train: directly inject a procedure (skill) into an individual — no experience consumed. */
+  train(individual: string, procedure: string, id?: string): RolexResult {
+    validateGherkin(procedure);
+    const proc = this.rt.create(this.resolve(individual), C.procedure, procedure, id);
+    return ok(this.rt, proc, "train");
   }
 }
 
@@ -129,6 +157,7 @@ class IndividualNamespace {
 class RoleNamespace {
   constructor(
     private rt: Runtime,
+    private resolve: Resolve,
     private prototype?: Prototype,
     private resourcex?: ResourceX
   ) {}
@@ -136,8 +165,9 @@ class RoleNamespace {
   // ---- Activation ----
 
   /** Activate: merge prototype (if any) with instance state. */
-  async activate(individual: Structure): Promise<RolexResult> {
-    const instanceState = this.rt.project(individual);
+  async activate(individual: string): Promise<RolexResult> {
+    const node = this.resolve(individual);
+    const instanceState = this.rt.project(node);
     const protoState = instanceState.id
       ? await this.prototype?.resolve(instanceState.id)
       : undefined;
@@ -148,83 +178,89 @@ class RoleNamespace {
   }
 
   /** Focus: project a goal's state (view / switch context). */
-  focus(goal: Structure): RolexResult {
-    return ok(this.rt, goal, "focus");
+  focus(goal: string): RolexResult {
+    return ok(this.rt, this.resolve(goal), "focus");
   }
 
   // ---- Execution ----
 
   /** Declare a goal under an individual. */
-  want(individual: Structure, goal?: string, id?: string, alias?: readonly string[]): RolexResult {
+  want(individual: string, goal?: string, id?: string, alias?: readonly string[]): RolexResult {
     validateGherkin(goal);
-    const node = this.rt.create(individual, C.goal, goal, id, alias);
+    const node = this.rt.create(this.resolve(individual), C.goal, goal, id, alias);
     return ok(this.rt, node, "want");
   }
 
   /** Create a plan for a goal. */
-  plan(goal: Structure, plan?: string, id?: string): RolexResult {
+  plan(goal: string, plan?: string, id?: string): RolexResult {
     validateGherkin(plan);
-    const node = this.rt.create(goal, C.plan, plan, id);
+    const node = this.rt.create(this.resolve(goal), C.plan, plan, id);
     return ok(this.rt, node, "plan");
   }
 
   /** Add a task to a plan. */
-  todo(plan: Structure, task?: string, id?: string, alias?: readonly string[]): RolexResult {
+  todo(plan: string, task?: string, id?: string, alias?: readonly string[]): RolexResult {
     validateGherkin(task);
-    const node = this.rt.create(plan, C.task, task, id, alias);
+    const node = this.rt.create(this.resolve(plan), C.task, task, id, alias);
     return ok(this.rt, node, "todo");
   }
 
   /** Finish a task: consume task, create encounter under individual. */
-  finish(task: Structure, individual: Structure, encounter?: string): RolexResult {
+  finish(task: string, individual: string, encounter?: string): RolexResult {
     validateGherkin(encounter);
-    const encId = task.id ? `${task.id}-finished` : undefined;
-    const enc = this.rt.create(individual, C.encounter, encounter, encId);
-    this.rt.remove(task);
+    const taskNode = this.resolve(task);
+    const encId = taskNode.id ? `${taskNode.id}-finished` : undefined;
+    const enc = this.rt.create(this.resolve(individual), C.encounter, encounter, encId);
+    this.rt.remove(taskNode);
     return ok(this.rt, enc, "finish");
   }
 
   /** Achieve a goal: consume goal, create encounter under individual. */
-  achieve(goal: Structure, individual: Structure, encounter?: string): RolexResult {
+  achieve(goal: string, individual: string, encounter?: string): RolexResult {
     validateGherkin(encounter);
-    const encId = goal.id ? `${goal.id}-achieved` : undefined;
-    const enc = this.rt.create(individual, C.encounter, encounter, encId);
-    this.rt.remove(goal);
+    const goalNode = this.resolve(goal);
+    const encId = goalNode.id ? `${goalNode.id}-achieved` : undefined;
+    const enc = this.rt.create(this.resolve(individual), C.encounter, encounter, encId);
+    this.rt.remove(goalNode);
     return ok(this.rt, enc, "achieve");
   }
 
   /** Abandon a goal: consume goal, create encounter under individual. */
-  abandon(goal: Structure, individual: Structure, encounter?: string): RolexResult {
+  abandon(goal: string, individual: string, encounter?: string): RolexResult {
     validateGherkin(encounter);
-    const encId = goal.id ? `${goal.id}-abandoned` : undefined;
-    const enc = this.rt.create(individual, C.encounter, encounter, encId);
-    this.rt.remove(goal);
+    const goalNode = this.resolve(goal);
+    const encId = goalNode.id ? `${goalNode.id}-abandoned` : undefined;
+    const enc = this.rt.create(this.resolve(individual), C.encounter, encounter, encId);
+    this.rt.remove(goalNode);
     return ok(this.rt, enc, "abandon");
   }
 
   // ---- Cognition ----
 
   /** Reflect: consume encounter, create experience under individual. */
-  reflect(encounter: Structure, individual: Structure, experience?: string, id?: string): RolexResult {
+  reflect(encounter: string, individual: string, experience?: string, id?: string): RolexResult {
     validateGherkin(experience);
-    const exp = this.rt.create(individual, C.experience, experience || encounter.information, id);
-    this.rt.remove(encounter);
+    const encNode = this.resolve(encounter);
+    const exp = this.rt.create(this.resolve(individual), C.experience, experience || encNode.information, id);
+    this.rt.remove(encNode);
     return ok(this.rt, exp, "reflect");
   }
 
-  /** Realize: consume experience, create principle under knowledge. */
-  realize(experience: Structure, knowledge: Structure, principle?: string, id?: string): RolexResult {
+  /** Realize: consume experience, create principle under individual. */
+  realize(experience: string, individual: string, principle?: string, id?: string): RolexResult {
     validateGherkin(principle);
-    const prin = this.rt.create(knowledge, C.principle, principle || experience.information, id);
-    this.rt.remove(experience);
+    const expNode = this.resolve(experience);
+    const prin = this.rt.create(this.resolve(individual), C.principle, principle || expNode.information, id);
+    this.rt.remove(expNode);
     return ok(this.rt, prin, "realize");
   }
 
-  /** Master: consume experience, create procedure under knowledge. */
-  master(experience: Structure, knowledge: Structure, procedure?: string, id?: string): RolexResult {
+  /** Master: consume experience, create procedure under individual. */
+  master(experience: string, individual: string, procedure?: string, id?: string): RolexResult {
     validateGherkin(procedure);
-    const proc = this.rt.create(knowledge, C.procedure, procedure || experience.information, id);
-    this.rt.remove(experience);
+    const expNode = this.resolve(experience);
+    const proc = this.rt.create(this.resolve(individual), C.procedure, procedure || expNode.information, id);
+    this.rt.remove(expNode);
     return ok(this.rt, proc, "master");
   }
 
@@ -261,7 +297,8 @@ class OrgNamespace {
   constructor(
     private rt: Runtime,
     private society: Structure,
-    private past: Structure
+    private past: Structure,
+    private resolve: Resolve
   ) {}
 
   // ---- Structure ----
@@ -274,67 +311,66 @@ class OrgNamespace {
   }
 
   /** Establish a position within an organization. */
-  establish(
-    org: Structure,
-    position?: string,
-    id?: string,
-    alias?: readonly string[]
-  ): RolexResult {
+  establish(org: string, position?: string, id?: string, alias?: readonly string[]): RolexResult {
     validateGherkin(position);
-    const pos = this.rt.create(org, C.position, position, id, alias);
+    const pos = this.rt.create(this.resolve(org), C.position, position, id, alias);
     return ok(this.rt, pos, "establish");
   }
 
   /** Define the charter for an organization. */
-  charter(org: Structure, charter: string): RolexResult {
+  charter(org: string, charter: string): RolexResult {
     validateGherkin(charter);
-    const node = this.rt.create(org, C.charter, charter);
+    const node = this.rt.create(this.resolve(org), C.charter, charter);
     return ok(this.rt, node, "charter");
   }
 
   /** Add a duty to a position. */
-  charge(position: Structure, duty: string, id?: string): RolexResult {
+  charge(position: string, duty: string, id?: string): RolexResult {
     validateGherkin(duty);
-    const node = this.rt.create(position, C.duty, duty, id);
+    const node = this.rt.create(this.resolve(position), C.duty, duty, id);
     return ok(this.rt, node, "charge");
   }
 
   // ---- Archival ----
 
   /** Dissolve an organization. */
-  dissolve(org: Structure): RolexResult {
-    return archive(this.rt, this.past, org, "dissolve");
+  dissolve(org: string): RolexResult {
+    return archive(this.rt, this.past, this.resolve(org), "dissolve");
   }
 
   /** Abolish a position. */
-  abolish(position: Structure): RolexResult {
-    return archive(this.rt, this.past, position, "abolish");
+  abolish(position: string): RolexResult {
+    return archive(this.rt, this.past, this.resolve(position), "abolish");
   }
 
   // ---- Membership & Appointment ----
 
   /** Hire: link individual to organization via membership. */
-  hire(org: Structure, individual: Structure): RolexResult {
-    this.rt.link(org, individual, "membership", "belong");
-    return ok(this.rt, org, "hire");
+  hire(org: string, individual: string): RolexResult {
+    const orgNode = this.resolve(org);
+    this.rt.link(orgNode, this.resolve(individual), "membership", "belong");
+    return ok(this.rt, orgNode, "hire");
   }
 
   /** Fire: remove membership link. */
-  fire(org: Structure, individual: Structure): RolexResult {
-    this.rt.unlink(org, individual, "membership", "belong");
-    return ok(this.rt, org, "fire");
+  fire(org: string, individual: string): RolexResult {
+    const orgNode = this.resolve(org);
+    this.rt.unlink(orgNode, this.resolve(individual), "membership", "belong");
+    return ok(this.rt, orgNode, "fire");
   }
 
   /** Appoint: link individual to position via appointment. */
-  appoint(position: Structure, individual: Structure): RolexResult {
-    this.rt.link(position, individual, "appointment", "serve");
-    return ok(this.rt, position, "appoint");
+  appoint(position: string, individual: string): RolexResult {
+    const posNode = this.resolve(position);
+    this.rt.link(posNode, this.resolve(individual), "appointment", "serve");
+    return ok(this.rt, posNode, "appoint");
   }
 
   /** Dismiss: remove appointment link. */
-  dismiss(position: Structure, individual: Structure): RolexResult {
-    this.rt.unlink(position, individual, "appointment", "serve");
-    return ok(this.rt, position, "dismiss");
+  dismiss(position: string, individual: string): RolexResult {
+    const posNode = this.resolve(position);
+    this.rt.unlink(posNode, this.resolve(individual), "appointment", "serve");
+    return ok(this.rt, posNode, "dismiss");
   }
 }
 

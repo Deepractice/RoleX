@@ -6,7 +6,7 @@ Feature: master — experience to procedure
     Given an experience exists from reflection
     When master is called with experience ids and a procedure id
     Then the experience is consumed
-    And a procedure is added to the role's knowledge
+    And a procedure is created under the individual
     And the procedure stores skill metadata and ResourceX locator
 
   Scenario: Procedure ID convention

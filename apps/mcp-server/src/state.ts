@@ -2,148 +2,110 @@
  * McpState — stateful session for the MCP server.
  *
  * Holds what the stateless Rolex API does not:
- *   - activeRole (which individual is "me")
- *   - focusedGoal / focusedPlan (execution context)
- *   - id → Structure registry (resolve user-facing ids to node refs)
- *   - encounter / experience registries (for selective cognition)
+ *   - activeRoleId (which individual is "me")
+ *   - focusedGoalId / focusedPlanId (execution context)
+ *   - encounter / experience id sets (for selective cognition)
+ *
+ * Since the Rolex API now accepts string ids directly,
+ * McpState only stores ids — no Structure references.
  */
-import type { Rolex, State, Structure } from "rolexjs";
+import type { Rolex, State } from "rolexjs";
 
 export class McpState {
-  activeRole: Structure | null = null;
-  focusedGoal: Structure | null = null;
-  focusedPlan: Structure | null = null;
-  knowledgeRef: Structure | null = null;
+  activeRoleId: string | null = null;
+  focusedGoalId: string | null = null;
+  focusedPlanId: string | null = null;
 
-  private refs = new Map<string, Structure>();
-  private encounterRegistry = new Map<string, Structure>();
-  private experienceRegistry = new Map<string, Structure>();
+  private encounterIds = new Set<string>();
+  private experienceIds = new Set<string>();
 
   constructor(readonly rolex: Rolex) {}
-
-  // ================================================================
-  //  Registry — id → Structure
-  // ================================================================
-
-  register(id: string, ref: Structure) {
-    this.refs.set(id, ref);
-  }
-
-  resolve(id: string): Structure {
-    const ref = this.refs.get(id);
-    if (!ref) throw new Error(`Not found: "${id}"`);
-    return ref;
-  }
-
-  unregister(id: string) {
-    this.refs.delete(id);
-  }
 
   // ================================================================
   //  Requirements — throw if missing
   // ================================================================
 
-  requireRole(): Structure {
-    if (!this.activeRole) throw new Error("No active role. Call activate first.");
-    return this.activeRole;
+  requireRoleId(): string {
+    if (!this.activeRoleId) throw new Error("No active role. Call activate first.");
+    return this.activeRoleId;
   }
 
-  requireGoal(): Structure {
-    if (!this.focusedGoal) throw new Error("No focused goal. Call want first.");
-    return this.focusedGoal;
+  requireGoalId(): string {
+    if (!this.focusedGoalId) throw new Error("No focused goal. Call want first.");
+    return this.focusedGoalId;
   }
 
-  requirePlan(): Structure {
-    if (!this.focusedPlan) throw new Error("No focused plan. Call plan first.");
-    return this.focusedPlan;
-  }
-
-  requireKnowledge(): Structure {
-    if (!this.knowledgeRef) throw new Error("No knowledge branch found.");
-    return this.knowledgeRef;
+  requirePlanId(): string {
+    if (!this.focusedPlanId) throw new Error("No focused plan. Call plan first.");
+    return this.focusedPlanId;
   }
 
   // ================================================================
-  //  Cognition registries — encounter / experience (named, selective)
+  //  Cognition registries — encounter / experience ids
   // ================================================================
 
-  registerEncounter(id: string, enc: Structure) {
-    this.encounterRegistry.set(id, enc);
+  addEncounter(id: string) {
+    this.encounterIds.add(id);
   }
 
-  resolveEncounters(ids: string[]): Structure[] {
-    return ids.map((id) => {
-      const enc = this.encounterRegistry.get(id);
-      if (!enc) throw new Error(`Encounter not found: "${id}"`);
-      return enc;
-    });
+  requireEncounterIds(ids: string[]) {
+    for (const id of ids) {
+      if (!this.encounterIds.has(id)) throw new Error(`Encounter not found: "${id}"`);
+    }
   }
 
   consumeEncounters(ids: string[]) {
     for (const id of ids) {
-      this.encounterRegistry.delete(id);
+      this.encounterIds.delete(id);
     }
   }
 
-  listEncounters(): string[] {
-    return [...this.encounterRegistry.keys()];
+  addExperience(id: string) {
+    this.experienceIds.add(id);
   }
 
-  registerExperience(id: string, exp: Structure) {
-    this.experienceRegistry.set(id, exp);
-  }
-
-  resolveExperiences(ids: string[]): Structure[] {
-    return ids.map((id) => {
-      const exp = this.experienceRegistry.get(id);
-      if (!exp) throw new Error(`Experience not found: "${id}"`);
-      return exp;
-    });
+  requireExperienceIds(ids: string[]) {
+    for (const id of ids) {
+      if (!this.experienceIds.has(id)) throw new Error(`Experience not found: "${id}"`);
+    }
   }
 
   consumeExperiences(ids: string[]) {
     for (const id of ids) {
-      this.experienceRegistry.delete(id);
+      this.experienceIds.delete(id);
     }
   }
 
-  listExperiences(): string[] {
-    return [...this.experienceRegistry.keys()];
-  }
-
   // ================================================================
-  //  Lookup — find individual by id/alias
+  //  Lookup
   // ================================================================
 
-  findIndividual(roleId: string): Structure | null {
-    return this.rolex.find(roleId);
+  findIndividual(roleId: string): boolean {
+    return this.rolex.find(roleId) !== null;
   }
 
   // ================================================================
   //  Activation helpers
   // ================================================================
 
-  /** Cache child refs from an activation projection. */
+  /** Rehydrate ids from an activation projection. */
   cacheFromActivation(state: State) {
-    const children = (state as State & { children?: readonly State[] }).children;
-    this.knowledgeRef = children?.find((c: State) => c.name === "knowledge") ?? null;
     this.rehydrate(state);
   }
 
-  /** Walk the state tree and re-register all nodes with ids into the appropriate registries. */
+  /** Walk the state tree and collect ids into the appropriate registries. */
   private rehydrate(node: State) {
     if (node.id) {
       switch (node.name) {
         case "goal":
-        case "task":
-        case "plan":
-          this.refs.set(node.id, node);
+          // Set focused goal to the first one found if none set
+          if (!this.focusedGoalId) this.focusedGoalId = node.id;
           break;
         case "encounter":
-          this.encounterRegistry.set(node.id, node);
+          this.encounterIds.add(node.id);
           break;
         case "experience":
-          this.experienceRegistry.set(node.id, node);
+          this.experienceIds.add(node.id);
           break;
       }
     }
@@ -160,12 +122,12 @@ export class McpState {
   cognitiveHint(process: string): string | null {
     switch (process) {
       case "activate":
-        if (!this.focusedGoal)
+        if (!this.focusedGoalId)
           return "I have no goal yet. I should call `want` to declare one, or `focus` to review existing goals.";
         return "I have an active goal. I should call `focus` to review progress, or `want` to declare a new goal.";
 
       case "focus":
-        if (!this.focusedPlan)
+        if (!this.focusedPlanId)
           return "I have a goal but no plan. I should call `plan` to design how to achieve it.";
         return "I have a plan. I should call `todo` to create tasks, or continue working.";
 
@@ -179,22 +141,22 @@ export class McpState {
         return "Task created. I can add more with `todo`, or start working and call `finish` when done.";
 
       case "finish": {
-        const encCount = this.encounterRegistry.size;
-        if (encCount > 0 && !this.focusedGoal)
+        const encCount = this.encounterIds.size;
+        if (encCount > 0 && !this.focusedGoalId)
           return `Task finished. No more goals — I have ${encCount} encounter(s) to choose from for \`reflect\`, or \`want\` a new goal.`;
         return "Task finished. I should continue with remaining tasks, or call `achieve` when the goal is met.";
       }
 
       case "achieve":
       case "abandon": {
-        const encCount = this.encounterRegistry.size;
+        const encCount = this.encounterIds.size;
         if (encCount > 0)
           return `Goal closed. I have ${encCount} encounter(s) to choose from for \`reflect\`, or I can \`want\` a new goal.`;
         return "Goal closed. I can call `want` for a new goal, or `focus` to review others.";
       }
 
       case "reflect": {
-        const expCount = this.experienceRegistry.size;
+        const expCount = this.experienceIds.size;
         if (expCount > 0)
           return `Experience gained. I can \`realize\` principles or \`master\` procedures — ${expCount} experience(s) available.`;
         return "Experience gained. I can `realize` a principle, `master` a procedure, or continue working.";

@@ -1,8 +1,8 @@
 /**
  * @rolexjs/mcp-server — individual-level MCP tools.
  *
- * Stateful wrapper around the stateless Rolex API.
- * Holds activeRole, focusedGoal, focusedPlan, and id registries.
+ * Thin wrapper around the Rolex API (which accepts string ids).
+ * McpState holds session context: activeRoleId, focusedGoalId, encounter/experience ids.
  *
  * Tools:
  *   activate — activate a role
@@ -60,14 +60,12 @@ server.addTool({
     roleId: z.string().describe("Role name to activate"),
   }),
   execute: async ({ roleId }) => {
-    let node = state.findIndividual(roleId);
-    if (!node) {
-      // Auto-born if prototype is registered
-      const born = rolex.individual.born(undefined, roleId);
-      node = born.state;
+    if (!state.findIndividual(roleId)) {
+      // Auto-born if not found
+      rolex.individual.born(undefined, roleId);
     }
-    state.activeRole = node;
-    const result = await rolex.role.activate(node);
+    state.activeRoleId = roleId;
+    const result = await rolex.role.activate(roleId);
     state.cacheFromActivation(result.state);
     return fmt("activate", roleId, result);
   },
@@ -81,12 +79,11 @@ server.addTool({
   }),
   execute: async ({ id }) => {
     if (id) {
-      const goal = state.resolve(id);
-      state.focusedGoal = goal;
-      state.focusedPlan = null;
+      state.focusedGoalId = id;
+      state.focusedPlanId = null;
     }
-    const goal = state.requireGoal();
-    const result = rolex.role.focus(goal);
+    const goalId = state.requireGoalId();
+    const result = rolex.role.focus(goalId);
     return fmt("focus", id ?? "current goal", result);
   },
 });
@@ -101,11 +98,10 @@ server.addTool({
     goal: z.string().describe("Gherkin Feature source describing the goal"),
   }),
   execute: async ({ id, goal }) => {
-    const role = state.requireRole();
-    const result = rolex.role.want(role, goal, id);
-    state.register(id, result.state);
-    state.focusedGoal = result.state;
-    state.focusedPlan = null;
+    const roleId = state.requireRoleId();
+    const result = rolex.role.want(roleId, goal, id);
+    state.focusedGoalId = id;
+    state.focusedPlanId = null;
     return fmt("want", id, result);
   },
 });
@@ -118,9 +114,9 @@ server.addTool({
     plan: z.string().describe("Gherkin Feature source describing the plan"),
   }),
   execute: async ({ id, plan }) => {
-    const goal = state.requireGoal();
-    const result = rolex.role.plan(goal, plan, id);
-    state.focusedPlan = result.state;
+    const goalId = state.requireGoalId();
+    const result = rolex.role.plan(goalId, plan, id);
+    state.focusedPlanId = id;
     return fmt("plan", id, result);
   },
 });
@@ -133,9 +129,8 @@ server.addTool({
     task: z.string().describe("Gherkin Feature source describing the task"),
   }),
   execute: async ({ id, task }) => {
-    const plan = state.requirePlan();
-    const result = rolex.role.todo(plan, task, id);
-    state.register(id, result.state);
+    const planId = state.requirePlanId();
+    const result = rolex.role.todo(planId, task, id);
     return fmt("todo", id, result);
   },
 });
@@ -148,12 +143,10 @@ server.addTool({
     encounter: z.string().optional().describe("Optional Gherkin Feature describing what happened"),
   }),
   execute: async ({ id, encounter }) => {
-    const task = state.resolve(id);
-    const role = state.requireRole();
-    const result = rolex.role.finish(task, role, encounter);
+    const roleId = state.requireRoleId();
+    const result = rolex.role.finish(id, roleId, encounter);
     const encId = result.state.id ?? id;
-    state.registerEncounter(encId, result.state);
-    state.unregister(id);
+    state.addEncounter(encId);
     return fmt("finish", id, result);
   },
 });
@@ -165,14 +158,13 @@ server.addTool({
     encounter: z.string().optional().describe("Optional Gherkin Feature describing what happened"),
   }),
   execute: async ({ encounter }) => {
-    const goal = state.requireGoal();
-    const goalId = goal.id ?? "goal";
-    const role = state.requireRole();
-    const result = rolex.role.achieve(goal, role, encounter);
+    const goalId = state.requireGoalId();
+    const roleId = state.requireRoleId();
+    const result = rolex.role.achieve(goalId, roleId, encounter);
     const encId = result.state.id ?? goalId;
-    state.registerEncounter(encId, result.state);
-    state.focusedGoal = null;
-    state.focusedPlan = null;
+    state.addEncounter(encId);
+    state.focusedGoalId = null;
+    state.focusedPlanId = null;
     return fmt("achieve", goalId, result);
   },
 });
@@ -184,14 +176,13 @@ server.addTool({
     encounter: z.string().optional().describe("Optional Gherkin Feature describing what happened"),
   }),
   execute: async ({ encounter }) => {
-    const goal = state.requireGoal();
-    const goalId = goal.id ?? "goal";
-    const role = state.requireRole();
-    const result = rolex.role.abandon(goal, role, encounter);
+    const goalId = state.requireGoalId();
+    const roleId = state.requireRoleId();
+    const result = rolex.role.abandon(goalId, roleId, encounter);
     const encId = result.state.id ?? goalId;
-    state.registerEncounter(encId, result.state);
-    state.focusedGoal = null;
-    state.focusedPlan = null;
+    state.addEncounter(encId);
+    state.focusedGoalId = null;
+    state.focusedPlanId = null;
     return fmt("abandon", goalId, result);
   },
 });
@@ -207,12 +198,11 @@ server.addTool({
     experience: z.string().optional().describe("Gherkin Feature source for the experience"),
   }),
   execute: async ({ ids, id, experience }) => {
-    const encounters = state.resolveEncounters(ids);
-    const role = state.requireRole();
-    const fallbackSource = encounters[0]?.information;
-    const result = rolex.role.reflect(encounters[0], role, experience || fallbackSource, id);
+    state.requireEncounterIds(ids);
+    const roleId = state.requireRoleId();
+    const result = rolex.role.reflect(ids[0], roleId, experience, id);
     state.consumeEncounters(ids);
-    state.registerExperience(id, result.state);
+    state.addExperience(id);
     return fmt("reflect", id, result);
   },
 });
@@ -226,10 +216,9 @@ server.addTool({
     principle: z.string().optional().describe("Gherkin Feature source for the principle"),
   }),
   execute: async ({ ids, id, principle }) => {
-    const experiences = state.resolveExperiences(ids);
-    const knowledge = state.requireKnowledge();
-    const fallbackSource = experiences[0]?.information;
-    const result = rolex.role.realize(experiences[0], knowledge, principle || fallbackSource, id);
+    state.requireExperienceIds(ids);
+    const roleId = state.requireRoleId();
+    const result = rolex.role.realize(ids[0], roleId, principle, id);
     state.consumeExperiences(ids);
     return fmt("realize", id, result);
   },
@@ -244,10 +233,9 @@ server.addTool({
     procedure: z.string().optional().describe("Gherkin Feature source for the procedure"),
   }),
   execute: async ({ ids, id, procedure }) => {
-    const experiences = state.resolveExperiences(ids);
-    const knowledge = state.requireKnowledge();
-    const fallbackSource = experiences[0]?.information;
-    const result = rolex.role.master(experiences[0], knowledge, procedure || fallbackSource, id);
+    state.requireExperienceIds(ids);
+    const roleId = state.requireRoleId();
+    const result = rolex.role.master(ids[0], roleId, procedure, id);
     state.consumeExperiences(ids);
     return fmt("master", id, result);
   },
