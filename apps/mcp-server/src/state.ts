@@ -127,6 +127,29 @@ export class McpState {
   cacheFromActivation(state: State) {
     const children = (state as State & { children?: readonly State[] }).children;
     this.knowledgeRef = children?.find((c: State) => c.name === "knowledge") ?? null;
+    this.rehydrate(state);
+  }
+
+  /** Walk the state tree and re-register all nodes with ids into the appropriate registries. */
+  private rehydrate(node: State) {
+    if (node.id) {
+      switch (node.name) {
+        case "goal":
+        case "task":
+        case "plan":
+          this.refs.set(node.id, node);
+          break;
+        case "encounter":
+          this.encounterRegistry.set(node.id, node);
+          break;
+        case "experience":
+          this.experienceRegistry.set(node.id, node);
+          break;
+      }
+    }
+    for (const child of (node as State & { children?: readonly State[] }).children ?? []) {
+      this.rehydrate(child);
+    }
   }
 
   // ================================================================

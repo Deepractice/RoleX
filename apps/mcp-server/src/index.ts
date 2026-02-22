@@ -114,13 +114,14 @@ server.addTool({
   name: "plan",
   description: detail("plan"),
   parameters: z.object({
+    id: z.string().describe("Plan id — keywords from the plan content joined by hyphens"),
     plan: z.string().describe("Gherkin Feature source describing the plan"),
   }),
-  execute: async ({ plan }) => {
+  execute: async ({ id, plan }) => {
     const goal = state.requireGoal();
-    const result = rolex.role.plan(goal, plan);
+    const result = rolex.role.plan(goal, plan, id);
     state.focusedPlan = result.state;
-    return fmt("plan", "plan", result);
+    return fmt("plan", id, result);
   },
 });
 
@@ -150,7 +151,8 @@ server.addTool({
     const task = state.resolve(id);
     const role = state.requireRole();
     const result = rolex.role.finish(task, role, encounter);
-    state.registerEncounter(id, result.state);
+    const encId = result.state.id ?? id;
+    state.registerEncounter(encId, result.state);
     state.unregister(id);
     return fmt("finish", id, result);
   },
@@ -167,7 +169,8 @@ server.addTool({
     const goalId = goal.id ?? "goal";
     const role = state.requireRole();
     const result = rolex.role.achieve(goal, role, encounter);
-    state.registerEncounter(goalId, result.state);
+    const encId = result.state.id ?? goalId;
+    state.registerEncounter(encId, result.state);
     state.focusedGoal = null;
     state.focusedPlan = null;
     return fmt("achieve", goalId, result);
@@ -185,7 +188,8 @@ server.addTool({
     const goalId = goal.id ?? "goal";
     const role = state.requireRole();
     const result = rolex.role.abandon(goal, role, encounter);
-    state.registerEncounter(goalId, result.state);
+    const encId = result.state.id ?? goalId;
+    state.registerEncounter(encId, result.state);
     state.focusedGoal = null;
     state.focusedPlan = null;
     return fmt("abandon", goalId, result);
@@ -199,17 +203,17 @@ server.addTool({
   description: detail("reflect"),
   parameters: z.object({
     ids: z.array(z.string()).describe("Encounter ids to reflect on (selective consumption)"),
+    id: z.string().describe("Experience id — keywords from the experience content joined by hyphens"),
     experience: z.string().optional().describe("Gherkin Feature source for the experience"),
   }),
-  execute: async ({ ids, experience }) => {
+  execute: async ({ ids, id, experience }) => {
     const encounters = state.resolveEncounters(ids);
     const role = state.requireRole();
     const fallbackSource = encounters[0]?.information;
-    const result = rolex.role.reflect(encounters[0], role, experience || fallbackSource);
+    const result = rolex.role.reflect(encounters[0], role, experience || fallbackSource, id);
     state.consumeEncounters(ids);
-    const expId = ids.join("+");
-    state.registerExperience(expId, result.state);
-    return fmt("reflect", expId, result);
+    state.registerExperience(id, result.state);
+    return fmt("reflect", id, result);
   },
 });
 
@@ -218,15 +222,16 @@ server.addTool({
   description: detail("realize"),
   parameters: z.object({
     ids: z.array(z.string()).describe("Experience ids to distill into a principle"),
+    id: z.string().describe("Principle id — keywords from the principle content joined by hyphens"),
     principle: z.string().optional().describe("Gherkin Feature source for the principle"),
   }),
-  execute: async ({ ids, principle }) => {
+  execute: async ({ ids, id, principle }) => {
     const experiences = state.resolveExperiences(ids);
     const knowledge = state.requireKnowledge();
     const fallbackSource = experiences[0]?.information;
-    const result = rolex.role.realize(experiences[0], knowledge, principle || fallbackSource);
+    const result = rolex.role.realize(experiences[0], knowledge, principle || fallbackSource, id);
     state.consumeExperiences(ids);
-    return fmt("realize", ids.join("+"), result);
+    return fmt("realize", id, result);
   },
 });
 
@@ -235,15 +240,16 @@ server.addTool({
   description: detail("master"),
   parameters: z.object({
     ids: z.array(z.string()).describe("Experience ids to distill into a procedure"),
+    id: z.string().describe("Procedure id — keywords from the procedure content joined by hyphens"),
     procedure: z.string().optional().describe("Gherkin Feature source for the procedure"),
   }),
-  execute: async ({ ids, procedure }) => {
+  execute: async ({ ids, id, procedure }) => {
     const experiences = state.resolveExperiences(ids);
     const knowledge = state.requireKnowledge();
     const fallbackSource = experiences[0]?.information;
-    const result = rolex.role.master(experiences[0], knowledge, procedure || fallbackSource);
+    const result = rolex.role.master(experiences[0], knowledge, procedure || fallbackSource, id);
     state.consumeExperiences(ids);
-    return fmt("master", ids.join("+"), result);
+    return fmt("master", id, result);
   },
 });
 

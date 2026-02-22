@@ -588,6 +588,23 @@ const resource = defineCommand({
   },
 });
 
+// ========== Prototype — register ResourceX source ==========
+
+const prototype = defineCommand({
+  meta: { name: "prototype", description: "Register a ResourceX source as a prototype" },
+  args: {
+    source: {
+      type: "positional" as const,
+      description: "ResourceX source — local path or locator",
+      required: true,
+    },
+  },
+  async run({ args }) {
+    const result = await rolex.prototype(args.source);
+    output(result, result.state.id ?? args.source);
+  },
+});
+
 // ========== Main ==========
 
 const main = defineCommand({
@@ -601,6 +618,7 @@ const main = defineCommand({
     role,
     org,
     resource,
+    prototype,
   },
 });
 

@@ -5,10 +5,15 @@ Feature: plan — create a plan for a goal
   Scenario: Create a plan
     Given a focused goal exists
     And a Gherkin source describing the plan phases
-    When plan is called with the source
+    When plan is called with an id and the source
     Then a new plan node is created under the goal
     And the plan becomes the focused plan
     And tasks can be added to this plan with todo
+
+  Scenario: Plan ID convention
+    Given the id is keywords from the plan content joined by hyphens
+    Then "Fix ID-less node creation" becomes id "fix-id-less-node-creation"
+    And "JWT authentication strategy" becomes id "jwt-authentication-strategy"
 
   Scenario: Writing the plan Gherkin
     Given the plan breaks a goal into logical phases

@@ -324,4 +324,39 @@ describe("round-trip", () => {
     expect(naming?.name).toBe("principle");
     expect(naming?.information).toBe("Feature: Name params well");
   });
+
+  test("multiple encounters with distinct ids survive round-trip", () => {
+    const original = state("individual", {
+      id: "sean",
+      information: "Feature: Sean",
+      children: [
+        state("identity"),
+        state("knowledge"),
+        state("encounter", { id: "task-a-finished", information: "Feature: Task A done" }),
+        state("encounter", { id: "task-b-finished", information: "Feature: Task B done" }),
+        state("encounter", { id: "goal-x-achieved", information: "Feature: Goal X achieved" }),
+      ],
+    });
+
+    const { manifest, files } = stateToFiles(original);
+    const fileContents: Record<string, string> = {};
+    for (const f of files) {
+      fileContents[f.path] = f.content;
+    }
+
+    const restored = filesToState(manifest, fileContents);
+
+    const encounters = restored.children!.filter((c) => c.name === "encounter");
+    expect(encounters).toHaveLength(3);
+    expect(encounters.map((e) => e.id).sort()).toEqual([
+      "goal-x-achieved",
+      "task-a-finished",
+      "task-b-finished",
+    ]);
+
+    const paths = files.map((f) => f.path);
+    expect(paths).toContain("task-a-finished.encounter.feature");
+    expect(paths).toContain("task-b-finished.encounter.feature");
+    expect(paths).toContain("goal-x-achieved.encounter.feature");
+  });
 });

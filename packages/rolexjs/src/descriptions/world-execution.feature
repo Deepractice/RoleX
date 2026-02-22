@@ -10,7 +10,7 @@ Feature: Execution — the doing cycle
 
   Scenario: Plan and create tasks
     Given I have a focused goal
-    Then I call plan(plan) to break it into logical phases
+    Then I call plan(id, plan) to break it into logical phases
     And I call todo(id, task) to create concrete, actionable tasks
 
   Scenario: Execute and finish

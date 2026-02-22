@@ -162,9 +162,9 @@ class RoleNamespace {
   }
 
   /** Create a plan for a goal. */
-  plan(goal: Structure, plan?: string): RolexResult {
+  plan(goal: Structure, plan?: string, id?: string): RolexResult {
     validateGherkin(plan);
-    const node = this.rt.create(goal, C.plan, plan);
+    const node = this.rt.create(goal, C.plan, plan, id);
     return ok(this.rt, node, "plan");
   }
 
@@ -178,7 +178,8 @@ class RoleNamespace {
   /** Finish a task: consume task, create encounter under individual. */
   finish(task: Structure, individual: Structure, encounter?: string): RolexResult {
     validateGherkin(encounter);
-    const enc = this.rt.create(individual, C.encounter, encounter);
+    const encId = task.id ? `${task.id}-finished` : undefined;
+    const enc = this.rt.create(individual, C.encounter, encounter, encId);
     this.rt.remove(task);
     return ok(this.rt, enc, "finish");
   }
@@ -186,7 +187,8 @@ class RoleNamespace {
   /** Achieve a goal: consume goal, create encounter under individual. */
   achieve(goal: Structure, individual: Structure, encounter?: string): RolexResult {
     validateGherkin(encounter);
-    const enc = this.rt.create(individual, C.encounter, encounter);
+    const encId = goal.id ? `${goal.id}-achieved` : undefined;
+    const enc = this.rt.create(individual, C.encounter, encounter, encId);
     this.rt.remove(goal);
     return ok(this.rt, enc, "achieve");
   }
@@ -194,7 +196,8 @@ class RoleNamespace {
   /** Abandon a goal: consume goal, create encounter under individual. */
   abandon(goal: Structure, individual: Structure, encounter?: string): RolexResult {
     validateGherkin(encounter);
-    const enc = this.rt.create(individual, C.encounter, encounter);
+    const encId = goal.id ? `${goal.id}-abandoned` : undefined;
+    const enc = this.rt.create(individual, C.encounter, encounter, encId);
     this.rt.remove(goal);
     return ok(this.rt, enc, "abandon");
   }
@@ -202,25 +205,25 @@ class RoleNamespace {
   // ---- Cognition ----
 
   /** Reflect: consume encounter, create experience under individual. */
-  reflect(encounter: Structure, individual: Structure, experience?: string): RolexResult {
+  reflect(encounter: Structure, individual: Structure, experience?: string, id?: string): RolexResult {
     validateGherkin(experience);
-    const exp = this.rt.create(individual, C.experience, experience || encounter.information);
+    const exp = this.rt.create(individual, C.experience, experience || encounter.information, id);
     this.rt.remove(encounter);
     return ok(this.rt, exp, "reflect");
   }
 
   /** Realize: consume experience, create principle under knowledge. */
-  realize(experience: Structure, knowledge: Structure, principle?: string): RolexResult {
+  realize(experience: Structure, knowledge: Structure, principle?: string, id?: string): RolexResult {
     validateGherkin(principle);
-    const prin = this.rt.create(knowledge, C.principle, principle || experience.information);
+    const prin = this.rt.create(knowledge, C.principle, principle || experience.information, id);
     this.rt.remove(experience);
     return ok(this.rt, prin, "realize");
   }
 
   /** Master: consume experience, create procedure under knowledge. */
-  master(experience: Structure, knowledge: Structure, procedure?: string): RolexResult {
+  master(experience: Structure, knowledge: Structure, procedure?: string, id?: string): RolexResult {
     validateGherkin(procedure);
-    const proc = this.rt.create(knowledge, C.procedure, procedure || experience.information);
+    const proc = this.rt.create(knowledge, C.procedure, procedure || experience.information, id);
     this.rt.remove(experience);
     return ok(this.rt, proc, "master");
   }
@@ -231,8 +234,16 @@ class RoleNamespace {
   async skill(locator: string): Promise<string> {
     if (!this.resourcex) throw new Error("ResourceX is not available.");
     const content = await this.resourcex.ingest<string>(locator);
-    if (typeof content === "string") return content;
-    return JSON.stringify(content, null, 2);
+    const text = typeof content === "string" ? content : JSON.stringify(content, null, 2);
+
+    // Try to render RXM context alongside content
+    try {
+      const rxm = await this.resourcex.info(locator);
+      return `${formatRXM(rxm)}\n\n${text}`;
+    } catch {
+      // Path-based locator or info unavailable — return content only
+      return text;
+    }
   }
 
   /** Use a resource — role's entry point for interacting with external resources. */
@@ -282,9 +293,9 @@ class OrgNamespace {
   }
 
   /** Add a duty to a position. */
-  charge(position: Structure, duty: string): RolexResult {
+  charge(position: Structure, duty: string, id?: string): RolexResult {
     validateGherkin(duty);
-    const node = this.rt.create(position, C.duty, duty);
+    const node = this.rt.create(position, C.duty, duty, id);
     return ok(this.rt, node, "charge");
   }
 
@@ -365,6 +376,39 @@ function ok(rt: Runtime, node: Structure, process: string): RolexResult {
     state: rt.project(node),
     process,
   };
+}
+
+/** Render file tree from RXM source.files */
+function renderFileTree(files: Record<string, any>, indent = ""): string {
+  const lines: string[] = [];
+  for (const [name, value] of Object.entries(files)) {
+    if (value && typeof value === "object" && !("size" in value)) {
+      // Directory
+      lines.push(`${indent}${name}`);
+      lines.push(renderFileTree(value, `${indent}  `));
+    } else {
+      const size = value?.size ? ` (${value.size} bytes)` : "";
+      lines.push(`${indent}${name}${size}`);
+    }
+  }
+  return lines.filter(Boolean).join("\n");
+}
+
+/** Format RXM info as context header for skill injection. */
+function formatRXM(rxm: any): string {
+  const lines: string[] = [`--- RXM: ${rxm.locator} ---`];
+  const def = rxm.definition;
+  if (def) {
+    if (def.author) lines.push(`Author: ${def.author}`);
+    if (def.description) lines.push(`Description: ${def.description}`);
+  }
+  const source = rxm.source;
+  if (source?.files) {
+    lines.push(`Files:`);
+    lines.push(renderFileTree(source.files, "  "));
+  }
+  lines.push("---");
+  return lines.join("\n");
 }
 
 /** Create a Rolex instance from a Platform. */

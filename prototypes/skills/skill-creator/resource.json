@@ -1,0 +1,7 @@
+{
+  "name": "skill-creator",
+  "type": "skill",
+  "tag": "0.1.0",
+  "author": "deepractice",
+  "description": "Guide for creating RoleX skills using Gherkin Feature format"
+}
