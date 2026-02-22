@@ -156,15 +156,16 @@ server.addTool({
   name: "complete",
   description: detail("complete"),
   parameters: z.object({
+    id: z.string().optional().describe("Plan id to complete (defaults to focused plan)"),
     encounter: z.string().optional().describe("Optional Gherkin Feature describing what happened"),
   }),
-  execute: async ({ encounter }) => {
-    const planId = state.requirePlanId();
+  execute: async ({ id, encounter }) => {
     const roleId = state.requireRoleId();
+    const planId = id ?? state.requirePlanId();
     const result = rolex.role.complete(planId, roleId, encounter);
     const encId = result.state.id ?? planId;
     state.addEncounter(encId);
-    state.focusedPlanId = null;
+    if (state.focusedPlanId === planId) state.focusedPlanId = null;
     return fmt("complete", planId, result);
   },
 });
@@ -173,15 +174,16 @@ server.addTool({
   name: "abandon",
   description: detail("abandon"),
   parameters: z.object({
+    id: z.string().optional().describe("Plan id to abandon (defaults to focused plan)"),
     encounter: z.string().optional().describe("Optional Gherkin Feature describing what happened"),
   }),
-  execute: async ({ encounter }) => {
-    const planId = state.requirePlanId();
+  execute: async ({ id, encounter }) => {
     const roleId = state.requireRoleId();
+    const planId = id ?? state.requirePlanId();
     const result = rolex.role.abandon(planId, roleId, encounter);
     const encId = result.state.id ?? planId;
     state.addEncounter(encId);
-    state.focusedPlanId = null;
+    if (state.focusedPlanId === planId) state.focusedPlanId = null;
     return fmt("abandon", planId, result);
   },
 });
