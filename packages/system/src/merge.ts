@@ -12,11 +12,13 @@
 import type { State } from "./process.js";
 
 export const mergeState = (base: State, overlay: State): State => {
-  const mergedChildren = mergeChildren(base.children, overlay.children);
-  const mergedLinks = mergeLinks(base.links, overlay.links);
+  const taggedBase = tagOrigin(base, "prototype");
+  const taggedOverlay = tagOrigin(overlay, "instance");
+  const mergedChildren = mergeChildren(taggedBase.children, taggedOverlay.children);
+  const mergedLinks = mergeLinks(taggedBase.links, taggedOverlay.links);
 
   return {
-    ...base,
+    ...taggedBase,
     // overlay scalar properties take precedence when present
     ...(overlay.ref ? { ref: overlay.ref } : {}),
     ...(overlay.id ? { id: overlay.id } : {}),
@@ -24,8 +26,19 @@ export const mergeState = (base: State, overlay: State): State => {
     ...(overlay.alias ? { alias: overlay.alias } : {}),
     ...(mergedChildren ? { children: mergedChildren } : {}),
     ...(mergedLinks ? { links: mergedLinks } : {}),
+    // root node with overlay ref is instance
+    origin: overlay.ref ? "instance" : "prototype",
   };
 };
+
+/** Tag all nodes in a state tree with an origin marker. */
+const tagOrigin = (state: State, origin: "prototype" | "instance"): State => ({
+  ...state,
+  origin,
+  ...(state.children
+    ? { children: state.children.map((c) => tagOrigin(c, origin)) }
+    : {}),
+});
 
 const mergeChildren = (
   baseChildren?: readonly State[],

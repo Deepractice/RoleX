@@ -5,13 +5,13 @@ description: Guide for creating RoleX skills. Use when creating a new skill or u
 
 Feature: RoleX Skill Creator
 Create skills that follow the RoleX capability system.
-A skill is a SKILL.md file referenced by a knowledge.procedure entry.
-Progressive disclosure: procedure summary at identity → full SKILL.md via skill → execution via use.
+A skill is a SKILL.md file referenced by a knowledge.procedure entry via ResourceX locator.
+Progressive disclosure: procedure summary at identity → full SKILL.md via skill(locator) → execution via use.
 
 Scenario: What is a RoleX skill
 Given a role needs operational capabilities beyond its identity
 Then a skill is a SKILL.md file containing detailed instructions
-And a knowledge.procedure is a Gherkin summary that references the SKILL.md path
+And a knowledge.procedure is a Gherkin summary that references the skill via locator
 And the procedure is loaded at identity time — the role knows what skills exist
 And the full SKILL.md is loaded on demand via the skill process
 
@@ -30,18 +30,18 @@ And references contain domain-specific details loaded only when needed
 
 Scenario: The procedure-skill contract
 Given a knowledge.procedure is trained to a role
-Then the Feature description contains the absolute path to SKILL.md
+Then the Feature description contains the ResourceX locator for the skill
 And the Feature body summarizes what the skill can do
 And example procedure:
 """
 Feature: Role Management
-/path/to/skills/role-management/SKILL.md
+deepractice/role-management
 
         Scenario: What this skill does
           Given I need to manage role lifecycle
           Then I can born, teach, train, retire, and kill roles
       """
-    And the description line is the SKILL.md path — the skill process reads it
+    And the description line is the locator — the skill process resolves it via ResourceX
 
 Feature: Skill Creation Process
 How to create a new RoleX skill step by step.
@@ -67,7 +67,7 @@ Scenario: Step 3 — Create the procedure
 Given SKILL.md is written
 When you train the procedure to a role
 Then use the train command with Gherkin source
-And the Feature description MUST be the absolute path to SKILL.md
+And the Feature description MUST be the ResourceX locator for the skill
 And the Feature body summarizes capabilities for identity-time awareness
 
 Scenario: Step 4 — Test the skill

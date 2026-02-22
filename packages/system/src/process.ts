@@ -86,6 +86,9 @@ export interface State extends Structure {
 
   /** Cross-branch links from this node. */
   readonly links?: readonly { readonly relation: string; readonly target: State }[];
+
+  /** Origin of this node in a merged projection: prototype (read-only) or instance (mutable). */
+  readonly origin?: "prototype" | "instance";
 }
 
 // ===== Constructors =====

@@ -135,18 +135,29 @@ class IndividualNamespace {
 
   // ---- External injection ----
 
-  /** Teach: directly inject a principle into an individual — no experience consumed. */
+  /** Teach: directly inject a principle into an individual — no experience consumed. Upserts by id. */
   teach(individual: string, principle: string, id?: string): RolexResult {
     validateGherkin(principle);
-    const prin = this.rt.create(this.resolve(individual), C.principle, principle, id);
+    const parent = this.resolve(individual);
+    if (id) this.removeExisting(parent, id);
+    const prin = this.rt.create(parent, C.principle, principle, id);
     return ok(this.rt, prin, "teach");
   }
 
-  /** Train: directly inject a procedure (skill) into an individual — no experience consumed. */
+  /** Train: directly inject a procedure (skill) into an individual — no experience consumed. Upserts by id. */
   train(individual: string, procedure: string, id?: string): RolexResult {
     validateGherkin(procedure);
-    const proc = this.rt.create(this.resolve(individual), C.procedure, procedure, id);
+    const parent = this.resolve(individual);
+    if (id) this.removeExisting(parent, id);
+    const proc = this.rt.create(parent, C.procedure, procedure, id);
     return ok(this.rt, proc, "train");
+  }
+
+  /** Remove existing child node with matching id (for upsert). */
+  private removeExisting(parent: Structure, id: string): void {
+    const state = this.rt.project(parent);
+    const existing = findInState(state, id);
+    if (existing) this.rt.remove(existing);
   }
 }
 
@@ -262,6 +273,31 @@ class RoleNamespace {
     const proc = this.rt.create(this.resolve(individual), C.procedure, procedure || expNode.information, id);
     this.rt.remove(expNode);
     return ok(this.rt, proc, "master");
+  }
+
+  // ---- Knowledge management ----
+
+  /** Forget: remove any node under an individual by id. Prototype nodes are read-only. */
+  async forget(nodeId: string, individual: string): Promise<RolexResult> {
+    try {
+      const node = this.resolve(nodeId);
+      this.rt.remove(node);
+      return { state: { ...node, children: [] }, process: "forget" };
+    } catch {
+      // Not in runtime graph — check if it's a prototype node
+      if (this.prototype) {
+        // Resolve individual to get its actual stored id (case-sensitive match for prototype)
+        const indNode = this.resolve(individual);
+        const instanceState = this.rt.project(indNode);
+        const protoState = instanceState.id
+          ? await this.prototype.resolve(instanceState.id)
+          : undefined;
+        if (protoState && findInState(protoState, nodeId.toLowerCase())) {
+          throw new Error(`"${nodeId}" is a prototype node (read-only) and cannot be forgotten.`);
+        }
+      }
+      throw new Error(`"${nodeId}" not found.`);
+    }
   }
 
   // ---- Resource interaction ----

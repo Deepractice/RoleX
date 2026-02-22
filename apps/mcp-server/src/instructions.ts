@@ -14,4 +14,6 @@ export const instructions = [
   world.memory,
   world.gherkin,
   world.communication,
+  world["skill-system"],
+  world["state-origin"],
 ].join("\n\n");

@@ -8,6 +8,7 @@ Feature: teach — inject external principle
     When teach is called with individual id, principle Gherkin, and a principle id
     Then a principle is created directly under the individual
     And no experience or encounter is consumed
+    And if a principle with the same id already exists, it is replaced
 
   Scenario: Principle ID convention
     Given the id is keywords from the principle content joined by hyphens

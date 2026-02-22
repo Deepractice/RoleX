@@ -7,7 +7,7 @@ Feature: master — experience to procedure
     When master is called with experience ids and a procedure id
     Then the experience is consumed
     And a procedure is created under the individual
-    And the procedure stores skill metadata and ResourceX locator
+    And the procedure stores skill metadata and locator
 
   Scenario: Procedure ID convention
     Given the id is keywords from the procedure content joined by hyphens
@@ -17,6 +17,6 @@ Feature: master — experience to procedure
   Scenario: Writing the procedure Gherkin
     Given a procedure is skill metadata — a reference to full skill content
     Then the Feature title names the capability
-    And the description includes the ResourceX locator for full skill loading
+    And the description includes the locator for full skill loading
     And Scenarios describe when and why to apply this skill
     And the tone is referential — pointing to the full skill, not containing it

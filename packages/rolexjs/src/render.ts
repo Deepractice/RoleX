@@ -48,6 +48,9 @@ const descriptions: Record<string, (name: string, state: State) => string> = {
   reflect: (n) => `Reflected on "${n}" → experience gained.`,
   realize: (n) => `Realized principle from "${n}".`,
   master: (n) => `Mastered procedure from "${n}".`,
+
+  // Knowledge management
+  forget: (n) => `"${n}" forgotten.`,
 };
 
 export function describe(process: string, name: string, state: State): string {
@@ -94,6 +97,9 @@ const hints: Record<string, string> = {
   reflect: "realize principles or master procedures from experience.",
   realize: "principle added to knowledge.",
   master: "procedure added to knowledge.",
+
+  // Knowledge management
+  forget: "the node has been removed.",
 };
 
 export function hint(process: string): string {
@@ -136,8 +142,10 @@ export function renderState(state: State, depth = 1): string {
   const level = Math.min(depth, 6);
   const heading = "#".repeat(level);
 
-  // Heading
-  lines.push(`${heading} [${state.name}]`);
+  // Heading: [name] (id) {origin}
+  const idPart = state.id ? ` (${state.id})` : "";
+  const originPart = state.origin ? ` {${state.origin}}` : "";
+  lines.push(`${heading} [${state.name}]${idPart}${originPart}`);
 
   // Body: full information as-is
   if (state.information) {

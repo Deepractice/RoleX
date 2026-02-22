@@ -16,6 +16,7 @@
  *   reflect  — encounter(s) → experience
  *   realize  — experience(s) → principle
  *   master   — experience(s) → procedure
+ *   forget   — remove a node from the individual
  *   skill    — load full skill content by locator
  */
 
@@ -241,6 +242,21 @@ server.addTool({
   },
 });
 
+// ========== Tools: Knowledge management ==========
+
+server.addTool({
+  name: "forget",
+  description: detail("forget"),
+  parameters: z.object({
+    id: z.string().describe("Id of the node to remove (principle, procedure, experience, encounter, etc.)"),
+  }),
+  execute: async ({ id }) => {
+    const roleId = state.requireRoleId();
+    const result = await rolex.role.forget(id, roleId);
+    return fmt("forget", id, result);
+  },
+});
+
 // ========== Tools: Skill loading ==========
 
 server.addTool({
@@ -249,7 +265,7 @@ server.addTool({
   parameters: z.object({
     locator: z
       .string()
-      .describe("ResourceX locator for the skill (e.g. deepractice/role-management:1.0.0)"),
+      .describe("ResourceX locator for the skill (e.g. deepractice/role-management)"),
   }),
   execute: async ({ locator }) => {
     const content = await rolex.role.skill(locator);

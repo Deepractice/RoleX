@@ -8,6 +8,7 @@ Feature: train — inject external skill
     When train is called with individual id, procedure Gherkin, and a procedure id
     Then a procedure is created directly under the individual
     And no experience or encounter is consumed
+    And if a procedure with the same id already exists, it is replaced
 
   Scenario: Procedure ID convention
     Given the id is keywords from the procedure content joined by hyphens
@@ -25,5 +26,5 @@ Feature: train — inject external skill
   Scenario: Writing the procedure Gherkin
     Given the procedure is a skill reference — same format as master output
     Then the Feature title names the capability
-    And the description includes the path or locator for full skill loading
+    And the description includes the locator for full skill loading
     And Scenarios describe when and why to apply this skill
