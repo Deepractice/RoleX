@@ -245,32 +245,32 @@ const finish = defineCommand({
   },
 });
 
-const achieve = defineCommand({
-  meta: { name: "achieve", description: "Achieve a goal — creates encounter" },
+const complete = defineCommand({
+  meta: { name: "complete", description: "Complete a plan — creates encounter" },
   args: {
-    goal: { type: "positional" as const, description: "Goal id", required: true },
+    plan: { type: "positional" as const, description: "Plan id", required: true },
     individual: { type: "positional" as const, description: "Individual id", required: true },
     ...contentArg("encounter"),
   },
   run({ args }) {
     output(
-      rolex.role.achieve(args.goal, args.individual, resolveContent(args, "encounter")),
-      args.goal
+      rolex.role.complete(args.plan, args.individual, resolveContent(args, "encounter")),
+      args.plan
     );
   },
 });
 
 const abandon = defineCommand({
-  meta: { name: "abandon", description: "Abandon a goal — creates encounter" },
+  meta: { name: "abandon", description: "Abandon a plan — creates encounter" },
   args: {
-    goal: { type: "positional" as const, description: "Goal id", required: true },
+    plan: { type: "positional" as const, description: "Plan id", required: true },
     individual: { type: "positional" as const, description: "Individual id", required: true },
     ...contentArg("encounter"),
   },
   run({ args }) {
     output(
-      rolex.role.abandon(args.goal, args.individual, resolveContent(args, "encounter")),
-      args.goal
+      rolex.role.abandon(args.plan, args.individual, resolveContent(args, "encounter")),
+      args.plan
     );
   },
 });
@@ -362,7 +362,7 @@ const role = defineCommand({
     plan,
     todo,
     finish,
-    achieve,
+    complete,
     abandon,
     reflect,
     realize,

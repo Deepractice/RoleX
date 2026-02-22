@@ -41,8 +41,8 @@ const descriptions: Record<string, (name: string, state: State) => string> = {
   plan: (n) => `Plan created for "${n}".`,
   todo: (n) => `Task "${n}" added.`,
   finish: (n) => `Task "${n}" finished → encounter recorded.`,
-  achieve: (n) => `Goal "${n}" achieved → encounter recorded.`,
-  abandon: (n) => `Goal "${n}" abandoned → encounter recorded.`,
+  complete: (n) => `Plan "${n}" completed → encounter recorded.`,
+  abandon: (n) => `Plan "${n}" abandoned → encounter recorded.`,
 
   // Cognition
   reflect: (n) => `Reflected on "${n}" → experience gained.`,
@@ -83,14 +83,14 @@ const hints: Record<string, string> = {
 
   // Role
   activate: "want a goal, or check the current state.",
-  focus: "plan how to achieve it, or add tasks.",
+  focus: "plan how to work toward it, or add tasks.",
 
   // Execution
-  want: "plan how to achieve it.",
+  want: "plan how to work toward it.",
   plan: "add tasks with todo.",
   todo: "start working, finish when done.",
-  finish: "continue with remaining tasks, or achieve the goal.",
-  achieve: "reflect on encounters to gain experience.",
+  finish: "continue with remaining tasks, or complete the plan.",
+  complete: "reflect on encounters to gain experience.",
   abandon: "reflect on encounters to learn from the experience.",
 
   // Cognition

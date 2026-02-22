@@ -11,8 +11,8 @@
  *   plan     — plan for focused goal
  *   todo     — add task to focused plan
  *   finish   — finish a task → encounter
- *   achieve  — achieve focused goal → encounter
- *   abandon  — abandon focused goal → encounter
+ *   complete — complete focused plan → encounter
+ *   abandon  — abandon focused plan → encounter
  *   reflect  — encounter(s) → experience
  *   realize  — experience(s) → principle
  *   master   — experience(s) → procedure
@@ -153,20 +153,19 @@ server.addTool({
 });
 
 server.addTool({
-  name: "achieve",
-  description: detail("achieve"),
+  name: "complete",
+  description: detail("complete"),
   parameters: z.object({
     encounter: z.string().optional().describe("Optional Gherkin Feature describing what happened"),
   }),
   execute: async ({ encounter }) => {
-    const goalId = state.requireGoalId();
+    const planId = state.requirePlanId();
     const roleId = state.requireRoleId();
-    const result = rolex.role.achieve(goalId, roleId, encounter);
-    const encId = result.state.id ?? goalId;
+    const result = rolex.role.complete(planId, roleId, encounter);
+    const encId = result.state.id ?? planId;
     state.addEncounter(encId);
-    state.focusedGoalId = null;
     state.focusedPlanId = null;
-    return fmt("achieve", goalId, result);
+    return fmt("complete", planId, result);
   },
 });
 
@@ -177,14 +176,13 @@ server.addTool({
     encounter: z.string().optional().describe("Optional Gherkin Feature describing what happened"),
   }),
   execute: async ({ encounter }) => {
-    const goalId = state.requireGoalId();
+    const planId = state.requirePlanId();
     const roleId = state.requireRoleId();
-    const result = rolex.role.abandon(goalId, roleId, encounter);
-    const encId = result.state.id ?? goalId;
+    const result = rolex.role.abandon(planId, roleId, encounter);
+    const encId = result.state.id ?? planId;
     state.addEncounter(encId);
-    state.focusedGoalId = null;
     state.focusedPlanId = null;
-    return fmt("abandon", goalId, result);
+    return fmt("abandon", planId, result);
   },
 });
 

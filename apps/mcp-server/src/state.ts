@@ -144,15 +144,15 @@ export class McpState {
         const encCount = this.encounterIds.size;
         if (encCount > 0 && !this.focusedGoalId)
           return `Task finished. No more goals — I have ${encCount} encounter(s) to choose from for \`reflect\`, or \`want\` a new goal.`;
-        return "Task finished. I should continue with remaining tasks, or call `achieve` when the goal is met.";
+        return "Task finished. I should continue with remaining tasks, or call `complete` when the plan is done.";
       }
 
-      case "achieve":
+      case "complete":
       case "abandon": {
         const encCount = this.encounterIds.size;
         if (encCount > 0)
-          return `Goal closed. I have ${encCount} encounter(s) to choose from for \`reflect\`, or I can \`want\` a new goal.`;
-        return "Goal closed. I can call `want` for a new goal, or `focus` to review others.";
+          return `Plan closed. I have ${encCount} encounter(s) to choose from for \`reflect\`, or I can continue with other plans.`;
+        return "Plan closed. I can create a new `plan`, or `focus` on another goal.";
       }
 
       case "reflect": {

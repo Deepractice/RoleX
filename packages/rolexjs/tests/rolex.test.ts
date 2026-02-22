@@ -210,24 +210,26 @@ describe("Rolex API (stateless)", () => {
       expect(() => rolex.project(task)).toThrow();
     });
 
-    test("achieve consumes goal, creates encounter", () => {
+    test("complete consumes plan, creates encounter", () => {
       const rolex = setup();
       const sean = rolex.born().state;
       const goal = rolex.want(sean, "Feature: Auth").state;
+      const plan = rolex.plan(goal, "Feature: Auth plan").state;
 
-      const r = rolex.achieve(goal, sean, "Feature: Auth done");
+      const r = rolex.complete(plan, sean, "Feature: Auth plan done");
       expect(r.state.name).toBe("encounter");
-      expect(() => rolex.project(goal)).toThrow();
+      expect(() => rolex.project(plan)).toThrow();
     });
 
-    test("abandon consumes goal, creates encounter", () => {
+    test("abandon consumes plan, creates encounter", () => {
       const rolex = setup();
       const sean = rolex.born().state;
       const goal = rolex.want(sean, "Feature: Rust").state;
+      const plan = rolex.plan(goal, "Feature: Rust plan").state;
 
-      const r = rolex.abandon(goal, sean, "Feature: No time");
+      const r = rolex.abandon(plan, sean, "Feature: No time");
       expect(r.state.name).toBe("encounter");
-      expect(() => rolex.project(goal)).toThrow();
+      expect(() => rolex.project(plan)).toThrow();
     });
   });
 
@@ -328,7 +330,7 @@ describe("Rolex API (stateless)", () => {
 
       const enc1 = rolex.finish(t1, sean, "Feature: Login done").state;
       const _enc2 = rolex.finish(t2, sean, "Feature: Refresh done").state;
-      rolex.achieve(goal, sean, "Feature: Auth complete");
+      rolex.complete(plan, sean, "Feature: Auth plan complete");
 
       // Cognition cycle
       const knowledge = sean.children!.find((c) => c.name === "knowledge")!;
@@ -381,7 +383,7 @@ describe("Rolex API (stateless)", () => {
         "plan",
         "todo",
         "finish",
-        "achieve",
+        "complete",
         "abandon",
         "reflect",
         "realize",
