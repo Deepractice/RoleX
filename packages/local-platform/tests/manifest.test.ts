@@ -68,11 +68,11 @@ describe("stateToFiles", () => {
 
     // manifest structure
     expect(manifest.id).toBe("nuwa");
-    expect(manifest.children?.["identity"]).toEqual({ type: "identity" });
-    expect(manifest.children?.["knowledge"]?.children?.["role-creation"]).toEqual({
+    expect(manifest.children?.identity).toEqual({ type: "identity" });
+    expect(manifest.children?.knowledge?.children?.["role-creation"]).toEqual({
       type: "principle",
     });
-    expect(manifest.children?.["knowledge"]?.children?.["orchestration"]).toEqual({
+    expect(manifest.children?.knowledge?.children?.orchestration).toEqual({
       type: "procedure",
     });
 
@@ -93,20 +93,18 @@ describe("stateToFiles", () => {
     const { manifest, files } = stateToFiles(s);
 
     expect(files).toHaveLength(0); // no files — neither nuwa nor knowledge have information
-    expect(manifest.children?.["knowledge"]).toEqual({ type: "knowledge" });
+    expect(manifest.children?.knowledge).toEqual({ type: "knowledge" });
   });
 
   test("node without id defaults to type name", () => {
     const s = state("individual", {
       id: "nuwa",
-      children: [
-        state("identity", { information: "Feature: Identity info" }),
-      ],
+      children: [state("identity", { information: "Feature: Identity info" })],
     });
     const { manifest, files } = stateToFiles(s);
 
     // identity has no id, defaults to "identity"
-    expect(manifest.children?.["identity"]).toBeDefined();
+    expect(manifest.children?.identity).toBeDefined();
     expect(files[0].path).toBe("identity.identity.feature");
   });
 
@@ -144,7 +142,7 @@ describe("stateToFiles", () => {
     });
     const { manifest } = stateToFiles(s);
 
-    expect(manifest.links?.["belong"]).toEqual(["dp", "acme"]);
+    expect(manifest.links?.belong).toEqual(["dp", "acme"]);
   });
 
   test("deep nesting: goal > plan > task", () => {
@@ -231,9 +229,9 @@ describe("filesToState", () => {
 
     const knowledge = s.children!.find((c) => c.name === "knowledge");
     expect(knowledge?.children).toHaveLength(1);
-    expect(knowledge?.children![0].id).toBe("role-creation");
-    expect(knowledge?.children![0].name).toBe("principle");
-    expect(knowledge?.children![0].information).toBe("Feature: Role Creation");
+    expect(knowledge?.children?.[0].id).toBe("role-creation");
+    expect(knowledge?.children?.[0].name).toBe("principle");
+    expect(knowledge?.children?.[0].information).toBe("Feature: Role Creation");
   });
 
   test("missing feature file results in no information", () => {
@@ -320,7 +318,7 @@ describe("round-trip", () => {
     expect(knowledge?.information).toBe("Feature: What I know");
     expect(knowledge?.children).toHaveLength(2);
 
-    const naming = knowledge?.children!.find((c) => c.id === "naming");
+    const naming = knowledge?.children?.find((c) => c.id === "naming");
     expect(naming?.name).toBe("principle");
     expect(naming?.information).toBe("Feature: Name params well");
   });

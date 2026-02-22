@@ -5,7 +5,13 @@ import { mergeState } from "../src/merge.js";
 // Helper to create minimal State nodes
 const state = (
   name: string,
-  opts?: { id?: string; ref?: string; information?: string; children?: State[]; links?: State["links"] }
+  opts?: {
+    id?: string;
+    ref?: string;
+    information?: string;
+    children?: State[];
+    links?: State["links"];
+  }
 ): State => ({
   name,
   description: "",
@@ -63,9 +69,7 @@ describe("mergeState", () => {
 
   test("same-name same-id children are recursively merged", () => {
     const base = state("knowledge", {
-      children: [
-        state("principle", { id: "naming", information: "Feature: Name params well" }),
-      ],
+      children: [state("principle", { id: "naming", information: "Feature: Name params well" })],
     });
     const overlay = state("knowledge", {
       children: [
@@ -152,9 +156,7 @@ describe("mergeState", () => {
     const overlay = state("individual", {
       children: [
         state("knowledge", {
-          children: [
-            state("principle", { id: "b", information: "Principle B" }),
-          ],
+          children: [state("principle", { id: "b", information: "Principle B" })],
         }),
       ],
     });
@@ -222,8 +224,8 @@ describe("mergeState", () => {
   });
 
   test("overlay ref preserved when base has none (prototype scenario)", () => {
-    const base = state("individual");  // prototype, no ref
-    const overlay = state("individual", { ref: "n2" });  // runtime instance
+    const base = state("individual"); // prototype, no ref
+    const overlay = state("individual", { ref: "n2" }); // runtime instance
     const result = mergeState(base, overlay);
     expect(result.ref).toBe("n2");
   });

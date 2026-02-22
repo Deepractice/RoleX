@@ -35,9 +35,7 @@ export const mergeState = (base: State, overlay: State): State => {
 const tagOrigin = (state: State, origin: "prototype" | "instance"): State => ({
   ...state,
   origin,
-  ...(state.children
-    ? { children: state.children.map((c) => tagOrigin(c, origin)) }
-    : {}),
+  ...(state.children ? { children: state.children.map((c) => tagOrigin(c, origin)) } : {}),
 });
 
 const mergeChildren = (
@@ -74,9 +72,7 @@ const mergeChildren = (
 
     for (const b of baseGroup) {
       if (b.id) {
-        const oIdx = overlayGroup.findIndex(
-          (o, i) => !matchedOverlay.has(i) && o.id === b.id
-        );
+        const oIdx = overlayGroup.findIndex((o, i) => !matchedOverlay.has(i) && o.id === b.id);
         if (oIdx >= 0) {
           result.push(mergeState(b, overlayGroup[oIdx]));
           matchedOverlay.add(oIdx);

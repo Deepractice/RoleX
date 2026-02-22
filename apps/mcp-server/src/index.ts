@@ -195,7 +195,9 @@ server.addTool({
   description: detail("reflect"),
   parameters: z.object({
     ids: z.array(z.string()).describe("Encounter ids to reflect on (selective consumption)"),
-    id: z.string().describe("Experience id — keywords from the experience content joined by hyphens"),
+    id: z
+      .string()
+      .describe("Experience id — keywords from the experience content joined by hyphens"),
     experience: z.string().optional().describe("Gherkin Feature source for the experience"),
   }),
   execute: async ({ ids, id, experience }) => {
@@ -248,7 +250,9 @@ server.addTool({
   name: "forget",
   description: detail("forget"),
   parameters: z.object({
-    id: z.string().describe("Id of the node to remove (principle, procedure, experience, encounter, etc.)"),
+    id: z
+      .string()
+      .describe("Id of the node to remove (principle, procedure, experience, encounter, etc.)"),
   }),
   execute: async ({ id }) => {
     const roleId = state.requireRoleId();

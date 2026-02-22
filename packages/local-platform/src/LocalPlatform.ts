@@ -16,22 +16,15 @@
  * When dataDir is null, runs purely in-memory (useful for tests).
  */
 
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  readdirSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { NodeProvider } from "@resourcexjs/node-provider";
 import type { Platform } from "@rolexjs/core";
-import type { Prototype, Runtime, State, Structure } from "@rolexjs/system";
 import { organizationType, roleType } from "@rolexjs/resourcex-types";
+import type { Prototype, Runtime, State, Structure } from "@rolexjs/system";
 import { createResourceX, setProvider } from "resourcexjs";
-import { type Manifest, filesToState, stateToFiles } from "./manifest.js";
+import { filesToState, type Manifest, stateToFiles } from "./manifest.js";
 
 // ===== Internal types =====
 
@@ -151,7 +144,7 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
   /** Use a stored ref, updating counter to avoid future collisions. */
   const useRef = (storedRef: string): string => {
     const n = parseInt(storedRef.slice(1), 10);
-    if (!isNaN(n) && n > counter) counter = n;
+    if (!Number.isNaN(n) && n > counter) counter = n;
     return storedRef;
   };
 
@@ -197,9 +190,7 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
       const manifestPath = join(entityDir, manifestName);
       if (!existsSync(manifestPath)) continue;
 
-      const manifest: Manifest = JSON.parse(
-        readFileSync(manifestPath, "utf-8")
-      );
+      const manifest: Manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
       const featureFiles: Record<string, string> = {};
       for (const file of readdirSync(entityDir)) {
         if (file.endsWith(".feature")) {
@@ -237,16 +228,8 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
 
     // Load entities
     const entityRefs = [
-      ...loadEntitiesFrom(
-        join(dataDir, "role"),
-        "individual.json",
-        societyRef
-      ),
-      ...loadEntitiesFrom(
-        join(dataDir, "organization"),
-        "organization.json",
-        societyRef
-      ),
+      ...loadEntitiesFrom(join(dataDir, "role"), "individual.json", societyRef),
+      ...loadEntitiesFrom(join(dataDir, "organization"), "organization.json", societyRef),
     ];
 
     // Build id → ref index for link resolution
@@ -275,20 +258,11 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
     }
   };
 
-  const saveEntity = (
-    baseDir: string,
-    entityId: string,
-    manifestName: string,
-    state: State
-  ) => {
+  const saveEntity = (baseDir: string, entityId: string, manifestName: string, state: State) => {
     const entityDir = join(baseDir, entityId);
     mkdirSync(entityDir, { recursive: true });
     const { manifest, files } = stateToFiles(state);
-    writeFileSync(
-      join(entityDir, manifestName),
-      JSON.stringify(manifest, null, 2),
-      "utf-8"
-    );
+    writeFileSync(join(entityDir, manifestName), JSON.stringify(manifest, null, 2), "utf-8");
     for (const file of files) {
       writeFileSync(join(entityDir, file.path), file.content, "utf-8");
     }
@@ -348,9 +322,7 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
       if (treeNode.parent) {
         const parentTreeNode = nodes.get(treeNode.parent);
         if (parentTreeNode) {
-          parentTreeNode.children = parentTreeNode.children.filter(
-            (r) => r !== node.ref
-          );
+          parentTreeNode.children = parentTreeNode.children.filter((r) => r !== node.ref);
         }
       }
 
@@ -381,21 +353,13 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
       if (!to.ref) throw new Error("Target node has no ref");
 
       const fromLinks = links.get(from.ref) ?? [];
-      if (
-        !fromLinks.some(
-          (l) => l.toId === to.ref && l.relation === relationName
-        )
-      ) {
+      if (!fromLinks.some((l) => l.toId === to.ref && l.relation === relationName)) {
         fromLinks.push({ toId: to.ref, relation: relationName });
         links.set(from.ref, fromLinks);
       }
 
       const toLinks = links.get(to.ref) ?? [];
-      if (
-        !toLinks.some(
-          (l) => l.toId === from.ref && l.relation === reverseName
-        )
-      ) {
+      if (!toLinks.some((l) => l.toId === from.ref && l.relation === reverseName)) {
         toLinks.push({ toId: from.ref, relation: reverseName });
         links.set(to.ref, toLinks);
       }

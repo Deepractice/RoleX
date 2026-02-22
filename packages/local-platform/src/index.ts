@@ -8,5 +8,5 @@
 export type { LocalPlatformConfig } from "./LocalPlatform.js";
 export { localPlatform } from "./LocalPlatform.js";
 
-export type { Manifest, ManifestNode, FileEntry } from "./manifest.js";
-export { stateToFiles, filesToState } from "./manifest.js";
+export type { FileEntry, Manifest, ManifestNode } from "./manifest.js";
+export { filesToState, stateToFiles } from "./manifest.js";

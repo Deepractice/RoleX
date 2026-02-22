@@ -10,5 +10,5 @@
  *   resourcex.supportType(organizationType);
  */
 
-export { roleType } from "./role.js";
 export { organizationType } from "./organization.js";
+export { roleType } from "./role.js";

@@ -124,10 +124,7 @@ function buildManifestLinks(
  * Convert a manifest + feature file contents to a State tree.
  * fileContents maps filename (e.g. "role-creation.principle.feature") to Gherkin text.
  */
-export function filesToState(
-  manifest: Manifest,
-  fileContents: Record<string, string>
-): State {
+export function filesToState(manifest: Manifest, fileContents: Record<string, string>): State {
   const buildState = (id: string, node: ManifestNode): State => {
     const filename = `${id}.${node.type}.feature`;
     const information = fileContents[filename];

@@ -19,7 +19,13 @@
 import type { Platform } from "@rolexjs/core";
 import * as C from "@rolexjs/core";
 import { parse } from "@rolexjs/parser";
-import { type Prototype, type Runtime, type State, type Structure, mergeState } from "@rolexjs/system";
+import {
+  mergeState,
+  type Prototype,
+  type Runtime,
+  type State,
+  type Structure,
+} from "@rolexjs/system";
 import type { ResourceX } from "resourcexjs";
 
 export interface RolexResult {
@@ -81,7 +87,8 @@ export class Rolex {
   /** Register a ResourceX source as a prototype. Ingests to extract id, stores id → source mapping. */
   async prototype(source: string): Promise<RolexResult> {
     if (!this.resourcex) throw new Error("ResourceX is not available.");
-    if (!this._registerPrototype) throw new Error("Platform does not support prototype registration.");
+    if (!this._registerPrototype)
+      throw new Error("Platform does not support prototype registration.");
     const state = await this.resourcex.ingest<State>(source);
     if (!state.id) throw new Error("Prototype resource must have an id.");
     this._registerPrototype(state.id, source);
@@ -182,9 +189,7 @@ class RoleNamespace {
     const protoState = instanceState.id
       ? await this.prototype?.resolve(instanceState.id)
       : undefined;
-    const state = protoState
-      ? mergeState(protoState, instanceState)
-      : instanceState;
+    const state = protoState ? mergeState(protoState, instanceState) : instanceState;
     return { state, process: "activate" };
   }
 
@@ -252,7 +257,12 @@ class RoleNamespace {
   reflect(encounter: string, individual: string, experience?: string, id?: string): RolexResult {
     validateGherkin(experience);
     const encNode = this.resolve(encounter);
-    const exp = this.rt.create(this.resolve(individual), C.experience, experience || encNode.information, id);
+    const exp = this.rt.create(
+      this.resolve(individual),
+      C.experience,
+      experience || encNode.information,
+      id
+    );
     this.rt.remove(encNode);
     return ok(this.rt, exp, "reflect");
   }
@@ -261,7 +271,12 @@ class RoleNamespace {
   realize(experience: string, individual: string, principle?: string, id?: string): RolexResult {
     validateGherkin(principle);
     const expNode = this.resolve(experience);
-    const prin = this.rt.create(this.resolve(individual), C.principle, principle || expNode.information, id);
+    const prin = this.rt.create(
+      this.resolve(individual),
+      C.principle,
+      principle || expNode.information,
+      id
+    );
     this.rt.remove(expNode);
     return ok(this.rt, prin, "realize");
   }
@@ -270,7 +285,12 @@ class RoleNamespace {
   master(experience: string, individual: string, procedure?: string, id?: string): RolexResult {
     validateGherkin(procedure);
     const expNode = this.resolve(experience);
-    const proc = this.rt.create(this.resolve(individual), C.procedure, procedure || expNode.information, id);
+    const proc = this.rt.create(
+      this.resolve(individual),
+      C.procedure,
+      procedure || expNode.information,
+      id
+    );
     this.rt.remove(expNode);
     return ok(this.rt, proc, "master");
   }

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { localPlatform } from "../src/index.js";
 
 const testDir = join(tmpdir(), "rolex-proto-test");
@@ -24,20 +24,28 @@ function writePrototype(
   mkdirSync(dir, { recursive: true });
 
   // resource.json — ResourceX source marker
-  writeFileSync(join(dir, "resource.json"), JSON.stringify({
-    name: id,
-    type,
-    tag: "0.1.0",
-    author: "test",
-    description: `${id} prototype`,
-  }), "utf-8");
+  writeFileSync(
+    join(dir, "resource.json"),
+    JSON.stringify({
+      name: id,
+      type,
+      tag: "0.1.0",
+      author: "test",
+      description: `${id} prototype`,
+    }),
+    "utf-8"
+  );
 
   // manifest
-  writeFileSync(join(dir, manifestFile), JSON.stringify({
-    id,
-    type: manifestType,
-    children: { identity: { type: "identity" } },
-  }), "utf-8");
+  writeFileSync(
+    join(dir, manifestFile),
+    JSON.stringify({
+      id,
+      type: manifestType,
+      children: { identity: { type: "identity" } },
+    }),
+    "utf-8"
+  );
 
   // feature files
   for (const [name, content] of Object.entries(features)) {

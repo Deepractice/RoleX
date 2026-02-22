@@ -109,27 +109,41 @@ const rehire = defineCommand({
 });
 
 const teach = defineCommand({
-  meta: { name: "teach", description: "Inject a principle directly into an individual's knowledge" },
+  meta: {
+    name: "teach",
+    description: "Inject a principle directly into an individual's knowledge",
+  },
   args: {
     individual: { type: "positional" as const, description: "Individual id", required: true },
     ...contentArg("principle"),
     id: { type: "string" as const, description: "Principle id (keywords joined by hyphens)" },
   },
   run({ args }) {
-    const result = rolex.individual.teach(args.individual, requireContent(args, "principle"), args.id);
+    const result = rolex.individual.teach(
+      args.individual,
+      requireContent(args, "principle"),
+      args.id
+    );
     output(result, args.id ?? result.state.name);
   },
 });
 
 const train = defineCommand({
-  meta: { name: "train", description: "Inject a procedure (skill) directly into an individual's knowledge" },
+  meta: {
+    name: "train",
+    description: "Inject a procedure (skill) directly into an individual's knowledge",
+  },
   args: {
     individual: { type: "positional" as const, description: "Individual id", required: true },
     ...contentArg("procedure"),
     id: { type: "string" as const, description: "Procedure id (keywords joined by hyphens)" },
   },
   run({ args }) {
-    const result = rolex.individual.train(args.individual, requireContent(args, "procedure"), args.id);
+    const result = rolex.individual.train(
+      args.individual,
+      requireContent(args, "procedure"),
+      args.id
+    );
     output(result, args.id ?? result.state.name);
   },
 });
@@ -178,7 +192,12 @@ const want = defineCommand({
   },
   run({ args }) {
     const aliasList = args.alias ? args.alias.split(",").map((a: string) => a.trim()) : undefined;
-    const result = rolex.role.want(args.individual, resolveContent(args, "goal"), args.id, aliasList);
+    const result = rolex.role.want(
+      args.individual,
+      resolveContent(args, "goal"),
+      args.id,
+      aliasList
+    );
     output(result, result.state.name);
   },
 });
@@ -219,7 +238,10 @@ const finish = defineCommand({
     ...contentArg("encounter"),
   },
   run({ args }) {
-    output(rolex.role.finish(args.task, args.individual, resolveContent(args, "encounter")), args.task);
+    output(
+      rolex.role.finish(args.task, args.individual, resolveContent(args, "encounter")),
+      args.task
+    );
   },
 });
 
@@ -231,7 +253,10 @@ const achieve = defineCommand({
     ...contentArg("encounter"),
   },
   run({ args }) {
-    output(rolex.role.achieve(args.goal, args.individual, resolveContent(args, "encounter")), args.goal);
+    output(
+      rolex.role.achieve(args.goal, args.individual, resolveContent(args, "encounter")),
+      args.goal
+    );
   },
 });
 
@@ -243,7 +268,10 @@ const abandon = defineCommand({
     ...contentArg("encounter"),
   },
   run({ args }) {
-    output(rolex.role.abandon(args.goal, args.individual, resolveContent(args, "encounter")), args.goal);
+    output(
+      rolex.role.abandon(args.goal, args.individual, resolveContent(args, "encounter")),
+      args.goal
+    );
   },
 });
 
@@ -256,7 +284,12 @@ const reflect = defineCommand({
     id: { type: "string" as const, description: "Experience id (keywords joined by hyphens)" },
   },
   run({ args }) {
-    const result = rolex.role.reflect(args.encounter, args.individual, resolveContent(args, "experience"), args.id);
+    const result = rolex.role.reflect(
+      args.encounter,
+      args.individual,
+      resolveContent(args, "experience"),
+      args.id
+    );
     output(result, result.state.name);
   },
 });
@@ -270,7 +303,12 @@ const realize = defineCommand({
     id: { type: "string" as const, description: "Principle id (keywords joined by hyphens)" },
   },
   run({ args }) {
-    const result = rolex.role.realize(args.experience, args.individual, resolveContent(args, "principle"), args.id);
+    const result = rolex.role.realize(
+      args.experience,
+      args.individual,
+      resolveContent(args, "principle"),
+      args.id
+    );
     output(result, result.state.name);
   },
 });
@@ -284,7 +322,12 @@ const master = defineCommand({
     id: { type: "string" as const, description: "Procedure id (keywords joined by hyphens)" },
   },
   run({ args }) {
-    const result = rolex.role.master(args.experience, args.individual, resolveContent(args, "procedure"), args.id);
+    const result = rolex.role.master(
+      args.experience,
+      args.individual,
+      resolveContent(args, "procedure"),
+      args.id
+    );
     output(result, result.state.name);
   },
 });
@@ -354,7 +397,12 @@ const establish = defineCommand({
   },
   run({ args }) {
     const aliasList = args.alias ? args.alias.split(",").map((a: string) => a.trim()) : undefined;
-    const result = rolex.org.establish(args.org, resolveContent(args, "position"), args.id, aliasList);
+    const result = rolex.org.establish(
+      args.org,
+      resolveContent(args, "position"),
+      args.id,
+      aliasList
+    );
     output(result, args.id ?? result.state.name);
   },
 });
