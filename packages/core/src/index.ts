@@ -1,60 +1,95 @@
 /**
- * @rolexjs/core
+ * @rolexjs/core — RoleX Concept World
  *
- * RDD (Role-Driven Development) Five-Dimension Model.
+ * Domain-specific structures and processes built on @rolexjs/system.
  *
- * Three-entity architecture:
- *   Role         = WHO  (identity, goals)
- *   Organization = WHERE (structure, nesting)
- *   Position     = WHAT  (duties, boundaries)
+ * Structures — the concept tree (19 concepts, 2 relations)
+ * Processes  — how the world changes (24 processes, 4 layers)
  *
- * Every role operates through five dimensions:
- *
- *   Identity → Goal → Plan → Task/Skill
- *   (I am)     (I want) (I plan) (I do)
- *
- * Goal, Plan, Task, Duty extend Feature (IS-A).
- * Identity wraps Features (HAS-A).
- * Feature and Scenario extend Gherkin types with RDD semantics.
- * Verification is embedded — Scenario.verifiable determines testability.
+ *   Layer 1: Execution   — want, plan, todo, finish, achieve, abandon
+ *   Layer 2: Cognition   — reflect, realize, master
+ *   Layer 3: Organization — hire, fire, appoint, dismiss, charter, charge
+ *   Layer 4: Lifecycle   — born, found, establish, retire, die, dissolve, abolish, rehire
+ *   + Role: activate
  */
 
-// ========== RDD Types (extend Gherkin) ==========
+// Re-export system primitives
+export {
+  type Create,
+  create,
+  createPrototype,
+  createRuntime,
+  type GraphOp,
+  type Link,
+  link,
+  mergeState,
+  type Process,
+  type Prototype,
+  process,
+  type Relation,
+  type Remove,
+  type Runtime,
+  relation,
+  remove,
+  type State,
+  type Structure,
+  structure,
+  type Transform,
+  transform,
+  type Unlink,
+  unlink,
+} from "@rolexjs/system";
 
-export type { Feature } from "./Feature.js";
-export type { Scenario } from "./Scenario.js";
+// Platform
+export type { Platform } from "./platform.js";
 
-// ========== Core Model ==========
-
-export type { Role } from "./Role.js";
-export type { Identity } from "./Identity.js";
-export type { Goal } from "./Goal.js";
-export type { Plan } from "./Plan.js";
-export type { Task } from "./Task.js";
-export type { Duty } from "./Duty.js";
-export type { Skill } from "./Skill.js";
-export type {
-  Platform,
-  OrganizationInfo,
-  OrganizationConfig,
-  PositionInfo,
-  Assignment,
-  RolexConfig,
-  RoleEntry,
-  Directory,
-} from "./Platform.js";
-
-// ========== State Machines ==========
+// ===== Structures =====
 
 export {
-  getRoleState,
-  getPositionState,
-  ROLE_MACHINE,
-  POSITION_MACHINE,
-  findTransition,
-  canTransition,
-  transition,
-  RELATIONS,
-  validateOneToOne,
-} from "./model/index.js";
-export type { RoleState, PositionState, Transition, OneToOneConstraint } from "./model/index.js";
+  background,
+  // Organization
+  charter,
+  duty,
+  // Individual — Cognition
+  encounter,
+  experience,
+  // Individual — Execution
+  goal,
+  // Individual — Identity
+  identity,
+  // Level 1
+  individual,
+  // Individual — Knowledge
+  knowledge,
+  mindset,
+  organization,
+  past,
+  plan,
+  position,
+  principle,
+  procedure,
+  // Level 0
+  society,
+  task,
+  tone,
+} from "./structures.js";
+
+// ===== Processes — Layer 1: Execution =====
+
+export { abandon, achieve, finish, planGoal, todo, want } from "./execution.js";
+
+// ===== Processes — Layer 2: Cognition =====
+
+export { master, realize, reflect } from "./cognition.js";
+
+// ===== Processes — Layer 3: Organization =====
+
+export { appoint, charge, charterOrg, dismiss, fire, hire } from "./organization.js";
+
+// ===== Processes — Layer 4: Lifecycle =====
+
+export { abolish, born, die, dissolve, establish, found, rehire, retire } from "./lifecycle.js";
+
+// ===== Role =====
+
+export { activate } from "./role.js";

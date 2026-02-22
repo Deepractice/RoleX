@@ -1,35 +1,26 @@
 /**
- * rolexjs
- * RoleX - AI Agent Role Management Framework
+ * rolexjs — RoleX API + Render layer.
  *
- * Three-entity architecture:
- *   Role         → WHO  (identity, goals)
- *   Organization → WHERE (structure, nesting)
- *   Position     → WHAT  (duties, boundaries)
+ * Rolex class is stateless — takes node references, returns results.
+ * Render functions are standalone — caller composes name + state.
  *
- * Three-layer API:
- *   Rolex        → Society (born, found, establish, directory, find)
- *   Organization → Org management (hire, fire, appoint, dismiss)
- *   Role         → Embodied perspective (first-person)
+ * Usage:
+ *   import { Rolex, describe, hint } from "rolexjs";
+ *   import { createGraphRuntime } from "@rolexjs/local-platform";
  *
- * Platform-agnostic — import a Platform implementation separately:
- *   @rolexjs/local-platform  → filesystem (.rolex/ directory)
+ *   const rolex = new Rolex({ runtime: createGraphRuntime() });
+ *   const result = rolex.born("Feature: I am Sean");
+ *   console.log(describe("born", "sean", result.state));
+ *   console.log(hint("born"));
  */
 
+// Re-export core (structures + processes)
 export * from "@rolexjs/core";
-export { Rolex } from "./Rolex.js";
-export { Organization } from "./Organization.js";
-export { Role } from "./Role.js";
-export { Position } from "./Position.js";
-export * from "./descriptions.js";
-export {
-  renderFeature,
-  renderFeatures,
-  renderStatusBar,
-  renderError,
-  next,
-  NEXT,
-  nextHire,
-  nextFinish,
-} from "./render.js";
-export { bootstrap } from "./bootstrap.js";
+// Feature (Gherkin type + parse/serialize)
+export type { DataTableRow, Feature, Scenario, Step } from "./feature.js";
+export { parse, serialize } from "./feature.js";
+// Render
+export { describe, detail, hint, renderState, world } from "./render.js";
+export type { RolexResult } from "./rolex.js";
+// API
+export { createRoleX, Rolex } from "./rolex.js";

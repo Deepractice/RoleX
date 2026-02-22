@@ -1,0 +1,15 @@
+{
+  "id": "nuwa",
+  "type": "individual",
+  "alias": ["女娲", "nvwa"],
+  "children": {
+    "identity": {
+      "type": "identity",
+      "children": {
+        "background": {
+          "type": "background"
+        }
+      }
+    }
+  }
+}

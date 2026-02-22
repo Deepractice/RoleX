@@ -1,0 +1,45 @@
+{
+  "name": "@rolexjs/system",
+  "version": "0.1.0",
+  "description": "RoleX Systems Theory — six primitives + declarative process composition",
+  "keywords": [
+    "rolex",
+    "systems-theory",
+    "system",
+    "process",
+    "define"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Deepractice/RoleX.git",
+    "directory": "packages/system"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "bun": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "lint": "biome lint .",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "publishConfig": {
+    "access": "public"
+  }
+}

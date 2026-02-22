@@ -1,175 +1,182 @@
 /**
- * render.ts — Unified rendering layer for Rolex output.
+ * Render — description + hint templates for every process.
  *
- * Converts Feature objects back to Gherkin text.
- * Used by both MCP server and CLI for consistent output.
+ * Each operation produces two pieces of text:
+ *   description — what just happened (past tense)
+ *   hint        — what to do next (suggestion)
+ *
+ * These are shared by MCP and CLI. The I/O layer just presents them.
  */
+import type { State } from "@rolexjs/system";
 
-import type { Feature, Goal } from "@rolexjs/core";
+// ================================================================
+//  Description — what happened
+// ================================================================
 
-/**
- * Render a single Feature as Gherkin text.
- */
-export function renderFeature(feature: Feature): string {
-  const lines: string[] = [];
+const descriptions: Record<string, (name: string, state: State) => string> = {
+  // Lifecycle
+  born: (n) => `Individual "${n}" is born.`,
+  found: (n) => `Organization "${n}" is founded.`,
+  establish: (n) => `Position "${n}" is established.`,
+  charter: (n) => `Charter defined for "${n}".`,
+  charge: (n) => `Duty "${n}" assigned.`,
+  retire: (n) => `"${n}" retired.`,
+  die: (n) => `"${n}" is gone.`,
+  dissolve: (n) => `Organization "${n}" dissolved.`,
+  abolish: (n) => `Position "${n}" abolished.`,
+  rehire: (n) => `"${n}" is back.`,
 
-  // Type comment
-  if (feature.type) {
-    lines.push(`# type: ${feature.type}`);
-  }
+  // Organization
+  hire: (n) => `"${n}" hired.`,
+  fire: (n) => `"${n}" fired.`,
+  appoint: (n) => `"${n}" appointed.`,
+  dismiss: (n) => `"${n}" dismissed.`,
 
-  // Tags
-  if (feature.tags && feature.tags.length > 0) {
-    lines.push(feature.tags.map((t) => t.name).join(" "));
-  }
+  // Role
+  activate: (n) => `Role "${n}" activated.`,
+  focus: (n) => `Focused on goal "${n}".`,
 
-  // Feature header
-  lines.push(`Feature: ${feature.name}`);
+  // Execution
+  want: (n) => `Goal "${n}" declared.`,
+  plan: (n) => `Plan created for "${n}".`,
+  todo: (n) => `Task "${n}" added.`,
+  finish: (n) => `Task "${n}" finished → encounter recorded.`,
+  achieve: (n) => `Goal "${n}" achieved → encounter recorded.`,
+  abandon: (n) => `Goal "${n}" abandoned → encounter recorded.`,
 
-  // Description
-  if (feature.description?.trim()) {
-    for (const line of feature.description.split("\n")) {
-      lines.push(`  ${line.trimEnd()}`);
-    }
-  }
+  // Cognition
+  reflect: (n) => `Reflected on "${n}" → experience gained.`,
+  realize: (n) => `Realized principle from "${n}".`,
+  master: (n) => `Mastered procedure from "${n}".`,
 
-  // Scenarios
-  for (const scenario of feature.scenarios) {
-    lines.push("");
-
-    // Scenario tags
-    if (scenario.tags && scenario.tags.length > 0) {
-      lines.push(`  ${scenario.tags.map((t) => t.name).join(" ")}`);
-    }
-
-    lines.push(`  Scenario: ${scenario.name}`);
-
-    for (const step of scenario.steps) {
-      lines.push(`    ${step.keyword}${step.text}`);
-    }
-  }
-
-  return lines.join("\n");
-}
-
-/**
- * Render multiple Features as Gherkin text, separated by blank lines.
- */
-export function renderFeatures(features: Feature[]): string {
-  return features.map(renderFeature).join("\n\n");
-}
-
-/**
- * Render a status bar showing current role, goal, assignment, and time.
- */
-export function renderStatusBar(
-  roleName: string,
-  currentGoal: Goal | null,
-  org?: string,
-  position?: string
-): string {
-  const now = new Date().toISOString().replace("T", " ").slice(0, 19);
-  const goal = currentGoal ? currentGoal.name : "none";
-  const parts = [`[${roleName}] goal: ${goal}`];
-  if (org) parts.push(`org: ${org}`);
-  if (position) parts.push(`position: ${position}`);
-  parts.push(now);
-  return parts.join(" | ");
-}
-
-// ========== Workflow Hints ==========
-
-/** Append a workflow hint to output. */
-export function next(result: string, hint: string): string {
-  return `${result}\n\n**Next**: ${hint}`;
-}
-
-/** Static workflow hints — keyed by operation name. */
-export const NEXT: Record<string, string> = {
-  born: "`teach` to add knowledge, or `hire` to bring into organization.",
-  found: "`establish` to create positions, or `born` to create roles for this organization.",
-  establish: "`appoint` to assign a role to this position.",
-  appoint: "`identity(roleId)` to activate the role with duties injected.",
-  dismiss: "Role is back to member. `appoint` to reassign, or `fire` to remove from org.",
-  teach: "`teach` more knowledge, or `hire` to bring into organization.",
-  fire: "Role identity remains intact. `hire` to re-hire, or `directory` to see current state.",
-  synthesize: "`focus()` to check current goal, or continue working.",
-  want: "`plan` to design how to achieve it, or `todo` to create tasks directly.",
-  plan: "`todo` to break the plan into concrete tasks.",
-  todo: "Execute the task, then `finish(name)` when done.",
-  achieve: "`focus()` to see the next goal.",
-  abandon: "`focus()` to see the next goal.",
-  reflect: "`identity(roleId)` to see updated knowledge.",
+  // Knowledge management
+  forget: (n) => `"${n}" forgotten.`,
 };
 
-/** Dynamic hint for hire — includes the role name. */
-export function nextHire(name: string): string {
-  return `\`identity("${name}")\` to activate the role, or \`appoint\` to assign a position.`;
+export function describe(process: string, name: string, state: State): string {
+  const fn = descriptions[process];
+  return fn ? fn(name, state) : `${process} completed.`;
 }
 
-/** Dynamic hint for finish — checks remaining task count. */
-export function nextFinish(remainingTasks: number): string {
-  if (remainingTasks === 0) {
-    return "All tasks done! Use `achieve()` to complete the goal.";
-  }
-  return `${remainingTasks} task(s) remaining.`;
+// ================================================================
+//  Hint — what to do next
+// ================================================================
+
+const hints: Record<string, string> = {
+  // Lifecycle
+  born: "hire into an organization, or activate to start working.",
+  found: "establish positions and define a charter.",
+  establish: "charge with duties, then appoint members.",
+  charter: "establish positions for the organization.",
+  charge: "appoint someone to this position.",
+  retire: "rehire if needed later.",
+  die: "this individual is permanently gone.",
+  dissolve: "the organization no longer exists.",
+  abolish: "the position no longer exists.",
+  rehire: "activate to resume working.",
+
+  // Organization
+  hire: "appoint to a position, or activate to start working.",
+  fire: "the individual is no longer a member.",
+  appoint: "the individual now holds this position.",
+  dismiss: "the position is now vacant.",
+
+  // Role
+  activate: "want a goal, or check the current state.",
+  focus: "plan how to achieve it, or add tasks.",
+
+  // Execution
+  want: "plan how to achieve it.",
+  plan: "add tasks with todo.",
+  todo: "start working, finish when done.",
+  finish: "continue with remaining tasks, or achieve the goal.",
+  achieve: "reflect on encounters to gain experience.",
+  abandon: "reflect on encounters to learn from the experience.",
+
+  // Cognition
+  reflect: "realize principles or master procedures from experience.",
+  realize: "principle added to knowledge.",
+  master: "procedure added to knowledge.",
+
+  // Knowledge management
+  forget: "the node has been removed.",
+};
+
+export function hint(process: string): string {
+  const h = hints[process];
+  return h ? `Next: ${h}` : "What would you like to do next?";
 }
 
-// ========== Error Rendering ==========
+// ================================================================
+//  Detail — longer process descriptions (from .feature files)
+// ================================================================
 
-const HINTS: Array<[RegExp, string]> = [
-  [/No active role/, "Call `identity(roleId)` first to activate a role."],
-  [
-    /No active goal/,
-    "Use `want()` to create a goal, or `focus(name)` to switch to an existing one.",
-  ],
-  [/Role not found/, 'Create the role first with `society(operation: "born")`.'],
-  [/not hired/, 'Hire the role first with `organization(operation: "hire")`.'],
-  [/not a member/, 'Hire the role first with `organization(operation: "hire")`.'],
-  [/Goal not found/, "Check the goal name, or use `focus()` to see active goals."],
-  [/Task not found/, "Check the task name. Use `focus()` to see current tasks."],
-  [
-    /Experience not found/,
-    "Check the experience name. Use `identity(roleId)` to see all identity files.",
-  ],
-  [
-    /Not found in society/,
-    'Check the name. Use `society(operation: "directory")` to list all roles and organizations.',
-  ],
-  [/Organization not found/, 'Found an organization first with `society(operation: "found")`.'],
-  [
-    /Organization already exists/,
-    "Use a different name, or use `find()` to access the existing org.",
-  ],
-  [/Position.*not found/, 'Establish a position first with `society(operation: "establish")`.'],
-  [/Position.*already exists/, "Use a different name for the position."],
-  [/not appointed/, 'Appoint the role first with `organization(operation: "appoint")`.'],
-  [/Invalid transition/, "Check the current state. Use `directory` to see role states."],
-  [/already assigned/, "The entity is already assigned. Dismiss or fire first."],
-  [/requires:/, "Check the required parameters for this operation."],
-];
+import { processes, world } from "./descriptions/index.js";
 
-function getHint(message: string): string | null {
-  for (const [pattern, hint] of HINTS) {
-    if (pattern.test(message)) return hint;
-  }
-  return null;
+/** Full Gherkin feature content for a process — sourced from .feature files. */
+export function detail(process: string): string {
+  return processes[process] ?? "";
 }
+
+/** World feature descriptions — framework-level instructions. */
+export { world };
+
+// ================================================================
+//  Generic State renderer — renders any State tree as markdown
+// ================================================================
 
 /**
- * Render an error as a formatted markdown block.
+ * renderState — generic markdown renderer for any State tree.
  *
- * Format:
- *   **Error** | `tool_name`
- *   > error message
- *   **Hint**: actionable suggestion
+ * Rules:
+ *   - Heading: "#" repeated to depth + " [name]"
+ *   - Body: raw information field as-is (full Gherkin preserved)
+ *   - Links: "> → relation [target.name]" with target feature name
+ *   - Children: recursive at depth+1
+ *
+ * No concept-specific knowledge — purely structural.
+ * Markdown heading depth caps at 6 (######).
  */
-export function renderError(tool: string, error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error);
-  const hint = getHint(message);
-  const lines = [`**Error** | \`${tool}\``, "", `> ${message}`];
-  if (hint) {
-    lines.push("", `**Hint**: ${hint}`);
+export function renderState(state: State, depth = 1): string {
+  const lines: string[] = [];
+  const level = Math.min(depth, 6);
+  const heading = "#".repeat(level);
+
+  // Heading: [name] (id) {origin}
+  const idPart = state.id ? ` (${state.id})` : "";
+  const originPart = state.origin ? ` {${state.origin}}` : "";
+  lines.push(`${heading} [${state.name}]${idPart}${originPart}`);
+
+  // Body: full information as-is
+  if (state.information) {
+    lines.push("");
+    lines.push(state.information);
   }
+
+  // Links
+  if (state.links && state.links.length > 0) {
+    lines.push("");
+    for (const link of state.links) {
+      const targetLabel = extractLabel(link.target);
+      lines.push(`> ${link.relation} → ${targetLabel}`);
+    }
+  }
+
+  // Children
+  if (state.children && state.children.length > 0) {
+    for (const child of state.children) {
+      lines.push("");
+      lines.push(renderState(child, depth + 1));
+    }
+  }
+
   return lines.join("\n");
+}
+
+/** Extract a display label from a State: "[name] FeatureTitle" or just "[name]". */
+function extractLabel(state: State): string {
+  if (!state.information) return `[${state.name}]`;
+  const match = state.information.match(/^Feature:\s*(.+)/m);
+  const title = match ? match[1].trim() : state.information.split("\n")[0].trim();
+  return `[${state.name}] ${title}`;
 }

@@ -135,14 +135,14 @@ bun test packages/core/tests/unit/role.test.ts
 # Run BDD tests (Cucumber)
 bun run test:bdd
 
-# Lint
-bun run lint
+# Lint + format check (Biome)
+bun run check
+
+# Auto-fix lint + format
+bun run check:fix
 
 # Type check
 bun run typecheck
-
-# Format code
-bun run format
 ```
 
 ## Architecture

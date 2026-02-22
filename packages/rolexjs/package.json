@@ -25,6 +25,7 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "bun": "./src/index.ts",
       "default": "./dist/index.js"
     }
   },
@@ -32,15 +33,21 @@
     "dist"
   ],
   "scripts": {
-    "build": "bun scripts/generate-seed.ts && tsup",
-    "lint": "eslint .",
+    "gen:desc": "bun run scripts/gen-descriptions.ts",
+    "build": "bun run gen:desc && tsup",
+    "lint": "biome lint .",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@rolexjs/core": "workspace:*"
+    "@rolexjs/core": "workspace:*",
+    "@rolexjs/system": "workspace:*",
+    "@rolexjs/parser": "workspace:*",
+    "resourcexjs": "^2.10.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@rolexjs/local-platform": "workspace:*"
+  },
   "publishConfig": {
     "access": "public"
   }

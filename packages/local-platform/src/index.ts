@@ -1,11 +1,12 @@
 /**
  * @rolexjs/local-platform
  *
- * Local filesystem implementation of Platform.
- * Stores roles in .rolex/ directories.
- *
- * On first use, bootstraps from the bundled seed .rolex/ —
- * including 女娲 (the genesis role).
+ * Local platform implementation for RoleX.
+ * Map-based runtime with file-based persistence (manifest + .feature files).
  */
 
-export { LocalPlatform } from "./LocalPlatform.js";
+export type { LocalPlatformConfig } from "./LocalPlatform.js";
+export { localPlatform } from "./LocalPlatform.js";
+
+export type { FileEntry, Manifest, ManifestNode } from "./manifest.js";
+export { filesToState, stateToFiles } from "./manifest.js";

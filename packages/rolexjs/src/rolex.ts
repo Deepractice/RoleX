@@ -1,0 +1,509 @@
+/**
+ * Rolex — stateless API layer.
+ *
+ * Every method takes string ids for existing nodes and resolves internally.
+ * No internal state — name registry, active role, session are the
+ * caller's responsibility (MCP / CLI).
+ *
+ * Runtime is injected — caller decides storage.
+ *
+ * All textual inputs must be valid Gherkin Feature syntax.
+ *
+ * Namespaces:
+ *   individual — lifecycle (born, retire, die, rehire) + external injection (teach, train)
+ *   role       — execution + cognition + use (activate → achieve, reflect → master, use)
+ *   org        — organization management (found, hire, appoint, ...)
+ *   resource   — ResourceX instance (optional)
+ */
+
+import type { Platform } from "@rolexjs/core";
+import * as C from "@rolexjs/core";
+import { parse } from "@rolexjs/parser";
+import {
+  mergeState,
+  type Prototype,
+  type Runtime,
+  type State,
+  type Structure,
+} from "@rolexjs/system";
+import type { ResourceX } from "resourcexjs";
+
+export interface RolexResult {
+  /** Projection of the primary affected node. */
+  state: State;
+  /** Which process was executed (for render). */
+  process: string;
+}
+
+/** Resolve an id to a Structure node, throws if not found. */
+type Resolve = (id: string) => Structure;
+
+export class Rolex {
+  private rt: Runtime;
+  private resourcex?: ResourceX;
+  private _registerPrototype?: (id: string, source: string) => void;
+
+  /** Root of the world. */
+  readonly society: Structure;
+  /** Container for archived things. */
+  readonly past: Structure;
+
+  /** Individual lifecycle — create, archive, restore, external injection. */
+  readonly individual: IndividualNamespace;
+  /** Role inner cycle — execution + cognition. */
+  readonly role: RoleNamespace;
+  /** Organization management — structure + membership. */
+  readonly org: OrgNamespace;
+  /** Resource management (optional — powered by ResourceX). */
+  readonly resource?: ResourceX;
+
+  constructor(platform: Platform) {
+    this.rt = platform.runtime;
+    this.resourcex = platform.resourcex;
+    this._registerPrototype = platform.registerPrototype;
+
+    // Ensure world roots exist (idempotent — reuse if already created by another process)
+    const roots = this.rt.roots();
+    this.society = roots.find((r) => r.name === "society") ?? this.rt.create(null, C.society);
+
+    const societyState = this.rt.project(this.society);
+    const existingPast = societyState.children?.find((c) => c.name === "past");
+    this.past = existingPast ?? this.rt.create(this.society, C.past);
+
+    // Shared resolver — all namespaces use this to look up nodes by id
+    const resolve: Resolve = (id: string) => {
+      const node = this.find(id);
+      if (!node) throw new Error(`"${id}" not found.`);
+      return node;
+    };
+
+    // Namespaces
+    this.individual = new IndividualNamespace(this.rt, this.society, this.past, resolve);
+    this.role = new RoleNamespace(this.rt, resolve, platform.prototype, platform.resourcex);
+    this.org = new OrgNamespace(this.rt, this.society, this.past, resolve);
+    this.resource = platform.resourcex;
+  }
+
+  /** Register a ResourceX source as a prototype. Ingests to extract id, stores id → source mapping. */
+  async prototype(source: string): Promise<RolexResult> {
+    if (!this.resourcex) throw new Error("ResourceX is not available.");
+    if (!this._registerPrototype)
+      throw new Error("Platform does not support prototype registration.");
+    const state = await this.resourcex.ingest<State>(source);
+    if (!state.id) throw new Error("Prototype resource must have an id.");
+    this._registerPrototype(state.id, source);
+    return { state, process: "prototype" };
+  }
+
+  /** Find a node by id or alias across the entire society tree. */
+  find(id: string): Structure | null {
+    const target = id.toLowerCase();
+    const state = this.rt.project(this.society);
+    return findInState(state, target);
+  }
+}
+
+// ================================================================
+//  Individual — lifecycle + external injection
+// ================================================================
+
+class IndividualNamespace {
+  constructor(
+    private rt: Runtime,
+    private society: Structure,
+    private past: Structure,
+    private resolve: Resolve
+  ) {}
+
+  /** Born an individual into society. */
+  born(individual?: string, id?: string, alias?: readonly string[]): RolexResult {
+    validateGherkin(individual);
+    const node = this.rt.create(this.society, C.individual, individual, id, alias);
+    return ok(this.rt, node, "born");
+  }
+
+  /** Retire an individual (can rehire later). */
+  retire(individual: string): RolexResult {
+    return archive(this.rt, this.past, this.resolve(individual), "retire");
+  }
+
+  /** An individual dies (permanent). */
+  die(individual: string): RolexResult {
+    return archive(this.rt, this.past, this.resolve(individual), "die");
+  }
+
+  /** Rehire a retired individual from past. */
+  rehire(pastNode: string): RolexResult {
+    const past = this.resolve(pastNode);
+    const individual = this.rt.create(this.society, C.individual, past.information);
+    this.rt.remove(past);
+    return ok(this.rt, individual, "rehire");
+  }
+
+  // ---- External injection ----
+
+  /** Teach: directly inject a principle into an individual — no experience consumed. Upserts by id. */
+  teach(individual: string, principle: string, id?: string): RolexResult {
+    validateGherkin(principle);
+    const parent = this.resolve(individual);
+    if (id) this.removeExisting(parent, id);
+    const prin = this.rt.create(parent, C.principle, principle, id);
+    return ok(this.rt, prin, "teach");
+  }
+
+  /** Train: directly inject a procedure (skill) into an individual — no experience consumed. Upserts by id. */
+  train(individual: string, procedure: string, id?: string): RolexResult {
+    validateGherkin(procedure);
+    const parent = this.resolve(individual);
+    if (id) this.removeExisting(parent, id);
+    const proc = this.rt.create(parent, C.procedure, procedure, id);
+    return ok(this.rt, proc, "train");
+  }
+
+  /** Remove existing child node with matching id (for upsert). */
+  private removeExisting(parent: Structure, id: string): void {
+    const state = this.rt.project(parent);
+    const existing = findInState(state, id);
+    if (existing) this.rt.remove(existing);
+  }
+}
+
+// ================================================================
+//  Role — execution + cognition
+// ================================================================
+
+class RoleNamespace {
+  constructor(
+    private rt: Runtime,
+    private resolve: Resolve,
+    private prototype?: Prototype,
+    private resourcex?: ResourceX
+  ) {}
+
+  // ---- Activation ----
+
+  /** Activate: merge prototype (if any) with instance state. */
+  async activate(individual: string): Promise<RolexResult> {
+    const node = this.resolve(individual);
+    const instanceState = this.rt.project(node);
+    const protoState = instanceState.id
+      ? await this.prototype?.resolve(instanceState.id)
+      : undefined;
+    const state = protoState ? mergeState(protoState, instanceState) : instanceState;
+    return { state, process: "activate" };
+  }
+
+  /** Focus: project a goal's state (view / switch context). */
+  focus(goal: string): RolexResult {
+    return ok(this.rt, this.resolve(goal), "focus");
+  }
+
+  // ---- Execution ----
+
+  /** Declare a goal under an individual. */
+  want(individual: string, goal?: string, id?: string, alias?: readonly string[]): RolexResult {
+    validateGherkin(goal);
+    const node = this.rt.create(this.resolve(individual), C.goal, goal, id, alias);
+    return ok(this.rt, node, "want");
+  }
+
+  /** Create a plan for a goal. */
+  plan(goal: string, plan?: string, id?: string): RolexResult {
+    validateGherkin(plan);
+    const node = this.rt.create(this.resolve(goal), C.plan, plan, id);
+    return ok(this.rt, node, "plan");
+  }
+
+  /** Add a task to a plan. */
+  todo(plan: string, task?: string, id?: string, alias?: readonly string[]): RolexResult {
+    validateGherkin(task);
+    const node = this.rt.create(this.resolve(plan), C.task, task, id, alias);
+    return ok(this.rt, node, "todo");
+  }
+
+  /** Finish a task: consume task, create encounter under individual. */
+  finish(task: string, individual: string, encounter?: string): RolexResult {
+    validateGherkin(encounter);
+    const taskNode = this.resolve(task);
+    const encId = taskNode.id ? `${taskNode.id}-finished` : undefined;
+    const enc = this.rt.create(this.resolve(individual), C.encounter, encounter, encId);
+    this.rt.remove(taskNode);
+    return ok(this.rt, enc, "finish");
+  }
+
+  /** Achieve a goal: consume goal, create encounter under individual. */
+  achieve(goal: string, individual: string, encounter?: string): RolexResult {
+    validateGherkin(encounter);
+    const goalNode = this.resolve(goal);
+    const encId = goalNode.id ? `${goalNode.id}-achieved` : undefined;
+    const enc = this.rt.create(this.resolve(individual), C.encounter, encounter, encId);
+    this.rt.remove(goalNode);
+    return ok(this.rt, enc, "achieve");
+  }
+
+  /** Abandon a goal: consume goal, create encounter under individual. */
+  abandon(goal: string, individual: string, encounter?: string): RolexResult {
+    validateGherkin(encounter);
+    const goalNode = this.resolve(goal);
+    const encId = goalNode.id ? `${goalNode.id}-abandoned` : undefined;
+    const enc = this.rt.create(this.resolve(individual), C.encounter, encounter, encId);
+    this.rt.remove(goalNode);
+    return ok(this.rt, enc, "abandon");
+  }
+
+  // ---- Cognition ----
+
+  /** Reflect: consume encounter, create experience under individual. */
+  reflect(encounter: string, individual: string, experience?: string, id?: string): RolexResult {
+    validateGherkin(experience);
+    const encNode = this.resolve(encounter);
+    const exp = this.rt.create(
+      this.resolve(individual),
+      C.experience,
+      experience || encNode.information,
+      id
+    );
+    this.rt.remove(encNode);
+    return ok(this.rt, exp, "reflect");
+  }
+
+  /** Realize: consume experience, create principle under individual. */
+  realize(experience: string, individual: string, principle?: string, id?: string): RolexResult {
+    validateGherkin(principle);
+    const expNode = this.resolve(experience);
+    const prin = this.rt.create(
+      this.resolve(individual),
+      C.principle,
+      principle || expNode.information,
+      id
+    );
+    this.rt.remove(expNode);
+    return ok(this.rt, prin, "realize");
+  }
+
+  /** Master: consume experience, create procedure under individual. */
+  master(experience: string, individual: string, procedure?: string, id?: string): RolexResult {
+    validateGherkin(procedure);
+    const expNode = this.resolve(experience);
+    const proc = this.rt.create(
+      this.resolve(individual),
+      C.procedure,
+      procedure || expNode.information,
+      id
+    );
+    this.rt.remove(expNode);
+    return ok(this.rt, proc, "master");
+  }
+
+  // ---- Knowledge management ----
+
+  /** Forget: remove any node under an individual by id. Prototype nodes are read-only. */
+  async forget(nodeId: string, individual: string): Promise<RolexResult> {
+    try {
+      const node = this.resolve(nodeId);
+      this.rt.remove(node);
+      return { state: { ...node, children: [] }, process: "forget" };
+    } catch {
+      // Not in runtime graph — check if it's a prototype node
+      if (this.prototype) {
+        // Resolve individual to get its actual stored id (case-sensitive match for prototype)
+        const indNode = this.resolve(individual);
+        const instanceState = this.rt.project(indNode);
+        const protoState = instanceState.id
+          ? await this.prototype.resolve(instanceState.id)
+          : undefined;
+        if (protoState && findInState(protoState, nodeId.toLowerCase())) {
+          throw new Error(`"${nodeId}" is a prototype node (read-only) and cannot be forgotten.`);
+        }
+      }
+      throw new Error(`"${nodeId}" not found.`);
+    }
+  }
+
+  // ---- Resource interaction ----
+
+  /** Skill: load full skill content by locator — for context injection (progressive disclosure layer 2). */
+  async skill(locator: string): Promise<string> {
+    if (!this.resourcex) throw new Error("ResourceX is not available.");
+    const content = await this.resourcex.ingest<string>(locator);
+    const text = typeof content === "string" ? content : JSON.stringify(content, null, 2);
+
+    // Try to render RXM context alongside content
+    try {
+      const rxm = await this.resourcex.info(locator);
+      return `${formatRXM(rxm)}\n\n${text}`;
+    } catch {
+      // Path-based locator or info unavailable — return content only
+      return text;
+    }
+  }
+
+  /** Use a resource — role's entry point for interacting with external resources. */
+  use<T = unknown>(locator: string): Promise<T> {
+    if (!this.resourcex) throw new Error("ResourceX is not available.");
+    return this.resourcex.ingest<T>(locator);
+  }
+}
+
+// ================================================================
+//  Org — organization management
+// ================================================================
+
+class OrgNamespace {
+  constructor(
+    private rt: Runtime,
+    private society: Structure,
+    private past: Structure,
+    private resolve: Resolve
+  ) {}
+
+  // ---- Structure ----
+
+  /** Found an organization. */
+  found(organization?: string, id?: string, alias?: readonly string[]): RolexResult {
+    validateGherkin(organization);
+    const org = this.rt.create(this.society, C.organization, organization, id, alias);
+    return ok(this.rt, org, "found");
+  }
+
+  /** Establish a position within an organization. */
+  establish(org: string, position?: string, id?: string, alias?: readonly string[]): RolexResult {
+    validateGherkin(position);
+    const pos = this.rt.create(this.resolve(org), C.position, position, id, alias);
+    return ok(this.rt, pos, "establish");
+  }
+
+  /** Define the charter for an organization. */
+  charter(org: string, charter: string): RolexResult {
+    validateGherkin(charter);
+    const node = this.rt.create(this.resolve(org), C.charter, charter);
+    return ok(this.rt, node, "charter");
+  }
+
+  /** Add a duty to a position. */
+  charge(position: string, duty: string, id?: string): RolexResult {
+    validateGherkin(duty);
+    const node = this.rt.create(this.resolve(position), C.duty, duty, id);
+    return ok(this.rt, node, "charge");
+  }
+
+  // ---- Archival ----
+
+  /** Dissolve an organization. */
+  dissolve(org: string): RolexResult {
+    return archive(this.rt, this.past, this.resolve(org), "dissolve");
+  }
+
+  /** Abolish a position. */
+  abolish(position: string): RolexResult {
+    return archive(this.rt, this.past, this.resolve(position), "abolish");
+  }
+
+  // ---- Membership & Appointment ----
+
+  /** Hire: link individual to organization via membership. */
+  hire(org: string, individual: string): RolexResult {
+    const orgNode = this.resolve(org);
+    this.rt.link(orgNode, this.resolve(individual), "membership", "belong");
+    return ok(this.rt, orgNode, "hire");
+  }
+
+  /** Fire: remove membership link. */
+  fire(org: string, individual: string): RolexResult {
+    const orgNode = this.resolve(org);
+    this.rt.unlink(orgNode, this.resolve(individual), "membership", "belong");
+    return ok(this.rt, orgNode, "fire");
+  }
+
+  /** Appoint: link individual to position via appointment. */
+  appoint(position: string, individual: string): RolexResult {
+    const posNode = this.resolve(position);
+    this.rt.link(posNode, this.resolve(individual), "appointment", "serve");
+    return ok(this.rt, posNode, "appoint");
+  }
+
+  /** Dismiss: remove appointment link. */
+  dismiss(position: string, individual: string): RolexResult {
+    const posNode = this.resolve(position);
+    this.rt.unlink(posNode, this.resolve(individual), "appointment", "serve");
+    return ok(this.rt, posNode, "dismiss");
+  }
+}
+
+// ================================================================
+//  Shared helpers
+// ================================================================
+
+function validateGherkin(source?: string): void {
+  if (!source) return;
+  try {
+    parse(source);
+  } catch (e: any) {
+    throw new Error(`Invalid Gherkin: ${e.message}`);
+  }
+}
+
+function findInState(state: State, target: string): Structure | null {
+  if (state.id && state.id.toLowerCase() === target) return state;
+  if (state.alias) {
+    for (const a of state.alias) {
+      if (a.toLowerCase() === target) return state;
+    }
+  }
+  for (const child of state.children ?? []) {
+    const found = findInState(child, target);
+    if (found) return found;
+  }
+  return null;
+}
+
+function archive(rt: Runtime, past: Structure, node: Structure, process: string): RolexResult {
+  const archived = rt.create(past, C.past, node.information);
+  rt.remove(node);
+  return ok(rt, archived, process);
+}
+
+function ok(rt: Runtime, node: Structure, process: string): RolexResult {
+  return {
+    state: rt.project(node),
+    process,
+  };
+}
+
+/** Render file tree from RXM source.files */
+function renderFileTree(files: Record<string, any>, indent = ""): string {
+  const lines: string[] = [];
+  for (const [name, value] of Object.entries(files)) {
+    if (value && typeof value === "object" && !("size" in value)) {
+      // Directory
+      lines.push(`${indent}${name}`);
+      lines.push(renderFileTree(value, `${indent}  `));
+    } else {
+      const size = value?.size ? ` (${value.size} bytes)` : "";
+      lines.push(`${indent}${name}${size}`);
+    }
+  }
+  return lines.filter(Boolean).join("\n");
+}
+
+/** Format RXM info as context header for skill injection. */
+function formatRXM(rxm: any): string {
+  const lines: string[] = [`--- RXM: ${rxm.locator} ---`];
+  const def = rxm.definition;
+  if (def) {
+    if (def.author) lines.push(`Author: ${def.author}`);
+    if (def.description) lines.push(`Description: ${def.description}`);
+  }
+  const source = rxm.source;
+  if (source?.files) {
+    lines.push(`Files:`);
+    lines.push(renderFileTree(source.files, "  "));
+  }
+  lines.push("---");
+  return lines.join("\n");
+}
+
+/** Create a Rolex instance from a Platform. */
+export function createRoleX(platform: Platform): Rolex {
+  return new Rolex(platform);
+}
