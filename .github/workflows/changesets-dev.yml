@@ -59,7 +59,7 @@ jobs:
               for dep in $(jq -r '(.dependencies // {}) + (.devDependencies // {}) | to_entries[] | select(.value == "workspace:*") | .key' "$pkg"); do
                 DEP_VERSION=$(find packages apps -name "package.json" -path "*/package.json" -exec jq -r --arg name "$dep" 'select(.name == $name) | .version' {} \; 2>/dev/null | head -1)
                 if [ -n "$DEP_VERSION" ]; then
-                  jq --arg dep "$dep" --arg ver "^${DEP_VERSION}" '
+                  jq --arg dep "$dep" --arg ver "${DEP_VERSION}" '
                     if .dependencies[$dep] == "workspace:*" then .dependencies[$dep] = $ver else . end |
                     if .devDependencies[$dep] == "workspace:*" then .devDependencies[$dep] = $ver else . end
                   ' "$pkg" > tmp && mv tmp "$pkg"
