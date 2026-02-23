@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 /**
  * RoleX CLI — thin wrapper over the Rolex API.
  *
