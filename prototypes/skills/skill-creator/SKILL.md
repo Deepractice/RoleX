@@ -1,83 +1,110 @@
-Feature: Skill Creator — Guide for creating RoleX skills
-  Create effective skills for RoleX roles using Gherkin Feature format.
-  Use this skill when a role needs to create a new skill or update an existing one.
+---
+name: skill-creator
+description: Guide for creating RoleX skills. Use when creating a new skill or updating an existing skill that extends a role's capabilities. Skills are SKILL.md files referenced by knowledge.procedure — the procedure summary is loaded at identity time, the full SKILL.md is loaded on demand via the skill process.
+---
 
-  Scenario: What is a RoleX skill
-    Given a skill is a reusable capability that extends a role
-    And skills are written as Gherkin Feature files
-    And skills are packaged as ResourceX resources
-    Then a skill provides procedural knowledge a role can load on demand
-    And skills follow progressive disclosure — metadata first, full content when needed
+Feature: RoleX Skill Creator
+Create skills that follow the RoleX capability system.
+A skill is a SKILL.md file referenced by a knowledge.procedure entry via ResourceX locator.
+Progressive disclosure: procedure summary at identity → full SKILL.md via skill(locator) → execution via use.
 
-  Scenario: Skill directory structure
-    Given a skill is a ResourceX resource
-    Then the directory contains
-      | file              | required | purpose                              |
-      | resource.json     | yes      | ResourceX source marker              |
-      | SKILL.md     | yes      | Main skill instructions in Gherkin   |
-      | references/       | no       | Reference .feature files loaded on demand |
-      | scripts/          | no       | Executable scripts for deterministic tasks |
-      | assets/           | no       | Templates and files used in output   |
+Scenario: What is a RoleX skill
+Given a role needs operational capabilities beyond its identity
+Then a skill is a SKILL.md file containing detailed instructions
+And a knowledge.procedure is a Gherkin summary that references the skill via locator
+And the procedure is loaded at identity time — the role knows what skills exist
+And the full SKILL.md is loaded on demand via the skill process
 
-  Scenario: resource.json format
-    Given the resource.json marks this as a ResourceX source
-    Then it contains
-      | field       | example                                    |
-      | name        | my-skill                                   |
-      | type        | skill                                      |
-      | tag         | 0.1.0                                      |
-      | author      | deepractice                                |
-      | description | What this skill does and when to trigger it |
-    And description is the primary trigger — it tells the role when to use this skill
+Scenario: Skill directory structure
+Given a skill lives under the skills/ directory
+Then the structure is:
+"""
+skills/<skill-name>/
+├── SKILL.md (required — detailed instructions in Gherkin)
+└── references/ (optional — loaded on demand)
+└── <topic>.md
+"""
+And SKILL.md has YAML frontmatter with name and description
+And the body uses Gherkin Feature/Scenario format
+And references contain domain-specific details loaded only when needed
 
-  Scenario: Writing SKILL.md
-    Given the Feature title names the capability
-    And the Feature description explains what it does and when to use it
-    When writing scenarios
-    Then each Scenario describes a distinct procedure or workflow
-    And Given establishes the context or precondition
-    And When describes the trigger or action
-    And Then describes the expected outcome or steps to follow
-    And Data Tables provide structured reference data
+Scenario: The procedure-skill contract
+Given a knowledge.procedure is trained to a role
+Then the Feature description contains the ResourceX locator for the skill
+And the Feature body summarizes what the skill can do
+And example procedure:
+"""
+Feature: Role Management
+deepractice/role-management
 
-  Scenario: Gherkin over Markdown
-    Given RoleX uses Gherkin as its universal language
-    When writing skill instructions
-    Then use Feature for the skill title and overview
-    And use Scenario for each distinct procedure
-    And use Given/When/Then for step-by-step instructions
-    And use Data Tables for structured data and options
-    And do NOT use Markdown — Gherkin is the format
+        Scenario: What this skill does
+          Given I need to manage role lifecycle
+          Then I can born, teach, train, retire, and kill roles
+      """
+    And the description line is the locator — the skill process resolves it via ResourceX
 
-  Scenario: Progressive disclosure in RoleX
-    Given context is a shared resource
-    When designing a skill
-    Then layer 1 is the procedure — metadata always loaded at activate time
-    And layer 2 is the skill — full SKILL.md loaded on demand via skill(locator)
-    And layer 3 is references — loaded only when the skill needs them
-    And keep SKILL.md concise — only include what the role needs to act
+Feature: Skill Creation Process
+How to create a new RoleX skill step by step.
 
-  Scenario: Conciseness principle
-    Given the role is already capable
-    When writing skill content
-    Then only add knowledge the role does not already have
-    And prefer concrete examples over verbose explanations
-    And challenge each scenario — does this justify its token cost
-    And split large skills into SKILL.md + references/
+Scenario: Step 1 — Understand the scope
+Given you are creating a skill for a specific domain
+When you analyze what operations the skill should cover
+Then identify the concrete commands, parameters, and workflows
+And determine what the role needs to know vs what it already knows
+And only include information the role cannot infer on its own
 
-  Scenario: Creating a new skill
-    Given the role needs a new capability
-    When creating a skill
-    Then create the skill directory under prototypes/skills/
-    And write resource.json with name, type, tag, author, description
-    And write SKILL.md with Feature title + Scenarios
-    And add references/ for detailed content loaded on demand
-    And add scripts/ for deterministic executable tasks
-    And test the skill by loading it via skill(locator)
+Scenario: Step 2 — Write SKILL.md
+Given you understand the scope
+When you write the SKILL.md
+Then start with YAML frontmatter (name + description)
+And write the body as Gherkin Features and Scenarios
+And each Feature covers a logical group of operations
+And each Scenario describes a specific workflow or decision point
+And use Given/When/Then for step-by-step procedures
+And keep SKILL.md under 500 lines — split into references if needed
 
-  Scenario: Registering a skill as a procedure
-    Given a skill is created and tested
-    When the role masters the skill
-    Then a procedure is created in the role's knowledge
-    And the procedure contains the ResourceX locator
-    And the role can load the full skill via skill(locator) when needed
+Scenario: Step 3 — Create the procedure
+Given SKILL.md is written
+When you train the procedure to a role
+Then use the train command with Gherkin source
+And the Feature description MUST be the ResourceX locator for the skill
+And the Feature body summarizes capabilities for identity-time awareness
+
+Scenario: Step 4 — Test the skill
+Given the procedure is trained
+When you call identity to reload
+Then the procedure summary should appear in identity output
+And calling skill with the procedure name should load the full SKILL.md
+And the loaded content should be actionable and complete
+
+Feature: SKILL.md Writing Guidelines
+Rules for writing effective skill content in Gherkin.
+
+Scenario: Context window is a shared resource
+Given the SKILL.md is loaded into the AI's context window
+Then keep content concise — only include what the role cannot infer
+And prefer concrete examples over verbose explanations
+And use Gherkin structure to organize — not to pad length
+
+Scenario: Gherkin as instruction format
+Given RoleX uses Gherkin as its universal language
+When writing SKILL.md body content
+Then use Feature for logical groups of related operations
+And use Scenario for specific workflows or procedures
+And use Given for preconditions and context
+And use When for actions and triggers
+And use Then for expected outcomes and next steps
+And use doc strings (triple quotes) for command examples and templates
+
+Scenario: Progressive disclosure within a skill
+Given a skill may cover many operations
+When some details are only needed in specific situations
+Then keep core workflows in SKILL.md
+And move detailed reference material to references/ files
+And reference them from SKILL.md with clear "when to read" guidance
+
+Scenario: Frontmatter requirements
+Given the frontmatter is the triggering mechanism
+Then name must match the procedure name
+And description must explain what the skill does AND when to use it
+And do not include other fields in frontmatter
