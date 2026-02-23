@@ -1,5 +1,24 @@
 # @rolexjs/cli
 
+## 0.11.0-dev.0
+
+### Minor Changes
+
+- e8fcab2: feat: plan lifecycle — complete/abandon operations for plans
+
+  - Add `complete` for plans — marks plan as done, creates encounter
+  - Move `abandon` from goal to plan — plans can be abandoned
+  - Remove `achieve` from goals — goals are long-term directions, use `forget` when done
+  - Three-layer verb separation: task→finish, plan→complete/abandon, goal→forget
+  - Update MCP tools, CLI commands, descriptions, and cognitive hints
+  - Refactor: rename growup to synthesize, string id API, teach/train injection
+
+### Patch Changes
+
+- Updated dependencies [e8fcab2]
+  - rolexjs@0.11.0-dev.0
+  - @rolexjs/local-platform@0.11.0-dev.0
+
 ## 0.10.0
 
 ### Patch Changes
