@@ -36,25 +36,12 @@ jobs:
       - name: Build Packages
         run: bun run build
 
-      - name: Replace workspace protocol
-        run: |
-          VERSION=$(jq -r '.version' packages/core/package.json)
-          echo "Replacing workspace:* with ^${VERSION}"
-
-          find packages apps -name "package.json" -type f -exec sed -i 's/"workspace:\*"/"^'"${VERSION}"'"/g' {} \;
-
-          if grep -r '"workspace:' packages/ apps/ --include="package.json" 2>/dev/null; then
-            echo "ERROR: workspace: protocol still found!"
-            exit 1
-          fi
-          echo "✅ All workspace:* replaced with ^${VERSION}"
-
-      - name: Publish Dev
+      - name: Version and Publish Dev
         id: changesets
         uses: changesets/action@v1
         with:
           version: bun run version
-          publish: bun run release --tag dev
+          publish: bun run release
           title: "chore: version packages (dev)"
           commit: "chore: version packages (dev)"
           createGithubReleases: false
@@ -66,7 +53,7 @@ jobs:
         if: steps.changesets.outputs.published == 'true'
         run: |
           VERSION=$(jq -r '.version' packages/core/package.json)
-          echo "## 🧪 Dev Packages Published" >> $GITHUB_STEP_SUMMARY
+          echo "## Dev Packages Published" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Version:** v${VERSION}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
