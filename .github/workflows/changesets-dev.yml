@@ -1,0 +1,76 @@
+name: Changesets (Dev)
+
+on:
+  push:
+    branches:
+      - dev
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release-dev:
+    name: Release Dev
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js (for npm publish)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build Packages
+        run: bun run build
+
+      - name: Replace workspace protocol
+        run: |
+          VERSION=$(jq -r '.version' packages/core/package.json)
+          echo "Replacing workspace:* with ^${VERSION}"
+
+          find packages apps -name "package.json" -type f -exec sed -i 's/"workspace:\*"/"^'"${VERSION}"'"/g' {} \;
+
+          if grep -r '"workspace:' packages/ apps/ --include="package.json" 2>/dev/null; then
+            echo "ERROR: workspace: protocol still found!"
+            exit 1
+          fi
+          echo "✅ All workspace:* replaced with ^${VERSION}"
+
+      - name: Publish Dev
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: bun run version
+          publish: bun run release --tag dev
+          title: "chore: version packages (dev)"
+          commit: "chore: version packages (dev)"
+          createGithubReleases: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.ORG_NPM_TOKEN }}
+
+      - name: Summary
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          VERSION=$(jq -r '.version' packages/core/package.json)
+          echo "## 🧪 Dev Packages Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** v${VERSION}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Install: \`bun add rolexjs@dev\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Published packages:" >> $GITHUB_STEP_SUMMARY
+          echo '${{ steps.changesets.outputs.publishedPackages }}' | jq -r '.[] | "- `\(.name)@\(.version)`"' >> $GITHUB_STEP_SUMMARY

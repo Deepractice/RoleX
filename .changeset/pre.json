@@ -1,0 +1,15 @@
+{
+  "mode": "pre",
+  "tag": "dev",
+  "initialVersions": {
+    "@rolexjs/cli": "0.10.0",
+    "@rolexjs/mcp-server": "0.10.0",
+    "@rolexjs/core": "0.10.0",
+    "@rolexjs/local-platform": "0.10.0",
+    "@rolexjs/parser": "0.10.0",
+    "@rolexjs/resourcex-types": "0.1.0",
+    "rolexjs": "0.10.0",
+    "@rolexjs/system": "0.1.0"
+  },
+  "changesets": ["synthesize-api-redesign"]
+}
