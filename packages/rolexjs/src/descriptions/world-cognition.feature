@@ -4,7 +4,7 @@ Feature: Cognition — the learning cycle
   These can also be injected externally via teach and train.
 
   Scenario: The cognitive upgrade path
-    Given finish, achieve, and abandon create encounters
+    Given finish, complete, and abandon create encounters
     Then reflect(ids, id, experience) selectively consumes chosen encounters and produces experience
     And realize(ids, id, principle) distills chosen experiences into a principle — transferable knowledge
     And master(ids, id, procedure) distills chosen experiences into a procedure — skill metadata

@@ -11,8 +11,8 @@
  *   plan     — plan for focused goal
  *   todo     — add task to focused plan
  *   finish   — finish a task → encounter
- *   achieve  — achieve focused goal → encounter
- *   abandon  — abandon focused goal → encounter
+ *   complete — complete focused plan → encounter
+ *   abandon  — abandon focused plan → encounter
  *   reflect  — encounter(s) → experience
  *   realize  — experience(s) → principle
  *   master   — experience(s) → procedure
@@ -65,6 +65,7 @@ server.addTool({
       // Auto-born if not found
       rolex.individual.born(undefined, roleId);
     }
+    state.reset();
     state.activeRoleId = roleId;
     const result = await rolex.role.activate(roleId);
     state.cacheFromActivation(result.state);
@@ -153,20 +154,20 @@ server.addTool({
 });
 
 server.addTool({
-  name: "achieve",
-  description: detail("achieve"),
+  name: "complete",
+  description: detail("complete"),
   parameters: z.object({
+    id: z.string().optional().describe("Plan id to complete (defaults to focused plan)"),
     encounter: z.string().optional().describe("Optional Gherkin Feature describing what happened"),
   }),
-  execute: async ({ encounter }) => {
-    const goalId = state.requireGoalId();
+  execute: async ({ id, encounter }) => {
     const roleId = state.requireRoleId();
-    const result = rolex.role.achieve(goalId, roleId, encounter);
-    const encId = result.state.id ?? goalId;
+    const planId = id ?? state.requirePlanId();
+    const result = rolex.role.complete(planId, roleId, encounter);
+    const encId = result.state.id ?? planId;
     state.addEncounter(encId);
-    state.focusedGoalId = null;
-    state.focusedPlanId = null;
-    return fmt("achieve", goalId, result);
+    if (state.focusedPlanId === planId) state.focusedPlanId = null;
+    return fmt("complete", planId, result);
   },
 });
 
@@ -174,17 +175,17 @@ server.addTool({
   name: "abandon",
   description: detail("abandon"),
   parameters: z.object({
+    id: z.string().optional().describe("Plan id to abandon (defaults to focused plan)"),
     encounter: z.string().optional().describe("Optional Gherkin Feature describing what happened"),
   }),
-  execute: async ({ encounter }) => {
-    const goalId = state.requireGoalId();
+  execute: async ({ id, encounter }) => {
     const roleId = state.requireRoleId();
-    const result = rolex.role.abandon(goalId, roleId, encounter);
-    const encId = result.state.id ?? goalId;
+    const planId = id ?? state.requirePlanId();
+    const result = rolex.role.abandon(planId, roleId, encounter);
+    const encId = result.state.id ?? planId;
     state.addEncounter(encId);
-    state.focusedGoalId = null;
-    state.focusedPlanId = null;
-    return fmt("abandon", goalId, result);
+    if (state.focusedPlanId === planId) state.focusedPlanId = null;
+    return fmt("abandon", planId, result);
   },
 });
 

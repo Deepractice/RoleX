@@ -11,7 +11,7 @@
  *
  * Namespaces:
  *   individual — lifecycle (born, retire, die, rehire) + external injection (teach, train)
- *   role       — execution + cognition + use (activate → achieve, reflect → master, use)
+ *   role       — execution + cognition + use (activate → complete, reflect → master, use)
  *   org        — organization management (found, hire, appoint, ...)
  *   resource   — ResourceX instance (optional)
  */
@@ -231,23 +231,23 @@ class RoleNamespace {
     return ok(this.rt, enc, "finish");
   }
 
-  /** Achieve a goal: consume goal, create encounter under individual. */
-  achieve(goal: string, individual: string, encounter?: string): RolexResult {
+  /** Complete a plan: consume plan, create encounter under individual. */
+  complete(plan: string, individual: string, encounter?: string): RolexResult {
     validateGherkin(encounter);
-    const goalNode = this.resolve(goal);
-    const encId = goalNode.id ? `${goalNode.id}-achieved` : undefined;
+    const planNode = this.resolve(plan);
+    const encId = planNode.id ? `${planNode.id}-completed` : undefined;
     const enc = this.rt.create(this.resolve(individual), C.encounter, encounter, encId);
-    this.rt.remove(goalNode);
-    return ok(this.rt, enc, "achieve");
+    this.rt.remove(planNode);
+    return ok(this.rt, enc, "complete");
   }
 
-  /** Abandon a goal: consume goal, create encounter under individual. */
-  abandon(goal: string, individual: string, encounter?: string): RolexResult {
+  /** Abandon a plan: consume plan, create encounter under individual. */
+  abandon(plan: string, individual: string, encounter?: string): RolexResult {
     validateGherkin(encounter);
-    const goalNode = this.resolve(goal);
-    const encId = goalNode.id ? `${goalNode.id}-abandoned` : undefined;
+    const planNode = this.resolve(plan);
+    const encId = planNode.id ? `${planNode.id}-abandoned` : undefined;
     const enc = this.rt.create(this.resolve(individual), C.encounter, encounter, encId);
-    this.rt.remove(goalNode);
+    this.rt.remove(planNode);
     return ok(this.rt, enc, "abandon");
   }
 

@@ -1,6 +1,6 @@
 Feature: Execution Cycle
   How an AI role pursues goals through structured phases.
-  want → design → todo → finish → achieve (or abandon).
+  want → plan → todo → finish → complete (or abandon).
   These are cognitive processes the AI agent calls as MCP tools.
 
   Scenario: Setting a goal
@@ -11,7 +11,7 @@ Feature: Execution Cycle
 
   Scenario: Planning
     Given a goal exists but has no plan yet
-    Then the role calls design to create a plan — breaking the goal into logical phases
+    Then the role calls plan to create a plan — breaking the goal into logical phases
     And multiple plans can exist for one goal — the latest is focused
     And plans are Gherkin Features describing the approach
 
@@ -24,18 +24,23 @@ Feature: Execution Cycle
   Scenario: Finishing tasks
     Given a task is complete
     Then the role calls finish with the task name
-    And optionally provides a conclusion — a summary of what happened
-    And the task gets marked @done
+    And optionally provides an encounter — a record of what happened
+    And the task is consumed and an encounter is created
 
-  Scenario: Achieving goals
-    Given all tasks are done and the goal is fulfilled
-    Then the role calls achieve with conclusion and experience
-    And conclusion records what happened — the factual summary
-    And experience captures what was learned — the transferable insight
-    And both are required — achieve is the moment of reflection
+  Scenario: Completing plans
+    Given all tasks are done and the plan's strategy succeeded
+    Then the role calls complete to mark the plan as done
+    And an encounter is created — recording the strategy outcome
+    And the plan is consumed
 
-  Scenario: Abandoning goals
-    Given a goal is no longer viable
-    Then the role calls abandon — optionally with conclusion and experience
-    And the goal gets marked @abandoned
-    And lessons can still be captured even from abandoned goals
+  Scenario: Abandoning plans
+    Given a plan's strategy is no longer viable
+    Then the role calls abandon to drop the plan
+    And an encounter is created — lessons from the failed approach
+    And the plan is consumed
+
+  Scenario: Goals are long-term directions
+    Given goals do not have complete or abandon operations
+    When a goal is no longer needed
+    Then the role calls forget to remove it
+    And learning is captured at the plan and task level

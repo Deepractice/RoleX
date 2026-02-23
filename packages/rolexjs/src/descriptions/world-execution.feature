@@ -1,6 +1,6 @@
 Feature: Execution — the doing cycle
   The role pursues goals through a structured lifecycle.
-  activate → want → plan → todo → finish → achieve or abandon.
+  activate → want → plan → todo → finish → complete or abandon.
 
   Scenario: Declare a goal
     Given I know who I am via activate
@@ -20,11 +20,17 @@ Feature: Execution — the doing cycle
     And an encounter is created — a raw record of what happened
     And I optionally capture what happened via the encounter parameter
 
-  Scenario: Achieve or abandon
-    Given tasks are done or the goal is no longer viable
-    When the goal is fulfilled I call achieve()
-    Or when the goal should be dropped I call abandon()
+  Scenario: Complete or abandon a plan
+    Given tasks are done or the plan's strategy is no longer viable
+    When the plan is fulfilled I call complete()
+    Or when the plan should be dropped I call abandon()
     Then an encounter is created for the cognition cycle
+
+  Scenario: Goals are long-term directions
+    Given goals do not have achieve or abandon operations
+    When a goal is no longer needed
+    Then I call forget to remove it
+    And learning is captured at the plan and task level, not the goal level
 
   Scenario: Multiple goals
     Given I may have several active goals

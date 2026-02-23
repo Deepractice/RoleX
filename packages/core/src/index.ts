@@ -6,7 +6,7 @@
  * Structures — the concept tree (19 concepts, 2 relations)
  * Processes  — how the world changes (24 processes, 4 layers)
  *
- *   Layer 1: Execution   — want, plan, todo, finish, achieve, abandon
+ *   Layer 1: Execution   — want, plan, todo, finish, complete, abandon
  *   Layer 2: Cognition   — reflect, realize, master
  *   Layer 3: Organization — hire, fire, appoint, dismiss, charter, charge
  *   Layer 4: Lifecycle   — born, found, establish, retire, die, dissolve, abolish, rehire
@@ -76,7 +76,7 @@ export {
 
 // ===== Processes — Layer 1: Execution =====
 
-export { abandon, achieve, finish, planGoal, todo, want } from "./execution.js";
+export { abandon, complete, finish, planGoal, todo, want } from "./execution.js";
 
 // ===== Processes — Layer 2: Cognition =====
 

@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 /**
  * RoleX CLI — thin wrapper over the Rolex API.
  *
@@ -245,32 +243,32 @@ const finish = defineCommand({
   },
 });
 
-const achieve = defineCommand({
-  meta: { name: "achieve", description: "Achieve a goal — creates encounter" },
+const complete = defineCommand({
+  meta: { name: "complete", description: "Complete a plan — creates encounter" },
   args: {
-    goal: { type: "positional" as const, description: "Goal id", required: true },
+    plan: { type: "positional" as const, description: "Plan id", required: true },
     individual: { type: "positional" as const, description: "Individual id", required: true },
     ...contentArg("encounter"),
   },
   run({ args }) {
     output(
-      rolex.role.achieve(args.goal, args.individual, resolveContent(args, "encounter")),
-      args.goal
+      rolex.role.complete(args.plan, args.individual, resolveContent(args, "encounter")),
+      args.plan
     );
   },
 });
 
 const abandon = defineCommand({
-  meta: { name: "abandon", description: "Abandon a goal — creates encounter" },
+  meta: { name: "abandon", description: "Abandon a plan — creates encounter" },
   args: {
-    goal: { type: "positional" as const, description: "Goal id", required: true },
+    plan: { type: "positional" as const, description: "Plan id", required: true },
     individual: { type: "positional" as const, description: "Individual id", required: true },
     ...contentArg("encounter"),
   },
   run({ args }) {
     output(
-      rolex.role.abandon(args.goal, args.individual, resolveContent(args, "encounter")),
-      args.goal
+      rolex.role.abandon(args.plan, args.individual, resolveContent(args, "encounter")),
+      args.plan
     );
   },
 });
@@ -362,7 +360,7 @@ const role = defineCommand({
     plan,
     todo,
     finish,
-    achieve,
+    complete,
     abandon,
     reflect,
     realize,
@@ -588,10 +586,12 @@ const rxPush = defineCommand({
   meta: { name: "push", description: "Push a resource to the remote registry" },
   args: {
     locator: { type: "positional" as const, description: "Resource locator", required: true },
+    registry: { type: "string" as const, description: "Registry URL (overrides default)" },
   },
   async run({ args }) {
     const rx = requireResource();
-    await rx.push(args.locator);
+    const opts = args.registry ? { registry: args.registry } : undefined;
+    await rx.push(args.locator, opts);
     consola.success(`Pushed ${args.locator}`);
   },
 });
@@ -600,11 +600,77 @@ const rxPull = defineCommand({
   meta: { name: "pull", description: "Pull a resource from the remote registry" },
   args: {
     locator: { type: "positional" as const, description: "Resource locator", required: true },
+    registry: { type: "string" as const, description: "Registry URL (overrides default)" },
   },
   async run({ args }) {
     const rx = requireResource();
-    await rx.pull(args.locator);
+    const opts = args.registry ? { registry: args.registry } : undefined;
+    await rx.pull(args.locator, opts);
     consola.success(`Pulled ${args.locator}`);
+  },
+});
+
+const rxRegistryAdd = defineCommand({
+  meta: { name: "add", description: "Add a registry" },
+  args: {
+    name: { type: "positional" as const, description: "Registry name", required: true },
+    url: { type: "positional" as const, description: "Registry URL", required: true },
+    default: { type: "boolean" as const, description: "Set as default registry" },
+  },
+  run({ args }) {
+    const rx = requireResource();
+    rx.addRegistry(args.name, args.url, args.default);
+    consola.success(`Added registry "${args.name}" (${args.url})`);
+  },
+});
+
+const rxRegistryRemove = defineCommand({
+  meta: { name: "remove", description: "Remove a registry" },
+  args: {
+    name: { type: "positional" as const, description: "Registry name", required: true },
+  },
+  run({ args }) {
+    const rx = requireResource();
+    rx.removeRegistry(args.name);
+    consola.success(`Removed registry "${args.name}"`);
+  },
+});
+
+const rxRegistryList = defineCommand({
+  meta: { name: "list", description: "List configured registries" },
+  run() {
+    const rx = requireResource();
+    const registries = rx.registries();
+    if (registries.length === 0) {
+      consola.info("No registries configured.");
+    } else {
+      for (const r of registries) {
+        const marker = r.default ? " (default)" : "";
+        console.log(`${r.name}: ${r.url}${marker}`);
+      }
+    }
+  },
+});
+
+const rxRegistrySetDefault = defineCommand({
+  meta: { name: "set-default", description: "Set a registry as default" },
+  args: {
+    name: { type: "positional" as const, description: "Registry name", required: true },
+  },
+  run({ args }) {
+    const rx = requireResource();
+    rx.setDefaultRegistry(args.name);
+    consola.success(`Set "${args.name}" as default registry`);
+  },
+});
+
+const rxRegistry = defineCommand({
+  meta: { name: "registry", description: "Manage registries" },
+  subCommands: {
+    add: rxRegistryAdd,
+    remove: rxRegistryRemove,
+    list: rxRegistryList,
+    "set-default": rxRegistrySetDefault,
   },
 });
 
@@ -618,6 +684,7 @@ const resource = defineCommand({
     remove: rxRemove,
     push: rxPush,
     pull: rxPull,
+    registry: rxRegistry,
   },
 });
 

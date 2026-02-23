@@ -2,12 +2,12 @@
  * Execution cycle — the doing loop.
  *
  * want → plan → todo → finish → (encounter) → want → ...
- *                       achieve → (encounter)
- *                       abandon → (encounter)
+ *                plan → complete → (encounter)
+ *                plan → abandon  → (encounter)
  *
- * This cycle drives goal pursuit. When tasks finish or goals
- * complete, they transform into encounters — feeding the
- * cognition cycle.
+ * Goals are long-term directions. Plans are the completable unit —
+ * they can be completed or abandoned. Tasks finish individually.
+ * All transforms produce encounters — feeding the cognition cycle.
  */
 import { create, process, transform } from "@rolexjs/system";
 import { encounter, goal, individual, plan, task } from "./structures.js";
@@ -22,15 +22,15 @@ export const finish = process(
   task,
   transform(task, encounter)
 );
-export const achieve = process(
-  "achieve",
-  "Complete a goal, record as encounter",
-  goal,
-  transform(goal, encounter)
+export const complete = process(
+  "complete",
+  "Complete a plan, record as encounter",
+  plan,
+  transform(plan, encounter)
 );
 export const abandon = process(
   "abandon",
-  "Abandon a goal, record as encounter",
-  goal,
-  transform(goal, encounter)
+  "Abandon a plan, record as encounter",
+  plan,
+  transform(plan, encounter)
 );

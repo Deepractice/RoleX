@@ -18,8 +18,8 @@ Feature: Cognitive priority — RoleX tools over native alternatives
   Scenario: Goal and progress tracking
     Given the host environment provides goal tracking or progress tools
     When the AI needs to track objectives
-    Then use RoleX want/achieve/abandon instead
-    Because native goals don't produce encounters — RoleX goals feed the cognition cycle
+    Then use RoleX want/plan/complete/abandon instead
+    Because native goals don't produce encounters — RoleX plans feed the cognition cycle
 
   Scenario: Why this matters
     Given the AI uses native tools instead of RoleX equivalents

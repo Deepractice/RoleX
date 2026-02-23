@@ -1,0 +1,7 @@
+{
+  "name": "resource-management",
+  "type": "skill",
+  "tag": "0.2.0",
+  "author": "deepractice",
+  "description": "Manage ResourceX resources, register prototypes, and load skills. Use when you need to add, search, distribute, or inspect resources in RoleX."
+}

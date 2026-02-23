@@ -1,6 +1,6 @@
 {
   "name": "@rolexjs/resourcex-types",
-  "version": "0.1.0",
+  "version": "0.11.0",
   "description": "RoleX resource types for ResourceX — role and organization",
   "keywords": [
     "rolex",
@@ -38,7 +38,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "resourcexjs": "^2.8.0"
+    "resourcexjs": "^2.13.0"
   },
   "devDependencies": {},
   "publishConfig": {
