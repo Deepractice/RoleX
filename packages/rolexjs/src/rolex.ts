@@ -281,17 +281,16 @@ class RoleNamespace {
     return ok(this.rt, prin, "realize");
   }
 
-  /** Master: consume experience, create procedure under individual. */
-  master(experience: string, individual: string, procedure?: string, id?: string): RolexResult {
+  /** Master: create procedure under individual, optionally consuming experience. */
+  master(individual: string, procedure: string, id?: string, experience?: string): RolexResult {
     validateGherkin(procedure);
-    const expNode = this.resolve(experience);
-    const proc = this.rt.create(
-      this.resolve(individual),
-      C.procedure,
-      procedure || expNode.information,
-      id
-    );
-    this.rt.remove(expNode);
+    const parent = this.resolve(individual);
+    if (id) {
+      const existing = findInState(this.rt.project(parent), id);
+      if (existing) this.rt.remove(existing);
+    }
+    const proc = this.rt.create(parent, C.procedure, procedure, id);
+    if (experience) this.rt.remove(this.resolve(experience));
     return ok(this.rt, proc, "master");
   }
 

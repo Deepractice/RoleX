@@ -1,13 +1,19 @@
-Feature: master — experience to procedure
-  Distill experience into a procedure — skill metadata and reference.
-  Procedures record what was learned as a reusable capability reference.
+Feature: master — self-mastery of a procedure
+  The role masters a procedure through its own agency.
+  This is an act of self-growth — the role decides to acquire or codify a skill.
+  Experience can be consumed as the source, or the role can master directly from external information.
 
-  Scenario: Master a procedure
+  Scenario: Master from experience
     Given an experience exists from reflection
-    When master is called with experience ids and a procedure id
+    When master is called with experience ids
     Then the experience is consumed
     And a procedure is created under the individual
-    And the procedure stores skill metadata and locator
+
+  Scenario: Master directly
+    Given the role encounters external information worth mastering
+    When master is called without experience ids
+    Then a procedure is created under the individual
+    And no experience is consumed
 
   Scenario: Procedure ID convention
     Given the id is keywords from the procedure content joined by hyphens

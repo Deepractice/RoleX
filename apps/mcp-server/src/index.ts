@@ -232,15 +232,15 @@ server.addTool({
   name: "master",
   description: detail("master"),
   parameters: z.object({
-    ids: z.array(z.string()).describe("Experience ids to distill into a procedure"),
+    ids: z.array(z.string()).optional().describe("Experience ids to distill into a procedure"),
     id: z.string().describe("Procedure id — keywords from the procedure content joined by hyphens"),
-    procedure: z.string().optional().describe("Gherkin Feature source for the procedure"),
+    procedure: z.string().describe("Gherkin Feature source for the procedure"),
   }),
   execute: async ({ ids, id, procedure }) => {
-    state.requireExperienceIds(ids);
+    if (ids?.length) state.requireExperienceIds(ids);
     const roleId = state.requireRoleId();
-    const result = rolex.role.master(ids[0], roleId, procedure, id);
-    state.consumeExperiences(ids);
+    const result = rolex.role.master(roleId, procedure, id, ids?.[0]);
+    if (ids?.length) state.consumeExperiences(ids);
     return fmt("master", id, result);
   },
 });

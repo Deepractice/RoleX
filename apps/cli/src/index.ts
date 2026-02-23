@@ -314,17 +314,17 @@ const realize = defineCommand({
 const master = defineCommand({
   meta: { name: "master", description: "Distill experience into a procedure" },
   args: {
-    experience: { type: "positional" as const, description: "Experience id", required: true },
     individual: { type: "positional" as const, description: "Individual id", required: true },
     ...contentArg("procedure"),
     id: { type: "string" as const, description: "Procedure id (keywords joined by hyphens)" },
+    experience: { type: "string" as const, description: "Experience id to consume (optional)" },
   },
   run({ args }) {
     const result = rolex.role.master(
-      args.experience,
       args.individual,
-      resolveContent(args, "procedure"),
-      args.id
+      requireContent(args, "procedure"),
+      args.id,
+      args.experience
     );
     output(result, result.state.name);
   },
