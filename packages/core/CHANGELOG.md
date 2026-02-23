@@ -1,5 +1,18 @@
 # @rolexjs/core
 
+## 0.11.0-dev.0
+
+### Minor Changes
+
+- e8fcab2: feat: plan lifecycle — complete/abandon operations for plans
+
+  - Add `complete` for plans — marks plan as done, creates encounter
+  - Move `abandon` from goal to plan — plans can be abandoned
+  - Remove `achieve` from goals — goals are long-term directions, use `forget` when done
+  - Three-layer verb separation: task→finish, plan→complete/abandon, goal→forget
+  - Update MCP tools, CLI commands, descriptions, and cognitive hints
+  - Refactor: rename growup to synthesize, string id API, teach/train injection
+
 ## 0.10.0
 
 ## 0.9.1
@@ -96,6 +109,7 @@
 ### Minor Changes
 
 - a3b4929: refactor: export roleType as BundledType for ResourceX integration
+
   - Add src/builtins/role.type.ts with resolve(ctx) logic
   - Modify build.ts to bundle role type into code string
   - Auto-generate roleType.ts with BundledType export

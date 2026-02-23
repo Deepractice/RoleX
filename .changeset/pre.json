@@ -11,5 +11,5 @@
     "rolexjs": "0.10.0",
     "@rolexjs/system": "0.1.0"
   },
-  "changesets": []
+  "changesets": ["synthesize-api-redesign"]
 }

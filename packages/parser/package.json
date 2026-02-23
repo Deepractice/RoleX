@@ -1,6 +1,6 @@
 {
   "name": "@rolexjs/parser",
-  "version": "0.10.0",
+  "version": "0.11.0-dev.0",
   "description": "Gherkin parser for Rolex — wraps @cucumber/gherkin",
   "keywords": [
     "rolex",
