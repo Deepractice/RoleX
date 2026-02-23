@@ -9,12 +9,17 @@
       "@rolexjs/local-platform",
       "rolexjs",
       "@rolexjs/cli",
-      "@rolexjs/mcp-server"
+      "@rolexjs/mcp-server",
+      "@rolexjs/system",
+      "@rolexjs/resourcex-types"
     ]
   ],
   "linked": [],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": []
+  "ignore": [],
+  "snapshot": {
+    "useCalculatedVersion": true
+  }
 }
