@@ -129,8 +129,61 @@ Feature: Resource Lifecycle
       rolex resource remove nuwa:0.1.0
       """
 
+Feature: Registry Configuration
+  Manage which remote registries are available for push and pull.
+  Configuration is shared with ResourceX at ~/.deepractice/resourcex/config.json.
+
+  Scenario: registry list — show configured registries
+    Given you want to see which registries are available
+    When you call registry list
+    Then it shows all configured registries with their names and URLs
+    And the default registry is marked
+    And parameters are:
+      """
+      rolex resource registry list
+      """
+
+  Scenario: registry add — add a new registry
+    Given you want to connect to a remote registry
+    When you call registry add with a name and URL
+    Then the registry is saved to configuration
+    And the first added registry automatically becomes the default
+    And parameters are:
+      """
+      rolex resource registry add <NAME> <URL> [--default]
+
+      ARGUMENTS:
+        NAME       Registry name (required)
+        URL        Registry URL (required)
+      OPTIONS:
+        --default  Set as default registry
+      """
+    And example:
+      """
+      rolex resource registry add deepractice https://registry.deepractice.dev
+      """
+
+  Scenario: registry remove — remove a registry
+    Given you no longer need a registry
+    When you call registry remove with its name
+    Then the registry is removed from configuration
+    And parameters are:
+      """
+      rolex resource registry remove <NAME>
+      """
+
+  Scenario: registry set-default — change the default registry
+    Given you have multiple registries and want to switch the default
+    When you call registry set-default with a name
+    Then that registry becomes the default for push and pull
+    And parameters are:
+      """
+      rolex resource registry set-default <NAME>
+      """
+
 Feature: Resource Distribution
   Push and pull resources to/from a remote registry.
+  Uses the default registry unless overridden with --registry.
 
   Scenario: push — publish a resource to the remote registry
     Given you want to share a resource with others
@@ -138,14 +191,17 @@ Feature: Resource Distribution
     Then the resource is uploaded to the configured remote registry
     And parameters are:
       """
-      rolex resource push <LOCATOR>
+      rolex resource push <LOCATOR> [--registry <URL>]
 
       ARGUMENTS:
-        LOCATOR    Resource locator (required, must exist locally)
+        LOCATOR              Resource locator (required, must exist locally)
+      OPTIONS:
+        --registry <URL>     Override default registry for this operation
       """
     And example:
       """
       rolex resource push nuwa:0.1.0
+      rolex resource push my-skill:0.1.0 --registry https://registry.deepractice.dev
       """
 
   Scenario: pull — download a resource from the remote registry
@@ -155,10 +211,12 @@ Feature: Resource Distribution
     And it becomes available for local use
     And parameters are:
       """
-      rolex resource pull <LOCATOR>
+      rolex resource pull <LOCATOR> [--registry <URL>]
 
       ARGUMENTS:
-        LOCATOR    Resource locator (required)
+        LOCATOR              Resource locator (required)
+      OPTIONS:
+        --registry <URL>     Override default registry for this operation
       """
     And example:
       """

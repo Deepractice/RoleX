@@ -23,8 +23,8 @@
     "@rolexjs/system": "workspace:*",
     "@rolexjs/core": "workspace:*",
     "@rolexjs/resourcex-types": "workspace:*",
-    "resourcexjs": "^2.8.0",
-    "@resourcexjs/node-provider": "^2.8.0"
+    "resourcexjs": "^2.13.0",
+    "@resourcexjs/node-provider": "^2.13.0"
   },
   "devDependencies": {},
   "publishConfig": {
