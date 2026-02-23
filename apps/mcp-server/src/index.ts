@@ -65,6 +65,7 @@ server.addTool({
       // Auto-born if not found
       rolex.individual.born(undefined, roleId);
     }
+    state.reset();
     state.activeRoleId = roleId;
     const result = await rolex.role.activate(roleId);
     state.cacheFromActivation(result.state);

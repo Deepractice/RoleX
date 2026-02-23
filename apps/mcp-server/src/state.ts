@@ -88,6 +88,15 @@ export class McpState {
   //  Activation helpers
   // ================================================================
 
+  /** Reset all session state — called before rehydrating a new role. */
+  reset() {
+    this.activeRoleId = null;
+    this.focusedGoalId = null;
+    this.focusedPlanId = null;
+    this.encounterIds.clear();
+    this.experienceIds.clear();
+  }
+
   /** Rehydrate ids from an activation projection. */
   cacheFromActivation(state: State) {
     this.rehydrate(state);
