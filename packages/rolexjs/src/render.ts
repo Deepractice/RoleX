@@ -133,11 +133,17 @@ export { world };
  *   - Body: raw information field as-is (full Gherkin preserved)
  *   - Links: "> → relation [target.name]" with target feature name
  *   - Children: recursive at depth+1
+ *   - Fold: when fold(node) returns true, render heading only (no body/links/children)
  *
  * No concept-specific knowledge — purely structural.
  * Markdown heading depth caps at 6 (######).
  */
-export function renderState(state: State, depth = 1): string {
+export interface RenderStateOptions {
+  /** When returns true, render only the heading — skip body, links, and children. */
+  fold?: (node: State) => boolean;
+}
+
+export function renderState(state: State, depth = 1, options?: RenderStateOptions): string {
   const lines: string[] = [];
   const level = Math.min(depth, 6);
   const heading = "#".repeat(level);
@@ -146,6 +152,11 @@ export function renderState(state: State, depth = 1): string {
   const idPart = state.id ? ` (${state.id})` : "";
   const originPart = state.origin ? ` {${state.origin}}` : "";
   lines.push(`${heading} [${state.name}]${idPart}${originPart}`);
+
+  // Folded: heading only
+  if (options?.fold?.(state)) {
+    return lines.join("\n");
+  }
 
   // Body: full information as-is
   if (state.information) {
@@ -166,7 +177,7 @@ export function renderState(state: State, depth = 1): string {
   if (state.children && state.children.length > 0) {
     for (const child of state.children) {
       lines.push("");
-      lines.push(renderState(child, depth + 1));
+      lines.push(renderState(child, depth + 1, options));
     }
   }
 

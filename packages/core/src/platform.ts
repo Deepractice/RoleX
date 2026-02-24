@@ -13,6 +13,12 @@
 import type { Prototype, Runtime } from "@rolexjs/system";
 import type { ResourceX } from "resourcexjs";
 
+/** Serializable context data for persistence. */
+export interface ContextData {
+  focusedGoalId: string | null;
+  focusedPlanId: string | null;
+}
+
 export interface Platform {
   /** Graph operation engine (may include transparent persistence). */
   readonly runtime: Runtime;
@@ -25,4 +31,10 @@ export interface Platform {
 
   /** Register a prototype: bind id to a ResourceX source (path or locator). */
   registerPrototype?(id: string, source: string): void;
+
+  /** Save role context to persistent storage. */
+  saveContext?(roleId: string, data: ContextData): void;
+
+  /** Load role context from persistent storage. Returns null if none exists. */
+  loadContext?(roleId: string): ContextData | null;
 }

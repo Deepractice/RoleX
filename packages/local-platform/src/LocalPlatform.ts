@@ -20,7 +20,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { NodeProvider } from "@resourcexjs/node-provider";
-import type { Platform } from "@rolexjs/core";
+import type { ContextData, Platform } from "@rolexjs/core";
 import { organizationType, roleType } from "@rolexjs/resourcex-types";
 import type { Prototype, Runtime, State, Structure } from "@rolexjs/system";
 import { createResourceX, setProvider } from "resourcexjs";
@@ -474,5 +474,22 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
     },
   };
 
-  return { runtime, prototype, resourcex, registerPrototype };
+  // ===== Context persistence =====
+  // Context lives outside role/ to survive save()'s clean-and-rebuild cycle.
+
+  const saveContext = (roleId: string, data: ContextData): void => {
+    if (!dataDir) return;
+    const contextDir = join(dataDir, "context");
+    mkdirSync(contextDir, { recursive: true });
+    writeFileSync(join(contextDir, `${roleId}.json`), JSON.stringify(data, null, 2), "utf-8");
+  };
+
+  const loadContext = (roleId: string): ContextData | null => {
+    if (!dataDir) return null;
+    const contextPath = join(dataDir, "context", `${roleId}.json`);
+    if (!existsSync(contextPath)) return null;
+    return JSON.parse(readFileSync(contextPath, "utf-8"));
+  };
+
+  return { runtime, prototype, resourcex, registerPrototype, saveContext, loadContext };
 }

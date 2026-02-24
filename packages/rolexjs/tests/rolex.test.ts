@@ -527,6 +527,29 @@ describe("Rolex API (stateless)", () => {
       const md = renderState(identity as any);
       expect(md).toBe("# [identity]");
     });
+
+    test("fold collapses matching nodes to heading only", () => {
+      const rolex = setup();
+      rolex.individual.born(undefined, "sean");
+      rolex.role.want("sean", "Feature: Goal A", "g-a");
+      rolex.role.want("sean", "Feature: Goal B", "g-b");
+      rolex.role.plan("g-b", "Feature: Plan under B", "p-b");
+
+      const state = rolex.find("sean")!;
+      const md = renderState(state as any, 1, {
+        fold: (node) => node.name === "goal" && node.id !== "g-b",
+      });
+
+      // g-a: folded — heading only, no body
+      expect(md).toContain("## [goal] (g-a)");
+      expect(md).not.toContain("Feature: Goal A");
+
+      // g-b: expanded — heading + body + children
+      expect(md).toContain("## [goal] (g-b)");
+      expect(md).toContain("Feature: Goal B");
+      expect(md).toContain("### [plan] (p-b)");
+      expect(md).toContain("Feature: Plan under B");
+    });
   });
 
   // ============================================================

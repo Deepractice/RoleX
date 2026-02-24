@@ -56,7 +56,14 @@ server.addTool({
     }
     const result = await rolex.role.activate(roleId);
     state.ctx = result.ctx!;
-    return fmt("activate", roleId, result);
+    const ctx = result.ctx!;
+    return render({
+      process: "activate",
+      name: roleId,
+      result,
+      cognitiveHint: result.hint ?? null,
+      fold: (node) => node.name === "goal" && node.id !== ctx.focusedGoalId,
+    });
   },
 });
 

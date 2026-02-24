@@ -8,7 +8,7 @@
  * MCP and CLI share describe() + hint() + renderState() from rolexjs.
  * Relations are rendered per-node via bidirectional links — no separate layer needed.
  */
-import type { RolexResult } from "rolexjs";
+import type { RenderStateOptions, RolexResult } from "rolexjs";
 import { describe, hint, renderState } from "rolexjs";
 
 // ================================================================
@@ -24,11 +24,13 @@ export interface RenderOptions {
   result: RolexResult;
   /** AI cognitive hint — first-person, state-aware self-direction cue. */
   cognitiveHint?: string | null;
+  /** Fold predicate — folded nodes render heading only. */
+  fold?: RenderStateOptions["fold"];
 }
 
 /** Render a full 3-layer output string. */
 export function render(opts: RenderOptions): string {
-  const { process, name, result, cognitiveHint } = opts;
+  const { process, name, result, cognitiveHint, fold } = opts;
   const lines: string[] = [];
 
   // Layer 1: Status
@@ -42,7 +44,7 @@ export function render(opts: RenderOptions): string {
 
   // Layer 3: Projection — generic markdown rendering of the full state tree
   lines.push("");
-  lines.push(renderState(result.state));
+  lines.push(renderState(result.state, 1, fold ? { fold } : undefined));
 
   return lines.join("\n");
 }

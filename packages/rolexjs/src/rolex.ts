@@ -16,7 +16,7 @@
  *   resource   — ResourceX instance (optional)
  */
 
-import type { Platform } from "@rolexjs/core";
+import type { ContextData, Platform } from "@rolexjs/core";
 import * as C from "@rolexjs/core";
 import { parse } from "@rolexjs/parser";
 import {
@@ -84,7 +84,17 @@ export class Rolex {
 
     // Namespaces
     this.individual = new IndividualNamespace(this.rt, this.society, this.past, resolve);
-    this.role = new RoleNamespace(this.rt, resolve, platform.prototype, platform.resourcex);
+    const persistContext =
+      platform.saveContext && platform.loadContext
+        ? { save: platform.saveContext, load: platform.loadContext }
+        : undefined;
+    this.role = new RoleNamespace(
+      this.rt,
+      resolve,
+      platform.prototype,
+      platform.resourcex,
+      persistContext
+    );
     this.org = new OrgNamespace(this.rt, this.society, this.past, resolve);
     this.resource = platform.resourcex;
   }
@@ -188,8 +198,20 @@ class RoleNamespace {
     private rt: Runtime,
     private resolve: Resolve,
     private prototype?: Prototype,
-    private resourcex?: ResourceX
+    private resourcex?: ResourceX,
+    private persistContext?: {
+      save: (roleId: string, data: ContextData) => void;
+      load: (roleId: string) => ContextData | null;
+    }
   ) {}
+
+  private saveCtx(ctx?: RoleContext): void {
+    if (!ctx || !this.persistContext) return;
+    this.persistContext.save(ctx.roleId, {
+      focusedGoalId: ctx.focusedGoalId,
+      focusedPlanId: ctx.focusedPlanId,
+    });
+  }
 
   // ---- Activation ----
 
@@ -203,6 +225,14 @@ class RoleNamespace {
     const state = protoState ? mergeState(protoState, instanceState) : instanceState;
     const ctx = new RoleContext(individual);
     ctx.rehydrate(state);
+
+    // Restore persisted focus (overrides rehydrate defaults)
+    const persisted = this.persistContext?.load(individual);
+    if (persisted) {
+      ctx.focusedGoalId = persisted.focusedGoalId;
+      ctx.focusedPlanId = persisted.focusedPlanId;
+    }
+
     return { state, process: "activate", hint: ctx.cognitiveHint("activate") ?? undefined, ctx };
   }
 
@@ -214,6 +244,7 @@ class RoleNamespace {
     }
     const result = ok(this.rt, this.resolve(goal), "focus");
     if (ctx) result.hint = ctx.cognitiveHint("focus") ?? undefined;
+    this.saveCtx(ctx);
     return result;
   }
 
@@ -234,6 +265,7 @@ class RoleNamespace {
       if (id) ctx.focusedGoalId = id;
       ctx.focusedPlanId = null;
       result.hint = ctx.cognitiveHint("want") ?? undefined;
+      this.saveCtx(ctx);
     }
     return result;
   }
@@ -255,6 +287,7 @@ class RoleNamespace {
     if (ctx) {
       if (id) ctx.focusedPlanId = id;
       result.hint = ctx.cognitiveHint("plan") ?? undefined;
+      this.saveCtx(ctx);
     }
     return result;
   }
@@ -309,6 +342,7 @@ class RoleNamespace {
       ctx.addEncounter(result.state.id ?? plan);
       if (ctx.focusedPlanId === plan) ctx.focusedPlanId = null;
       result.hint = ctx.cognitiveHint("complete") ?? undefined;
+      this.saveCtx(ctx);
     }
     return result;
   }
@@ -325,6 +359,7 @@ class RoleNamespace {
       ctx.addEncounter(result.state.id ?? plan);
       if (ctx.focusedPlanId === plan) ctx.focusedPlanId = null;
       result.hint = ctx.cognitiveHint("abandon") ?? undefined;
+      this.saveCtx(ctx);
     }
     return result;
   }

@@ -41,7 +41,7 @@ export {
 } from "@rolexjs/system";
 
 // Platform
-export type { Platform } from "./platform.js";
+export type { ContextData, Platform } from "./platform.js";
 
 // ===== Structures =====
 

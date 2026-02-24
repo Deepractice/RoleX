@@ -21,6 +21,7 @@ export { RoleContext } from "./context.js";
 // Feature (Gherkin type + parse/serialize)
 export type { DataTableRow, Feature, Scenario, Step } from "./feature.js";
 export { parse, serialize } from "./feature.js";
+export type { RenderStateOptions } from "./render.js";
 // Render
 export { describe, detail, hint, renderState, world } from "./render.js";
 export type { RolexResult } from "./rolex.js";
