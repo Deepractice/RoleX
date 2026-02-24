@@ -96,11 +96,19 @@ server.addTool({
   parameters: z.object({
     id: z.string().describe("Plan id — keywords from the plan content joined by hyphens"),
     plan: z.string().describe("Gherkin Feature source describing the plan"),
+    after: z
+      .string()
+      .optional()
+      .describe("Plan id this plan follows (sequential/phase relationship)"),
+    fallback: z
+      .string()
+      .optional()
+      .describe("Plan id this plan is a backup for (alternative/strategy relationship)"),
   }),
-  execute: async ({ id, plan }) => {
+  execute: async ({ id, plan, after, fallback }) => {
     const ctx = state.requireCtx();
     const goalId = ctx.requireGoalId();
-    const result = rolex.role.plan(goalId, plan, id, ctx);
+    const result = rolex.role.plan(goalId, plan, id, ctx, after, fallback);
     return fmt("plan", id, result);
   },
 });

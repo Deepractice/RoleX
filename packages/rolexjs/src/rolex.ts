@@ -238,10 +238,19 @@ class RoleNamespace {
     return result;
   }
 
-  /** Create a plan for a goal. */
-  plan(goal: string, plan?: string, id?: string, ctx?: RoleContext): RolexResult {
+  /** Create a plan for a goal. Optionally link to another plan via after (sequential) or fallback (alternative). */
+  plan(
+    goal: string,
+    plan?: string,
+    id?: string,
+    ctx?: RoleContext,
+    after?: string,
+    fallback?: string
+  ): RolexResult {
     validateGherkin(plan);
     const node = this.rt.create(this.resolve(goal), C.plan, plan, id);
+    if (after) this.rt.link(node, this.resolve(after), "after", "before");
+    if (fallback) this.rt.link(node, this.resolve(fallback), "fallback-for", "fallback");
     const result = ok(this.rt, node, "plan");
     if (ctx) {
       if (id) ctx.focusedPlanId = id;

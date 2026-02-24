@@ -193,6 +193,56 @@ describe("Rolex API (stateless)", () => {
       expect(r.state.name).toBe("plan");
     });
 
+    test("plan with after creates sequential link", () => {
+      const rolex = setup();
+      rolex.individual.born(undefined, "sean");
+      rolex.role.want("sean", "Feature: Auth", "g1");
+      rolex.role.plan("g1", "Feature: Phase 1", "phase-1");
+      rolex.role.plan("g1", "Feature: Phase 2", "phase-2", undefined, "phase-1");
+
+      // Phase 2 has "after" link to Phase 1
+      const p2 = rolex.find("phase-2")!;
+      expect((p2 as any).links).toHaveLength(1);
+      expect((p2 as any).links[0].relation).toBe("after");
+      expect((p2 as any).links[0].target.id).toBe("phase-1");
+
+      // Phase 1 has reverse "before" link to Phase 2
+      const p1 = rolex.find("phase-1")!;
+      expect((p1 as any).links).toHaveLength(1);
+      expect((p1 as any).links[0].relation).toBe("before");
+      expect((p1 as any).links[0].target.id).toBe("phase-2");
+    });
+
+    test("plan with fallback creates alternative link", () => {
+      const rolex = setup();
+      rolex.individual.born(undefined, "sean");
+      rolex.role.want("sean", "Feature: Auth", "g1");
+      rolex.role.plan("g1", "Feature: JWT approach", "plan-a");
+      rolex.role.plan("g1", "Feature: Session approach", "plan-b", undefined, undefined, "plan-a");
+
+      // Plan B has "fallback-for" link to Plan A
+      const pb = rolex.find("plan-b")!;
+      expect((pb as any).links).toHaveLength(1);
+      expect((pb as any).links[0].relation).toBe("fallback-for");
+      expect((pb as any).links[0].target.id).toBe("plan-a");
+
+      // Plan A has reverse "fallback" link to Plan B
+      const pa = rolex.find("plan-a")!;
+      expect((pa as any).links).toHaveLength(1);
+      expect((pa as any).links[0].relation).toBe("fallback");
+      expect((pa as any).links[0].target.id).toBe("plan-b");
+    });
+
+    test("plan without after/fallback has no links", () => {
+      const rolex = setup();
+      rolex.individual.born(undefined, "sean");
+      rolex.role.want("sean", "Feature: Auth", "g1");
+      rolex.role.plan("g1", "Feature: JWT plan", "p1");
+
+      const p1 = rolex.find("p1")!;
+      expect((p1 as any).links).toBeUndefined();
+    });
+
     test("todo creates a task under plan", () => {
       const rolex = setup();
       rolex.individual.born(undefined, "sean");
