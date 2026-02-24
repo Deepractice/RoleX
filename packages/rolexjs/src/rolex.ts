@@ -170,6 +170,9 @@ export class Rolex {
         return this.proto;
       case "author":
         return this.author;
+      case "resource":
+        if (!this.resource) throw new Error("ResourceX is not available.");
+        return this.resource;
       default:
         throw new Error(`Unknown namespace "${ns}".`);
     }
@@ -235,6 +238,24 @@ export class Rolex {
         return [a.dir, a.content, a.id];
       case "author.train":
         return [a.dir, a.content, a.id];
+
+      // resource (ResourceX proxy)
+      case "resource.add":
+        return [a.path];
+      case "resource.search":
+        return [a.query];
+      case "resource.has":
+        return [a.locator];
+      case "resource.info":
+        return [a.locator];
+      case "resource.remove":
+        return [a.locator];
+      case "resource.push":
+        return [a.locator, a.registry ? { registry: a.registry } : undefined];
+      case "resource.pull":
+        return [a.locator, a.registry ? { registry: a.registry } : undefined];
+      case "resource.clearCache":
+        return [a.registry];
 
       default:
         throw new Error(`No arg mapping for "!${key}".`);

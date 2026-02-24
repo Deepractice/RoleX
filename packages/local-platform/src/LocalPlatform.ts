@@ -447,7 +447,7 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
 
   /** Built-in prototypes — always available, cannot be overridden. */
   const BUILTINS: Record<string, string> = {
-    nuwa: "https://github.com/Deepractice/DeepracticeX/tree/main/roles/nuwa",
+    nuwa: "nuwa:0.1.0",
   };
 
   const registryPath = dataDir ? join(dataDir, "prototype.json") : undefined;

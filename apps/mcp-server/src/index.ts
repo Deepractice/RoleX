@@ -258,6 +258,27 @@ server.addTool({
   },
 });
 
+// ========== Tools: Use ==========
+
+server.addTool({
+  name: "use",
+  description: detail("use"),
+  parameters: z.object({
+    locator: z
+      .string()
+      .describe(
+        "Locator string. !namespace.method for RoleX commands, or a ResourceX locator for resources"
+      ),
+    args: z.record(z.unknown()).optional().describe("Named arguments for the command or resource"),
+  }),
+  execute: async ({ locator, args }) => {
+    const result = await rolex.use(locator, args);
+    if (result == null) return `${locator} done.`;
+    if (typeof result === "string") return result;
+    return JSON.stringify(result, null, 2);
+  },
+});
+
 // ========== Tools: Prototype authoring ==========
 
 server.addTool({
