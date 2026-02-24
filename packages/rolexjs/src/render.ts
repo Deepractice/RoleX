@@ -65,7 +65,7 @@ export function describe(process: string, name: string, state: State): string {
 const hints: Record<string, string> = {
   // Lifecycle
   born: "hire into an organization, or activate to start working.",
-  found: "establish positions and define a charter.",
+  found: "define a charter for the organization.",
   establish: "charge with duties, then appoint members.",
   charter: "establish positions for the organization.",
   charge: "appoint someone to this position.",
@@ -215,6 +215,7 @@ const CONCEPT_ORDER: readonly string[] = [
   "task",
   // Organization
   "charter",
+  // Position
   "position",
   "duty",
 ];

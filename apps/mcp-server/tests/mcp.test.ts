@@ -104,9 +104,9 @@ describe("render", () => {
   it("includes appointment relation in projection", () => {
     rolex.individual.born("Feature: Sean", "sean");
     rolex.org.found("Feature: Deepractice", "dp");
-    rolex.org.establish("dp", "Feature: Architect", "architect");
+    rolex.position.establish("Feature: Architect", "architect");
     rolex.org.hire("dp", "sean");
-    rolex.org.appoint("architect", "sean");
+    rolex.position.appoint("architect", "sean");
 
     const seanState = rolex.find("sean")!;
     const output = render({

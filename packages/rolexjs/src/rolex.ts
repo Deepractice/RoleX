@@ -12,7 +12,8 @@
  * Namespaces:
  *   individual — lifecycle (born, retire, die, rehire) + external injection (teach, train)
  *   role       — execution + cognition + use (activate → complete, reflect → master, use)
- *   org        — organization management (found, hire, appoint, ...)
+ *   org        — organization management (found, charter, dissolve, hire, fire)
+ *   position   — position management (establish, abolish, charge, appoint, dismiss)
  *   resource   — ResourceX instance (optional)
  */
 
@@ -59,6 +60,8 @@ export class Rolex {
   readonly role: RoleNamespace;
   /** Organization management — structure + membership. */
   readonly org: OrgNamespace;
+  /** Position management — establish, charge, appoint. */
+  readonly position: PositionNamespace;
   /** Resource management (optional — powered by ResourceX). */
   readonly resource?: ResourceX;
 
@@ -96,6 +99,7 @@ export class Rolex {
       persistContext
     );
     this.org = new OrgNamespace(this.rt, this.society, this.past, resolve);
+    this.position = new PositionNamespace(this.rt, this.society, this.past, resolve);
     this.resource = platform.resourcex;
   }
 
@@ -513,25 +517,11 @@ class OrgNamespace {
     return ok(this.rt, org, "found");
   }
 
-  /** Establish a position within an organization. */
-  establish(org: string, position?: string, id?: string, alias?: readonly string[]): RolexResult {
-    validateGherkin(position);
-    const pos = this.rt.create(this.resolve(org), C.position, position, id, alias);
-    return ok(this.rt, pos, "establish");
-  }
-
   /** Define the charter for an organization. */
   charter(org: string, charter: string): RolexResult {
     validateGherkin(charter);
     const node = this.rt.create(this.resolve(org), C.charter, charter);
     return ok(this.rt, node, "charter");
-  }
-
-  /** Add a duty to a position. */
-  charge(position: string, duty: string, id?: string): RolexResult {
-    validateGherkin(duty);
-    const node = this.rt.create(this.resolve(position), C.duty, duty, id);
-    return ok(this.rt, node, "charge");
   }
 
   // ---- Archival ----
@@ -541,12 +531,7 @@ class OrgNamespace {
     return archive(this.rt, this.past, this.resolve(org), "dissolve");
   }
 
-  /** Abolish a position. */
-  abolish(position: string): RolexResult {
-    return archive(this.rt, this.past, this.resolve(position), "abolish");
-  }
-
-  // ---- Membership & Appointment ----
+  // ---- Membership ----
 
   /** Hire: link individual to organization via membership. */
   hire(org: string, individual: string): RolexResult {
@@ -561,6 +546,44 @@ class OrgNamespace {
     this.rt.unlink(orgNode, this.resolve(individual), "membership", "belong");
     return ok(this.rt, orgNode, "fire");
   }
+}
+
+// ================================================================
+//  Position — position management
+// ================================================================
+
+class PositionNamespace {
+  constructor(
+    private rt: Runtime,
+    private society: Structure,
+    private past: Structure,
+    private resolve: Resolve
+  ) {}
+
+  // ---- Structure ----
+
+  /** Establish a position. */
+  establish(position?: string, id?: string, alias?: readonly string[]): RolexResult {
+    validateGherkin(position);
+    const pos = this.rt.create(this.society, C.position, position, id, alias);
+    return ok(this.rt, pos, "establish");
+  }
+
+  /** Add a duty to a position. */
+  charge(position: string, duty: string, id?: string): RolexResult {
+    validateGherkin(duty);
+    const node = this.rt.create(this.resolve(position), C.duty, duty, id);
+    return ok(this.rt, node, "charge");
+  }
+
+  // ---- Archival ----
+
+  /** Abolish a position. */
+  abolish(position: string): RolexResult {
+    return archive(this.rt, this.past, this.resolve(position), "abolish");
+  }
+
+  // ---- Appointment ----
 
   /** Appoint: link individual to position via appointment. */
   appoint(position: string, individual: string): RolexResult {

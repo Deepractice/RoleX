@@ -31,10 +31,9 @@ describe("Rolex API (stateless)", () => {
       expect(r.process).toBe("found");
     });
 
-    test("establish creates a position under org", () => {
+    test("establish creates a position", () => {
       const rolex = setup();
-      rolex.org.found(undefined, "org1");
-      const r = rolex.org.establish("org1", "Feature: Backend architect", "pos1");
+      const r = rolex.position.establish("Feature: Backend architect", "pos1");
       expect(r.state.name).toBe("position");
     });
 
@@ -48,9 +47,8 @@ describe("Rolex API (stateless)", () => {
 
     test("charge adds duty to position", () => {
       const rolex = setup();
-      rolex.org.found(undefined, "org1");
-      rolex.org.establish("org1", undefined, "pos1");
-      const r = rolex.org.charge("pos1", "Feature: Design systems");
+      rolex.position.establish(undefined, "pos1");
+      const r = rolex.position.charge("pos1", "Feature: Design systems");
       expect(r.state.name).toBe("duty");
     });
   });
@@ -91,9 +89,8 @@ describe("Rolex API (stateless)", () => {
 
     test("abolish archives position", () => {
       const rolex = setup();
-      rolex.org.found(undefined, "org1");
-      rolex.org.establish("org1", undefined, "pos1");
-      rolex.org.abolish("pos1");
+      rolex.position.establish(undefined, "pos1");
+      rolex.position.abolish("pos1");
       const found = rolex.find("pos1");
       expect(found).not.toBeNull();
       expect(found!.name).toBe("past");
@@ -138,9 +135,8 @@ describe("Rolex API (stateless)", () => {
     test("appoint links individual to position", () => {
       const rolex = setup();
       rolex.individual.born(undefined, "sean");
-      rolex.org.found(undefined, "org1");
-      rolex.org.establish("org1", undefined, "pos1");
-      const r = rolex.org.appoint("pos1", "sean");
+      rolex.position.establish(undefined, "pos1");
+      const r = rolex.position.appoint("pos1", "sean");
       expect(r.state.links).toHaveLength(1);
       expect(r.state.links![0].relation).toBe("appointment");
     });
@@ -148,10 +144,9 @@ describe("Rolex API (stateless)", () => {
     test("dismiss removes appointment", () => {
       const rolex = setup();
       rolex.individual.born(undefined, "sean");
-      rolex.org.found(undefined, "org1");
-      rolex.org.establish("org1", undefined, "pos1");
-      rolex.org.appoint("pos1", "sean");
-      const r = rolex.org.dismiss("pos1", "sean");
+      rolex.position.establish(undefined, "pos1");
+      rolex.position.appoint("pos1", "sean");
+      const r = rolex.position.dismiss("pos1", "sean");
       expect(r.state.links).toBeUndefined();
     });
   });
@@ -358,18 +353,18 @@ describe("Rolex API (stateless)", () => {
       // Create world
       rolex.individual.born("Feature: I am Sean", "sean");
       rolex.org.found("Feature: Deepractice", "dp");
-      rolex.org.establish("dp", "Feature: Architect", "architect");
+      rolex.position.establish("Feature: Architect", "architect");
       rolex.org.charter("dp", "Feature: Build great AI");
-      rolex.org.charge("architect", "Feature: Design systems");
+      rolex.position.charge("architect", "Feature: Design systems");
 
-      // Organization
+      // Organization + Position
       rolex.org.hire("dp", "sean");
-      rolex.org.appoint("architect", "sean");
+      rolex.position.appoint("architect", "sean");
 
       // Verify links
       const orgState = rolex.find("dp")!;
       expect(orgState.links).toHaveLength(1);
-      const posState = (orgState as any).children!.find((c: any) => c.name === "position")!;
+      const posState = rolex.find("architect")!;
       expect(posState.links).toHaveLength(1);
 
       // Execution cycle
@@ -729,8 +724,7 @@ describe("Rolex API (stateless)", () => {
 
     test("establish with id", () => {
       const rolex = setup();
-      rolex.org.found("Feature: Deepractice", "dp");
-      const r = rolex.org.establish("dp", "Feature: Architect", "architect");
+      const r = rolex.position.establish("Feature: Architect", "architect");
       expect(r.state.id).toBe("architect");
     });
   });

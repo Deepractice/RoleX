@@ -386,21 +386,15 @@ const found = defineCommand({
 });
 
 const establish = defineCommand({
-  meta: { name: "establish", description: "Establish a position within an organization" },
+  meta: { name: "establish", description: "Establish a position" },
   args: {
-    org: { type: "positional" as const, description: "Organization id", required: true },
     ...contentArg("position"),
     id: { type: "string" as const, description: "User-facing identifier (kebab-case)" },
     alias: { type: "string" as const, description: "Comma-separated aliases" },
   },
   run({ args }) {
     const aliasList = args.alias ? args.alias.split(",").map((a: string) => a.trim()) : undefined;
-    const result = rolex.org.establish(
-      args.org,
-      resolveContent(args, "position"),
-      args.id,
-      aliasList
-    );
+    const result = rolex.position.establish(resolveContent(args, "position"), args.id, aliasList);
     output(result, args.id ?? result.state.name);
   },
 });
@@ -424,7 +418,7 @@ const charge = defineCommand({
     id: { type: "string" as const, description: "Duty id (keywords joined by hyphens)" },
   },
   run({ args }) {
-    const result = rolex.org.charge(args.position, requireContent(args, "duty"), args.id);
+    const result = rolex.position.charge(args.position, requireContent(args, "duty"), args.id);
     output(result, result.state.name);
   },
 });
@@ -445,7 +439,7 @@ const abolish = defineCommand({
     position: { type: "positional" as const, description: "Position id", required: true },
   },
   run({ args }) {
-    output(rolex.org.abolish(args.position), args.position);
+    output(rolex.position.abolish(args.position), args.position);
   },
 });
 
@@ -478,7 +472,7 @@ const appoint = defineCommand({
     individual: { type: "positional" as const, description: "Individual id", required: true },
   },
   run({ args }) {
-    output(rolex.org.appoint(args.position, args.individual), args.position);
+    output(rolex.position.appoint(args.position, args.individual), args.position);
   },
 });
 
@@ -489,7 +483,7 @@ const dismiss = defineCommand({
     individual: { type: "positional" as const, description: "Individual id", required: true },
   },
   run({ args }) {
-    output(rolex.org.dismiss(args.position, args.individual), args.position);
+    output(rolex.position.dismiss(args.position, args.individual), args.position);
   },
 });
 
@@ -497,13 +491,19 @@ const org = defineCommand({
   meta: { name: "org", description: "Organization management" },
   subCommands: {
     found,
-    establish,
     charter,
-    charge,
     dissolve,
-    abolish,
     hire,
     fire,
+  },
+});
+
+const pos = defineCommand({
+  meta: { name: "pos", description: "Position management" },
+  subCommands: {
+    establish,
+    charge,
+    abolish,
     appoint,
     dismiss,
   },
@@ -717,6 +717,7 @@ const main = defineCommand({
     individual,
     role,
     org,
+    pos,
     resource,
     prototype,
   },

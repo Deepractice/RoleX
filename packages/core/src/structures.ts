@@ -21,10 +21,10 @@
  * │ │           └── task    "Concrete unit of work"         │
  * │ ├── organization        "A group of individuals"        │
  * │ │   │  ∿ membership → individual                        │
- * │ │   ├── charter         "The rules and mission"         │
- * │ │   └── position        "A role held by an individual"  │
- * │ │       │  ∿ appointment → individual                   │
- * │ │       └── duty        "Responsibilities of position"  │
+ * │ │   └── charter         "The rules and mission"         │
+ * │ ├── position            "A role held by an individual"  │
+ * │ │   │  ∿ appointment → individual                       │
+ * │ │   └── duty            "Responsibilities of position"  │
  * │ └── past                "Things no longer active"        │
  * └─────────────────────────────────────────────────────────┘
  */
@@ -37,7 +37,7 @@ import { relation, structure } from "@rolexjs/system";
 export const society = structure("society", "The RoleX world", null);
 
 // ================================================================
-//  Level 1 — Three pillars
+//  Level 1 — Four pillars
 // ================================================================
 
 export const individual = structure("individual", "A single agent in society", society);
@@ -82,7 +82,12 @@ export const task = structure("task", "Concrete unit of work", plan);
 // ================================================================
 
 export const charter = structure("charter", "The rules and mission", organization);
-export const position = structure("position", "A role held by an individual", organization, [
+
+// ================================================================
+//  Position — independent entity
+// ================================================================
+
+export const position = structure("position", "A role held by an individual", society, [
   relation("appointment", "Who holds this position", individual),
 ]);
 export const duty = structure("duty", "Responsibilities of this position", position);
