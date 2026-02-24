@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { localPlatform } from "@rolexjs/local-platform";
 import { describe as renderDescribe, hint as renderHint, renderState } from "../src/render.js";
-import { createRoleX } from "../src/rolex.js";
+import { createRoleX, type RolexResult } from "../src/rolex.js";
 
 function setup() {
   return createRoleX(localPlatform({ dataDir: null }));
@@ -726,6 +726,92 @@ describe("Rolex API (stateless)", () => {
       const rolex = setup();
       const r = rolex.position.establish("Feature: Architect", "architect");
       expect(r.state.id).toBe("architect");
+    });
+  });
+
+  // ============================================================
+  //  use — unified execution entry point
+  // ============================================================
+
+  describe("use: ! command dispatch", () => {
+    test("!org.found creates organization", async () => {
+      const rolex = setup();
+      const r = await rolex.use<RolexResult>("!org.found", {
+        content: "Feature: Deepractice",
+        id: "dp",
+      });
+      expect(r.state.name).toBe("organization");
+      expect(r.state.id).toBe("dp");
+    });
+
+    test("!position.establish creates position", async () => {
+      const rolex = setup();
+      const r = await rolex.use<RolexResult>("!position.establish", {
+        content: "Feature: Architect",
+        id: "architect",
+      });
+      expect(r.state.name).toBe("position");
+      expect(r.state.id).toBe("architect");
+    });
+
+    test("!org.hire links individual to org", async () => {
+      const rolex = setup();
+      rolex.individual.born(undefined, "sean");
+      rolex.org.found(undefined, "dp");
+      const r = await rolex.use<RolexResult>("!org.hire", {
+        org: "dp",
+        individual: "sean",
+      });
+      expect(r.state.links).toHaveLength(1);
+      expect(r.state.links![0].relation).toBe("membership");
+    });
+
+    test("!position.appoint links individual to position", async () => {
+      const rolex = setup();
+      rolex.individual.born(undefined, "sean");
+      rolex.position.establish(undefined, "pos1");
+      const r = await rolex.use<RolexResult>("!position.appoint", {
+        position: "pos1",
+        individual: "sean",
+      });
+      expect(r.state.links).toHaveLength(1);
+      expect(r.state.links![0].relation).toBe("appointment");
+    });
+
+    test("!individual.born creates individual", async () => {
+      const rolex = setup();
+      const r = await rolex.use<RolexResult>("!individual.born", {
+        content: "Feature: Alice",
+        id: "alice",
+      });
+      expect(r.state.name).toBe("individual");
+      expect(r.state.id).toBe("alice");
+    });
+
+    test("!individual.teach injects principle", async () => {
+      const rolex = setup();
+      rolex.individual.born(undefined, "sean");
+      const r = await rolex.use<RolexResult>("!individual.teach", {
+        individual: "sean",
+        content: "Feature: Always test first",
+        id: "test-first",
+      });
+      expect(r.state.name).toBe("principle");
+    });
+
+    test("throws on unknown namespace", async () => {
+      const rolex = setup();
+      expect(() => rolex.use("!foo.bar")).toThrow('Unknown namespace "foo"');
+    });
+
+    test("throws on unknown method", async () => {
+      const rolex = setup();
+      expect(() => rolex.use("!org.nope")).toThrow('Unknown command "!org.nope"');
+    });
+
+    test("throws on missing dot", async () => {
+      const rolex = setup();
+      expect(() => rolex.use("!orgfound")).toThrow("Expected");
     });
   });
 });

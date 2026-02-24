@@ -11,10 +11,13 @@
  *
  * Namespaces:
  *   individual — lifecycle (born, retire, die, rehire) + external injection (teach, train)
- *   role       — execution + cognition + use (activate → complete, reflect → master, use)
+ *   role       — execution + cognition (activate → complete, reflect → master, skill)
  *   org        — organization management (found, charter, dissolve, hire, fire)
  *   position   — position management (establish, abolish, charge, appoint, dismiss)
  *   resource   — ResourceX instance (optional)
+ *
+ * Unified entry point:
+ *   use(locator, args) — `!ns.method` dispatches to runtime, else delegates to ResourceX
  */
 
 import type { ContextData, Platform } from "@rolexjs/core";
@@ -119,6 +122,103 @@ export class Rolex {
     const target = id.toLowerCase();
     const state = this.rt.project(this.society);
     return findInState(state, target);
+  }
+
+  /**
+   * Unified execution entry point.
+   *
+   * - `!namespace.method` — dispatch to RoleX runtime (e.g. `!org.found`, `!position.establish`)
+   * - anything else — delegate to ResourceX `ingest`
+   */
+  async use<T = unknown>(locator: string, args?: Record<string, unknown>): Promise<T> {
+    if (locator.startsWith("!")) {
+      return this.dispatch<T>(locator.slice(1), args ?? {});
+    }
+    if (!this.resourcex) throw new Error("ResourceX is not available.");
+    return this.resourcex.ingest<T>(locator, args);
+  }
+
+  /** Dispatch a `!namespace.method` command to the corresponding API. */
+  private dispatch<T>(command: string, args: Record<string, unknown>): T {
+    const dot = command.indexOf(".");
+    if (dot < 0) throw new Error(`Invalid command "${command}". Expected "namespace.method".`);
+    const ns = command.slice(0, dot);
+    const method = command.slice(dot + 1);
+
+    const namespace = this.resolveNamespace(ns);
+    const fn = (namespace as Record<string, unknown>)[method];
+    if (typeof fn !== "function") {
+      throw new Error(`Unknown command "!${command}".`);
+    }
+
+    return fn.call(namespace, ...this.toArgs(ns, method, args));
+  }
+
+  private resolveNamespace(ns: string): object {
+    switch (ns) {
+      case "individual":
+        return this.individual;
+      case "role":
+        return this.role;
+      case "org":
+        return this.org;
+      case "position":
+        return this.position;
+      default:
+        throw new Error(`Unknown namespace "${ns}".`);
+    }
+  }
+
+  /**
+   * Map named args to positional args for each namespace.method.
+   * Keeps dispatch table centralized — one place to maintain.
+   */
+  private toArgs(ns: string, method: string, a: Record<string, unknown>): unknown[] {
+    const key = `${ns}.${method}`;
+
+    // prettier-ignore
+    switch (key) {
+      // individual
+      case "individual.born":
+        return [a.content, a.id, a.alias];
+      case "individual.retire":
+        return [a.individual];
+      case "individual.die":
+        return [a.individual];
+      case "individual.rehire":
+        return [a.individual];
+      case "individual.teach":
+        return [a.individual, a.content, a.id];
+      case "individual.train":
+        return [a.individual, a.content, a.id];
+
+      // org
+      case "org.found":
+        return [a.content, a.id, a.alias];
+      case "org.charter":
+        return [a.org, a.content];
+      case "org.dissolve":
+        return [a.org];
+      case "org.hire":
+        return [a.org, a.individual];
+      case "org.fire":
+        return [a.org, a.individual];
+
+      // position
+      case "position.establish":
+        return [a.content, a.id, a.alias];
+      case "position.charge":
+        return [a.position, a.content, a.id];
+      case "position.abolish":
+        return [a.position];
+      case "position.appoint":
+        return [a.position, a.individual];
+      case "position.dismiss":
+        return [a.position, a.individual];
+
+      default:
+        throw new Error(`No arg mapping for "!${key}".`);
+    }
   }
 }
 
@@ -487,12 +587,6 @@ class RoleNamespace {
       // Path-based locator or info unavailable — return content only
       return text;
     }
-  }
-
-  /** Use a resource — role's entry point for interacting with external resources. */
-  use<T = unknown>(locator: string): Promise<T> {
-    if (!this.resourcex) throw new Error("ResourceX is not available.");
-    return this.resourcex.ingest<T>(locator);
   }
 }
 
