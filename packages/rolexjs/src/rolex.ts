@@ -27,12 +27,17 @@ import {
   type Structure,
 } from "@rolexjs/system";
 import type { ResourceX } from "resourcexjs";
+import { RoleContext } from "./context.js";
 
 export interface RolexResult {
   /** Projection of the primary affected node. */
   state: State;
   /** Which process was executed (for render). */
   process: string;
+  /** Cognitive hint — populated when RoleContext is used. */
+  hint?: string;
+  /** Role context — returned by activate, pass to subsequent operations. */
+  ctx?: RoleContext;
 }
 
 /** Resolve an id to a Structure node, throws if not found. */
@@ -119,6 +124,9 @@ class IndividualNamespace {
   born(individual?: string, id?: string, alias?: readonly string[]): RolexResult {
     validateGherkin(individual);
     const node = this.rt.create(this.society, C.individual, individual, id, alias);
+    // Scaffolding: every individual has identity + knowledge
+    this.rt.create(node, C.identity);
+    this.rt.create(node, C.knowledge);
     return ok(this.rt, node, "born");
   }
 
@@ -135,7 +143,10 @@ class IndividualNamespace {
   /** Rehire a retired individual from past. */
   rehire(pastNode: string): RolexResult {
     const past = this.resolve(pastNode);
-    const individual = this.rt.create(this.society, C.individual, past.information);
+    const individual = this.rt.create(this.society, C.individual, past.information, past.id);
+    // Scaffolding: restore identity + knowledge
+    this.rt.create(individual, C.identity);
+    this.rt.create(individual, C.knowledge);
     this.rt.remove(past);
     return ok(this.rt, individual, "rehire");
   }
@@ -182,7 +193,7 @@ class RoleNamespace {
 
   // ---- Activation ----
 
-  /** Activate: merge prototype (if any) with instance state. */
+  /** Activate: merge prototype (if any) with instance state. Returns ctx when created. */
   async activate(individual: string): Promise<RolexResult> {
     const node = this.resolve(individual);
     const instanceState = this.rt.project(node);
@@ -190,72 +201,119 @@ class RoleNamespace {
       ? await this.prototype?.resolve(instanceState.id)
       : undefined;
     const state = protoState ? mergeState(protoState, instanceState) : instanceState;
-    return { state, process: "activate" };
+    const ctx = new RoleContext(individual);
+    ctx.rehydrate(state);
+    return { state, process: "activate", hint: ctx.cognitiveHint("activate") ?? undefined, ctx };
   }
 
   /** Focus: project a goal's state (view / switch context). */
-  focus(goal: string): RolexResult {
-    return ok(this.rt, this.resolve(goal), "focus");
+  focus(goal: string, ctx?: RoleContext): RolexResult {
+    if (ctx) {
+      ctx.focusedGoalId = goal;
+      ctx.focusedPlanId = null;
+    }
+    const result = ok(this.rt, this.resolve(goal), "focus");
+    if (ctx) result.hint = ctx.cognitiveHint("focus") ?? undefined;
+    return result;
   }
 
   // ---- Execution ----
 
   /** Declare a goal under an individual. */
-  want(individual: string, goal?: string, id?: string, alias?: readonly string[]): RolexResult {
+  want(individual: string, goal?: string, id?: string, alias?: readonly string[], ctx?: RoleContext): RolexResult {
     validateGherkin(goal);
     const node = this.rt.create(this.resolve(individual), C.goal, goal, id, alias);
-    return ok(this.rt, node, "want");
+    const result = ok(this.rt, node, "want");
+    if (ctx) {
+      if (id) ctx.focusedGoalId = id;
+      ctx.focusedPlanId = null;
+      result.hint = ctx.cognitiveHint("want") ?? undefined;
+    }
+    return result;
   }
 
   /** Create a plan for a goal. */
-  plan(goal: string, plan?: string, id?: string): RolexResult {
+  plan(goal: string, plan?: string, id?: string, ctx?: RoleContext): RolexResult {
     validateGherkin(plan);
     const node = this.rt.create(this.resolve(goal), C.plan, plan, id);
-    return ok(this.rt, node, "plan");
+    const result = ok(this.rt, node, "plan");
+    if (ctx) {
+      if (id) ctx.focusedPlanId = id;
+      result.hint = ctx.cognitiveHint("plan") ?? undefined;
+    }
+    return result;
   }
 
   /** Add a task to a plan. */
-  todo(plan: string, task?: string, id?: string, alias?: readonly string[]): RolexResult {
+  todo(plan: string, task?: string, id?: string, alias?: readonly string[], ctx?: RoleContext): RolexResult {
     validateGherkin(task);
     const node = this.rt.create(this.resolve(plan), C.task, task, id, alias);
-    return ok(this.rt, node, "todo");
+    const result = ok(this.rt, node, "todo");
+    if (ctx) result.hint = ctx.cognitiveHint("todo") ?? undefined;
+    return result;
   }
 
-  /** Finish a task: consume task, create encounter under individual. */
-  finish(task: string, individual: string, encounter?: string): RolexResult {
+  /** Finish a task: consume task, optionally create encounter under individual. */
+  finish(task: string, individual: string, encounter?: string, ctx?: RoleContext): RolexResult {
     validateGherkin(encounter);
     const taskNode = this.resolve(task);
-    const encId = taskNode.id ? `${taskNode.id}-finished` : undefined;
-    const enc = this.rt.create(this.resolve(individual), C.encounter, encounter, encId);
+    let enc: Structure | undefined;
+    if (encounter) {
+      const encId = taskNode.id ? `${taskNode.id}-finished` : undefined;
+      enc = this.rt.create(this.resolve(individual), C.encounter, encounter, encId);
+    }
     this.rt.remove(taskNode);
-    return ok(this.rt, enc, "finish");
+    const result: RolexResult = enc
+      ? ok(this.rt, enc, "finish")
+      : { state: this.rt.project(this.resolve(individual)), process: "finish" };
+    if (ctx) {
+      if (enc) {
+        const encId = result.state.id ?? task;
+        ctx.addEncounter(encId);
+      }
+      result.hint = ctx.cognitiveHint("finish") ?? undefined;
+    }
+    return result;
   }
 
   /** Complete a plan: consume plan, create encounter under individual. */
-  complete(plan: string, individual: string, encounter?: string): RolexResult {
+  complete(plan: string, individual: string, encounter?: string, ctx?: RoleContext): RolexResult {
     validateGherkin(encounter);
     const planNode = this.resolve(plan);
     const encId = planNode.id ? `${planNode.id}-completed` : undefined;
     const enc = this.rt.create(this.resolve(individual), C.encounter, encounter, encId);
     this.rt.remove(planNode);
-    return ok(this.rt, enc, "complete");
+    const result = ok(this.rt, enc, "complete");
+    if (ctx) {
+      ctx.addEncounter(result.state.id ?? plan);
+      if (ctx.focusedPlanId === plan) ctx.focusedPlanId = null;
+      result.hint = ctx.cognitiveHint("complete") ?? undefined;
+    }
+    return result;
   }
 
   /** Abandon a plan: consume plan, create encounter under individual. */
-  abandon(plan: string, individual: string, encounter?: string): RolexResult {
+  abandon(plan: string, individual: string, encounter?: string, ctx?: RoleContext): RolexResult {
     validateGherkin(encounter);
     const planNode = this.resolve(plan);
     const encId = planNode.id ? `${planNode.id}-abandoned` : undefined;
     const enc = this.rt.create(this.resolve(individual), C.encounter, encounter, encId);
     this.rt.remove(planNode);
-    return ok(this.rt, enc, "abandon");
+    const result = ok(this.rt, enc, "abandon");
+    if (ctx) {
+      ctx.addEncounter(result.state.id ?? plan);
+      if (ctx.focusedPlanId === plan) ctx.focusedPlanId = null;
+      result.hint = ctx.cognitiveHint("abandon") ?? undefined;
+    }
+    return result;
   }
 
   // ---- Cognition ----
 
   /** Reflect: consume encounter, create experience under individual. */
-  reflect(encounter: string, individual: string, experience?: string, id?: string): RolexResult {
+  reflect(encounter: string, individual: string, experience?: string, id?: string, ctx?: RoleContext): RolexResult {
     validateGherkin(experience);
+    if (ctx) ctx.requireEncounterIds([encounter]);
     const encNode = this.resolve(encounter);
     const exp = this.rt.create(
       this.resolve(individual),
@@ -264,12 +322,19 @@ class RoleNamespace {
       id
     );
     this.rt.remove(encNode);
-    return ok(this.rt, exp, "reflect");
+    const result = ok(this.rt, exp, "reflect");
+    if (ctx) {
+      ctx.consumeEncounters([encounter]);
+      if (id) ctx.addExperience(id);
+      result.hint = ctx.cognitiveHint("reflect") ?? undefined;
+    }
+    return result;
   }
 
   /** Realize: consume experience, create principle under individual. */
-  realize(experience: string, individual: string, principle?: string, id?: string): RolexResult {
+  realize(experience: string, individual: string, principle?: string, id?: string, ctx?: RoleContext): RolexResult {
     validateGherkin(principle);
+    if (ctx) ctx.requireExperienceIds([experience]);
     const expNode = this.resolve(experience);
     const prin = this.rt.create(
       this.resolve(individual),
@@ -278,20 +343,31 @@ class RoleNamespace {
       id
     );
     this.rt.remove(expNode);
-    return ok(this.rt, prin, "realize");
+    const result = ok(this.rt, prin, "realize");
+    if (ctx) {
+      ctx.consumeExperiences([experience]);
+      result.hint = ctx.cognitiveHint("realize") ?? undefined;
+    }
+    return result;
   }
 
   /** Master: create procedure under individual, optionally consuming experience. */
-  master(individual: string, procedure: string, id?: string, experience?: string): RolexResult {
+  master(individual: string, procedure: string, id?: string, experience?: string, ctx?: RoleContext): RolexResult {
     validateGherkin(procedure);
+    if (ctx && experience) ctx.requireExperienceIds([experience]);
     const parent = this.resolve(individual);
     if (id) {
       const existing = findInState(this.rt.project(parent), id);
       if (existing) this.rt.remove(existing);
     }
     const proc = this.rt.create(parent, C.procedure, procedure, id);
-    if (experience) this.rt.remove(this.resolve(experience));
-    return ok(this.rt, proc, "master");
+    if (experience) {
+      this.rt.remove(this.resolve(experience));
+      if (ctx) ctx.consumeExperiences([experience]);
+    }
+    const result = ok(this.rt, proc, "master");
+    if (ctx) result.hint = ctx.cognitiveHint("master") ?? undefined;
+    return result;
   }
 
   // ---- Knowledge management ----
@@ -457,7 +533,7 @@ function findInState(state: State, target: string): Structure | null {
 }
 
 function archive(rt: Runtime, past: Structure, node: Structure, process: string): RolexResult {
-  const archived = rt.create(past, C.past, node.information);
+  const archived = rt.create(past, C.past, node.information, node.id);
   rt.remove(node);
   return ok(rt, archived, process);
 }

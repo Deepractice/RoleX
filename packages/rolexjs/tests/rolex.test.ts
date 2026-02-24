@@ -15,7 +15,7 @@ describe("Rolex API (stateless)", () => {
   describe("lifecycle: creation", () => {
     test("born creates an individual with scaffolding", () => {
       const rolex = setup();
-      const r = rolex.born("Feature: I am Sean");
+      const r = rolex.individual.born("Feature: I am Sean", "sean");
       expect(r.state.name).toBe("individual");
       expect(r.state.information).toBe("Feature: I am Sean");
       expect(r.process).toBe("born");
@@ -27,31 +27,31 @@ describe("Rolex API (stateless)", () => {
 
     test("found creates an organization", () => {
       const rolex = setup();
-      const r = rolex.found("Feature: AI company");
+      const r = rolex.org.found("Feature: AI company", "ai-co");
       expect(r.state.name).toBe("organization");
       expect(r.process).toBe("found");
     });
 
     test("establish creates a position under org", () => {
       const rolex = setup();
-      const org = rolex.found().state;
-      const r = rolex.establish(org, "Feature: Backend architect");
+      rolex.org.found(undefined, "org1");
+      const r = rolex.org.establish("org1", "Feature: Backend architect", "pos1");
       expect(r.state.name).toBe("position");
     });
 
     test("charter defines org mission", () => {
       const rolex = setup();
-      const org = rolex.found().state;
-      const r = rolex.charter(org, "Feature: Build great AI");
+      rolex.org.found(undefined, "org1");
+      const r = rolex.org.charter("org1", "Feature: Build great AI");
       expect(r.state.name).toBe("charter");
       expect(r.state.information).toBe("Feature: Build great AI");
     });
 
     test("charge adds duty to position", () => {
       const rolex = setup();
-      const org = rolex.found().state;
-      const pos = rolex.establish(org).state;
-      const r = rolex.charge(pos, "Feature: Design systems");
+      rolex.org.found(undefined, "org1");
+      rolex.org.establish("org1", undefined, "pos1");
+      const r = rolex.org.charge("pos1", "Feature: Design systems");
       expect(r.state.name).toBe("duty");
     });
   });
@@ -63,42 +63,48 @@ describe("Rolex API (stateless)", () => {
   describe("lifecycle: archival", () => {
     test("retire archives individual", () => {
       const rolex = setup();
-      const sean = rolex.born("Feature: Sean").state;
-      const r = rolex.retire(sean);
+      rolex.individual.born("Feature: Sean", "sean");
+      const r = rolex.individual.retire("sean");
       expect(r.state.name).toBe("past");
       expect(r.process).toBe("retire");
-      // Original is gone
-      expect(() => rolex.project(sean)).toThrow();
+      // Original individual is gone — only past node with same id remains
+      const found = rolex.find("sean");
+      expect(found).not.toBeNull();
+      expect(found!.name).toBe("past");
     });
 
     test("die archives individual", () => {
       const rolex = setup();
-      const alice = rolex.born().state;
-      const r = rolex.die(alice);
+      rolex.individual.born(undefined, "alice");
+      const r = rolex.individual.die("alice");
       expect(r.state.name).toBe("past");
       expect(r.process).toBe("die");
     });
 
     test("dissolve archives organization", () => {
       const rolex = setup();
-      const org = rolex.found().state;
-      rolex.dissolve(org);
-      expect(() => rolex.project(org)).toThrow();
+      rolex.org.found(undefined, "org1");
+      rolex.org.dissolve("org1");
+      const found = rolex.find("org1");
+      expect(found).not.toBeNull();
+      expect(found!.name).toBe("past");
     });
 
     test("abolish archives position", () => {
       const rolex = setup();
-      const org = rolex.found().state;
-      const pos = rolex.establish(org).state;
-      rolex.abolish(pos);
-      expect(() => rolex.project(pos)).toThrow();
+      rolex.org.found(undefined, "org1");
+      rolex.org.establish("org1", undefined, "pos1");
+      rolex.org.abolish("pos1");
+      const found = rolex.find("pos1");
+      expect(found).not.toBeNull();
+      expect(found!.name).toBe("past");
     });
 
     test("rehire restores individual from past", () => {
       const rolex = setup();
-      const sean = rolex.born("Feature: Sean").state;
-      const archived = rolex.retire(sean).state;
-      const r = rolex.rehire(archived);
+      rolex.individual.born("Feature: Sean", "sean");
+      rolex.individual.retire("sean");
+      const r = rolex.individual.rehire("sean");
       expect(r.state.name).toBe("individual");
       expect(r.state.information).toBe("Feature: Sean");
       // Scaffolding restored
@@ -115,39 +121,39 @@ describe("Rolex API (stateless)", () => {
   describe("organization", () => {
     test("hire links individual to org", () => {
       const rolex = setup();
-      const sean = rolex.born().state;
-      const org = rolex.found().state;
-      const r = rolex.hire(org, sean);
+      rolex.individual.born(undefined, "sean");
+      rolex.org.found(undefined, "org1");
+      const r = rolex.org.hire("org1", "sean");
       expect(r.state.links).toHaveLength(1);
       expect(r.state.links![0].relation).toBe("membership");
     });
 
     test("fire removes membership", () => {
       const rolex = setup();
-      const sean = rolex.born().state;
-      const org = rolex.found().state;
-      rolex.hire(org, sean);
-      const r = rolex.fire(org, sean);
+      rolex.individual.born(undefined, "sean");
+      rolex.org.found(undefined, "org1");
+      rolex.org.hire("org1", "sean");
+      const r = rolex.org.fire("org1", "sean");
       expect(r.state.links).toBeUndefined();
     });
 
     test("appoint links individual to position", () => {
       const rolex = setup();
-      const sean = rolex.born().state;
-      const org = rolex.found().state;
-      const pos = rolex.establish(org).state;
-      const r = rolex.appoint(pos, sean);
+      rolex.individual.born(undefined, "sean");
+      rolex.org.found(undefined, "org1");
+      rolex.org.establish("org1", undefined, "pos1");
+      const r = rolex.org.appoint("pos1", "sean");
       expect(r.state.links).toHaveLength(1);
       expect(r.state.links![0].relation).toBe("appointment");
     });
 
     test("dismiss removes appointment", () => {
       const rolex = setup();
-      const sean = rolex.born().state;
-      const org = rolex.found().state;
-      const pos = rolex.establish(org).state;
-      rolex.appoint(pos, sean);
-      const r = rolex.dismiss(pos, sean);
+      rolex.individual.born(undefined, "sean");
+      rolex.org.found(undefined, "org1");
+      rolex.org.establish("org1", undefined, "pos1");
+      rolex.org.appoint("pos1", "sean");
+      const r = rolex.org.dismiss("pos1", "sean");
       expect(r.state.links).toBeUndefined();
     });
   });
@@ -157,10 +163,10 @@ describe("Rolex API (stateless)", () => {
   // ============================================================
 
   describe("role", () => {
-    test("activate returns individual projection", () => {
+    test("activate returns individual projection", async () => {
       const rolex = setup();
-      const sean = rolex.born("Feature: Sean").state;
-      const r = rolex.activate(sean);
+      rolex.individual.born("Feature: Sean", "sean");
+      const r = await rolex.role.activate("sean");
       expect(r.state.name).toBe("individual");
       expect(r.process).toBe("activate");
     });
@@ -173,63 +179,63 @@ describe("Rolex API (stateless)", () => {
   describe("execution", () => {
     test("want creates a goal", () => {
       const rolex = setup();
-      const sean = rolex.born().state;
-      const r = rolex.want(sean, "Feature: Build auth system");
+      rolex.individual.born(undefined, "sean");
+      const r = rolex.role.want("sean", "Feature: Build auth system", "g1");
       expect(r.state.name).toBe("goal");
       expect(r.state.information).toBe("Feature: Build auth system");
     });
 
     test("plan creates a plan under goal", () => {
       const rolex = setup();
-      const sean = rolex.born().state;
-      const goal = rolex.want(sean, "Feature: Auth").state;
-      const r = rolex.plan(goal, "Feature: JWT plan");
+      rolex.individual.born(undefined, "sean");
+      rolex.role.want("sean", "Feature: Auth", "g1");
+      const r = rolex.role.plan("g1", "Feature: JWT plan", "p1");
       expect(r.state.name).toBe("plan");
     });
 
     test("todo creates a task under plan", () => {
       const rolex = setup();
-      const sean = rolex.born().state;
-      const goal = rolex.want(sean).state;
-      const plan = rolex.plan(goal).state;
-      const r = rolex.todo(plan, "Feature: Implement JWT");
+      rolex.individual.born(undefined, "sean");
+      rolex.role.want("sean", undefined, "g1");
+      rolex.role.plan("g1", undefined, "p1");
+      const r = rolex.role.todo("p1", "Feature: Implement JWT", "t1");
       expect(r.state.name).toBe("task");
     });
 
     test("finish consumes task, creates encounter", () => {
       const rolex = setup();
-      const sean = rolex.born().state;
-      const goal = rolex.want(sean).state;
-      const plan = rolex.plan(goal).state;
-      const task = rolex.todo(plan).state;
+      rolex.individual.born(undefined, "sean");
+      rolex.role.want("sean", undefined, "g1");
+      rolex.role.plan("g1", undefined, "p1");
+      rolex.role.todo("p1", undefined, "t1");
 
-      const r = rolex.finish(task, sean, "Feature: JWT done");
+      const r = rolex.role.finish("t1", "sean", "Feature: JWT done");
       expect(r.state.name).toBe("encounter");
       expect(r.state.information).toBe("Feature: JWT done");
       // Task is gone
-      expect(() => rolex.project(task)).toThrow();
+      expect(rolex.find("t1")).toBeNull();
     });
 
     test("complete consumes plan, creates encounter", () => {
       const rolex = setup();
-      const sean = rolex.born().state;
-      const goal = rolex.want(sean, "Feature: Auth").state;
-      const plan = rolex.plan(goal, "Feature: Auth plan").state;
+      rolex.individual.born(undefined, "sean");
+      rolex.role.want("sean", "Feature: Auth", "g1");
+      rolex.role.plan("g1", "Feature: Auth plan", "p1");
 
-      const r = rolex.complete(plan, sean, "Feature: Auth plan done");
+      const r = rolex.role.complete("p1", "sean", "Feature: Auth plan done");
       expect(r.state.name).toBe("encounter");
-      expect(() => rolex.project(plan)).toThrow();
+      expect(rolex.find("p1")).toBeNull();
     });
 
     test("abandon consumes plan, creates encounter", () => {
       const rolex = setup();
-      const sean = rolex.born().state;
-      const goal = rolex.want(sean, "Feature: Rust").state;
-      const plan = rolex.plan(goal, "Feature: Rust plan").state;
+      rolex.individual.born(undefined, "sean");
+      rolex.role.want("sean", "Feature: Rust", "g1");
+      rolex.role.plan("g1", "Feature: Rust plan", "p1");
 
-      const r = rolex.abandon(plan, sean, "Feature: No time");
+      const r = rolex.role.abandon("p1", "sean", "Feature: No time");
       expect(r.state.name).toBe("encounter");
-      expect(() => rolex.project(plan)).toThrow();
+      expect(rolex.find("p1")).toBeNull();
     });
   });
 
@@ -240,60 +246,56 @@ describe("Rolex API (stateless)", () => {
   describe("cognition", () => {
     test("reflect: encounter → experience", () => {
       const rolex = setup();
-      const sean = rolex.born().state;
-      const goal = rolex.want(sean).state;
-      const plan = rolex.plan(goal).state;
-      const task = rolex.todo(plan).state;
-      const enc = rolex.finish(task, sean, "Feature: JWT quirks").state;
+      rolex.individual.born(undefined, "sean");
+      rolex.role.want("sean", undefined, "g1");
+      rolex.role.plan("g1", undefined, "p1");
+      rolex.role.todo("p1", undefined, "t1");
+      rolex.role.finish("t1", "sean", "Feature: JWT quirks");
 
-      const r = rolex.reflect(enc, sean, "Feature: Token refresh matters");
+      const r = rolex.role.reflect("t1-finished", "sean", "Feature: Token refresh matters", "exp1");
       expect(r.state.name).toBe("experience");
       expect(r.state.information).toBe("Feature: Token refresh matters");
-      expect(() => rolex.project(enc)).toThrow();
+      expect(rolex.find("t1-finished")).toBeNull();
     });
 
     test("reflect inherits encounter info if no source given", () => {
       const rolex = setup();
-      const sean = rolex.born().state;
-      const goal = rolex.want(sean).state;
-      const plan = rolex.plan(goal).state;
-      const task = rolex.todo(plan).state;
-      const enc = rolex.finish(task, sean, "Feature: JWT quirks").state;
+      rolex.individual.born(undefined, "sean");
+      rolex.role.want("sean", undefined, "g1");
+      rolex.role.plan("g1", undefined, "p1");
+      rolex.role.todo("p1", undefined, "t1");
+      rolex.role.finish("t1", "sean", "Feature: JWT quirks");
 
-      const r = rolex.reflect(enc, sean);
+      const r = rolex.role.reflect("t1-finished", "sean");
       expect(r.state.information).toBe("Feature: JWT quirks");
     });
 
-    test("realize: experience → principle under knowledge", () => {
+    test("realize: experience → principle under individual", () => {
       const rolex = setup();
-      const sean = rolex.born().state;
-      const knowledge = sean.children!.find((c) => c.name === "knowledge")!;
+      rolex.individual.born(undefined, "sean");
+      rolex.role.want("sean", undefined, "g1");
+      rolex.role.plan("g1", undefined, "p1");
+      rolex.role.todo("p1", undefined, "t1");
+      rolex.role.finish("t1", "sean", "Feature: Lessons");
+      rolex.role.reflect("t1-finished", "sean", undefined, "exp1");
 
-      const goal = rolex.want(sean).state;
-      const plan = rolex.plan(goal).state;
-      const task = rolex.todo(plan).state;
-      const enc = rolex.finish(task, sean, "Feature: Lessons").state;
-      const exp = rolex.reflect(enc, sean).state;
-
-      const r = rolex.realize(exp, knowledge, "Feature: Security first");
+      const r = rolex.role.realize("exp1", "sean", "Feature: Security first", "sec-first");
       expect(r.state.name).toBe("principle");
       expect(r.state.information).toBe("Feature: Security first");
-      expect(() => rolex.project(exp)).toThrow();
+      expect(rolex.find("exp1")).toBeNull();
     });
 
-    test("master: experience → skill under knowledge", () => {
+    test("master: experience → procedure under individual", () => {
       const rolex = setup();
-      const sean = rolex.born().state;
-      const knowledge = sean.children!.find((c) => c.name === "knowledge")!;
+      rolex.individual.born(undefined, "sean");
+      rolex.role.want("sean", undefined, "g1");
+      rolex.role.plan("g1", undefined, "p1");
+      rolex.role.todo("p1", undefined, "t1");
+      rolex.role.finish("t1", "sean", "Feature: Practice");
+      rolex.role.reflect("t1-finished", "sean", undefined, "exp1");
 
-      const goal = rolex.want(sean).state;
-      const plan = rolex.plan(goal).state;
-      const task = rolex.todo(plan).state;
-      const enc = rolex.finish(task, sean, "Feature: Practice").state;
-      const exp = rolex.reflect(enc, sean).state;
-
-      const r = rolex.master(exp, knowledge, "Feature: JWT mastery");
-      expect(r.state.name).toBe("skill");
+      const r = rolex.role.master("sean", "Feature: JWT mastery", "jwt", "exp1");
+      expect(r.state.name).toBe("procedure");
     });
   });
 
@@ -306,42 +308,41 @@ describe("Rolex API (stateless)", () => {
       const rolex = setup();
 
       // Create world
-      const sean = rolex.born("Feature: I am Sean").state;
-      const org = rolex.found("Feature: Deepractice").state;
-      const pos = rolex.establish(org, "Feature: Architect").state;
-      rolex.charter(org, "Feature: Build great AI");
-      rolex.charge(pos, "Feature: Design systems");
+      rolex.individual.born("Feature: I am Sean", "sean");
+      rolex.org.found("Feature: Deepractice", "dp");
+      rolex.org.establish("dp", "Feature: Architect", "architect");
+      rolex.org.charter("dp", "Feature: Build great AI");
+      rolex.org.charge("architect", "Feature: Design systems");
 
       // Organization
-      rolex.hire(org, sean);
-      rolex.appoint(pos, sean);
+      rolex.org.hire("dp", "sean");
+      rolex.org.appoint("architect", "sean");
 
       // Verify links
-      const orgState = rolex.project(org);
+      const orgState = rolex.find("dp")!;
       expect(orgState.links).toHaveLength(1);
-      const posState = orgState.children!.find((c) => c.name === "position")!;
+      const posState = (orgState as any).children!.find((c: any) => c.name === "position")!;
       expect(posState.links).toHaveLength(1);
 
       // Execution cycle
-      const goal = rolex.want(sean, "Feature: Build auth").state;
-      const plan = rolex.plan(goal, "Feature: JWT auth plan").state;
-      const t1 = rolex.todo(plan, "Feature: Login endpoint").state;
-      const t2 = rolex.todo(plan, "Feature: Refresh endpoint").state;
+      rolex.role.want("sean", "Feature: Build auth", "build-auth");
+      rolex.role.plan("build-auth", "Feature: JWT auth plan", "jwt-plan");
+      rolex.role.todo("jwt-plan", "Feature: Login endpoint", "t1");
+      rolex.role.todo("jwt-plan", "Feature: Refresh endpoint", "t2");
 
-      const enc1 = rolex.finish(t1, sean, "Feature: Login done").state;
-      const _enc2 = rolex.finish(t2, sean, "Feature: Refresh done").state;
-      rolex.complete(plan, sean, "Feature: Auth plan complete");
+      rolex.role.finish("t1", "sean", "Feature: Login done");
+      rolex.role.finish("t2", "sean", "Feature: Refresh done");
+      rolex.role.complete("jwt-plan", "sean", "Feature: Auth plan complete");
 
       // Cognition cycle
-      const knowledge = sean.children!.find((c) => c.name === "knowledge")!;
-      const exp = rolex.reflect(enc1, sean, "Feature: Token handling").state;
-      rolex.realize(exp, knowledge, "Feature: Always validate expiry");
+      rolex.role.reflect("t1-finished", "sean", "Feature: Token handling", "token-exp");
+      rolex.role.realize("token-exp", "sean", "Feature: Always validate expiry", "validate-expiry");
 
-      // Verify knowledge
-      const knowledgeState = rolex.project(knowledge);
-      expect(knowledgeState.children).toHaveLength(1);
-      expect(knowledgeState.children![0].name).toBe("principle");
-      expect(knowledgeState.children![0].information).toBe("Feature: Always validate expiry");
+      // Verify principle exists under individual
+      const seanState = rolex.find("sean")!;
+      const principle = (seanState as any).children?.find((c: any) => c.name === "principle");
+      expect(principle).toBeDefined();
+      expect(principle.information).toBe("Feature: Always validate expiry");
     });
   });
 
@@ -352,7 +353,7 @@ describe("Rolex API (stateless)", () => {
   describe("render", () => {
     test("describe generates text with name", () => {
       const rolex = setup();
-      const r = rolex.born();
+      const r = rolex.individual.born(undefined, "sean");
       const text = renderDescribe("born", "sean", r.state);
       expect(text).toContain("sean");
     });
@@ -402,7 +403,7 @@ describe("Rolex API (stateless)", () => {
   describe("renderState", () => {
     test("renders individual with heading and information", () => {
       const rolex = setup();
-      const r = rolex.born("Feature: I am Sean\n  An AI role.");
+      const r = rolex.individual.born("Feature: I am Sean\n  An AI role.", "sean");
       const md = renderState(r.state);
       expect(md).toContain("# [individual]");
       expect(md).toContain("Feature: I am Sean");
@@ -411,7 +412,7 @@ describe("Rolex API (stateless)", () => {
 
     test("renders children at deeper heading levels", () => {
       const rolex = setup();
-      const r = rolex.born("Feature: Sean");
+      const r = rolex.individual.born("Feature: Sean", "sean");
       const md = renderState(r.state);
       // identity and knowledge are children at depth 2
       expect(md).toContain("## [identity]");
@@ -420,24 +421,24 @@ describe("Rolex API (stateless)", () => {
 
     test("renders links generically", () => {
       const rolex = setup();
-      const sean = rolex.born("Feature: Sean").state;
-      const org = rolex.found("Feature: Deepractice").state;
-      rolex.hire(org, sean);
+      rolex.individual.born("Feature: Sean", "sean");
+      rolex.org.found("Feature: Deepractice", "dp");
+      rolex.org.hire("dp", "sean");
       // Project org — should have membership link
-      const orgState = rolex.project(org);
-      const md = renderState(orgState);
+      const orgState = rolex.find("dp")!;
+      const md = renderState(orgState as any);
       expect(md).toContain("membership");
       expect(md).toContain("[individual]");
     });
 
     test("renders bidirectional links", () => {
       const rolex = setup();
-      const sean = rolex.born("Feature: Sean").state;
-      const org = rolex.found("Feature: Deepractice").state;
-      rolex.hire(org, sean);
+      rolex.individual.born("Feature: Sean", "sean");
+      rolex.org.found("Feature: Deepractice", "dp");
+      rolex.org.hire("dp", "sean");
       // Project individual — should have belong link
-      const seanState = rolex.project(sean);
-      const md = renderState(seanState);
+      const seanState = rolex.find("sean")!;
+      const md = renderState(seanState as any);
       expect(md).toContain("belong");
       expect(md).toContain("[organization]");
       expect(md).toContain("Deepractice");
@@ -445,13 +446,13 @@ describe("Rolex API (stateless)", () => {
 
     test("renders nested structure (goal → plan → task)", () => {
       const rolex = setup();
-      const sean = rolex.born().state;
-      const goal = rolex.want(sean, "Feature: Build auth").state;
-      const plan = rolex.plan(goal, "Feature: JWT plan").state;
-      rolex.todo(plan, "Feature: Login endpoint");
+      rolex.individual.born(undefined, "sean");
+      rolex.role.want("sean", "Feature: Build auth", "g1");
+      rolex.role.plan("g1", "Feature: JWT plan", "p1");
+      rolex.role.todo("p1", "Feature: Login endpoint", "t1");
       // Project goal to see full tree
-      const goalState = rolex.project(goal);
-      const md = renderState(goalState);
+      const goalState = rolex.find("g1")!;
+      const md = renderState(goalState as any);
       expect(md).toContain("# [goal]");
       expect(md).toContain("## [plan]");
       expect(md).toContain("### [task]");
@@ -462,19 +463,18 @@ describe("Rolex API (stateless)", () => {
 
     test("caps heading depth at 6", () => {
       const rolex = setup();
-      const sean = rolex.born().state;
-      // individual(1) → identity(2) is the deepest built-in nesting
+      const r = rolex.individual.born(undefined, "sean");
       // Manually test with depth parameter
-      const md = renderState(sean, 7);
+      const md = renderState(r.state, 7);
       // Should use ###### (6) not ####### (7)
       expect(md).toStartWith("###### [individual]");
     });
 
     test("renders without information gracefully", () => {
       const rolex = setup();
-      const r = rolex.born();
+      const r = rolex.individual.born(undefined, "sean");
       const identity = r.state.children!.find((c) => c.name === "identity")!;
-      const md = renderState(identity);
+      const md = renderState(identity as any);
       expect(md).toBe("# [identity]");
     });
   });
@@ -486,86 +486,74 @@ describe("Rolex API (stateless)", () => {
   describe("gherkin validation", () => {
     test("born rejects non-Gherkin input", () => {
       const rolex = setup();
-      expect(() => rolex.born("not gherkin")).toThrow("Invalid Gherkin");
+      expect(() => rolex.individual.born("not gherkin")).toThrow("Invalid Gherkin");
     });
 
     test("born accepts valid Gherkin", () => {
       const rolex = setup();
-      expect(() => rolex.born("Feature: Sean")).not.toThrow();
+      expect(() => rolex.individual.born("Feature: Sean")).not.toThrow();
     });
 
     test("born accepts undefined (no source)", () => {
       const rolex = setup();
-      expect(() => rolex.born()).not.toThrow();
+      expect(() => rolex.individual.born()).not.toThrow();
     });
 
     test("want rejects non-Gherkin goal", () => {
       const rolex = setup();
-      const sean = rolex.born("Feature: Sean").state;
-      expect(() => rolex.want(sean, "plain text goal")).toThrow("Invalid Gherkin");
+      rolex.individual.born("Feature: Sean", "sean");
+      expect(() => rolex.role.want("sean", "plain text goal")).toThrow("Invalid Gherkin");
     });
 
     test("finish rejects non-Gherkin encounter", () => {
       const rolex = setup();
-      const sean = rolex.born("Feature: Sean").state;
-      const goal = rolex.want(sean, "Feature: Auth").state;
-      const plan = rolex.plan(goal).state;
-      const task = rolex.todo(plan, "Feature: Login").state;
-      expect(() => rolex.finish(task, sean, "just text")).toThrow("Invalid Gherkin");
+      rolex.individual.born("Feature: Sean", "sean");
+      rolex.role.want("sean", "Feature: Auth", "g1");
+      rolex.role.plan("g1", undefined, "p1");
+      rolex.role.todo("p1", "Feature: Login", "t1");
+      expect(() => rolex.role.finish("t1", "sean", "just text")).toThrow("Invalid Gherkin");
     });
 
     test("reflect rejects non-Gherkin experience", () => {
       const rolex = setup();
-      const sean = rolex.born("Feature: Sean").state;
-      const goal = rolex.want(sean, "Feature: Auth").state;
-      const plan = rolex.plan(goal).state;
-      const task = rolex.todo(plan, "Feature: Login").state;
-      const enc = rolex.finish(
-        task,
-        sean,
+      rolex.individual.born("Feature: Sean", "sean");
+      rolex.role.want("sean", "Feature: Auth", "g1");
+      rolex.role.plan("g1", undefined, "p1");
+      rolex.role.todo("p1", "Feature: Login", "t1");
+      rolex.role.finish(
+        "t1",
+        "sean",
         "Feature: Done\n  Scenario: It worked\n    Given login\n    Then success"
-      ).state;
-      expect(() => rolex.reflect(enc, sean, "not gherkin")).toThrow("Invalid Gherkin");
+      );
+      expect(() => rolex.role.reflect("t1-finished", "sean", "not gherkin")).toThrow(
+        "Invalid Gherkin"
+      );
     });
 
     test("realize rejects non-Gherkin principle", () => {
       const rolex = setup();
-      const sean = rolex.born("Feature: Sean").state;
-      const knowledge = sean.children!.find((c) => c.name === "knowledge")!;
-      const goal = rolex.want(sean, "Feature: Auth").state;
-      const plan = rolex.plan(goal).state;
-      const task = rolex.todo(plan, "Feature: Login").state;
-      const enc = rolex.finish(
-        task,
-        sean,
+      rolex.individual.born("Feature: Sean", "sean");
+      rolex.role.want("sean", "Feature: Auth", "g1");
+      rolex.role.plan("g1", undefined, "p1");
+      rolex.role.todo("p1", "Feature: Login", "t1");
+      rolex.role.finish(
+        "t1",
+        "sean",
         "Feature: Done\n  Scenario: OK\n    Given x\n    Then y"
-      ).state;
-      const exp = rolex.reflect(
-        enc,
-        sean,
-        "Feature: Insight\n  Scenario: Learned\n    Given practice\n    Then understanding"
-      ).state;
-      expect(() => rolex.realize(exp, knowledge, "not gherkin")).toThrow("Invalid Gherkin");
+      );
+      rolex.role.reflect(
+        "t1-finished",
+        "sean",
+        "Feature: Insight\n  Scenario: Learned\n    Given practice\n    Then understanding",
+        "exp1"
+      );
+      expect(() => rolex.role.realize("exp1", "sean", "not gherkin")).toThrow("Invalid Gherkin");
     });
 
-    test("master rejects non-Gherkin skill", () => {
+    test("master rejects non-Gherkin procedure", () => {
       const rolex = setup();
-      const sean = rolex.born("Feature: Sean").state;
-      const knowledge = sean.children!.find((c) => c.name === "knowledge")!;
-      const goal = rolex.want(sean, "Feature: Auth").state;
-      const plan = rolex.plan(goal).state;
-      const task = rolex.todo(plan, "Feature: Login").state;
-      const enc = rolex.finish(
-        task,
-        sean,
-        "Feature: Done\n  Scenario: OK\n    Given x\n    Then y"
-      ).state;
-      const exp = rolex.reflect(
-        enc,
-        sean,
-        "Feature: Insight\n  Scenario: Learned\n    Given practice\n    Then understanding"
-      ).state;
-      expect(() => rolex.master(exp, knowledge, "not gherkin")).toThrow("Invalid Gherkin");
+      rolex.individual.born("Feature: Sean", "sean");
+      expect(() => rolex.role.master("sean", "not gherkin")).toThrow("Invalid Gherkin");
     });
   });
 
@@ -576,43 +564,43 @@ describe("Rolex API (stateless)", () => {
   describe("id & alias", () => {
     test("born with id stores it on the node", () => {
       const rolex = setup();
-      const r = rolex.born("Feature: I am Sean", "sean");
+      const r = rolex.individual.born("Feature: I am Sean", "sean");
       expect(r.state.id).toBe("sean");
       expect(r.state.ref).toBeDefined();
     });
 
     test("born with id and alias stores both", () => {
       const rolex = setup();
-      const r = rolex.born("Feature: I am Sean", "sean", ["Sean", "姜山"]);
+      const r = rolex.individual.born("Feature: I am Sean", "sean", ["Sean", "姜山"]);
       expect(r.state.id).toBe("sean");
       expect(r.state.alias).toEqual(["Sean", "姜山"]);
     });
 
     test("born without id has no id field", () => {
       const rolex = setup();
-      const r = rolex.born("Feature: I am Sean");
+      const r = rolex.individual.born("Feature: I am Sean");
       expect(r.state.id).toBeUndefined();
     });
 
     test("want with id stores it on the goal", () => {
       const rolex = setup();
-      const sean = rolex.born("Feature: Sean").state;
-      const r = rolex.want(sean, "Feature: Build auth", "build-auth");
+      rolex.individual.born("Feature: Sean", "sean");
+      const r = rolex.role.want("sean", "Feature: Build auth", "build-auth");
       expect(r.state.id).toBe("build-auth");
     });
 
     test("todo with id stores it on the task", () => {
       const rolex = setup();
-      const sean = rolex.born("Feature: Sean").state;
-      const goal = rolex.want(sean).state;
-      const plan = rolex.plan(goal).state;
-      const r = rolex.todo(plan, "Feature: Login", "impl-login");
+      rolex.individual.born("Feature: Sean", "sean");
+      rolex.role.want("sean", undefined, "g1");
+      rolex.role.plan("g1", undefined, "p1");
+      const r = rolex.role.todo("p1", "Feature: Login", "impl-login");
       expect(r.state.id).toBe("impl-login");
     });
 
     test("find by id", () => {
       const rolex = setup();
-      rolex.born("Feature: I am Sean", "sean");
+      rolex.individual.born("Feature: I am Sean", "sean");
       const found = rolex.find("sean");
       expect(found).not.toBeNull();
       expect(found!.name).toBe("individual");
@@ -621,7 +609,7 @@ describe("Rolex API (stateless)", () => {
 
     test("find by alias", () => {
       const rolex = setup();
-      rolex.born("Feature: I am Sean", "sean", ["Sean", "姜山"]);
+      rolex.individual.born("Feature: I am Sean", "sean", ["Sean", "姜山"]);
       const found = rolex.find("姜山");
       expect(found).not.toBeNull();
       expect(found!.name).toBe("individual");
@@ -629,7 +617,7 @@ describe("Rolex API (stateless)", () => {
 
     test("find is case insensitive", () => {
       const rolex = setup();
-      rolex.born("Feature: I am Sean", "sean", ["Sean"]);
+      rolex.individual.born("Feature: I am Sean", "sean", ["Sean"]);
       expect(rolex.find("Sean")).not.toBeNull();
       expect(rolex.find("SEAN")).not.toBeNull();
       expect(rolex.find("sean")).not.toBeNull();
@@ -637,14 +625,14 @@ describe("Rolex API (stateless)", () => {
 
     test("find returns null when not found", () => {
       const rolex = setup();
-      rolex.born("Feature: I am Sean", "sean");
+      rolex.individual.born("Feature: I am Sean", "sean");
       expect(rolex.find("nobody")).toBeNull();
     });
 
     test("find searches nested nodes", () => {
       const rolex = setup();
-      const sean = rolex.born("Feature: Sean", "sean").state;
-      rolex.want(sean, "Feature: Build auth", "build-auth");
+      rolex.individual.born("Feature: Sean", "sean");
+      rolex.role.want("sean", "Feature: Build auth", "build-auth");
       const found = rolex.find("build-auth");
       expect(found).not.toBeNull();
       expect(found!.name).toBe("goal");
@@ -652,14 +640,14 @@ describe("Rolex API (stateless)", () => {
 
     test("found with id", () => {
       const rolex = setup();
-      const r = rolex.found("Feature: Deepractice", "deepractice");
+      const r = rolex.org.found("Feature: Deepractice", "deepractice");
       expect(r.state.id).toBe("deepractice");
     });
 
     test("establish with id", () => {
       const rolex = setup();
-      const org = rolex.found("Feature: Deepractice").state;
-      const r = rolex.establish(org, "Feature: Architect", "architect");
+      rolex.org.found("Feature: Deepractice", "dp");
+      const r = rolex.org.establish("dp", "Feature: Architect", "architect");
       expect(r.state.id).toBe("architect");
     });
   });

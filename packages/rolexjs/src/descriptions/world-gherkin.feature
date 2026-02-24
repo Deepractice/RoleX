@@ -14,3 +14,14 @@ Feature: Gherkin — the universal language
     And use Feature as the title — what this concern is about
     And use Scenario for specific situations within that concern
     And do not mix unrelated concerns into one Feature
+
+  Scenario: Valid step keywords
+    Given the only valid step keywords are Given, When, Then, And, But
+    When writing steps that express causality or explanation
+    Then never invent keywords like Because, Since, or So
+
+  Scenario: Expressing causality without Because
+    Given you want to write "Then X because Y"
+    Then rewrite as two steps — "Then X" followed by "And Y" stating the reason as a fact
+    And example — instead of "Then use RoleX tools because native tools break the loop"
+    And write "Then use RoleX tools" followed by "And native tools do not feed the growth loop"

@@ -7,12 +7,17 @@ Feature: finish — complete a task
     When finish is called on the task
     Then the task is marked done
     And an encounter is created under the role
-    And the encounter can later be consumed by reflect
 
   Scenario: Finish with experience
     Given a task is completed with a notable learning
     When finish is called with an optional experience parameter
     Then the experience text is attached to the encounter
+
+  Scenario: Finish without encounter
+    Given a task is completed with no notable learning
+    When finish is called without the encounter parameter
+    Then the task is removed but no encounter is created
+    And routine completions leave no trace — keeping the state clean
 
   Scenario: Writing the encounter Gherkin
     Given the encounter records what happened — a raw account of the experience

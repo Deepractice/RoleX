@@ -24,3 +24,5 @@ export { describe, detail, hint, renderState, world } from "./render.js";
 export type { RolexResult } from "./rolex.js";
 // API
 export { createRoleX, Rolex } from "./rolex.js";
+// Context
+export { RoleContext } from "./context.js";

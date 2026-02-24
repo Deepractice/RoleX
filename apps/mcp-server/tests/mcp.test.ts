@@ -1,8 +1,9 @@
 /**
  * MCP server integration tests.
  *
- * Tests the stateful MCP layer (state + render) on top of stateless Rolex.
- * Does not test FastMCP transport — only the logic behind each tool.
+ * Tests the thin MCP layer (state + render) on top of stateless Rolex.
+ * Business logic (RoleContext) is tested in rolexjs/tests/context.test.ts.
+ * This file tests MCP-specific concerns: state holder, render, and integration.
  */
 import { beforeEach, describe, expect, it } from "bun:test";
 import { localPlatform } from "@rolexjs/local-platform";
@@ -23,145 +24,31 @@ beforeEach(() => {
 // ================================================================
 
 describe("findIndividual", () => {
-  it("finds an individual by id (case insensitive)", () => {
-    rolex.born("Feature: Sean\n  A backend architect", "sean");
-    const found = state.findIndividual("sean");
-    expect(found).not.toBeNull();
-    expect(found!.name).toBe("individual");
+  it("returns true when individual exists", () => {
+    rolex.individual.born("Feature: Sean\n  A backend architect", "sean");
+    expect(state.findIndividual("sean")).toBe(true);
   });
 
-  it("returns null when not found", () => {
-    expect(state.findIndividual("nobody")).toBeNull();
-  });
-
-  it("finds by alias", () => {
-    rolex.born("Feature: I am Sean the Architect", "sean", ["Sean", "姜山"]);
-    const found = state.findIndividual("姜山");
-    expect(found).not.toBeNull();
-    expect(found!.name).toBe("individual");
-  });
-
-  it("finds by alias case insensitive", () => {
-    rolex.born("Feature: Sean", "sean", ["Sean"]);
-    const found = state.findIndividual("SEAN");
-    expect(found).not.toBeNull();
+  it("returns false when not found", () => {
+    expect(state.findIndividual("nobody")).toBe(false);
   });
 });
 
 // ================================================================
-//  State: registry
+//  State: requireCtx
 // ================================================================
 
-describe("registry", () => {
-  it("register and resolve", () => {
-    const result = rolex.born("Feature: Sean", "sean");
-    state.register("sean", result.state);
-    expect(state.resolve("sean")).toBe(result.state);
+describe("requireCtx", () => {
+  it("throws without active role", () => {
+    expect(() => state.requireCtx()).toThrow("No active role");
   });
 
-  it("resolve throws on unknown id", () => {
-    expect(() => state.resolve("unknown")).toThrow("Not found");
-  });
-
-  it("unregister removes entry", () => {
-    const result = rolex.born("Feature: Sean", "sean");
-    state.register("sean", result.state);
-    state.unregister("sean");
-    expect(() => state.resolve("sean")).toThrow("Not found");
-  });
-});
-
-// ================================================================
-//  State: requirements
-// ================================================================
-
-describe("requirements", () => {
-  it("requireRole throws without active role", () => {
-    expect(() => state.requireRole()).toThrow("No active role");
-  });
-
-  it("requireGoal throws without focused goal", () => {
-    expect(() => state.requireGoal()).toThrow("No focused goal");
-  });
-
-  it("requirePlan throws without focused plan", () => {
-    expect(() => state.requirePlan()).toThrow("No focused plan");
-  });
-
-  it("requireKnowledge throws without knowledge ref", () => {
-    expect(() => state.requireKnowledge()).toThrow("No knowledge branch");
-  });
-});
-
-// ================================================================
-//  State: encounter / experience registries (named, selective)
-// ================================================================
-
-describe("cognition registries", () => {
-  it("register and resolve encounters by id", () => {
-    const r1 = rolex.born("Feature: A");
-    const r2 = rolex.born("Feature: B");
-    state.registerEncounter("task-a", r1.state);
-    state.registerEncounter("task-b", r2.state);
-    const resolved = state.resolveEncounters(["task-a", "task-b"]);
-    expect(resolved).toHaveLength(2);
-    expect(resolved[0]).toBe(r1.state);
-    expect(resolved[1]).toBe(r2.state);
-  });
-
-  it("listEncounters returns all ids", () => {
-    const r1 = rolex.born("Feature: A");
-    const r2 = rolex.born("Feature: B");
-    state.registerEncounter("task-a", r1.state);
-    state.registerEncounter("task-b", r2.state);
-    expect(state.listEncounters()).toEqual(["task-a", "task-b"]);
-  });
-
-  it("consumeEncounters removes selected entries", () => {
-    const r1 = rolex.born("Feature: A");
-    const r2 = rolex.born("Feature: B");
-    state.registerEncounter("task-a", r1.state);
-    state.registerEncounter("task-b", r2.state);
-    state.consumeEncounters(["task-a"]);
-    expect(state.listEncounters()).toEqual(["task-b"]);
-  });
-
-  it("resolveEncounters throws on unknown id", () => {
-    expect(() => state.resolveEncounters(["unknown"])).toThrow("Encounter not found");
-  });
-
-  it("register and resolve experiences by id", () => {
-    const r1 = rolex.born("Feature: A");
-    state.registerExperience("exp-a", r1.state);
-    const resolved = state.resolveExperiences(["exp-a"]);
-    expect(resolved).toHaveLength(1);
-  });
-
-  it("consumeExperiences removes selected entries", () => {
-    const r1 = rolex.born("Feature: A");
-    const r2 = rolex.born("Feature: B");
-    state.registerExperience("exp-a", r1.state);
-    state.registerExperience("exp-b", r2.state);
-    state.consumeExperiences(["exp-a"]);
-    expect(state.listExperiences()).toEqual(["exp-b"]);
-  });
-
-  it("resolveExperiences throws on unknown id", () => {
-    expect(() => state.resolveExperiences(["unknown"])).toThrow("Experience not found");
-  });
-});
-
-// ================================================================
-//  State: cacheFromActivation
-// ================================================================
-
-describe("cacheFromActivation", () => {
-  it("caches knowledge ref", () => {
-    const born = rolex.born("Feature: Sean", "sean");
-    const activated = rolex.activate(born.state);
-    state.cacheFromActivation(activated.state);
-    expect(state.knowledgeRef).not.toBeNull();
-    expect(state.knowledgeRef!.name).toBe("knowledge");
+  it("returns ctx after activation", async () => {
+    rolex.individual.born("Feature: Sean", "sean");
+    const result = await rolex.role.activate("sean");
+    state.ctx = result.ctx!;
+    expect(state.requireCtx()).toBe(result.ctx);
+    expect(state.requireCtx().roleId).toBe("sean");
   });
 });
 
@@ -171,7 +58,7 @@ describe("cacheFromActivation", () => {
 
 describe("render", () => {
   it("includes status + hint + projection", () => {
-    const result = rolex.born("Feature: Sean", "sean");
+    const result = rolex.individual.born("Feature: Sean", "sean");
     const output = render({
       process: "born",
       name: "Sean",
@@ -187,120 +74,116 @@ describe("render", () => {
     expect(output).toContain("## [knowledge]");
   });
 
-  it("includes bidirectional links in projection", () => {
-    // Born + found + hire → individual has "belong" link
-    const sean = rolex.born("Feature: Sean", "sean");
-    const org = rolex.found("Feature: Deepractice");
-    rolex.hire(org.state, sean.state);
+  it("includes cognitive hint when provided", () => {
+    const result = rolex.individual.born("Feature: Sean", "sean");
+    const output = render({
+      process: "born",
+      name: "Sean",
+      result,
+      cognitiveHint: "I have no goal yet. Declare one with want.",
+    });
+    expect(output).toContain("I →");
+    expect(output).toContain("I have no goal yet");
+  });
 
-    const activated = rolex.activate(sean.state);
+  it("includes bidirectional links in projection", () => {
+    rolex.individual.born("Feature: Sean", "sean");
+    rolex.org.found("Feature: Deepractice", "dp");
+    rolex.org.hire("dp", "sean");
+
+    // Project individual — should have belong link
+    const seanState = rolex.find("sean")!;
     const output = render({
       process: "activate",
       name: "Sean",
-      result: activated,
+      result: { state: seanState as any, process: "activate" },
     });
-    // Individual should have belong → organization via bidirectional link
     expect(output).toContain("belong");
     expect(output).toContain("Deepractice");
   });
 
   it("includes appointment relation in projection", () => {
-    const sean = rolex.born("Feature: Sean", "sean");
-    const org = rolex.found("Feature: Deepractice");
-    const pos = rolex.establish(org.state, "Feature: Architect");
-    rolex.hire(org.state, sean.state);
-    rolex.appoint(pos.state, sean.state);
+    rolex.individual.born("Feature: Sean", "sean");
+    rolex.org.found("Feature: Deepractice", "dp");
+    rolex.org.establish("dp", "Feature: Architect", "architect");
+    rolex.org.hire("dp", "sean");
+    rolex.org.appoint("architect", "sean");
 
-    const activated = rolex.activate(sean.state);
+    const seanState = rolex.find("sean")!;
     const output = render({
       process: "activate",
       name: "Sean",
-      result: activated,
+      result: { state: seanState as any, process: "activate" },
     });
-    // Individual should have serve → position via bidirectional link
     expect(output).toContain("serve");
     expect(output).toContain("Architect");
   });
 });
 
 // ================================================================
-//  Full flow: identity → want → plan → todo → finish → reflect
+//  Full flow: MCP thin layer integration
 // ================================================================
 
 describe("full execution flow", () => {
-  it("completes identity → want → plan → todo → finish → reflect → realize", () => {
-    // Setup: born externally with id
-    const _born = rolex.born("Feature: Sean", "sean");
+  it("completes want → plan → todo → finish → reflect → realize through namespace API", async () => {
+    // Born + activate
+    rolex.individual.born("Feature: Sean", "sean");
+    const activated = await rolex.role.activate("sean");
+    state.ctx = activated.ctx!;
+    const ctx = state.requireCtx();
 
-    // 1. Identity (activate)
-    const individual = state.findIndividual("sean");
-    expect(individual).not.toBeNull();
-    state.activeRole = individual!;
-    const activated = rolex.activate(individual!);
-    state.cacheFromActivation(activated.state);
+    // Want
+    const goal = rolex.role.want(ctx.roleId, "Feature: Build Auth", "build-auth", undefined, ctx);
+    expect(ctx.focusedGoalId).toBe("build-auth");
+    expect(goal.hint).toBeDefined();
 
-    // 2. Want
-    const goal = rolex.want(
-      state.requireRole(),
-      "Feature: Build Auth\n  Scenario: JWT login",
-      "build-auth"
+    // Plan
+    const plan = rolex.role.plan("build-auth", "Feature: Auth Plan", "auth-plan", ctx);
+    expect(ctx.focusedPlanId).toBe("auth-plan");
+    expect(plan.hint).toBeDefined();
+
+    // Todo
+    const task = rolex.role.todo("auth-plan", "Feature: Implement JWT", "impl-jwt", undefined, ctx);
+    expect(task.hint).toBeDefined();
+
+    // Finish with encounter
+    const finished = rolex.role.finish(
+      "impl-jwt",
+      ctx.roleId,
+      "Feature: Implemented JWT\n  Scenario: Token pattern\n    Given JWT needed\n    Then tokens work",
+      ctx
     );
-    state.register("build-auth", goal.state);
-    state.focusedGoal = goal.state;
-
-    // 3. Plan
-    const plan = rolex.plan(state.requireGoal(), "Feature: Auth Plan\n  Scenario: Phase 1");
-    state.focusedPlan = plan.state;
-
-    // 4. Todo
-    const task = rolex.todo(
-      state.requirePlan(),
-      "Feature: Implement JWT\n  Scenario: Token generation",
-      "impl-jwt"
-    );
-    state.register("impl-jwt", task.state);
-
-    // 5. Finish → encounter (registered by id)
-    const taskRef = state.resolve("impl-jwt");
-    const finished = rolex.finish(
-      taskRef,
-      state.requireRole(),
-      "Feature: Implemented JWT token generation\n  Scenario: Discovered refresh token pattern\n    Given JWT tokens expire\n    When I implemented token generation\n    Then I discovered refresh tokens are key"
-    );
-    state.registerEncounter("impl-jwt", finished.state);
-    state.unregister("impl-jwt");
     expect(finished.state.name).toBe("encounter");
+    expect(ctx.encounterIds.has("impl-jwt-finished")).toBe(true);
 
-    // 6. Reflect → experience (selective: choose which encounters)
-    const encIds = state.listEncounters();
-    expect(encIds).toEqual(["impl-jwt"]);
-    const encounters = state.resolveEncounters(["impl-jwt"]);
-    const reflected = rolex.reflect(
-      encounters[0],
-      state.requireRole(),
-      "Feature: Token rotation pattern\n  Scenario: Refresh tokens prevent session loss\n    Given tokens expire periodically\n    When refresh tokens are used\n    Then sessions persist without re-authentication"
+    // Reflect: encounter → experience
+    const reflected = rolex.role.reflect(
+      "impl-jwt-finished",
+      ctx.roleId,
+      "Feature: Token rotation insight\n  Scenario: Refresh matters\n    Given tokens expire\n    Then refresh tokens are key",
+      "token-insight",
+      ctx
     );
-    state.consumeEncounters(["impl-jwt"]);
-    state.registerExperience("impl-jwt", reflected.state);
     expect(reflected.state.name).toBe("experience");
+    expect(ctx.encounterIds.has("impl-jwt-finished")).toBe(false);
+    expect(ctx.experienceIds.has("token-insight")).toBe(true);
 
-    // 7. Realize → principle (selective: choose which experiences)
-    const expIds = state.listExperiences();
-    expect(expIds).toEqual(["impl-jwt"]);
-    const experiences = state.resolveExperiences(["impl-jwt"]);
-    const knowledge = state.requireKnowledge();
-    const realized = rolex.realize(
-      experiences[0],
-      knowledge,
-      "Feature: Always use refresh tokens\n  Scenario: Short-lived tokens need rotation\n    Given access tokens have limited lifetime\n    When a system relies on long sessions\n    Then refresh tokens must be implemented"
+    // Realize: experience → principle
+    const realized = rolex.role.realize(
+      "token-insight",
+      ctx.roleId,
+      "Feature: Always use refresh tokens\n  Scenario: Short-lived tokens need rotation\n    Given access tokens expire\n    Then refresh tokens must exist",
+      "refresh-tokens",
+      ctx
     );
-    state.consumeExperiences(["impl-jwt"]);
     expect(realized.state.name).toBe("principle");
+    expect(ctx.experienceIds.has("token-insight")).toBe(false);
 
-    // Verify the knowledge has the principle
-    const knowledgeState = rolex.project(knowledge);
-    const children = (knowledgeState as any).children ?? [];
-    expect(children.some((c: any) => c.name === "principle")).toBe(true);
+    // Verify principle exists under individual
+    const seanState = rolex.find("sean")!;
+    const principle = (seanState as any).children?.find((c: any) => c.name === "principle");
+    expect(principle).toBeDefined();
+    expect(principle.information).toContain("Always use refresh tokens");
   });
 });
 
@@ -309,21 +192,21 @@ describe("full execution flow", () => {
 // ================================================================
 
 describe("focus", () => {
-  it("switches focused goal by id", () => {
-    const born = rolex.born("Feature: Sean", "sean");
-    state.activeRole = born.state;
+  it("switches focused goal via ctx", async () => {
+    rolex.individual.born("Feature: Sean", "sean");
+    const activated = await rolex.role.activate("sean");
+    state.ctx = activated.ctx!;
+    const ctx = state.requireCtx();
 
-    const goal1 = rolex.want(state.requireRole(), "Feature: Goal A", "goal-a");
-    state.register("goal-a", goal1.state);
-    state.focusedGoal = goal1.state;
+    rolex.role.want(ctx.roleId, "Feature: Goal A", "goal-a", undefined, ctx);
+    expect(ctx.focusedGoalId).toBe("goal-a");
 
-    const goal2 = rolex.want(state.requireRole(), "Feature: Goal B", "goal-b");
-    state.register("goal-b", goal2.state);
-    state.focusedGoal = goal2.state;
+    rolex.role.want(ctx.roleId, "Feature: Goal B", "goal-b", undefined, ctx);
+    expect(ctx.focusedGoalId).toBe("goal-b");
 
     // Switch back to goal A
-    state.focusedGoal = state.resolve("goal-a");
-    expect(state.requireGoal()).toBe(goal1.state);
+    rolex.role.focus("goal-a", ctx);
+    expect(ctx.focusedGoalId).toBe("goal-a");
   });
 });
 
@@ -332,51 +215,48 @@ describe("focus", () => {
 // ================================================================
 
 describe("selective cognition", () => {
-  it("can selectively reflect on chosen encounters", () => {
-    const born = rolex.born("Feature: Sean", "sean");
-    state.activeRole = born.state;
-    state.cacheFromActivation(rolex.activate(born.state).state);
+  it("ctx tracks multiple encounters, reflect consumes selectively", async () => {
+    rolex.individual.born("Feature: Sean", "sean");
+    const activated = await rolex.role.activate("sean");
+    state.ctx = activated.ctx!;
+    const ctx = state.requireCtx();
 
-    // Create multiple encounters
-    const goal = rolex.want(state.requireRole(), "Feature: Auth", "auth");
-    state.focusedGoal = goal.state;
-    const plan = rolex.plan(goal.state);
-    state.focusedPlan = plan.state;
+    // Create goal + plan + tasks
+    rolex.role.want(ctx.roleId, "Feature: Auth", "auth", undefined, ctx);
+    rolex.role.plan("auth", "Feature: Plan", "plan1", ctx);
+    rolex.role.todo("plan1", "Feature: Login", "login", undefined, ctx);
+    rolex.role.todo("plan1", "Feature: Signup", "signup", undefined, ctx);
 
-    const t1 = rolex.todo(plan.state, "Feature: Login", "login");
-    state.register("login", t1.state);
-    const t2 = rolex.todo(plan.state, "Feature: Signup", "signup");
-    state.register("signup", t2.state);
-
-    const enc1 = rolex.finish(
-      t1.state,
-      state.requireRole(),
-      "Feature: Login implementation complete\n  Scenario: Built login flow\n    Given login was required\n    When I implemented the login form\n    Then users can authenticate"
+    // Finish both with encounters
+    rolex.role.finish(
+      "login",
+      ctx.roleId,
+      "Feature: Login done\n  Scenario: OK\n    Given login\n    Then success",
+      ctx
     );
-    state.registerEncounter("login", enc1.state);
-    const enc2 = rolex.finish(
-      t2.state,
-      state.requireRole(),
-      "Feature: Signup implementation complete\n  Scenario: Built signup flow\n    Given signup was required\n    When I implemented the registration form\n    Then users can create accounts"
+    rolex.role.finish(
+      "signup",
+      ctx.roleId,
+      "Feature: Signup done\n  Scenario: OK\n    Given signup\n    Then success",
+      ctx
     );
-    state.registerEncounter("signup", enc2.state);
 
-    // List encounters — should have both
-    expect(state.listEncounters()).toEqual(["login", "signup"]);
+    expect(ctx.encounterIds.has("login-finished")).toBe(true);
+    expect(ctx.encounterIds.has("signup-finished")).toBe(true);
 
-    // Reflect only on "login"
-    const encounters = state.resolveEncounters(["login"]);
-    const reflected = rolex.reflect(
-      encounters[0],
-      state.requireRole(),
-      "Feature: Login flow design insight\n  Scenario: Authentication requires multi-step validation\n    Given a login form submits credentials\n    When validation occurs server-side\n    Then error feedback must be immediate and specific"
+    // Reflect only on "login-finished"
+    rolex.role.reflect(
+      "login-finished",
+      ctx.roleId,
+      "Feature: Login insight\n  Scenario: OK\n    Given practice\n    Then understanding",
+      "login-insight",
+      ctx
     );
-    state.consumeEncounters(["login"]);
-    state.registerExperience("login", reflected.state);
 
-    // "signup" encounter still available
-    expect(state.listEncounters()).toEqual(["signup"]);
-    // "login" experience available
-    expect(state.listExperiences()).toEqual(["login"]);
+    // "login-finished" consumed, "signup-finished" still available
+    expect(ctx.encounterIds.has("login-finished")).toBe(false);
+    expect(ctx.encounterIds.has("signup-finished")).toBe(true);
+    // Experience registered
+    expect(ctx.experienceIds.has("login-insight")).toBe(true);
   });
 });
