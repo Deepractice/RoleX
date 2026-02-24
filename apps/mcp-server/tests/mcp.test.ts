@@ -71,7 +71,6 @@ describe("render", () => {
     // Layer 3: Projection (generic markdown)
     expect(output).toContain("# [individual]");
     expect(output).toContain("## [identity]");
-    expect(output).toContain("## [knowledge]");
   });
 
   it("includes cognitive hint when provided", () => {

@@ -153,10 +153,10 @@ export class RoleContext {
       }
 
       case "realize":
-        return "Principle added to knowledge. I should continue working.";
+        return "Principle added. I should continue working.";
 
       case "master":
-        return "Procedure added to knowledge. I should continue working.";
+        return "Procedure added. I should continue working.";
 
       default:
         return null;

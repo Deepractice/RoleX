@@ -19,10 +19,9 @@ describe("Rolex API (stateless)", () => {
       expect(r.state.name).toBe("individual");
       expect(r.state.information).toBe("Feature: I am Sean");
       expect(r.process).toBe("born");
-      // Scaffolding: identity + knowledge
+      // Scaffolding: identity
       const names = r.state.children!.map((c) => c.name);
       expect(names).toContain("identity");
-      expect(names).toContain("knowledge");
     });
 
     test("found creates an organization", () => {
@@ -110,7 +109,6 @@ describe("Rolex API (stateless)", () => {
       // Scaffolding restored
       const names = r.state.children!.map((c) => c.name);
       expect(names).toContain("identity");
-      expect(names).toContain("knowledge");
     });
   });
 
@@ -464,9 +462,8 @@ describe("Rolex API (stateless)", () => {
       const rolex = setup();
       const r = rolex.individual.born("Feature: Sean", "sean");
       const md = renderState(r.state);
-      // identity and knowledge are children at depth 2
+      // identity is a child at depth 2
       expect(md).toContain("## [identity]");
-      expect(md).toContain("## [knowledge]");
     });
 
     test("renders links generically", () => {
@@ -526,6 +523,23 @@ describe("Rolex API (stateless)", () => {
       const identity = r.state.children!.find((c) => c.name === "identity")!;
       const md = renderState(identity as any);
       expect(md).toBe("# [identity]");
+    });
+
+    test("sorts children by concept hierarchy order", () => {
+      const rolex = setup();
+      rolex.individual.born(undefined, "sean");
+      // Create in reverse of concept order: goal → principle
+      rolex.role.want("sean", "Feature: My Goal", "g1");
+      rolex.individual.teach("sean", "Feature: My Principle", "p1");
+
+      const state = rolex.find("sean")!;
+      const md = renderState(state as any);
+      // Concept order: identity < principle < goal
+      const identityPos = md.indexOf("## [identity]");
+      const principlePos = md.indexOf("## [principle] (p1)");
+      const goalPos = md.indexOf("## [goal] (g1)");
+      expect(identityPos).toBeLessThan(principlePos);
+      expect(principlePos).toBeLessThan(goalPos);
     });
 
     test("fold collapses matching nodes to heading only", () => {

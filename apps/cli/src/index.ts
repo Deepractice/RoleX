@@ -109,7 +109,7 @@ const rehire = defineCommand({
 const teach = defineCommand({
   meta: {
     name: "teach",
-    description: "Inject a principle directly into an individual's knowledge",
+    description: "Inject a principle directly into an individual",
   },
   args: {
     individual: { type: "positional" as const, description: "Individual id", required: true },
@@ -129,7 +129,7 @@ const teach = defineCommand({
 const train = defineCommand({
   meta: {
     name: "train",
-    description: "Inject a procedure (skill) directly into an individual's knowledge",
+    description: "Inject a procedure (skill) directly into an individual",
   },
   args: {
     individual: { type: "positional" as const, description: "Individual id", required: true },

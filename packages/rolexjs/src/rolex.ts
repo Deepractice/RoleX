@@ -134,9 +134,8 @@ class IndividualNamespace {
   born(individual?: string, id?: string, alias?: readonly string[]): RolexResult {
     validateGherkin(individual);
     const node = this.rt.create(this.society, C.individual, individual, id, alias);
-    // Scaffolding: every individual has identity + knowledge
+    // Scaffolding: every individual has identity
     this.rt.create(node, C.identity);
-    this.rt.create(node, C.knowledge);
     return ok(this.rt, node, "born");
   }
 
@@ -154,9 +153,8 @@ class IndividualNamespace {
   rehire(pastNode: string): RolexResult {
     const past = this.resolve(pastNode);
     const individual = this.rt.create(this.society, C.individual, past.information, past.id);
-    // Scaffolding: restore identity + knowledge
+    // Scaffolding: restore identity
     this.rt.create(individual, C.identity);
-    this.rt.create(individual, C.knowledge);
     this.rt.remove(past);
     return ok(this.rt, individual, "rehire");
   }

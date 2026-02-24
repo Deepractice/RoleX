@@ -95,8 +95,8 @@ const hints: Record<string, string> = {
 
   // Cognition
   reflect: "realize principles or master procedures from experience.",
-  realize: "principle added to knowledge.",
-  master: "procedure added to knowledge.",
+  realize: "principle added.",
+  master: "procedure added.",
 
   // Knowledge management
   forget: "the node has been removed.",
@@ -126,16 +126,15 @@ export { world };
 // ================================================================
 
 /**
- * renderState — generic markdown renderer for any State tree.
+ * renderState — markdown renderer for State trees.
  *
  * Rules:
  *   - Heading: "#" repeated to depth + " [name]"
  *   - Body: raw information field as-is (full Gherkin preserved)
  *   - Links: "> → relation [target.name]" with target feature name
- *   - Children: recursive at depth+1
+ *   - Children: sorted by concept hierarchy, then rendered at depth+1
  *   - Fold: when fold(node) returns true, render heading only (no body/links/children)
  *
- * No concept-specific knowledge — purely structural.
  * Markdown heading depth caps at 6 (######).
  */
 export interface RenderStateOptions {
@@ -173,9 +172,10 @@ export function renderState(state: State, depth = 1, options?: RenderStateOption
     }
   }
 
-  // Children
+  // Children — sorted by concept hierarchy
   if (state.children && state.children.length > 0) {
-    for (const child of state.children) {
+    const sorted = sortByConceptOrder(state.children);
+    for (const child of sorted) {
       lines.push("");
       lines.push(renderState(child, depth + 1, options));
     }
@@ -190,4 +190,42 @@ function extractLabel(state: State): string {
   const match = state.information.match(/^Feature:\s*(.+)/m);
   const title = match ? match[1].trim() : state.information.split("\n")[0].trim();
   return `[${state.name}] ${title}`;
+}
+
+// ================================================================
+//  Concept ordering — children sorted by structure hierarchy
+// ================================================================
+
+/** Concept tree order: identity → cognition → knowledge → execution → organization. */
+const CONCEPT_ORDER: readonly string[] = [
+  // Individual — Identity
+  "identity",
+  "background",
+  "tone",
+  "mindset",
+  // Individual — Cognition
+  "encounter",
+  "experience",
+  // Individual — Knowledge
+  "principle",
+  "procedure",
+  // Individual — Execution
+  "goal",
+  "plan",
+  "task",
+  // Organization
+  "charter",
+  "position",
+  "duty",
+];
+
+/** Sort children by concept hierarchy order. Unknown names go to the end, preserving relative order. */
+function sortByConceptOrder(children: readonly State[]): readonly State[] {
+  return [...children].sort((a, b) => {
+    const ai = CONCEPT_ORDER.indexOf(a.name);
+    const bi = CONCEPT_ORDER.indexOf(b.name);
+    const aOrder = ai >= 0 ? ai : CONCEPT_ORDER.length;
+    const bOrder = bi >= 0 ? bi : CONCEPT_ORDER.length;
+    return aOrder - bOrder;
+  });
 }

@@ -14,9 +14,8 @@
  * │ │   │   └── mindset     "How I think"                   │
  * │ │   ├── encounter       "A specific event I went through"│
  * │ │   ├── experience      "What I learned from encounters" │
- * │ │   ├── knowledge       "What I know"                   │
- * │ │   │   ├── principle   "My rules of conduct"           │
- * │ │   │   └── procedure   "My skill references and metadata"│
+ * │ │   ├── principle       "My rules of conduct"           │
+ * │ │   ├── procedure       "My skill references and metadata"│
  * │ │   └── goal            "What I am pursuing"            │
  * │ │       └── plan        "How to achieve a goal"         │
  * │ │           └── task    "Concrete unit of work"         │
@@ -67,9 +66,8 @@ export const experience = structure("experience", "What I learned from encounter
 //  Individual — Knowledge
 // ================================================================
 
-export const knowledge = structure("knowledge", "What I know", individual);
-export const principle = structure("principle", "My rules of conduct", knowledge);
-export const procedure = structure("procedure", "My skill references and metadata", knowledge);
+export const principle = structure("principle", "My rules of conduct", individual);
+export const procedure = structure("procedure", "My skill references and metadata", individual);
 
 // ================================================================
 //  Individual — Execution
