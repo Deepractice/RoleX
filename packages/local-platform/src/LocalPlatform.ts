@@ -445,17 +445,23 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
 
   // ===== Prototype registry =====
 
+  /** Built-in prototypes — always available, overridable by user registry. */
+  const BUILTINS: Record<string, string> = {
+    nuwa: "https://github.com/Deepractice/DeepracticeX/tree/main/roles/nuwa",
+  };
+
   const registryPath = dataDir ? join(dataDir, "prototype.json") : undefined;
 
   const readRegistry = (): Record<string, string> => {
-    if (!registryPath || !existsSync(registryPath)) return {};
-    return JSON.parse(readFileSync(registryPath, "utf-8"));
+    const registry = { ...BUILTINS };
+    if (registryPath && existsSync(registryPath)) {
+      Object.assign(registry, JSON.parse(readFileSync(registryPath, "utf-8")));
+    }
+    return registry;
   };
 
-  const registerPrototype = (id: string, source: string): void => {
+  const writeRegistry = (registry: Record<string, string>): void => {
     if (!registryPath) return;
-    const registry = readRegistry();
-    registry[id] = source;
     mkdirSync(dataDir!, { recursive: true });
     writeFileSync(registryPath, JSON.stringify(registry, null, 2), "utf-8");
   };
@@ -471,6 +477,22 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
       } catch {
         return undefined;
       }
+    },
+
+    summon(id, source) {
+      const registry = readRegistry();
+      registry[id] = source;
+      writeRegistry(registry);
+    },
+
+    banish(id) {
+      const registry = readRegistry();
+      delete registry[id];
+      writeRegistry(registry);
+    },
+
+    list() {
+      return readRegistry();
     },
   };
 
@@ -491,5 +513,5 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
     return JSON.parse(readFileSync(contextPath, "utf-8"));
   };
 
-  return { runtime, prototype, resourcex, registerPrototype, saveContext, loadContext };
+  return { runtime, prototype, resourcex, saveContext, loadContext };
 }

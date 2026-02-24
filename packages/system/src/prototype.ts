@@ -14,31 +14,54 @@ import type { State } from "./process.js";
 
 // ===== Prototype interface =====
 
-/** A source that resolves prototype State trees by id. */
+/** A source that manages and resolves prototype State trees by id. */
 export interface Prototype {
   /** Resolve a prototype State by id. Returns undefined if no prototype exists. */
   resolve(id: string): Promise<State | undefined>;
+
+  /** Summon: register a prototype — bind id to a source (path or locator). */
+  summon(id: string, source: string): void;
+
+  /** Banish: unregister a prototype by id. */
+  banish(id: string): void;
+
+  /** List all registered prototypes: id → source mapping. */
+  list(): Record<string, string>;
 }
 
 // ===== In-memory implementation =====
 
-/** Create an in-memory prototype source. */
+/** Create an in-memory prototype (for tests). */
 export const createPrototype = (): Prototype & {
-  /** Register a State tree as a prototype (keyed by state.id). */
-  register(state: State): void;
+  /** Seed a State directly for testing (bypasses source resolution). */
+  seed(state: State): void;
 } => {
-  const prototypes = new Map<string, State>();
+  const states = new Map<string, State>();
+  const sources = new Map<string, string>();
 
   return {
     async resolve(id) {
-      return prototypes.get(id);
+      return states.get(id);
     },
 
-    register(state) {
+    summon(id, source) {
+      sources.set(id, source);
+    },
+
+    banish(id) {
+      sources.delete(id);
+      states.delete(id);
+    },
+
+    list() {
+      return Object.fromEntries(sources);
+    },
+
+    seed(state) {
       if (!state.id) {
         throw new Error("Prototype state must have an id");
       }
-      prototypes.set(state.id, state);
+      states.set(state.id, state);
     },
   };
 };

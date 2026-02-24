@@ -51,9 +51,6 @@ server.addTool({
     roleId: z.string().describe("Role name to activate"),
   }),
   execute: async ({ roleId }) => {
-    if (!state.findIndividual(roleId)) {
-      rolex.individual.born(undefined, roleId);
-    }
     const result = await rolex.role.activate(roleId);
     state.ctx = result.ctx!;
     const ctx = result.ctx!;

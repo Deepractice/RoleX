@@ -50,7 +50,6 @@ type Resolve = (id: string) => Structure;
 export class Rolex {
   private rt: Runtime;
   private resourcex?: ResourceX;
-  private _registerPrototype?: (id: string, source: string) => void;
 
   /** Root of the world. */
   readonly society: Structure;
@@ -65,13 +64,14 @@ export class Rolex {
   readonly org: OrgNamespace;
   /** Position management — establish, charge, appoint. */
   readonly position: PositionNamespace;
+  /** Prototype management — summon, banish, list. */
+  readonly proto: PrototypeNamespace;
   /** Resource management (optional — powered by ResourceX). */
   readonly resource?: ResourceX;
 
   constructor(platform: Platform) {
     this.rt = platform.runtime;
     this.resourcex = platform.resourcex;
-    this._registerPrototype = platform.registerPrototype;
 
     // Ensure world roots exist (idempotent — reuse if already created by another process)
     const roots = this.rt.roots();
@@ -94,27 +94,24 @@ export class Rolex {
       platform.saveContext && platform.loadContext
         ? { save: platform.saveContext, load: platform.loadContext }
         : undefined;
+    const tryFind = (id: string) => this.find(id);
+    const born = (id: string) => {
+      this.individual.born(undefined, id);
+      return this.find(id)!;
+    };
     this.role = new RoleNamespace(
       this.rt,
       resolve,
+      tryFind,
+      born,
       platform.prototype,
       platform.resourcex,
       persistContext
     );
     this.org = new OrgNamespace(this.rt, this.society, this.past, resolve);
     this.position = new PositionNamespace(this.rt, this.society, this.past, resolve);
+    this.proto = new PrototypeNamespace(platform.prototype, platform.resourcex);
     this.resource = platform.resourcex;
-  }
-
-  /** Register a ResourceX source as a prototype. Ingests to extract id, stores id → source mapping. */
-  async prototype(source: string): Promise<RolexResult> {
-    if (!this.resourcex) throw new Error("ResourceX is not available.");
-    if (!this._registerPrototype)
-      throw new Error("Platform does not support prototype registration.");
-    const state = await this.resourcex.ingest<State>(source);
-    if (!state.id) throw new Error("Prototype resource must have an id.");
-    this._registerPrototype(state.id, source);
-    return { state, process: "prototype" };
   }
 
   /** Find a node by id or alias across the entire society tree. */
@@ -164,6 +161,8 @@ export class Rolex {
         return this.org;
       case "position":
         return this.position;
+      case "prototype":
+        return this.proto;
       default:
         throw new Error(`Unknown namespace "${ns}".`);
     }
@@ -215,6 +214,12 @@ export class Rolex {
         return [a.position, a.individual];
       case "position.dismiss":
         return [a.position, a.individual];
+
+      // prototype
+      case "prototype.summon":
+        return [a.source];
+      case "prototype.banish":
+        return [a.id];
 
       default:
         throw new Error(`No arg mapping for "!${key}".`);
@@ -299,6 +304,8 @@ class RoleNamespace {
   constructor(
     private rt: Runtime,
     private resolve: Resolve,
+    private tryFind: (id: string) => Structure | null,
+    private born: (id: string) => Structure,
     private prototype?: Prototype,
     private resourcex?: ResourceX,
     private persistContext?: {
@@ -317,9 +324,23 @@ class RoleNamespace {
 
   // ---- Activation ----
 
-  /** Activate: merge prototype (if any) with instance state. Returns ctx when created. */
+  /**
+   * Activate: merge prototype (if any) with instance state.
+   *
+   * If the individual does not exist in runtime but a prototype is registered,
+   * auto-born the individual first, then proceed with normal activation.
+   */
   async activate(individual: string): Promise<RolexResult> {
-    const node = this.resolve(individual);
+    let node = this.tryFind(individual);
+    if (!node) {
+      // Not in runtime — check prototype registry
+      const hasProto = this.prototype ? Object.hasOwn(this.prototype.list(), individual) : false;
+      if (hasProto) {
+        node = this.born(individual);
+      } else {
+        throw new Error(`"${individual}" not found.`);
+      }
+    }
     const instanceState = this.rt.project(node);
     const protoState = instanceState.id
       ? await this.prototype?.resolve(instanceState.id)
@@ -691,6 +712,39 @@ class PositionNamespace {
     const posNode = this.resolve(position);
     this.rt.unlink(posNode, this.resolve(individual), "appointment", "serve");
     return ok(this.rt, posNode, "dismiss");
+  }
+}
+
+// ================================================================
+//  Prototype — summon, banish, list
+// ================================================================
+
+class PrototypeNamespace {
+  constructor(
+    private prototype?: Prototype,
+    private resourcex?: ResourceX
+  ) {}
+
+  /** Summon: pull a prototype from source, register it. */
+  async summon(source: string): Promise<RolexResult> {
+    if (!this.resourcex) throw new Error("ResourceX is not available.");
+    if (!this.prototype) throw new Error("Platform does not support prototypes.");
+    const state = await this.resourcex.ingest<State>(source);
+    if (!state.id) throw new Error("Prototype resource must have an id.");
+    this.prototype.summon(state.id, source);
+    return { state, process: "summon" };
+  }
+
+  /** Banish: unregister a prototype by id. */
+  banish(id: string): RolexResult {
+    if (!this.prototype) throw new Error("Platform does not support prototypes.");
+    this.prototype.banish(id);
+    return { state: { name: id, description: "", parent: null }, process: "banish" };
+  }
+
+  /** List all registered prototypes. */
+  list(): Record<string, string> {
+    return this.prototype?.list() ?? {};
   }
 }
 

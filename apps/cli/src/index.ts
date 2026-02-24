@@ -340,7 +340,7 @@ const use = defineCommand({
     },
   },
   async run({ args }) {
-    const result = await rolex.role.use(args.locator);
+    const result = await rolex.use(args.locator);
     if (typeof result === "string") {
       console.log(result);
     } else if (result instanceof Uint8Array) {
@@ -488,7 +488,7 @@ const dismiss = defineCommand({
 });
 
 const org = defineCommand({
-  meta: { name: "org", description: "Organization management" },
+  meta: { name: "organization", description: "Organization management" },
   subCommands: {
     found,
     charter,
@@ -499,7 +499,7 @@ const org = defineCommand({
 });
 
 const pos = defineCommand({
-  meta: { name: "pos", description: "Position management" },
+  meta: { name: "position", description: "Position management" },
   subCommands: {
     establish,
     charge,
@@ -688,10 +688,10 @@ const resource = defineCommand({
   },
 });
 
-// ========== Prototype — register ResourceX source ==========
+// ========== Prototype — summon, banish, list ==========
 
-const prototype = defineCommand({
-  meta: { name: "prototype", description: "Register a ResourceX source as a prototype" },
+const protoSummon = defineCommand({
+  meta: { name: "summon", description: "Summon a prototype from a ResourceX source" },
   args: {
     source: {
       type: "positional" as const,
@@ -700,8 +700,47 @@ const prototype = defineCommand({
     },
   },
   async run({ args }) {
-    const result = await rolex.prototype(args.source);
+    const result = await rolex.proto.summon(args.source);
     output(result, result.state.id ?? args.source);
+  },
+});
+
+const protoBanish = defineCommand({
+  meta: { name: "banish", description: "Banish a prototype by id" },
+  args: {
+    id: {
+      type: "positional" as const,
+      description: "Prototype id to banish",
+      required: true,
+    },
+  },
+  run({ args }) {
+    const result = rolex.proto.banish(args.id);
+    output(result, args.id);
+  },
+});
+
+const protoList = defineCommand({
+  meta: { name: "list", description: "List all registered prototypes" },
+  run() {
+    const list = rolex.proto.list();
+    const entries = Object.entries(list);
+    if (entries.length === 0) {
+      console.log("No prototypes registered.");
+      return;
+    }
+    for (const [id, source] of entries) {
+      console.log(`${id} → ${source}`);
+    }
+  },
+});
+
+const proto = defineCommand({
+  meta: { name: "prototype", description: "Prototype management — summon, banish, list" },
+  subCommands: {
+    summon: protoSummon,
+    banish: protoBanish,
+    list: protoList,
   },
 });
 
@@ -716,10 +755,10 @@ const main = defineCommand({
   subCommands: {
     individual,
     role,
-    org,
-    pos,
+    organization: org,
+    position: pos,
     resource,
-    prototype,
+    prototype: proto,
   },
 });
 

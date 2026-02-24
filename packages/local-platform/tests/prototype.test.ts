@@ -23,7 +23,6 @@ function writePrototype(
   const dir = join(baseDir, id);
   mkdirSync(dir, { recursive: true });
 
-  // resource.json — ResourceX source marker
   writeFileSync(
     join(dir, "resource.json"),
     JSON.stringify({
@@ -36,7 +35,6 @@ function writePrototype(
     "utf-8"
   );
 
-  // manifest
   writeFileSync(
     join(dir, manifestFile),
     JSON.stringify({
@@ -47,7 +45,6 @@ function writePrototype(
     "utf-8"
   );
 
-  // feature files
   for (const [name, content] of Object.entries(features)) {
     writeFileSync(join(dir, name), content, "utf-8");
   }
@@ -56,7 +53,7 @@ function writePrototype(
 }
 
 describe("LocalPlatform Prototype (registry-based)", () => {
-  test("resolve returns undefined when nothing registered", async () => {
+  test("resolve returns undefined for unknown id", async () => {
     const { prototype } = localPlatform({ dataDir: testDir, resourceDir });
     expect(await prototype!.resolve("unknown")).toBeUndefined();
   });
@@ -71,32 +68,32 @@ describe("LocalPlatform Prototype (registry-based)", () => {
     expect(await prototype!.resolve("sean")).toBeUndefined();
   });
 
-  test("registerPrototype + resolve round-trip for role", async () => {
+  test("summon + resolve round-trip for role", async () => {
     const protoDir = join(testDir, "protos");
-    const dir = writePrototype(protoDir, "nuwa", "role", {
-      "nuwa.individual.feature": "Feature: Nuwa\n  World admin.",
+    const dir = writePrototype(protoDir, "test-role", "role", {
+      "test-role.individual.feature": "Feature: TestRole\n  Test role.",
     });
 
     const platform = localPlatform({ dataDir: testDir, resourceDir });
-    platform.registerPrototype!("nuwa", dir);
+    platform.prototype!.summon("test-role", dir);
 
-    const state = await platform.prototype!.resolve("nuwa");
+    const state = await platform.prototype!.resolve("test-role");
     expect(state).toBeDefined();
-    expect(state!.id).toBe("nuwa");
+    expect(state!.id).toBe("test-role");
     expect(state!.name).toBe("individual");
-    expect(state!.information).toBe("Feature: Nuwa\n  World admin.");
+    expect(state!.information).toBe("Feature: TestRole\n  Test role.");
     expect(state!.children).toHaveLength(1);
     expect(state!.children![0].name).toBe("identity");
   });
 
-  test("registerPrototype + resolve round-trip for organization", async () => {
+  test("summon + resolve round-trip for organization", async () => {
     const protoDir = join(testDir, "protos");
     const dir = writePrototype(protoDir, "deepractice", "organization", {
       "deepractice.organization.feature": "Feature: Deepractice\n  AI company.",
     });
 
     const platform = localPlatform({ dataDir: testDir, resourceDir });
-    platform.registerPrototype!("deepractice", dir);
+    platform.prototype!.summon("deepractice", dir);
 
     const state = await platform.prototype!.resolve("deepractice");
     expect(state).toBeDefined();
@@ -107,15 +104,15 @@ describe("LocalPlatform Prototype (registry-based)", () => {
 
   test("resolve returns undefined for unregistered id", async () => {
     const protoDir = join(testDir, "protos");
-    const dir = writePrototype(protoDir, "nuwa", "role");
+    const dir = writePrototype(protoDir, "test-role", "role");
 
     const platform = localPlatform({ dataDir: testDir, resourceDir });
-    platform.registerPrototype!("nuwa", dir);
+    platform.prototype!.summon("test-role", dir);
 
     expect(await platform.prototype!.resolve("nobody")).toBeUndefined();
   });
 
-  test("registerPrototype overwrites previous source", async () => {
+  test("summon overwrites previous source", async () => {
     const protoDir = join(testDir, "protos");
     const dir1 = writePrototype(protoDir, "v1", "role", {
       "v1.individual.feature": "Feature: V1",
@@ -125,25 +122,49 @@ describe("LocalPlatform Prototype (registry-based)", () => {
     });
 
     const platform = localPlatform({ dataDir: testDir, resourceDir });
-    platform.registerPrototype!("test", dir1);
-    platform.registerPrototype!("test", dir2);
+    platform.prototype!.summon("test", dir1);
+    platform.prototype!.summon("test", dir2);
 
     const state = await platform.prototype!.resolve("test");
     expect(state!.id).toBe("v2");
   });
 
+  test("banish removes user-registered prototype", async () => {
+    const protoDir = join(testDir, "protos");
+    const dir = writePrototype(protoDir, "temp", "role");
+
+    const platform = localPlatform({ dataDir: testDir, resourceDir });
+    platform.prototype!.summon("temp", dir);
+    expect(await platform.prototype!.resolve("temp")).toBeDefined();
+
+    platform.prototype!.banish("temp");
+    expect(await platform.prototype!.resolve("temp")).toBeUndefined();
+  });
+
   test("registry persists across platform instances", async () => {
     const protoDir = join(testDir, "protos");
-    const dir = writePrototype(protoDir, "nuwa", "role");
+    const dir = writePrototype(protoDir, "test-role", "role");
 
-    // First instance: register
     const p1 = localPlatform({ dataDir: testDir, resourceDir });
-    p1.registerPrototype!("nuwa", dir);
+    p1.prototype!.summon("test-role", dir);
 
-    // Second instance: resolve (reads same prototype.json)
     const p2 = localPlatform({ dataDir: testDir, resourceDir });
-    const state = await p2.prototype!.resolve("nuwa");
+    const state = await p2.prototype!.resolve("test-role");
     expect(state).toBeDefined();
-    expect(state!.id).toBe("nuwa");
+    expect(state!.id).toBe("test-role");
+  });
+
+  test("list includes builtins and user-registered prototypes", () => {
+    const platform = localPlatform({ dataDir: testDir, resourceDir });
+    platform.prototype!.summon("custom", "/path/to/custom");
+    const list = platform.prototype!.list();
+    expect(list.nuwa).toBeDefined(); // builtin
+    expect(list.custom).toBe("/path/to/custom"); // user-registered
+  });
+
+  test("builtin nuwa is always present in list", () => {
+    const platform = localPlatform({ dataDir: testDir, resourceDir });
+    const list = platform.prototype!.list();
+    expect(list.nuwa).toBe("https://github.com/Deepractice/DeepracticeX/tree/main/roles/nuwa");
   });
 });
