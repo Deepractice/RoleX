@@ -445,7 +445,7 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
 
   // ===== Prototype registry =====
 
-  /** Built-in prototypes — always available, overridable by user registry. */
+  /** Built-in prototypes — always available, cannot be overridden. */
   const BUILTINS: Record<string, string> = {
     nuwa: "https://github.com/Deepractice/DeepracticeX/tree/main/roles/nuwa",
   };
@@ -453,11 +453,11 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
   const registryPath = dataDir ? join(dataDir, "prototype.json") : undefined;
 
   const readRegistry = (): Record<string, string> => {
-    const registry = { ...BUILTINS };
+    let fileRegistry: Record<string, string> = {};
     if (registryPath && existsSync(registryPath)) {
-      Object.assign(registry, JSON.parse(readFileSync(registryPath, "utf-8")));
+      fileRegistry = JSON.parse(readFileSync(registryPath, "utf-8"));
     }
-    return registry;
+    return { ...fileRegistry, ...BUILTINS };
   };
 
   const writeRegistry = (registry: Record<string, string>): void => {
@@ -480,6 +480,9 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
     },
 
     summon(id, source) {
+      if (id in BUILTINS) {
+        throw new Error(`"${id}" is a built-in prototype and cannot be overridden.`);
+      }
       const registry = readRegistry();
       registry[id] = source;
       writeRegistry(registry);
