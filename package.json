@@ -45,11 +45,11 @@
     "bun": ">=1.3.0"
   },
   "dependencies": {
-    "@resourcexjs/node-provider": "^2.13.0",
-    "resourcexjs": "^2.13.0"
+    "@resourcexjs/node-provider": "^2.14.0",
+    "resourcexjs": "^2.14.0"
   },
   "overrides": {
-    "resourcexjs": "^2.13.0",
-    "@resourcexjs/node-provider": "^2.13.0"
+    "resourcexjs": "^2.14.0",
+    "@resourcexjs/node-provider": "^2.14.0"
   }
 }

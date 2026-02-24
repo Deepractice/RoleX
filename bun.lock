@@ -5,8 +5,8 @@
     "": {
       "name": "rolexjs",
       "dependencies": {
-        "@resourcexjs/node-provider": "^2.13.0",
-        "resourcexjs": "^2.13.0",
+        "@resourcexjs/node-provider": "^2.14.0",
+        "resourcexjs": "^2.14.0",
       },
       "devDependencies": {
         "@biomejs/biome": "^2.4.0",
@@ -54,18 +54,18 @@
       "version": "0.11.0",
       "dependencies": {
         "@rolexjs/system": "workspace:*",
-        "resourcexjs": "^2.13.0",
+        "resourcexjs": "^2.14.0",
       },
     },
     "packages/local-platform": {
       "name": "@rolexjs/local-platform",
       "version": "0.11.0",
       "dependencies": {
-        "@resourcexjs/node-provider": "^2.13.0",
+        "@resourcexjs/node-provider": "^2.14.0",
         "@rolexjs/core": "workspace:*",
         "@rolexjs/resourcex-types": "workspace:*",
         "@rolexjs/system": "workspace:*",
-        "resourcexjs": "^2.13.0",
+        "resourcexjs": "^2.14.0",
       },
     },
     "packages/parser": {
@@ -80,7 +80,7 @@
       "name": "@rolexjs/resourcex-types",
       "version": "0.11.0",
       "dependencies": {
-        "resourcexjs": "^2.13.0",
+        "resourcexjs": "^2.14.0",
       },
     },
     "packages/rolexjs": {
@@ -90,7 +90,7 @@
         "@rolexjs/core": "workspace:*",
         "@rolexjs/parser": "workspace:*",
         "@rolexjs/system": "workspace:*",
-        "resourcexjs": "^2.13.0",
+        "resourcexjs": "^2.14.0",
       },
       "devDependencies": {
         "@rolexjs/local-platform": "workspace:*",
@@ -102,8 +102,8 @@
     },
   },
   "overrides": {
-    "@resourcexjs/node-provider": "^2.13.0",
-    "resourcexjs": "^2.13.0",
+    "@resourcexjs/node-provider": "^2.14.0",
+    "resourcexjs": "^2.14.0",
   },
   "packages": {
     "@anthropic-ai/sandbox-runtime": ["@anthropic-ai/sandbox-runtime@0.0.32", "", { "dependencies": { "@pondwader/socks5-server": "^1.0.10", "@types/lodash-es": "^4.17.12", "commander": "^12.1.0", "lodash-es": "^4.17.22", "shell-quote": "^1.8.3", "zod": "^3.24.1" }, "bin": { "srt": "dist/cli.js" } }, "sha512-+mQDTTxBc72W2xpsRHamruom5Xdo8vswTRlKlEtlhMbYemQgqLdQpULHi33dalTkvbbHmwgugLfQ82IZUzqT4w=="],
@@ -344,11 +344,11 @@
 
     "@pondwader/socks5-server": ["@pondwader/socks5-server@1.0.10", "", {}, "sha512-bQY06wzzR8D2+vVCUoBsr5QS2U6UgPUQRmErNwtsuI6vLcyRKkafjkr3KxbtGFf9aBBIV2mcvlsKD1UYaIV+sg=="],
 
-    "@resourcexjs/arp": ["@resourcexjs/arp@2.13.0", "", {}, "sha512-UsMjOC194PYkbBqPhB1/TN70OSij7xu3aSFbUNNwXbTQmM3LU1av05QFVO5jcUsYcERCNtOY+Cov14iE2fJwsg=="],
+    "@resourcexjs/arp": ["@resourcexjs/arp@2.14.0", "https://registry.npmmirror.com/@resourcexjs/arp/-/arp-2.14.0.tgz", {}, "sha512-Kw3g7R3/Fkv3ce2Nl31vgv6PLwNJPXkbeya5//rpuR32LyXcWogF0lrGCskcepqhyJnMeAXOO5ZX0paJBVU1Yw=="],
 
-    "@resourcexjs/core": ["@resourcexjs/core@2.13.0", "", { "dependencies": { "modern-tar": "^0.7.3", "zod": "^4.3.6" } }, "sha512-6y+tEd1t7X/GjkJt1XW47zCUPjzMdE2VPjuqOfy4AgwT90pC8cvUwU6p/yNyEuMvu3Vew2wAHpNK4Tr6c1HcwA=="],
+    "@resourcexjs/core": ["@resourcexjs/core@2.14.0", "https://registry.npmmirror.com/@resourcexjs/core/-/core-2.14.0.tgz", { "dependencies": { "modern-tar": "^0.7.3", "zod": "^4.3.6" } }, "sha512-3QFWVzeKpVtLVMjEb5Qvsg1xFT0aWGutNBndRNS235itM7MhkDLC+tYrebZNJdBp1QnUlVc8TnWGieLhRD17FA=="],
 
-    "@resourcexjs/node-provider": ["@resourcexjs/node-provider@2.13.0", "", { "dependencies": { "@resourcexjs/core": "^2.13.0" } }, "sha512-lqXZ73KN5tGp8czdc03+7TOUBfA5RNzBT3+Dbt2KYSJYSWWWFcZg6MZjsWoI0Kp3Xx59Ll3GqbyWqm4il/U41g=="],
+    "@resourcexjs/node-provider": ["@resourcexjs/node-provider@2.14.0", "https://registry.npmmirror.com/@resourcexjs/node-provider/-/node-provider-2.14.0.tgz", { "dependencies": { "@resourcexjs/core": "^2.14.0" } }, "sha512-GrEvaU2JsrcISsoyrSaRwa8J98s9Ecgt2QM5atV5o0+V3CEayA9zUdccddkRdmkUbX4fqNmnnmbxJYplHODh2g=="],
 
     "@rolexjs/cli": ["@rolexjs/cli@workspace:apps/cli"],
 
@@ -934,7 +934,7 @@
 
     "resolve-from": ["resolve-from@5.0.0", "", {}, "sha512-qYg9KP24dD5qka9J47d0aVky0N+b4fTU89LN9iDnjB5waksiC49rvMB0PrUJQGoTmH50XPiqOvAjDfaijGxYZw=="],
 
-    "resourcexjs": ["resourcexjs@2.13.0", "", { "dependencies": { "@resourcexjs/arp": "^2.13.0", "@resourcexjs/core": "^2.13.0", "sandboxxjs": "^0.5.1" } }, "sha512-ZWCBnNVLQqYz9BceJyf9MBvfJCuH7jgxbgHGi4quu1nwk9JzMKkBCAISYt/dIXWpyki1ey6PuIeJd79pRNmNCQ=="],
+    "resourcexjs": ["resourcexjs@2.14.0", "https://registry.npmmirror.com/resourcexjs/-/resourcexjs-2.14.0.tgz", { "dependencies": { "@resourcexjs/arp": "^2.14.0", "@resourcexjs/core": "^2.14.0", "sandboxxjs": "^0.5.1" } }, "sha512-EGM88QusNIBNKv+PIeyYWBwTxmUK81F+A7jx/SEW6J+CI0JMuPAEPfQ+/i751CJbMlNwHd5ynPiLQ+/WGrDkeA=="],
 
     "reusify": ["reusify@1.1.0", "", {}, "sha512-g6QUff04oZpHs0eG5p83rFLhHeV00ug/Yf9nZM6fLeUrPguBTkTQOdpAWWspMh55TZfVQDPaN3NQJfbVRAxdIw=="],
 
