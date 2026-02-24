@@ -16,6 +16,8 @@
 
 // Re-export core (structures + processes)
 export * from "@rolexjs/core";
+// Context
+export { RoleContext } from "./context.js";
 // Feature (Gherkin type + parse/serialize)
 export type { DataTableRow, Feature, Scenario, Step } from "./feature.js";
 export { parse, serialize } from "./feature.js";
@@ -24,5 +26,3 @@ export { describe, detail, hint, renderState, world } from "./render.js";
 export type { RolexResult } from "./rolex.js";
 // API
 export { createRoleX, Rolex } from "./rolex.js";
-// Context
-export { RoleContext } from "./context.js";

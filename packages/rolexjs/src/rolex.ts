@@ -220,7 +220,13 @@ class RoleNamespace {
   // ---- Execution ----
 
   /** Declare a goal under an individual. */
-  want(individual: string, goal?: string, id?: string, alias?: readonly string[], ctx?: RoleContext): RolexResult {
+  want(
+    individual: string,
+    goal?: string,
+    id?: string,
+    alias?: readonly string[],
+    ctx?: RoleContext
+  ): RolexResult {
     validateGherkin(goal);
     const node = this.rt.create(this.resolve(individual), C.goal, goal, id, alias);
     const result = ok(this.rt, node, "want");
@@ -245,7 +251,13 @@ class RoleNamespace {
   }
 
   /** Add a task to a plan. */
-  todo(plan: string, task?: string, id?: string, alias?: readonly string[], ctx?: RoleContext): RolexResult {
+  todo(
+    plan: string,
+    task?: string,
+    id?: string,
+    alias?: readonly string[],
+    ctx?: RoleContext
+  ): RolexResult {
     validateGherkin(task);
     const node = this.rt.create(this.resolve(plan), C.task, task, id, alias);
     const result = ok(this.rt, node, "todo");
@@ -311,7 +323,13 @@ class RoleNamespace {
   // ---- Cognition ----
 
   /** Reflect: consume encounter, create experience under individual. */
-  reflect(encounter: string, individual: string, experience?: string, id?: string, ctx?: RoleContext): RolexResult {
+  reflect(
+    encounter: string,
+    individual: string,
+    experience?: string,
+    id?: string,
+    ctx?: RoleContext
+  ): RolexResult {
     validateGherkin(experience);
     if (ctx) ctx.requireEncounterIds([encounter]);
     const encNode = this.resolve(encounter);
@@ -332,7 +350,13 @@ class RoleNamespace {
   }
 
   /** Realize: consume experience, create principle under individual. */
-  realize(experience: string, individual: string, principle?: string, id?: string, ctx?: RoleContext): RolexResult {
+  realize(
+    experience: string,
+    individual: string,
+    principle?: string,
+    id?: string,
+    ctx?: RoleContext
+  ): RolexResult {
     validateGherkin(principle);
     if (ctx) ctx.requireExperienceIds([experience]);
     const expNode = this.resolve(experience);
@@ -352,7 +376,13 @@ class RoleNamespace {
   }
 
   /** Master: create procedure under individual, optionally consuming experience. */
-  master(individual: string, procedure: string, id?: string, experience?: string, ctx?: RoleContext): RolexResult {
+  master(
+    individual: string,
+    procedure: string,
+    id?: string,
+    experience?: string,
+    ctx?: RoleContext
+  ): RolexResult {
     validateGherkin(procedure);
     if (ctx && experience) ctx.requireExperienceIds([experience]);
     const parent = this.resolve(individual);

@@ -536,11 +536,7 @@ describe("Rolex API (stateless)", () => {
       rolex.role.want("sean", "Feature: Auth", "g1");
       rolex.role.plan("g1", undefined, "p1");
       rolex.role.todo("p1", "Feature: Login", "t1");
-      rolex.role.finish(
-        "t1",
-        "sean",
-        "Feature: Done\n  Scenario: OK\n    Given x\n    Then y"
-      );
+      rolex.role.finish("t1", "sean", "Feature: Done\n  Scenario: OK\n    Given x\n    Then y");
       rolex.role.reflect(
         "t1-finished",
         "sean",

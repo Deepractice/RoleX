@@ -29,7 +29,11 @@ const server = new FastMCP({
 
 // ========== Helpers ==========
 
-function fmt(process: string, label: string, result: { state: any; process: string; hint?: string }) {
+function fmt(
+  process: string,
+  label: string,
+  result: { state: any; process: string; hint?: string }
+) {
   return render({
     process,
     name: label,

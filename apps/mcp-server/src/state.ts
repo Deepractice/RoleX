@@ -5,7 +5,7 @@
  * registries) now lives in RoleContext (rolexjs). McpState only holds
  * the ctx reference and provides MCP-specific helpers.
  */
-import type { Rolex, RoleContext } from "rolexjs";
+import type { RoleContext, Rolex } from "rolexjs";
 
 export class McpState {
   ctx: RoleContext | null = null;
