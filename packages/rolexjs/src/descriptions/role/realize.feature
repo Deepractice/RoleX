@@ -5,7 +5,7 @@ Feature: realize — experience to principle
   Scenario: Realize a principle
     Given an experience exists from reflection
     When realize is called with experience ids and a principle id
-    Then the experience is consumed
+    Then the experiences are consumed
     And a principle is created under the individual
     And the principle represents transferable, reusable understanding
 

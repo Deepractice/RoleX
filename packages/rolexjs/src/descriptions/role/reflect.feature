@@ -4,9 +4,9 @@ Feature: reflect — encounter to experience
   This is the first step of the cognition cycle.
 
   Scenario: Reflect on an encounter
-    Given an encounter exists from a finished task or closed goal
+    Given an encounter exists from a finished task or completed plan
     When reflect is called with encounter ids and an experience id
-    Then the encounter is consumed
+    Then the encounters are consumed
     And an experience is created under the role
     And the experience can be distilled into knowledge via realize or master
 

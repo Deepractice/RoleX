@@ -9,6 +9,7 @@ import { world } from "rolexjs";
 export const instructions = [
   world["cognitive-priority"],
   world["role-identity"],
+  world.nuwa,
   world.execution,
   world.cognition,
   world.memory,

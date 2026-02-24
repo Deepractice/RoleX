@@ -20,6 +20,8 @@
  *   use(locator, args) — `!ns.method` dispatches to runtime, else delegates to ResourceX
  */
 
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import type { ContextData, Platform } from "@rolexjs/core";
 import * as C from "@rolexjs/core";
 import { parse } from "@rolexjs/parser";
@@ -66,6 +68,8 @@ export class Rolex {
   readonly position: PositionNamespace;
   /** Prototype management — summon, banish, list. */
   readonly proto: PrototypeNamespace;
+  /** Prototype authoring — write prototype files to a directory. */
+  readonly author: AuthorNamespace;
   /** Resource management (optional — powered by ResourceX). */
   readonly resource?: ResourceX;
 
@@ -111,6 +115,7 @@ export class Rolex {
     this.org = new OrgNamespace(this.rt, this.society, this.past, resolve);
     this.position = new PositionNamespace(this.rt, this.society, this.past, resolve);
     this.proto = new PrototypeNamespace(platform.prototype, platform.resourcex);
+    this.author = new AuthorNamespace();
     this.resource = platform.resourcex;
   }
 
@@ -163,6 +168,8 @@ export class Rolex {
         return this.position;
       case "prototype":
         return this.proto;
+      case "author":
+        return this.author;
       default:
         throw new Error(`Unknown namespace "${ns}".`);
     }
@@ -220,6 +227,14 @@ export class Rolex {
         return [a.source];
       case "prototype.banish":
         return [a.id];
+
+      // author
+      case "author.born":
+        return [a.dir, a.content, a.id, a.alias];
+      case "author.teach":
+        return [a.dir, a.content, a.id];
+      case "author.train":
+        return [a.dir, a.content, a.id];
 
       default:
         throw new Error(`No arg mapping for "!${key}".`);
@@ -745,6 +760,101 @@ class PrototypeNamespace {
   /** List all registered prototypes. */
   list(): Record<string, string> {
     return this.prototype?.list() ?? {};
+  }
+}
+
+// ================================================================
+//  Author — prototype file authoring
+// ================================================================
+
+interface AuthorManifest {
+  id: string;
+  type: string;
+  alias?: readonly string[];
+  children?: Record<string, { type: string }>;
+}
+
+class AuthorNamespace {
+  /** Born: create a prototype directory with manifest and root feature file. */
+  born(dir: string, content?: string, id?: string, alias?: readonly string[]): RolexResult {
+    validateGherkin(content);
+    if (!id) throw new Error("id is required for prototype authoring.");
+    mkdirSync(dir, { recursive: true });
+
+    const manifest: AuthorManifest = {
+      id,
+      type: "individual",
+      ...(alias && alias.length > 0 ? { alias } : {}),
+      children: { identity: { type: "identity" } },
+    };
+    writeFileSync(join(dir, "individual.json"), JSON.stringify(manifest, null, 2) + "\n", "utf-8");
+
+    if (content) {
+      writeFileSync(join(dir, `${id}.individual.feature`), content + "\n", "utf-8");
+    }
+
+    const state: State = {
+      id,
+      name: "individual",
+      description: "",
+      parent: null,
+      ...(alias ? { alias } : {}),
+      ...(content ? { information: content } : {}),
+    };
+    return { state, process: "born" };
+  }
+
+  /** Teach: add a principle to an existing prototype directory. */
+  teach(dir: string, principle: string, id?: string): RolexResult {
+    validateGherkin(principle);
+    if (!id) throw new Error("id is required for prototype authoring.");
+    const manifest = this.readManifest(dir);
+    if (!manifest.children) manifest.children = {};
+    manifest.children[id] = { type: "principle" };
+    this.writeManifest(dir, manifest);
+
+    writeFileSync(join(dir, `${id}.principle.feature`), principle + "\n", "utf-8");
+
+    const state: State = {
+      id,
+      name: "principle",
+      description: "",
+      parent: null,
+      information: principle,
+    };
+    return { state, process: "teach" };
+  }
+
+  /** Train: add a procedure to an existing prototype directory. */
+  train(dir: string, procedure: string, id?: string): RolexResult {
+    validateGherkin(procedure);
+    if (!id) throw new Error("id is required for prototype authoring.");
+    const manifest = this.readManifest(dir);
+    if (!manifest.children) manifest.children = {};
+    manifest.children[id] = { type: "procedure" };
+    this.writeManifest(dir, manifest);
+
+    writeFileSync(join(dir, `${id}.procedure.feature`), procedure + "\n", "utf-8");
+
+    const state: State = {
+      id,
+      name: "procedure",
+      description: "",
+      parent: null,
+      information: procedure,
+    };
+    return { state, process: "train" };
+  }
+
+  private readManifest(dir: string): AuthorManifest {
+    const path = join(dir, "individual.json");
+    if (!existsSync(path))
+      throw new Error(`No individual.json found in "${dir}". Run author.born first.`);
+    return JSON.parse(readFileSync(path, "utf-8"));
+  }
+
+  private writeManifest(dir: string, manifest: AuthorManifest): void {
+    writeFileSync(join(dir, "individual.json"), JSON.stringify(manifest, null, 2) + "\n", "utf-8");
   }
 }
 

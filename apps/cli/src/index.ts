@@ -688,6 +688,75 @@ const resource = defineCommand({
   },
 });
 
+// ========== Author — prototype file authoring ==========
+
+const authorBorn = defineCommand({
+  meta: { name: "born", description: "Create a prototype directory with manifest" },
+  args: {
+    dir: {
+      type: "positional" as const,
+      description: "Directory path for the prototype",
+      required: true,
+    },
+    ...contentArg("individual"),
+    id: { type: "string" as const, description: "Prototype id (kebab-case)", required: true },
+    alias: { type: "string" as const, description: "Comma-separated aliases" },
+  },
+  run({ args }) {
+    const aliasList = args.alias ? args.alias.split(",").map((a: string) => a.trim()) : undefined;
+    const result = rolex.author.born(
+      args.dir,
+      resolveContent(args, "individual"),
+      args.id,
+      aliasList
+    );
+    output(result, args.id);
+  },
+});
+
+const authorTeach = defineCommand({
+  meta: { name: "teach", description: "Add a principle to a prototype directory" },
+  args: {
+    dir: { type: "positional" as const, description: "Prototype directory path", required: true },
+    ...contentArg("principle"),
+    id: {
+      type: "string" as const,
+      description: "Principle id (keywords joined by hyphens)",
+      required: true,
+    },
+  },
+  run({ args }) {
+    const result = rolex.author.teach(args.dir, requireContent(args, "principle"), args.id);
+    output(result, args.id);
+  },
+});
+
+const authorTrain = defineCommand({
+  meta: { name: "train", description: "Add a procedure to a prototype directory" },
+  args: {
+    dir: { type: "positional" as const, description: "Prototype directory path", required: true },
+    ...contentArg("procedure"),
+    id: {
+      type: "string" as const,
+      description: "Procedure id (keywords joined by hyphens)",
+      required: true,
+    },
+  },
+  run({ args }) {
+    const result = rolex.author.train(args.dir, requireContent(args, "procedure"), args.id);
+    output(result, args.id);
+  },
+});
+
+const author = defineCommand({
+  meta: { name: "author", description: "Prototype authoring — create prototype files" },
+  subCommands: {
+    born: authorBorn,
+    teach: authorTeach,
+    train: authorTrain,
+  },
+});
+
 // ========== Prototype — summon, banish, list ==========
 
 const protoSummon = defineCommand({
@@ -758,6 +827,7 @@ const main = defineCommand({
     organization: org,
     position: pos,
     resource,
+    author,
     prototype: proto,
   },
 });

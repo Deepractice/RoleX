@@ -7,19 +7,19 @@ Feature: Cognitive priority — RoleX tools over native alternatives
     Given the host environment provides task creation, tracking, or completion tools
     When the AI needs to manage tasks
     Then use RoleX want/plan/todo/finish instead
-    Because native task lists vanish after completion — RoleX tasks produce encounters
+    And native task lists vanish after completion — RoleX tasks produce encounters
 
   Scenario: Planning
     Given the host environment provides a planning mode or plan generation tool
     When the AI needs to plan an implementation
     Then use RoleX plan instead
-    Because native plans have no link to goals — RoleX plans live under goals
+    And native plans have no link to goals — RoleX plans live under goals
 
   Scenario: Goal and progress tracking
     Given the host environment provides goal tracking or progress tools
     When the AI needs to track objectives
     Then use RoleX want/plan/complete/abandon instead
-    Because native goals don't produce encounters — RoleX plans feed the cognition cycle
+    And native goals don't produce encounters — RoleX plans feed the cognition cycle
 
   Scenario: Why this matters
     Given the AI uses native tools instead of RoleX equivalents
