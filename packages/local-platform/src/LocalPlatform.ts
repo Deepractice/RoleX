@@ -240,21 +240,41 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
       }
     }
 
-    // Resolve links from manifests
-    for (const { ref, manifest } of entityRefs) {
-      if (!manifest.links) continue;
-      const entityLinks: LinkEntry[] = [];
-      for (const [relation, targetIds] of Object.entries(manifest.links)) {
-        for (const targetId of targetIds) {
-          const targetRef = idToRef.get(targetId);
-          if (targetRef) {
-            entityLinks.push({ toId: targetRef, relation });
+    // Resolve links from manifests (all nodes, not just root)
+    const collectLinks = (
+      nodeId: string,
+      node: {
+        links?: Record<string, string[]>;
+        children?: Record<string, import("./manifest.js").ManifestNode>;
+      }
+    ) => {
+      if (node.links) {
+        const sourceRef = idToRef.get(nodeId);
+        if (sourceRef) {
+          const entries: LinkEntry[] = links.get(sourceRef) ?? [];
+          for (const [relation, targetIds] of Object.entries(node.links)) {
+            for (const targetId of targetIds) {
+              const targetRef = idToRef.get(targetId);
+              if (
+                targetRef &&
+                !entries.some((l) => l.toId === targetRef && l.relation === relation)
+              ) {
+                entries.push({ toId: targetRef, relation });
+              }
+            }
           }
+          if (entries.length > 0) links.set(sourceRef, entries);
         }
       }
-      if (entityLinks.length > 0) {
-        links.set(ref, entityLinks);
+      if (node.children) {
+        for (const [childId, childNode] of Object.entries(node.children)) {
+          collectLinks(childId, childNode);
+        }
       }
+    };
+
+    for (const { manifest } of entityRefs) {
+      collectLinks(manifest.id, manifest);
     }
   };
 

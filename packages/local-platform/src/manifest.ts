@@ -26,6 +26,7 @@ export interface ManifestNode {
   readonly type: string;
   readonly ref?: string;
   readonly children?: Record<string, ManifestNode>;
+  readonly links?: Record<string, string[]>;
 }
 
 /** Root manifest for an entity (individual or organization). */
@@ -74,6 +75,7 @@ export function stateToFiles(state: State): { manifest: Manifest; files: FileEnt
     const entry: ManifestNode = {
       type: node.name,
       ...(node.ref ? { ref: node.ref } : {}),
+      ...(node.links && node.links.length > 0 ? { links: buildManifestLinks(node.links) } : {}),
     };
     if (node.children && node.children.length > 0) {
       const children: Record<string, ManifestNode> = {};
@@ -136,6 +138,18 @@ export function filesToState(manifest: Manifest, fileContents: Record<string, st
       }
     }
 
+    const nodeLinks: { relation: string; target: State }[] = [];
+    if (node.links) {
+      for (const [relation, targetIds] of Object.entries(node.links)) {
+        for (const targetId of targetIds) {
+          nodeLinks.push({
+            relation,
+            target: { id: targetId, name: "", description: "", parent: null },
+          });
+        }
+      }
+    }
+
     return {
       ...(node.ref ? { ref: node.ref } : {}),
       id,
@@ -144,6 +158,7 @@ export function filesToState(manifest: Manifest, fileContents: Record<string, st
       parent: null,
       ...(information ? { information } : {}),
       ...(children.length > 0 ? { children } : {}),
+      ...(nodeLinks.length > 0 ? { links: nodeLinks } : {}),
     };
   };
 
