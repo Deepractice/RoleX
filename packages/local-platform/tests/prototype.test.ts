@@ -165,6 +165,6 @@ describe("LocalPlatform Prototype (registry-based)", () => {
   test("builtin nuwa is always present in list", () => {
     const platform = localPlatform({ dataDir: testDir, resourceDir });
     const list = platform.prototype!.list();
-    expect(list.nuwa).toBe("https://github.com/Deepractice/DeepracticeX/tree/main/roles/nuwa");
+    expect(list.nuwa).toBe("nuwa");
   });
 });

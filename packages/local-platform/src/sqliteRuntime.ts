@@ -5,12 +5,12 @@
  * No in-memory Map, no load/save cycle, no stale refs.
  */
 
+import type { CommonXDatabase } from "@deepracticex/drizzle";
 import type { Runtime, State, Structure } from "@rolexjs/system";
 import { and, eq, isNull } from "drizzle-orm";
-import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import { links, nodes } from "./schema.js";
 
-type DB = BunSQLiteDatabase;
+type DB = CommonXDatabase;
 
 // ===== Helpers =====
 
@@ -197,8 +197,9 @@ export function createSqliteRuntime(db: DB): Runtime {
 
     tag(node, tagValue) {
       if (!node.ref) throw new Error("Node has no ref");
-      const updated = db.update(nodes).set({ tag: tagValue }).where(eq(nodes.ref, node.ref)).run();
-      if (updated.changes === 0) throw new Error(`Node not found: ${node.ref}`);
+      const row = db.select().from(nodes).where(eq(nodes.ref, node.ref)).get();
+      if (!row) throw new Error(`Node not found: ${node.ref}`);
+      db.update(nodes).set({ tag: tagValue }).where(eq(nodes.ref, node.ref)).run();
     },
 
     project(node) {

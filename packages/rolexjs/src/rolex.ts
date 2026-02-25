@@ -223,6 +223,8 @@ export class Rolex {
         return [a.content, a.id, a.alias];
       case "position.charge":
         return [a.position, a.content, a.id];
+      case "position.require":
+        return [a.position, a.content, a.id];
       case "position.abolish":
         return [a.position];
       case "position.appoint":
@@ -745,6 +747,21 @@ class PositionNamespace {
     return ok(this.rt, node, "charge");
   }
 
+  // ---- Skill requirements ----
+
+  /** Require: declare that this position requires a skill. Upserts by id. */
+  require(position: string, procedure: string, id?: string): RolexResult {
+    validateGherkin(procedure);
+    const parent = this.resolve(position);
+    if (id) {
+      const state = this.rt.project(parent);
+      const existing = findInState(state, id);
+      if (existing) this.rt.remove(existing);
+    }
+    const proc = this.rt.create(parent, C.procedure, procedure, id);
+    return ok(this.rt, proc, "require");
+  }
+
   // ---- Archival ----
 
   /** Abolish a position. */
@@ -754,10 +771,25 @@ class PositionNamespace {
 
   // ---- Appointment ----
 
-  /** Appoint: link individual to position via appointment. */
+  /** Appoint: link individual to position via appointment. Auto-trains required skills. */
   appoint(position: string, individual: string): RolexResult {
     const posNode = this.resolve(position);
-    this.rt.link(posNode, this.resolve(individual), "appointment", "serve");
+    const indNode = this.resolve(individual);
+    this.rt.link(posNode, indNode, "appointment", "serve");
+
+    // Auto-train: inject required procedures into the individual
+    const posState = this.rt.project(posNode);
+    const required = (posState.children ?? []).filter((c) => c.name === "procedure");
+    for (const proc of required) {
+      if (proc.id) {
+        // Upsert: remove existing procedure with same id
+        const indState = this.rt.project(indNode);
+        const existing = findInState(indState, proc.id);
+        if (existing) this.rt.remove(existing);
+      }
+      this.rt.create(indNode, C.procedure, proc.information, proc.id);
+    }
+
     return ok(this.rt, posNode, "appoint");
   }
 

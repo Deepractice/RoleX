@@ -1,16 +1,10 @@
 <div align="center">
   <h1>RoleX</h1>
   <p>
-    <strong>Role-Driven Development (RDD) Framework for AI Agents</strong>
+    <strong>Social Framework for AI Agents</strong>
   </p>
-  <p>AI 智能体角色驱动开发框架</p>
-
-  <p>
-    <b>Persistent Identity</b> · <b>Goal-Driven</b> · <b>Gherkin-Native</b> · <b>MCP Ready</b>
-  </p>
-  <p>
-    <b>持久身份</b> · <b>目标驱动</b> · <b>Gherkin 原生</b> · <b>MCP 即用</b>
-  </p>
+  <p>AI 智能体社会化框架</p>
+  <p><em>Give AI agents persistent identity, social structure, and growth through experience — modeled on how human societies work.</em></p>
 
   <p>
     <a href="https://github.com/Deepractice/RoleX"><img src="https://img.shields.io/github/stars/Deepractice/RoleX?style=social" alt="Stars"/></a>
@@ -27,57 +21,154 @@
 
 ---
 
-RoleX lets AI agents have persistent identity, goals, plans, and tasks — all expressed in Gherkin `.feature` files. Instead of starting every conversation from scratch, your AI remembers who it is and what it's working on.
+## Why Social?
 
-RoleX evolved from [PromptX](https://github.com/Deepractice/PromptX) — rethinking AI role management with Gherkin-native identity and goal-driven development.
+Human societies solve a problem AI agents haven't: **how to organize, grow, and persist**.
 
-## Core Concepts
+In a society, people have identities, join organizations, hold positions, accumulate experience, and pass on knowledge. RoleX brings this same model to AI agents:
 
-**Everything is Gherkin.** Identity, knowledge, goals, plans, tasks — one format, one language.
+- **Identity** — An agent knows who it is across sessions, not just within one
+- **Organization** — Agents belong to groups, hold positions, carry duties
+- **Growth** — Experience accumulates into principles and reusable skills
+- **Persistence** — Goals, plans, and knowledge survive beyond a single conversation
 
-```text
-Society (Rolex)          # Top-level: create roles, found organizations
-  └── Organization       # Team structure: hire/fire roles
-       └── Role          # First-person: identity, goals, plans, tasks
+Everything is expressed in **Gherkin** `.feature` format — human-readable, structured, versionable.
+
+## Architecture
+
+RoleX models a **society** of AI agents, mirroring how human organizations work:
+
+```
+Society
+├── Individual      # An agent with identity, goals, and knowledge
+├── Organization    # Groups individuals via membership
+├── Position        # Defines roles with duties and required skills
+└── Past            # Archive for retired/dissolved entities
 ```
 
-### Five Dimensions of a Role
+## Systems
 
-| Dimension    | What it is                                          | Example                                       |
-| ------------ | --------------------------------------------------- | --------------------------------------------- |
-| **Identity** | Who I am — persona, knowledge, experience, voice    | "I am Sean, a backend architect"              |
-| **Goal**     | What I want to achieve — with success criteria      | "Build user authentication system"            |
-| **Plan**     | How I'll do it — phased execution strategy          | "Phase 1: Schema, Phase 2: API, Phase 3: JWT" |
-| **Task**     | Concrete work items — directly executable           | "Implement POST /api/auth/register"           |
-| **Skill**    | What I can do — AI capabilities, no teaching needed | Tool use, code generation                     |
+RoleX has four core systems. Each serves a distinct purpose in the agent lifecycle.
 
-### How It Works
+### Execution — The Doing Cycle
 
-1. **Activate nuwa (the genesis role)** — she guides everything else
-2. nuwa creates roles, teaches knowledge, builds organizations
-3. Each role works autonomously: set goals, make plans, execute tasks
-4. Experience accumulates as part of identity — roles grow over time
+Goal-driven work lifecycle. The agent declares what it wants, plans how to get there, and executes.
+
+```
+activate → want → plan → todo → finish → complete / abandon
+```
+
+| Tool | What it does |
+|------|-------------|
+| `activate` | Enter a role — load identity, goals, knowledge |
+| `focus` | View or switch the current goal |
+| `want` | Declare a goal with success criteria |
+| `plan` | Break a goal into phases (supports sequential and fallback strategies) |
+| `todo` | Create a concrete task under a plan |
+| `finish` | Mark a task done, optionally record what happened |
+| `complete` | Mark a plan done — strategy succeeded |
+| `abandon` | Drop a plan — strategy failed, but learning is captured |
+
+### Cognition — The Learning Cycle
+
+How agents grow. Raw encounters become structured experience, then distilled into reusable knowledge.
+
+```
+encounter → reflect → experience → realize / master → principle / procedure
+```
+
+| Tool | What it does |
+|------|-------------|
+| `reflect` | Digest encounters into experience — pattern recognition |
+| `realize` | Distill experience into a principle — transferable truth |
+| `master` | Distill experience into a procedure — reusable skill |
+| `forget` | Remove outdated knowledge |
+
+### World Management — via `use`
+
+Manage the society structure through the unified `use` tool with `!namespace.method` commands.
+
+**Individual** — agent lifecycle
+
+| Command | What it does |
+|---------|-------------|
+| `!individual.born` | Create an individual |
+| `!individual.teach` | Inject a principle (knowledge) |
+| `!individual.train` | Inject a procedure (skill) |
+| `!individual.retire` | Archive an individual |
+
+**Organization** — group structure
+
+| Command | What it does |
+|---------|-------------|
+| `!org.found` | Create an organization |
+| `!org.charter` | Define mission and governance |
+| `!org.hire` | Add a member |
+| `!org.fire` | Remove a member |
+| `!org.dissolve` | Archive an organization |
+
+**Position** — roles and responsibilities
+
+| Command | What it does |
+|---------|-------------|
+| `!position.establish` | Create a position |
+| `!position.charge` | Assign a duty |
+| `!position.require` | Declare a required skill — auto-trained on appointment |
+| `!position.appoint` | Appoint an individual (inherits required skills) |
+| `!position.dismiss` | Remove an individual from a position |
+| `!position.abolish` | Archive a position |
+
+**Census** — society-level queries
+
+| Command | What it does |
+|---------|-------------|
+| `!census.list` | List all individuals, organizations, positions |
+| `!census.list { type: "individual" }` | Filter by type |
+| `!census.list { type: "past" }` | View archived entities |
+
+### Skill System — Progressive Disclosure
+
+Skills load on demand, keeping the agent's context lean:
+
+1. **Procedure** (always loaded) — metadata: what the skill is, when to use it
+2. **Skill** (on demand) — full instructions loaded via `skill(locator)`
+3. **Resource** (on demand) — external resources loaded via `use(locator)`
+
+### Resource System — Agent Capital
+
+Resources are the **means of production** for AI agents — skills, prototypes, and knowledge packages that can be accumulated, shared, and reused across agents and teams.
+
+Powered by [ResourceX](https://github.com/Deepractice/ResourceX), the resource system handles the full lifecycle:
+
+**Production** — create and package
+
+| Command | What it does |
+|---------|-------------|
+| `!resource.add` | Register a local resource |
+| `!prototype.summon` | Pull and register a prototype from source |
+| `!prototype.banish` | Unregister a prototype |
+
+**Distribution** — share and consume
+
+| Command | What it does |
+|---------|-------------|
+| `!resource.push` | Publish a resource to a registry |
+| `!resource.pull` | Download a resource from a registry |
+| `!resource.search` | Search available resources |
+
+**Application** — load and use
+
+| Command | What it does |
+|---------|-------------|
+| `skill(locator)` | Load full skill instructions on demand |
+| `use(locator)` | Execute or ingest any resource |
+| `!resource.info` | Inspect a resource |
+
+This is how agent knowledge scales beyond a single individual — skills authored once can be distributed to any agent through prototypes and registries.
 
 ## Quick Start
 
-Install the MCP server and connect it to your AI client. That's it — nuwa will guide you from there.
-
-### Claude Desktop
-
-Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
-
-```json
-{
-  "mcpServers": {
-    "rolex": {
-      "command": "npx",
-      "args": ["-y", "@rolexjs/mcp-server"]
-    }
-  }
-}
-```
-
-Restart Claude Desktop after saving.
+Install the MCP server and connect it to your AI client. Then say **"activate nuwa"** — she will guide you from there.
 
 ### Claude Code
 
@@ -85,7 +176,9 @@ Restart Claude Desktop after saving.
 claude mcp add rolex -- npx -y @rolexjs/mcp-server
 ```
 
-Or add to your project's `.mcp.json`:
+### Claude Desktop
+
+Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
 
 ```json
 {
@@ -113,21 +206,6 @@ Add to `.cursor/mcp.json` (project) or `~/.cursor/mcp.json` (global):
 }
 ```
 
-### Windsurf
-
-Edit `~/.codeium/windsurf/mcp_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "rolex": {
-      "command": "npx",
-      "args": ["-y", "@rolexjs/mcp-server"]
-    }
-  }
-}
-```
-
 ### VS Code
 
 Add to `.vscode/mcp.json`:
@@ -137,6 +215,21 @@ Add to `.vscode/mcp.json`:
   "servers": {
     "rolex": {
       "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@rolexjs/mcp-server"]
+    }
+  }
+}
+```
+
+### Windsurf
+
+Edit `~/.codeium/windsurf/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "rolex": {
       "command": "npx",
       "args": ["-y", "@rolexjs/mcp-server"]
     }
@@ -176,57 +269,47 @@ Add to Zed's `settings.json`:
 }
 ```
 
-## After Installation
+## Gherkin — The Universal Language
 
-Start a conversation with your AI and say:
+Everything in RoleX is expressed as Gherkin Features:
 
-> Activate nuwa
+```gherkin
+Feature: Sean
+  A backend architect who builds AI agent frameworks.
 
-nuwa is the genesis role. She will bootstrap the environment and guide you through creating your own roles, organizations, and knowledge systems.
+  Scenario: Background
+    Given I am a software engineer
+    And I specialize in systems design
+```
 
-## MCP Tools
+Goals, plans, tasks, principles, procedures, encounters, experiences — all Gherkin. This means:
 
-RoleX provides 15 tools through the MCP server, organized in three layers:
+- **Human-readable** — anyone can understand an agent's state
+- **Structured** — parseable, diffable, versionable
+- **Composable** — Features compose naturally into larger systems
 
-| Layer            | Tools                                                                                     | Who uses it |
-| ---------------- | ----------------------------------------------------------------------------------------- | ----------- |
-| **Society**      | `society` (born, found, directory, find, teach)                                           | nuwa only   |
-| **Organization** | `organization` (hire, fire)                                                               | nuwa only   |
-| **Role**         | `identity`, `focus`, `want`, `plan`, `todo`, `achieve`, `abandon`, `finish`, `synthesize` | Any role    |
+## Storage
+
+RoleX persists everything in SQLite at `~/.deepractice/rolex/`:
+
+```
+~/.deepractice/rolex/
+├── rolex.db          # SQLite — single source of truth
+├── prototype.json    # Prototype registry
+└── context/          # Role context (focused goal/plan per role)
+```
 
 ## Packages
 
-| Package                   | Description                                            |
-| ------------------------- | ------------------------------------------------------ |
-| `@rolexjs/core`           | Core types and Platform interface                      |
-| `@rolexjs/parser`         | Gherkin parser (wraps @cucumber/gherkin)               |
-| `@rolexjs/local-platform` | Filesystem-based storage implementation                |
-| `rolexjs`                 | Main package — Rolex + Organization + Role + bootstrap |
-| `@rolexjs/mcp-server`     | MCP server for AI clients                              |
-| `@rolexjs/cli`            | Command-line interface                                 |
-
-## Storage Structure
-
-RoleX stores everything in a `.rolex/` directory:
-
-```text
-.rolex/
-├── rolex.json                              # Organization config
-├── alex/
-│   ├── identity/
-│   │   ├── persona.identity.feature        # Who I am
-│   │   ├── arch.knowledge.identity.feature # What I know
-│   │   └── v1.experience.identity.feature  # What I've learned
-│   └── goals/
-│       └── auth-system/
-│           ├── auth-system.goal.feature    # What I want
-│           ├── auth-system.plan.feature    # How I'll do it
-│           └── tasks/
-│               └── register.task.feature   # Concrete work
-└── bob/
-    ├── identity/
-    └── goals/
-```
+| Package | Description |
+|---------|-------------|
+| `rolexjs` | Core API — Rolex class, namespaces, rendering |
+| `@rolexjs/mcp-server` | MCP server for AI clients |
+| `@rolexjs/core` | Core types, structures, platform interface |
+| `@rolexjs/system` | Runtime interface, state merging, prototype |
+| `@rolexjs/parser` | Gherkin parser |
+| `@rolexjs/local-platform` | SQLite-backed runtime implementation |
+| `@rolexjs/cli` | Command-line interface |
 
 ---
 
@@ -234,10 +317,9 @@ RoleX stores everything in a `.rolex/` directory:
   <h3>Ecosystem</h3>
   <p>Part of the <a href="https://github.com/Deepractice">Deepractice</a> AI Agent infrastructure:</p>
   <p>
-    <a href="https://github.com/Deepractice/AgentX"><strong>AgentX</strong></a> ·
-    <a href="https://github.com/Deepractice/PromptX"><strong>PromptX</strong></a> ·
-    <a href="https://github.com/Deepractice/ResourceX"><strong>ResourceX</strong></a> ·
-    <a href="https://github.com/Deepractice/RoleX"><strong>RoleX</strong></a>
+    <a href="https://github.com/Deepractice/ResourceX"><strong>ResourceX</strong></a> &middot;
+    <a href="https://github.com/Deepractice/RoleX"><strong>RoleX</strong></a> &middot;
+    <a href="https://github.com/Deepractice/CommonX"><strong>CommonX</strong></a>
   </p>
 </div>
 

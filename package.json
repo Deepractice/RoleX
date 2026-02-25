@@ -46,7 +46,7 @@
   },
   "dependencies": {
     "@resourcexjs/node-provider": "^2.14.0",
-    "resourcexjs": "^2.14.0"
+    "resourcexjs": "^2.15.0"
   },
   "overrides": {
     "resourcexjs": "^2.14.0",

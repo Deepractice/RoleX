@@ -152,6 +152,54 @@ describe("Rolex API (stateless)", () => {
       const r = rolex.position.dismiss("pos1", "sean");
       expect(r.state.links).toBeUndefined();
     });
+
+    test("require adds procedure to position", () => {
+      const rolex = setup();
+      rolex.position.establish(undefined, "architect");
+      const r = rolex.position.require(
+        "architect",
+        "Feature: System Design\n  Scenario: Design APIs",
+        "system-design"
+      );
+      expect(r.state.name).toBe("procedure");
+      expect(r.state.id).toBe("system-design");
+      expect(r.process).toBe("require");
+    });
+
+    test("require upserts by id", () => {
+      const rolex = setup();
+      rolex.position.establish(undefined, "architect");
+      rolex.position.require("architect", "Feature: Old skill", "skill-1");
+      rolex.position.require("architect", "Feature: Updated skill", "skill-1");
+      const pos = rolex.find("architect")!;
+      const procedures = (pos as any).children?.filter((c: any) => c.name === "procedure");
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0].information).toBe("Feature: Updated skill");
+    });
+
+    test("appoint auto-trains required skills to individual", () => {
+      const rolex = setup();
+      rolex.individual.born(undefined, "sean");
+      rolex.position.establish(undefined, "architect");
+      rolex.position.require("architect", "Feature: System Design", "system-design");
+      rolex.position.require("architect", "Feature: Code Review", "code-review");
+      rolex.position.appoint("architect", "sean");
+
+      // Individual should now have the required procedures
+      const sean = rolex.find("sean")!;
+      const procedures = (sean as any).children?.filter((c: any) => c.name === "procedure");
+      expect(procedures).toHaveLength(2);
+      const ids = procedures.map((p: any) => p.id).sort();
+      expect(ids).toEqual(["code-review", "system-design"]);
+    });
+
+    test("appoint without required skills still works", () => {
+      const rolex = setup();
+      rolex.individual.born(undefined, "sean");
+      rolex.position.establish(undefined, "pos1");
+      const r = rolex.position.appoint("pos1", "sean");
+      expect(r.state.links).toHaveLength(1);
+    });
   });
 
   // ============================================================
