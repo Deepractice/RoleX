@@ -39,6 +39,9 @@ export interface Runtime {
   /** Remove a bidirectional cross-branch relation between two nodes. */
   unlink(from: Structure, to: Structure, relation: string, reverse: string): void;
 
+  /** Set a tag on a node (e.g., "done", "abandoned"). */
+  tag(node: Structure, tag: string): void;
+
   /** Project the current state of a node and its subtree (including links). */
   project(node: Structure): State;
 
@@ -218,6 +221,13 @@ export const createRuntime = (): Runtime => {
         if (filtered.length === 0) links.delete(to.ref);
         else links.set(to.ref, filtered);
       }
+    },
+
+    tag(node, tagValue) {
+      if (!node.ref) throw new Error("Node has no ref");
+      const treeNode = nodes.get(node.ref);
+      if (!treeNode) throw new Error(`Node not found: ${node.ref}`);
+      (treeNode.node as any).tag = tagValue;
     },
 
     project(node) {

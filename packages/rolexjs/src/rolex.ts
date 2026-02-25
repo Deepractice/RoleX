@@ -466,16 +466,16 @@ class RoleNamespace {
     return result;
   }
 
-  /** Finish a task: consume task, optionally create encounter under individual. */
+  /** Finish a task: tag task as done, optionally create encounter under individual. */
   finish(task: string, individual: string, encounter?: string, ctx?: RoleContext): RolexResult {
     validateGherkin(encounter);
     const taskNode = this.resolve(task);
+    this.rt.tag(taskNode, "done");
     let enc: Structure | undefined;
     if (encounter) {
       const encId = taskNode.id ? `${taskNode.id}-finished` : undefined;
       enc = this.rt.create(this.resolve(individual), C.encounter, encounter, encId);
     }
-    this.rt.remove(taskNode);
     const result: RolexResult = enc
       ? ok(this.rt, enc, "finish")
       : { state: this.rt.project(this.resolve(individual)), process: "finish" };
@@ -489,13 +489,13 @@ class RoleNamespace {
     return result;
   }
 
-  /** Complete a plan: consume plan, create encounter under individual. */
+  /** Complete a plan: tag plan as done, create encounter under individual. */
   complete(plan: string, individual: string, encounter?: string, ctx?: RoleContext): RolexResult {
     validateGherkin(encounter);
     const planNode = this.resolve(plan);
+    this.rt.tag(planNode, "done");
     const encId = planNode.id ? `${planNode.id}-completed` : undefined;
     const enc = this.rt.create(this.resolve(individual), C.encounter, encounter, encId);
-    this.rt.remove(planNode);
     const result = ok(this.rt, enc, "complete");
     if (ctx) {
       ctx.addEncounter(result.state.id ?? plan);
@@ -506,13 +506,13 @@ class RoleNamespace {
     return result;
   }
 
-  /** Abandon a plan: consume plan, create encounter under individual. */
+  /** Abandon a plan: tag plan as abandoned, create encounter under individual. */
   abandon(plan: string, individual: string, encounter?: string, ctx?: RoleContext): RolexResult {
     validateGherkin(encounter);
     const planNode = this.resolve(plan);
+    this.rt.tag(planNode, "abandoned");
     const encId = planNode.id ? `${planNode.id}-abandoned` : undefined;
     const enc = this.rt.create(this.resolve(individual), C.encounter, encounter, encId);
-    this.rt.remove(planNode);
     const result = ok(this.rt, enc, "abandon");
     if (ctx) {
       ctx.addEncounter(result.state.id ?? plan);

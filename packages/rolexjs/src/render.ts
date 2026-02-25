@@ -147,10 +147,11 @@ export function renderState(state: State, depth = 1, options?: RenderStateOption
   const level = Math.min(depth, 6);
   const heading = "#".repeat(level);
 
-  // Heading: [name] (id) {origin}
+  // Heading: [name] (id) {origin} #tag
   const idPart = state.id ? ` (${state.id})` : "";
   const originPart = state.origin ? ` {${state.origin}}` : "";
-  lines.push(`${heading} [${state.name}]${idPart}${originPart}`);
+  const tagPart = state.tag ? ` #${state.tag}` : "";
+  lines.push(`${heading} [${state.name}]${idPart}${originPart}${tagPart}`);
 
   // Folded: heading only
   if (options?.fold?.(state)) {

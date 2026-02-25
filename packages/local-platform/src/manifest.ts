@@ -25,6 +25,7 @@ import type { State } from "@rolexjs/system";
 export interface ManifestNode {
   readonly type: string;
   readonly ref?: string;
+  readonly tag?: string;
   readonly children?: Record<string, ManifestNode>;
   readonly links?: Record<string, string[]>;
 }
@@ -75,6 +76,7 @@ export function stateToFiles(state: State): { manifest: Manifest; files: FileEnt
     const entry: ManifestNode = {
       type: node.name,
       ...(node.ref ? { ref: node.ref } : {}),
+      ...(node.tag ? { tag: node.tag } : {}),
       ...(node.links && node.links.length > 0 ? { links: buildManifestLinks(node.links) } : {}),
     };
     if (node.children && node.children.length > 0) {
@@ -156,6 +158,7 @@ export function filesToState(manifest: Manifest, fileContents: Record<string, st
       name: node.type,
       description: "",
       parent: null,
+      ...(node.tag ? { tag: node.tag } : {}),
       ...(information ? { information } : {}),
       ...(children.length > 0 ? { children } : {}),
       ...(nodeLinks.length > 0 ? { links: nodeLinks } : {}),

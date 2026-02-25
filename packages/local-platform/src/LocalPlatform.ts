@@ -412,6 +412,15 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
       save();
     },
 
+    tag(node, tagValue) {
+      load();
+      if (!node.ref) throw new Error("Node has no ref");
+      const treeNode = nodes.get(node.ref);
+      if (!treeNode) throw new Error(`Node not found: ${node.ref}`);
+      (treeNode.node as any).tag = tagValue;
+      save();
+    },
+
     project(node) {
       load();
       if (!node.ref || !nodes.has(node.ref)) {
