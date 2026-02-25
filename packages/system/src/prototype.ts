@@ -19,11 +19,11 @@ export interface Prototype {
   /** Resolve a prototype State by id. Returns undefined if no prototype exists. */
   resolve(id: string): Promise<State | undefined>;
 
-  /** Summon: register a prototype — bind id to a source (path or locator). */
-  summon(id: string, source: string): void;
+  /** Settle: register a prototype — bind id to a source (path or locator). */
+  settle(id: string, source: string): void;
 
-  /** Banish: unregister a prototype by id. */
-  banish(id: string): void;
+  /** Evict: unregister a prototype by id. */
+  evict(id: string): void;
 
   /** List all registered prototypes: id → source mapping. */
   list(): Record<string, string>;
@@ -44,11 +44,11 @@ export const createPrototype = (): Prototype & {
       return states.get(id);
     },
 
-    summon(id, source) {
+    settle(id, source) {
       sources.set(id, source);
     },
 
-    banish(id) {
+    evict(id) {
       sources.delete(id);
       states.delete(id);
     },

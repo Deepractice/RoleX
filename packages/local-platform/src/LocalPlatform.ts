@@ -18,7 +18,7 @@ import { openDatabase } from "@deepracticex/sqlite";
 import { NodeProvider } from "@resourcexjs/node-provider";
 import type { ContextData, Platform } from "@rolexjs/core";
 import { organizationType, roleType } from "@rolexjs/resourcex-types";
-import type { Prototype, State } from "@rolexjs/system";
+import type { Initializer, Prototype, State } from "@rolexjs/system";
 import { sql } from "drizzle-orm";
 import { createResourceX, setProvider } from "resourcexjs";
 import { createSqliteRuntime } from "./sqliteRuntime.js";
@@ -106,19 +106,13 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
 
   // ===== Prototype registry =====
 
-  /** Built-in prototypes — always available, cannot be overridden. */
-  const BUILTINS: Record<string, string> = {
-    nuwa: "nuwa",
-  };
-
   const registryPath = dataDir ? join(dataDir, "prototype.json") : undefined;
 
   const readRegistry = (): Record<string, string> => {
-    let fileRegistry: Record<string, string> = {};
     if (registryPath && existsSync(registryPath)) {
-      fileRegistry = JSON.parse(readFileSync(registryPath, "utf-8"));
+      return JSON.parse(readFileSync(registryPath, "utf-8"));
     }
-    return { ...fileRegistry, ...BUILTINS };
+    return {};
   };
 
   const writeRegistry = (registry: Record<string, string>): void => {
@@ -140,16 +134,13 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
       }
     },
 
-    summon(id, source) {
-      if (id in BUILTINS) {
-        throw new Error(`"${id}" is a built-in prototype and cannot be overridden.`);
-      }
+    settle(id, source) {
       const registry = readRegistry();
       registry[id] = source;
       writeRegistry(registry);
     },
 
-    banish(id) {
+    evict(id) {
       const registry = readRegistry();
       delete registry[id];
       writeRegistry(registry);
@@ -157,6 +148,37 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
 
     list() {
       return readRegistry();
+    },
+  };
+
+  // ===== Initializer =====
+
+  /** Built-in prototypes to settle on first run. */
+  const BUILTIN_PROTOTYPES = ["nuwa", "rolex"];
+
+  const initializedPath = dataDir ? join(dataDir, "initialized.json") : undefined;
+
+  const initializer: Initializer = {
+    async bootstrap() {
+      // In-memory mode or already initialized — skip
+      if (!initializedPath) return;
+      if (existsSync(initializedPath)) return;
+
+      // Settle built-in prototypes
+      for (const name of BUILTIN_PROTOTYPES) {
+        const registry = readRegistry();
+        if (!(name in registry)) {
+          prototype.settle(name, name);
+        }
+      }
+
+      // Mark as initialized
+      mkdirSync(dataDir!, { recursive: true });
+      writeFileSync(
+        initializedPath,
+        JSON.stringify({ version: 1, initializedAt: new Date().toISOString() }, null, 2),
+        "utf-8"
+      );
     },
   };
 
@@ -176,5 +198,5 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
     return JSON.parse(readFileSync(contextPath, "utf-8"));
   };
 
-  return { runtime, prototype, resourcex, saveContext, loadContext };
+  return { runtime, prototype, resourcex, initializer, saveContext, loadContext };
 }

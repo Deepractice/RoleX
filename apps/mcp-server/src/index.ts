@@ -17,6 +17,7 @@ import { McpState } from "./state.js";
 // ========== Setup ==========
 
 const rolex = createRoleX(localPlatform());
+await rolex.bootstrap();
 const state = new McpState(rolex);
 
 // ========== Server ==========
@@ -276,51 +277,6 @@ server.addTool({
     if (result == null) return `${locator} done.`;
     if (typeof result === "string") return result;
     return JSON.stringify(result, null, 2);
-  },
-});
-
-// ========== Tools: Prototype authoring ==========
-
-server.addTool({
-  name: "author-born",
-  description: detail("author-born"),
-  parameters: z.object({
-    dir: z.string().describe("Directory path to create the prototype in"),
-    content: z.string().optional().describe("Gherkin Feature source for the root individual"),
-    id: z.string().describe("Prototype id (kebab-case)"),
-    alias: z.array(z.string()).optional().describe("Alternative display names"),
-  }),
-  execute: async ({ dir, content, id, alias }) => {
-    const result = rolex.author.born(dir, content, id, alias);
-    return fmt("born", id, result);
-  },
-});
-
-server.addTool({
-  name: "author-teach",
-  description: detail("author-teach"),
-  parameters: z.object({
-    dir: z.string().describe("Prototype directory path"),
-    content: z.string().describe("Gherkin Feature source for the principle"),
-    id: z.string().describe("Principle id (keywords joined by hyphens)"),
-  }),
-  execute: async ({ dir, content, id }) => {
-    const result = rolex.author.teach(dir, content, id);
-    return fmt("teach", id, result);
-  },
-});
-
-server.addTool({
-  name: "author-train",
-  description: detail("author-train"),
-  parameters: z.object({
-    dir: z.string().describe("Prototype directory path"),
-    content: z.string().describe("Gherkin Feature source for the procedure"),
-    id: z.string().describe("Procedure id (keywords joined by hyphens)"),
-  }),
-  execute: async ({ dir, content, id }) => {
-    const result = rolex.author.train(dir, content, id);
-    return fmt("train", id, result);
   },
 });
 

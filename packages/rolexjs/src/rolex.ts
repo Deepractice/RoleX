@@ -14,6 +14,7 @@
  *   role       — execution + cognition (activate → complete, reflect → master, skill)
  *   org        — organization management (found, charter, dissolve, hire, fire)
  *   position   — position management (establish, abolish, charge, appoint, dismiss)
+ *   prototype  — registry (settle, evict, list) + creation (born, teach, train, found, charter, establish, charge, require)
  *   resource   — ResourceX instance (optional)
  *
  * Unified entry point:
@@ -26,6 +27,7 @@ import type { ContextData, Platform } from "@rolexjs/core";
 import * as C from "@rolexjs/core";
 import { parse } from "@rolexjs/parser";
 import {
+  type Initializer,
   mergeState,
   type Prototype,
   type Runtime,
@@ -68,16 +70,17 @@ export class Rolex {
   readonly position: PositionNamespace;
   /** Census — society-level queries. */
   readonly census: CensusNamespace;
-  /** Prototype management — summon, banish, list. */
-  readonly proto: PrototypeNamespace;
-  /** Prototype authoring — write prototype files to a directory. */
-  readonly author: AuthorNamespace;
+  /** Prototype — registry + creation. */
+  readonly prototype: PrototypeNamespace;
   /** Resource management (optional — powered by ResourceX). */
   readonly resource?: ResourceX;
+
+  private readonly initializer?: Initializer;
 
   constructor(platform: Platform) {
     this.rt = platform.runtime;
     this.resourcex = platform.resourcex;
+    this.initializer = platform.initializer;
 
     // Ensure world roots exist (idempotent — reuse if already created by another process)
     const roots = this.rt.roots();
@@ -117,9 +120,13 @@ export class Rolex {
     this.org = new OrgNamespace(this.rt, this.society, this.past, resolve);
     this.position = new PositionNamespace(this.rt, this.society, this.past, resolve);
     this.census = new CensusNamespace(this.rt, this.society, this.past);
-    this.proto = new PrototypeNamespace(platform.prototype, platform.resourcex);
-    this.author = new AuthorNamespace();
+    this.prototype = new PrototypeNamespace(platform.prototype, platform.resourcex);
     this.resource = platform.resourcex;
+  }
+
+  /** Bootstrap the world — settle built-in prototypes on first run. */
+  async bootstrap(): Promise<void> {
+    await this.initializer?.bootstrap();
   }
 
   /** Find a node by id or alias across the entire society tree. */
@@ -172,9 +179,7 @@ export class Rolex {
       case "census":
         return this.census;
       case "prototype":
-        return this.proto;
-      case "author":
-        return this.author;
+        return this.prototype;
       case "resource":
         if (!this.resource) throw new Error("ResourceX is not available.");
         return this.resource;
@@ -237,18 +242,28 @@ export class Rolex {
         return [a.type];
 
       // prototype
-      case "prototype.summon":
+      case "prototype.settle":
         return [a.source];
-      case "prototype.banish":
+      case "prototype.evict":
         return [a.id];
-
-      // author
-      case "author.born":
+      case "prototype.born":
         return [a.dir, a.content, a.id, a.alias];
-      case "author.teach":
+      case "prototype.teach":
         return [a.dir, a.content, a.id];
-      case "author.train":
+      case "prototype.train":
         return [a.dir, a.content, a.id];
+      case "prototype.found":
+        return [a.dir, a.content, a.id, a.alias];
+      case "prototype.charter":
+        return [a.dir, a.content, a.id];
+      case "prototype.member":
+        return [a.dir, a.id, a.locator];
+      case "prototype.establish":
+        return [a.dir, a.content, a.id, a.appointments];
+      case "prototype.charge":
+        return [a.dir, a.position, a.content, a.id];
+      case "prototype.require":
+        return [a.dir, a.position, a.content, a.id];
 
       // resource (ResourceX proxy)
       case "resource.add":
@@ -758,7 +773,7 @@ class PositionNamespace {
       const existing = findInState(state, id);
       if (existing) this.rt.remove(existing);
     }
-    const proc = this.rt.create(parent, C.procedure, procedure, id);
+    const proc = this.rt.create(parent, C.requirement, procedure, id);
     return ok(this.rt, proc, "require");
   }
 
@@ -779,7 +794,7 @@ class PositionNamespace {
 
     // Auto-train: inject required procedures into the individual
     const posState = this.rt.project(posNode);
-    const required = (posState.children ?? []).filter((c) => c.name === "procedure");
+    const required = (posState.children ?? []).filter((c) => c.name === "requirement");
     for (const proc of required) {
       if (proc.id) {
         // Upsert: remove existing procedure with same id
@@ -854,8 +869,22 @@ class CensusNamespace {
 }
 
 // ================================================================
-//  Prototype — summon, banish, list
+//  Prototype — settle, evict, list
 // ================================================================
+
+interface PrototypeManifest {
+  id: string;
+  type: string;
+  alias?: readonly string[];
+  members?: Record<string, string>;
+  children?: Record<string, PrototypeManifestChild>;
+}
+
+interface PrototypeManifestChild {
+  type: string;
+  appointments?: string[];
+  children?: Record<string, PrototypeManifestChild>;
+}
 
 class PrototypeNamespace {
   constructor(
@@ -863,57 +892,48 @@ class PrototypeNamespace {
     private resourcex?: ResourceX
   ) {}
 
-  /** Summon: pull a prototype from source, register it. */
-  async summon(source: string): Promise<RolexResult> {
+  // ---- Registry ----
+
+  /** Settle: pull a prototype from source, register it in the world. */
+  async settle(source: string): Promise<RolexResult> {
     if (!this.resourcex) throw new Error("ResourceX is not available.");
     if (!this.prototype) throw new Error("Platform does not support prototypes.");
     const state = await this.resourcex.ingest<State>(source);
     if (!state.id) throw new Error("Prototype resource must have an id.");
-    this.prototype.summon(state.id, source);
-    return { state, process: "summon" };
+    this.prototype.settle(state.id, source);
+    return { state, process: "settle" };
   }
 
-  /** Banish: unregister a prototype by id. */
-  banish(id: string): RolexResult {
+  /** Evict: unregister a prototype from the world. */
+  evict(id: string): RolexResult {
     if (!this.prototype) throw new Error("Platform does not support prototypes.");
-    this.prototype.banish(id);
-    return { state: { name: id, description: "", parent: null }, process: "banish" };
+    this.prototype.evict(id);
+    return { state: { name: id, description: "", parent: null }, process: "evict" };
   }
 
   /** List all registered prototypes. */
   list(): Record<string, string> {
     return this.prototype?.list() ?? {};
   }
-}
 
-// ================================================================
-//  Author — prototype file authoring
-// ================================================================
+  // ---- Individual prototype creation ----
 
-interface AuthorManifest {
-  id: string;
-  type: string;
-  alias?: readonly string[];
-  children?: Record<string, { type: string }>;
-}
-
-class AuthorNamespace {
-  /** Born: create a prototype directory with manifest and root feature file. */
+  /** Born: create an individual prototype directory. */
   born(dir: string, content?: string, id?: string, alias?: readonly string[]): RolexResult {
     validateGherkin(content);
-    if (!id) throw new Error("id is required for prototype authoring.");
+    if (!id) throw new Error("id is required.");
     mkdirSync(dir, { recursive: true });
 
-    const manifest: AuthorManifest = {
+    const manifest: PrototypeManifest = {
       id,
       type: "individual",
       ...(alias && alias.length > 0 ? { alias } : {}),
       children: { identity: { type: "identity" } },
     };
-    writeFileSync(join(dir, "individual.json"), JSON.stringify(manifest, null, 2) + "\n", "utf-8");
+    writeFileSync(join(dir, "individual.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf-8");
 
     if (content) {
-      writeFileSync(join(dir, `${id}.individual.feature`), content + "\n", "utf-8");
+      writeFileSync(join(dir, `${id}.individual.feature`), `${content}\n`, "utf-8");
     }
 
     const state: State = {
@@ -930,13 +950,13 @@ class AuthorNamespace {
   /** Teach: add a principle to an existing prototype directory. */
   teach(dir: string, principle: string, id?: string): RolexResult {
     validateGherkin(principle);
-    if (!id) throw new Error("id is required for prototype authoring.");
+    if (!id) throw new Error("id is required.");
     const manifest = this.readManifest(dir);
     if (!manifest.children) manifest.children = {};
     manifest.children[id] = { type: "principle" };
     this.writeManifest(dir, manifest);
 
-    writeFileSync(join(dir, `${id}.principle.feature`), principle + "\n", "utf-8");
+    writeFileSync(join(dir, `${id}.principle.feature`), `${principle}\n`, "utf-8");
 
     const state: State = {
       id,
@@ -951,13 +971,13 @@ class AuthorNamespace {
   /** Train: add a procedure to an existing prototype directory. */
   train(dir: string, procedure: string, id?: string): RolexResult {
     validateGherkin(procedure);
-    if (!id) throw new Error("id is required for prototype authoring.");
+    if (!id) throw new Error("id is required.");
     const manifest = this.readManifest(dir);
     if (!manifest.children) manifest.children = {};
     manifest.children[id] = { type: "procedure" };
     this.writeManifest(dir, manifest);
 
-    writeFileSync(join(dir, `${id}.procedure.feature`), procedure + "\n", "utf-8");
+    writeFileSync(join(dir, `${id}.procedure.feature`), `${procedure}\n`, "utf-8");
 
     const state: State = {
       id,
@@ -969,15 +989,172 @@ class AuthorNamespace {
     return { state, process: "train" };
   }
 
-  private readManifest(dir: string): AuthorManifest {
-    const path = join(dir, "individual.json");
-    if (!existsSync(path))
-      throw new Error(`No individual.json found in "${dir}". Run author.born first.`);
-    return JSON.parse(readFileSync(path, "utf-8"));
+  // ---- Organization prototype creation ----
+
+  /** Found: create an organization prototype directory. */
+  found(dir: string, content?: string, id?: string, alias?: readonly string[]): RolexResult {
+    validateGherkin(content);
+    if (!id) throw new Error("id is required.");
+    mkdirSync(dir, { recursive: true });
+
+    const manifest: PrototypeManifest = {
+      id,
+      type: "organization",
+      ...(alias && alias.length > 0 ? { alias } : {}),
+      children: {},
+    };
+    writeFileSync(
+      join(dir, "organization.json"),
+      `${JSON.stringify(manifest, null, 2)}\n`,
+      "utf-8"
+    );
+
+    if (content) {
+      writeFileSync(join(dir, `${id}.organization.feature`), `${content}\n`, "utf-8");
+    }
+
+    const state: State = {
+      id,
+      name: "organization",
+      description: "",
+      parent: null,
+      ...(alias ? { alias } : {}),
+      ...(content ? { information: content } : {}),
+    };
+    return { state, process: "found" };
   }
 
-  private writeManifest(dir: string, manifest: AuthorManifest): void {
-    writeFileSync(join(dir, "individual.json"), JSON.stringify(manifest, null, 2) + "\n", "utf-8");
+  /** Charter: add a charter to an organization prototype. */
+  charter(dir: string, content: string, id?: string): RolexResult {
+    validateGherkin(content);
+    const charterId = id ?? "charter";
+    const manifest = this.readManifest(dir, "organization");
+    if (!manifest.children) manifest.children = {};
+    manifest.children[charterId] = { type: "charter" };
+    this.writeManifest(dir, manifest);
+
+    writeFileSync(join(dir, `${charterId}.charter.feature`), `${content}\n`, "utf-8");
+
+    const state: State = {
+      id: charterId,
+      name: "charter",
+      description: "",
+      parent: null,
+      information: content,
+    };
+    return { state, process: "charter" };
+  }
+
+  /** Member: register a member in an organization prototype. */
+  member(dir: string, id: string, locator: string): RolexResult {
+    if (!id) throw new Error("id is required.");
+    if (!locator) throw new Error("locator is required.");
+    const manifest = this.readManifest(dir, "organization");
+    if (!manifest.members) manifest.members = {};
+    manifest.members[id] = locator;
+    this.writeManifest(dir, manifest);
+
+    const state: State = {
+      id,
+      name: "member",
+      description: locator,
+      parent: null,
+    };
+    return { state, process: "member" };
+  }
+
+  /** Establish: add a position to an organization prototype. */
+  establish(dir: string, content?: string, id?: string, appointments?: string[]): RolexResult {
+    validateGherkin(content);
+    if (!id) throw new Error("id is required.");
+    const manifest = this.readManifest(dir, "organization");
+    if (!manifest.children) manifest.children = {};
+    manifest.children[id] = {
+      type: "position",
+      ...(appointments && appointments.length > 0 ? { appointments } : {}),
+      children: {},
+    };
+    this.writeManifest(dir, manifest);
+
+    if (content) {
+      writeFileSync(join(dir, `${id}.position.feature`), `${content}\n`, "utf-8");
+    }
+
+    const state: State = {
+      id,
+      name: "position",
+      description: "",
+      parent: null,
+      ...(content ? { information: content } : {}),
+    };
+    return { state, process: "establish" };
+  }
+
+  /** Charge: add a duty to a position in an organization prototype. */
+  charge(dir: string, position: string, content: string, id?: string): RolexResult {
+    validateGherkin(content);
+    if (!id) throw new Error("id is required.");
+    const manifest = this.readManifest(dir, "organization");
+    const pos = manifest.children?.[position];
+    if (!pos) throw new Error(`Position "${position}" not found in manifest.`);
+    if (!pos.children) pos.children = {};
+    pos.children[id] = { type: "duty" };
+    this.writeManifest(dir, manifest);
+
+    writeFileSync(join(dir, `${id}.duty.feature`), `${content}\n`, "utf-8");
+
+    const state: State = {
+      id,
+      name: "duty",
+      description: "",
+      parent: null,
+      information: content,
+    };
+    return { state, process: "charge" };
+  }
+
+  /** Require: add a required skill to a position in an organization prototype. */
+  require(dir: string, position: string, content: string, id?: string): RolexResult {
+    validateGherkin(content);
+    if (!id) throw new Error("id is required.");
+    const manifest = this.readManifest(dir, "organization");
+    const pos = manifest.children?.[position];
+    if (!pos) throw new Error(`Position "${position}" not found in manifest.`);
+    if (!pos.children) pos.children = {};
+    pos.children[id] = { type: "requirement" };
+    this.writeManifest(dir, manifest);
+
+    writeFileSync(join(dir, `${id}.requirement.feature`), `${content}\n`, "utf-8");
+
+    const state: State = {
+      id,
+      name: "requirement",
+      description: "",
+      parent: null,
+      information: content,
+    };
+    return { state, process: "require" };
+  }
+
+  // ---- Manifest I/O ----
+
+  private readManifest(dir: string, type?: string): PrototypeManifest {
+    if (type) {
+      const path = join(dir, `${type}.json`);
+      if (!existsSync(path)) throw new Error(`No ${type}.json found in "${dir}".`);
+      return JSON.parse(readFileSync(path, "utf-8"));
+    }
+    // Auto-detect: try individual.json first, then organization.json
+    const indPath = join(dir, "individual.json");
+    if (existsSync(indPath)) return JSON.parse(readFileSync(indPath, "utf-8"));
+    const orgPath = join(dir, "organization.json");
+    if (existsSync(orgPath)) return JSON.parse(readFileSync(orgPath, "utf-8"));
+    throw new Error(`No manifest found in "${dir}". Run prototype.born or prototype.found first.`);
+  }
+
+  private writeManifest(dir: string, manifest: PrototypeManifest): void {
+    const filename = `${manifest.type}.json`;
+    writeFileSync(join(dir, filename), `${JSON.stringify(manifest, null, 2)}\n`, "utf-8");
   }
 }
 

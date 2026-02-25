@@ -91,3 +91,4 @@ export const position = structure("position", "A role held by an individual", so
   relation("appointment", "Who holds this position", individual),
 ]);
 export const duty = structure("duty", "Responsibilities of this position", position);
+export const requirement = structure("requirement", "Required skill for this position", position);

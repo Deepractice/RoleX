@@ -68,14 +68,14 @@ describe("LocalPlatform Prototype (registry-based)", () => {
     expect(await prototype!.resolve("sean")).toBeUndefined();
   });
 
-  test("summon + resolve round-trip for role", async () => {
+  test("settle + resolve round-trip for role", async () => {
     const protoDir = join(testDir, "protos");
     const dir = writePrototype(protoDir, "test-role", "role", {
       "test-role.individual.feature": "Feature: TestRole\n  Test role.",
     });
 
     const platform = localPlatform({ dataDir: testDir, resourceDir });
-    platform.prototype!.summon("test-role", dir);
+    platform.prototype!.settle("test-role", dir);
 
     const state = await platform.prototype!.resolve("test-role");
     expect(state).toBeDefined();
@@ -86,14 +86,14 @@ describe("LocalPlatform Prototype (registry-based)", () => {
     expect(state!.children![0].name).toBe("identity");
   });
 
-  test("summon + resolve round-trip for organization", async () => {
+  test("settle + resolve round-trip for organization", async () => {
     const protoDir = join(testDir, "protos");
     const dir = writePrototype(protoDir, "deepractice", "organization", {
       "deepractice.organization.feature": "Feature: Deepractice\n  AI company.",
     });
 
     const platform = localPlatform({ dataDir: testDir, resourceDir });
-    platform.prototype!.summon("deepractice", dir);
+    platform.prototype!.settle("deepractice", dir);
 
     const state = await platform.prototype!.resolve("deepractice");
     expect(state).toBeDefined();
@@ -107,12 +107,12 @@ describe("LocalPlatform Prototype (registry-based)", () => {
     const dir = writePrototype(protoDir, "test-role", "role");
 
     const platform = localPlatform({ dataDir: testDir, resourceDir });
-    platform.prototype!.summon("test-role", dir);
+    platform.prototype!.settle("test-role", dir);
 
     expect(await platform.prototype!.resolve("nobody")).toBeUndefined();
   });
 
-  test("summon overwrites previous source", async () => {
+  test("settle overwrites previous source", async () => {
     const protoDir = join(testDir, "protos");
     const dir1 = writePrototype(protoDir, "v1", "role", {
       "v1.individual.feature": "Feature: V1",
@@ -122,22 +122,22 @@ describe("LocalPlatform Prototype (registry-based)", () => {
     });
 
     const platform = localPlatform({ dataDir: testDir, resourceDir });
-    platform.prototype!.summon("test", dir1);
-    platform.prototype!.summon("test", dir2);
+    platform.prototype!.settle("test", dir1);
+    platform.prototype!.settle("test", dir2);
 
     const state = await platform.prototype!.resolve("test");
     expect(state!.id).toBe("v2");
   });
 
-  test("banish removes user-registered prototype", async () => {
+  test("evict removes user-registered prototype", async () => {
     const protoDir = join(testDir, "protos");
     const dir = writePrototype(protoDir, "temp", "role");
 
     const platform = localPlatform({ dataDir: testDir, resourceDir });
-    platform.prototype!.summon("temp", dir);
+    platform.prototype!.settle("temp", dir);
     expect(await platform.prototype!.resolve("temp")).toBeDefined();
 
-    platform.prototype!.banish("temp");
+    platform.prototype!.evict("temp");
     expect(await platform.prototype!.resolve("temp")).toBeUndefined();
   });
 
@@ -146,7 +146,7 @@ describe("LocalPlatform Prototype (registry-based)", () => {
     const dir = writePrototype(protoDir, "test-role", "role");
 
     const p1 = localPlatform({ dataDir: testDir, resourceDir });
-    p1.prototype!.summon("test-role", dir);
+    p1.prototype!.settle("test-role", dir);
 
     const p2 = localPlatform({ dataDir: testDir, resourceDir });
     const state = await p2.prototype!.resolve("test-role");
@@ -154,17 +154,21 @@ describe("LocalPlatform Prototype (registry-based)", () => {
     expect(state!.id).toBe("test-role");
   });
 
-  test("list includes builtins and user-registered prototypes", () => {
+  test("bootstrap settles built-in prototypes on first run", async () => {
     const platform = localPlatform({ dataDir: testDir, resourceDir });
-    platform.prototype!.summon("custom", "/path/to/custom");
-    const list = platform.prototype!.list();
-    expect(list.nuwa).toBeDefined(); // builtin
-    expect(list.custom).toBe("/path/to/custom"); // user-registered
-  });
-
-  test("builtin nuwa is always present in list", () => {
-    const platform = localPlatform({ dataDir: testDir, resourceDir });
+    await platform.initializer!.bootstrap();
     const list = platform.prototype!.list();
     expect(list.nuwa).toBe("nuwa");
+    expect(list.rolex).toBe("rolex");
+  });
+
+  test("bootstrap is idempotent — second call is a no-op", async () => {
+    const platform = localPlatform({ dataDir: testDir, resourceDir });
+    await platform.initializer!.bootstrap();
+    // Manually remove rolex to prove second bootstrap doesn't re-settle
+    platform.prototype!.evict("rolex");
+    await platform.initializer!.bootstrap();
+    const list = platform.prototype!.list();
+    expect(list.rolex).toBeUndefined(); // not re-settled
   });
 });

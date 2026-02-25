@@ -18,6 +18,7 @@ import { createRoleX, describe, hint } from "rolexjs";
 // ========== Setup ==========
 
 const rolex = createRoleX(localPlatform());
+await rolex.bootstrap();
 
 // ========== Helpers ==========
 
@@ -688,9 +689,9 @@ const resource = defineCommand({
   },
 });
 
-// ========== Author — prototype file authoring ==========
+// ========== Prototype creation — born, teach, train ==========
 
-const authorBorn = defineCommand({
+const prototypeBorn = defineCommand({
   meta: { name: "born", description: "Create a prototype directory with manifest" },
   args: {
     dir: {
@@ -704,7 +705,7 @@ const authorBorn = defineCommand({
   },
   run({ args }) {
     const aliasList = args.alias ? args.alias.split(",").map((a: string) => a.trim()) : undefined;
-    const result = rolex.author.born(
+    const result = rolex.prototype.born(
       args.dir,
       resolveContent(args, "individual"),
       args.id,
@@ -714,7 +715,7 @@ const authorBorn = defineCommand({
   },
 });
 
-const authorTeach = defineCommand({
+const prototypeTeach = defineCommand({
   meta: { name: "teach", description: "Add a principle to a prototype directory" },
   args: {
     dir: { type: "positional" as const, description: "Prototype directory path", required: true },
@@ -726,12 +727,12 @@ const authorTeach = defineCommand({
     },
   },
   run({ args }) {
-    const result = rolex.author.teach(args.dir, requireContent(args, "principle"), args.id);
+    const result = rolex.prototype.teach(args.dir, requireContent(args, "principle"), args.id);
     output(result, args.id);
   },
 });
 
-const authorTrain = defineCommand({
+const prototypeTrain = defineCommand({
   meta: { name: "train", description: "Add a procedure to a prototype directory" },
   args: {
     dir: { type: "positional" as const, description: "Prototype directory path", required: true },
@@ -743,24 +744,18 @@ const authorTrain = defineCommand({
     },
   },
   run({ args }) {
-    const result = rolex.author.train(args.dir, requireContent(args, "procedure"), args.id);
+    const result = rolex.prototype.train(args.dir, requireContent(args, "procedure"), args.id);
     output(result, args.id);
   },
 });
 
-const author = defineCommand({
-  meta: { name: "author", description: "Prototype authoring — create prototype files" },
-  subCommands: {
-    born: authorBorn,
-    teach: authorTeach,
-    train: authorTrain,
+// ========== Prototype — registry ==========
+
+const protoSettle = defineCommand({
+  meta: {
+    name: "settle",
+    description: "Settle a prototype into the world from a ResourceX source",
   },
-});
-
-// ========== Prototype — summon, banish, list ==========
-
-const protoSummon = defineCommand({
-  meta: { name: "summon", description: "Summon a prototype from a ResourceX source" },
   args: {
     source: {
       type: "positional" as const,
@@ -769,22 +764,22 @@ const protoSummon = defineCommand({
     },
   },
   async run({ args }) {
-    const result = await rolex.proto.summon(args.source);
+    const result = await rolex.prototype.settle(args.source);
     output(result, result.state.id ?? args.source);
   },
 });
 
-const protoBanish = defineCommand({
-  meta: { name: "banish", description: "Banish a prototype by id" },
+const protoEvict = defineCommand({
+  meta: { name: "evict", description: "Evict a prototype from the world" },
   args: {
     id: {
       type: "positional" as const,
-      description: "Prototype id to banish",
+      description: "Prototype id to evict",
       required: true,
     },
   },
   run({ args }) {
-    const result = rolex.proto.banish(args.id);
+    const result = rolex.prototype.evict(args.id);
     output(result, args.id);
   },
 });
@@ -792,7 +787,7 @@ const protoBanish = defineCommand({
 const protoList = defineCommand({
   meta: { name: "list", description: "List all registered prototypes" },
   run() {
-    const list = rolex.proto.list();
+    const list = rolex.prototype.list();
     const entries = Object.entries(list);
     if (entries.length === 0) {
       console.log("No prototypes registered.");
@@ -804,12 +799,15 @@ const protoList = defineCommand({
   },
 });
 
-const proto = defineCommand({
-  meta: { name: "prototype", description: "Prototype management — summon, banish, list" },
+const prototype = defineCommand({
+  meta: { name: "prototype", description: "Prototype management — registry + creation" },
   subCommands: {
-    summon: protoSummon,
-    banish: protoBanish,
+    settle: protoSettle,
+    evict: protoEvict,
     list: protoList,
+    born: prototypeBorn,
+    teach: prototypeTeach,
+    train: prototypeTrain,
   },
 });
 
@@ -827,8 +825,7 @@ const main = defineCommand({
     organization: org,
     position: pos,
     resource,
-    author,
-    prototype: proto,
+    prototype,
   },
 });
 

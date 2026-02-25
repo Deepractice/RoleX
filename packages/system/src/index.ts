@@ -40,6 +40,10 @@ export { create, link, process, remove, transform, unlink } from "./process.js";
 
 export { mergeState } from "./merge.js";
 
+// ===== Initializer =====
+
+export type { Initializer } from "./initializer.js";
+
 // ===== Prototype =====
 
 export type { Prototype } from "./prototype.js";

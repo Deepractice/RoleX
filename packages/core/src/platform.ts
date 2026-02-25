@@ -10,7 +10,7 @@
  * Platform holds the Runtime (graph engine) and will hold additional
  * services as the framework grows (auth, events, plugins, etc.).
  */
-import type { Prototype, Runtime } from "@rolexjs/system";
+import type { Initializer, Prototype, Runtime } from "@rolexjs/system";
 import type { ResourceX } from "resourcexjs";
 
 /** Serializable context data for persistence. */
@@ -28,6 +28,9 @@ export interface Platform {
 
   /** Resource management capability (optional — requires resourcexjs). */
   readonly resourcex?: ResourceX;
+
+  /** Initializer — bootstrap the world on first run. */
+  readonly initializer?: Initializer;
 
   /** Save role context to persistent storage. */
   saveContext?(roleId: string, data: ContextData): void;

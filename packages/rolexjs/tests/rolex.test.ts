@@ -153,7 +153,7 @@ describe("Rolex API (stateless)", () => {
       expect(r.state.links).toBeUndefined();
     });
 
-    test("require adds procedure to position", () => {
+    test("require adds required skill to position", () => {
       const rolex = setup();
       rolex.position.establish(undefined, "architect");
       const r = rolex.position.require(
@@ -161,7 +161,7 @@ describe("Rolex API (stateless)", () => {
         "Feature: System Design\n  Scenario: Design APIs",
         "system-design"
       );
-      expect(r.state.name).toBe("procedure");
+      expect(r.state.name).toBe("requirement");
       expect(r.state.id).toBe("system-design");
       expect(r.process).toBe("require");
     });
@@ -172,9 +172,9 @@ describe("Rolex API (stateless)", () => {
       rolex.position.require("architect", "Feature: Old skill", "skill-1");
       rolex.position.require("architect", "Feature: Updated skill", "skill-1");
       const pos = rolex.find("architect")!;
-      const procedures = (pos as any).children?.filter((c: any) => c.name === "procedure");
-      expect(procedures).toHaveLength(1);
-      expect(procedures[0].information).toBe("Feature: Updated skill");
+      const requires = (pos as any).children?.filter((c: any) => c.name === "requirement");
+      expect(requires).toHaveLength(1);
+      expect(requires[0].information).toBe("Feature: Updated skill");
     });
 
     test("appoint auto-trains required skills to individual", () => {

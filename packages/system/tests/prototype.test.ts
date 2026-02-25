@@ -58,21 +58,21 @@ describe("Prototype", () => {
     expect(await proto.resolve("unknown")).toBeUndefined();
   });
 
-  test("summon and list round-trip", () => {
+  test("settle and list round-trip", () => {
     const proto = createPrototype();
-    proto.summon("nuwa", "/path/to/nuwa");
-    proto.summon("sean", "/path/to/sean");
+    proto.settle("nuwa", "/path/to/nuwa");
+    proto.settle("sean", "/path/to/sean");
     expect(proto.list()).toEqual({
       nuwa: "/path/to/nuwa",
       sean: "/path/to/sean",
     });
   });
 
-  test("banish removes from list", () => {
+  test("evict removes from list", () => {
     const proto = createPrototype();
-    proto.summon("nuwa", "/path/to/nuwa");
-    proto.summon("sean", "/path/to/sean");
-    proto.banish("nuwa");
+    proto.settle("nuwa", "/path/to/nuwa");
+    proto.settle("sean", "/path/to/sean");
+    proto.evict("nuwa");
     expect(proto.list()).toEqual({ sean: "/path/to/sean" });
   });
 

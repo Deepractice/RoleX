@@ -67,6 +67,8 @@ export {
   position,
   principle,
   procedure,
+  // Organization — Position
+  requirement,
   // Level 0
   society,
   task,

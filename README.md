@@ -34,9 +34,148 @@ In a society, people have identities, join organizations, hold positions, accumu
 
 Everything is expressed in **Gherkin** `.feature` format — human-readable, structured, versionable.
 
-## Architecture
+## Quick Start
 
-RoleX models a **society** of AI agents, mirroring how human organizations work:
+Install the MCP server, connect it to your AI client, and say **"activate nuwa"** — she will guide you from there.
+
+<details>
+<summary><b>Claude Code</b></summary>
+
+```bash
+claude mcp add rolex -- npx -y @rolexjs/mcp-server
+```
+
+</details>
+
+<details>
+<summary><b>Claude Desktop</b></summary>
+
+Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+
+```json
+{
+  "mcpServers": {
+    "rolex": {
+      "command": "npx",
+      "args": ["-y", "@rolexjs/mcp-server"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Cursor</b></summary>
+
+Add to `.cursor/mcp.json` (project) or `~/.cursor/mcp.json` (global):
+
+```json
+{
+  "mcpServers": {
+    "rolex": {
+      "command": "npx",
+      "args": ["-y", "@rolexjs/mcp-server"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>VS Code</b></summary>
+
+Add to `.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "rolex": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@rolexjs/mcp-server"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Windsurf</b></summary>
+
+Edit `~/.codeium/windsurf/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "rolex": {
+      "command": "npx",
+      "args": ["-y", "@rolexjs/mcp-server"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>JetBrains IDEs</b></summary>
+
+Go to **Settings > Tools > AI Assistant > Model Context Protocol (MCP)**, click **+** and paste:
+
+```json
+{
+  "mcpServers": {
+    "rolex": {
+      "command": "npx",
+      "args": ["-y", "@rolexjs/mcp-server"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Zed</b></summary>
+
+Add to Zed's `settings.json`:
+
+```json
+{
+  "context_servers": {
+    "rolex": {
+      "command": {
+        "path": "npx",
+        "args": ["-y", "@rolexjs/mcp-server"]
+      }
+    }
+  }
+}
+```
+
+</details>
+
+## How It Works
+
+**You don't need to learn any commands.** Just install the MCP server and talk to your AI naturally — "create an organization", "set a goal", "what have I learned?". The AI knows which tools to call.
+
+Everything below is what happens **under the hood**. RoleX provides MCP tools that the AI calls autonomously. Understanding the mechanism helps you get more out of it, but operating it is the AI's job, not yours.
+
+The tools fall into two categories:
+
+- **Direct tools** — the AI calls them by name (e.g. `activate`, `want`, `plan`). These are daily operations.
+- **The `use` tool** — a unified dispatch for world management, written as `!namespace.method` (e.g. `!org.found`, `!census.list`). This is the admin layer.
+
+The following sections walk through each system in the order an agent encounters them.
+
+---
+
+### 1. The World — Society Structure
+
+Before an agent can act, a world must exist. RoleX models a **society** with four entity types:
 
 ```
 Society
@@ -46,47 +185,7 @@ Society
 └── Past            # Archive for retired/dissolved entities
 ```
 
-## Systems
-
-RoleX has four core systems. Each serves a distinct purpose in the agent lifecycle.
-
-### Execution — The Doing Cycle
-
-Goal-driven work lifecycle. The agent declares what it wants, plans how to get there, and executes.
-
-```
-activate → want → plan → todo → finish → complete / abandon
-```
-
-| Tool | What it does |
-|------|-------------|
-| `activate` | Enter a role — load identity, goals, knowledge |
-| `focus` | View or switch the current goal |
-| `want` | Declare a goal with success criteria |
-| `plan` | Break a goal into phases (supports sequential and fallback strategies) |
-| `todo` | Create a concrete task under a plan |
-| `finish` | Mark a task done, optionally record what happened |
-| `complete` | Mark a plan done — strategy succeeded |
-| `abandon` | Drop a plan — strategy failed, but learning is captured |
-
-### Cognition — The Learning Cycle
-
-How agents grow. Raw encounters become structured experience, then distilled into reusable knowledge.
-
-```
-encounter → reflect → experience → realize / master → principle / procedure
-```
-
-| Tool | What it does |
-|------|-------------|
-| `reflect` | Digest encounters into experience — pattern recognition |
-| `realize` | Distill experience into a principle — transferable truth |
-| `master` | Distill experience into a procedure — reusable skill |
-| `forget` | Remove outdated knowledge |
-
-### World Management — via `use`
-
-Manage the society structure through the unified `use` tool with `!namespace.method` commands.
+All world management goes through the `use` tool:
 
 **Individual** — agent lifecycle
 
@@ -103,8 +202,7 @@ Manage the society structure through the unified `use` tool with `!namespace.met
 |---------|-------------|
 | `!org.found` | Create an organization |
 | `!org.charter` | Define mission and governance |
-| `!org.hire` | Add a member |
-| `!org.fire` | Remove a member |
+| `!org.hire` / `!org.fire` | Add or remove members |
 | `!org.dissolve` | Archive an organization |
 
 **Position** — roles and responsibilities
@@ -114,31 +212,77 @@ Manage the society structure through the unified `use` tool with `!namespace.met
 | `!position.establish` | Create a position |
 | `!position.charge` | Assign a duty |
 | `!position.require` | Declare a required skill — auto-trained on appointment |
-| `!position.appoint` | Appoint an individual (inherits required skills) |
-| `!position.dismiss` | Remove an individual from a position |
+| `!position.appoint` / `!position.dismiss` | Assign or remove an individual |
 | `!position.abolish` | Archive a position |
 
-**Census** — society-level queries
+**Census** — query the world
 
 | Command | What it does |
 |---------|-------------|
 | `!census.list` | List all individuals, organizations, positions |
-| `!census.list { type: "individual" }` | Filter by type |
-| `!census.list { type: "past" }` | View archived entities |
+| `!census.list { type: "..." }` | Filter by type: `individual`, `organization`, `position`, `past` |
 
-### Skill System — Progressive Disclosure
+---
 
-Skills load on demand, keeping the agent's context lean:
+### 2. Execution — The Doing Cycle
 
-1. **Procedure** (always loaded) — metadata: what the skill is, when to use it
-2. **Skill** (on demand) — full instructions loaded via `skill(locator)`
-3. **Resource** (on demand) — external resources loaded via `use(locator)`
+Once activated, an agent pursues goals through a structured lifecycle. These are **direct tools** the agent calls by name:
 
-### Resource System — Agent Capital
+```
+activate → want → plan → todo → finish → complete / abandon
+```
+
+| Tool | What it does |
+|------|-------------|
+| `activate` | Enter a role — load identity, goals, knowledge |
+| `focus` | View or switch the current goal |
+| `want` | Declare a goal with success criteria |
+| `plan` | Break a goal into phases (supports sequential and fallback strategies) |
+| `todo` | Create a concrete task under a plan |
+| `finish` | Mark a task done, optionally record what happened |
+| `complete` | Mark a plan done — strategy succeeded |
+| `abandon` | Drop a plan — strategy failed, but learning is captured |
+
+---
+
+### 3. Cognition — The Learning Cycle
+
+Execution produces **encounters** — raw records of what happened. The cognition system transforms these into structured knowledge. These are also **direct tools**:
+
+```
+encounter → reflect → experience → realize / master → principle / procedure
+```
+
+| Tool | What it does |
+|------|-------------|
+| `reflect` | Digest encounters into experience — pattern recognition |
+| `realize` | Distill experience into a principle — a transferable truth |
+| `master` | Distill experience into a procedure — a reusable skill |
+| `forget` | Remove outdated knowledge |
+
+This is how an agent grows. A principle learned from one project applies to the next. A procedure mastered once can be reused forever.
+
+---
+
+### 4. Skills — Progressive Disclosure
+
+An agent can't load every skill into context at once. RoleX uses a three-layer progressive disclosure model:
+
+| Layer | Loaded when | What it contains |
+|-------|-------------|-----------------|
+| **Procedure** | Always (at activate) | Metadata — what the skill is, when to use it |
+| **Skill** | On demand via `skill(locator)` | Full instructions — step-by-step how to do it |
+| **Resource** | On demand via `use(locator)` | External content — templates, data, tools |
+
+The `skill` and `use` tools are **direct tools** for loading content. When `use` receives a locator *without* the `!` prefix, it loads a resource from [ResourceX](https://github.com/Deepractice/ResourceX) instead of dispatching a command.
+
+---
+
+### 5. Resources — Agent Capital
 
 Resources are the **means of production** for AI agents — skills, prototypes, and knowledge packages that can be accumulated, shared, and reused across agents and teams.
 
-Powered by [ResourceX](https://github.com/Deepractice/ResourceX), the resource system handles the full lifecycle:
+Powered by [ResourceX](https://github.com/Deepractice/ResourceX), the resource system covers the full lifecycle through the `use` tool:
 
 **Production** — create and package
 
@@ -156,118 +300,15 @@ Powered by [ResourceX](https://github.com/Deepractice/ResourceX), the resource s
 | `!resource.pull` | Download a resource from a registry |
 | `!resource.search` | Search available resources |
 
-**Application** — load and use
+**Inspection**
 
 | Command | What it does |
 |---------|-------------|
-| `skill(locator)` | Load full skill instructions on demand |
-| `use(locator)` | Execute or ingest any resource |
-| `!resource.info` | Inspect a resource |
+| `!resource.info` | View resource metadata |
 
 This is how agent knowledge scales beyond a single individual — skills authored once can be distributed to any agent through prototypes and registries.
 
-## Quick Start
-
-Install the MCP server and connect it to your AI client. Then say **"activate nuwa"** — she will guide you from there.
-
-### Claude Code
-
-```bash
-claude mcp add rolex -- npx -y @rolexjs/mcp-server
-```
-
-### Claude Desktop
-
-Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
-
-```json
-{
-  "mcpServers": {
-    "rolex": {
-      "command": "npx",
-      "args": ["-y", "@rolexjs/mcp-server"]
-    }
-  }
-}
-```
-
-### Cursor
-
-Add to `.cursor/mcp.json` (project) or `~/.cursor/mcp.json` (global):
-
-```json
-{
-  "mcpServers": {
-    "rolex": {
-      "command": "npx",
-      "args": ["-y", "@rolexjs/mcp-server"]
-    }
-  }
-}
-```
-
-### VS Code
-
-Add to `.vscode/mcp.json`:
-
-```json
-{
-  "servers": {
-    "rolex": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@rolexjs/mcp-server"]
-    }
-  }
-}
-```
-
-### Windsurf
-
-Edit `~/.codeium/windsurf/mcp_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "rolex": {
-      "command": "npx",
-      "args": ["-y", "@rolexjs/mcp-server"]
-    }
-  }
-}
-```
-
-### JetBrains IDEs
-
-Go to **Settings > Tools > AI Assistant > Model Context Protocol (MCP)**, click **+** and paste:
-
-```json
-{
-  "mcpServers": {
-    "rolex": {
-      "command": "npx",
-      "args": ["-y", "@rolexjs/mcp-server"]
-    }
-  }
-}
-```
-
-### Zed
-
-Add to Zed's `settings.json`:
-
-```json
-{
-  "context_servers": {
-    "rolex": {
-      "command": {
-        "path": "npx",
-        "args": ["-y", "@rolexjs/mcp-server"]
-      }
-    }
-  }
-}
-```
+---
 
 ## Gherkin — The Universal Language
 
