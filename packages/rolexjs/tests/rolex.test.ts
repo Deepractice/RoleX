@@ -1,4 +1,7 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
+import { existsSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { localPlatform } from "@rolexjs/local-platform";
 import { describe as renderDescribe, hint as renderHint, renderState } from "../src/render.js";
 import { createRoleX, type RolexResult } from "../src/rolex.js";
@@ -740,6 +743,80 @@ describe("Rolex API (stateless)", () => {
   // ============================================================
   //  use — unified execution entry point
   // ============================================================
+  //  Census
+  // ============================================================
+
+  describe("census", () => {
+    test("list returns all top-level entities grouped by type", () => {
+      const rolex = setup();
+      rolex.individual.born(undefined, "sean");
+      rolex.org.found(undefined, "dp");
+      rolex.position.establish(undefined, "architect");
+      const result = rolex.census.list();
+      expect(result).toContain("[individual]");
+      expect(result).toContain("[organization]");
+      expect(result).toContain("[position]");
+      expect(result).toContain("sean");
+      expect(result).toContain("dp");
+      expect(result).toContain("architect");
+    });
+
+    test("list filters by type", () => {
+      const rolex = setup();
+      rolex.individual.born(undefined, "sean");
+      rolex.individual.born(undefined, "alice");
+      rolex.org.found(undefined, "dp");
+      const result = rolex.census.list("individual");
+      expect(result).toContain("[individual] (2)");
+      expect(result).toContain("sean");
+      expect(result).toContain("alice");
+      expect(result).not.toContain("dp");
+    });
+
+    test("list returns message when no matches", () => {
+      const rolex = setup();
+      const result = rolex.census.list("position");
+      expect(result).toBe("No position found.");
+    });
+
+    test("retired entities disappear from society", () => {
+      const rolex = setup();
+      rolex.individual.born(undefined, "sean");
+      rolex.individual.retire("sean");
+      const result = rolex.census.list("individual");
+      expect(result).toBe("No individual found.");
+    });
+
+    test("list past shows archived entities", () => {
+      const rolex = setup();
+      rolex.individual.born(undefined, "sean");
+      rolex.individual.retire("sean");
+      const result = rolex.census.list("past");
+      expect(result).toContain("sean");
+    });
+
+    test("!census.list via use dispatch", async () => {
+      const rolex = setup();
+      rolex.individual.born(undefined, "sean");
+      rolex.org.found(undefined, "dp");
+      const result = await rolex.use<string>("!census.list");
+      expect(result).toContain("sean");
+      expect(result).toContain("dp");
+    });
+
+    test("!census.list with type filter via use dispatch", async () => {
+      const rolex = setup();
+      rolex.individual.born(undefined, "sean");
+      rolex.org.found(undefined, "dp");
+      const result = await rolex.use<string>("!census.list", {
+        type: "organization",
+      });
+      expect(result).toContain("dp");
+      expect(result).not.toContain("sean");
+    });
+  });
+
+  // ============================================================
 
   describe("use: ! command dispatch", () => {
     test("!org.found creates organization", async () => {
@@ -821,5 +898,78 @@ describe("Rolex API (stateless)", () => {
       const rolex = setup();
       expect(() => rolex.use("!orgfound")).toThrow("Expected");
     });
+  });
+});
+
+// ================================================================
+//  Persistent mode — round-trip tests
+// ================================================================
+
+describe("Rolex API (persistent)", () => {
+  const testDir = join(tmpdir(), "rolex-persist-test");
+
+  afterEach(() => {
+    if (existsSync(testDir)) rmSync(testDir, { recursive: true });
+  });
+
+  function persistentSetup() {
+    return createRoleX(localPlatform({ dataDir: testDir, resourceDir: null }));
+  }
+
+  test("born → retire round-trip", () => {
+    const rolex = persistentSetup();
+    rolex.individual.born("Feature: Test Individual", "test-ind");
+    const r = rolex.individual.retire("test-ind");
+    expect(r.state.name).toBe("past");
+    expect(r.state.id).toBe("test-ind");
+    expect(r.process).toBe("retire");
+    // Original individual should be gone, past node should be findable
+    const found = rolex.find("test-ind");
+    expect(found).not.toBeNull();
+    expect(found!.name).toBe("past");
+  });
+
+  test("born → die round-trip", () => {
+    const rolex = persistentSetup();
+    rolex.individual.born("Feature: Test Individual", "test-ind");
+    const r = rolex.individual.die("test-ind");
+    expect(r.state.name).toBe("past");
+    expect(r.state.id).toBe("test-ind");
+    expect(r.process).toBe("die");
+  });
+
+  test("born → teach → retire round-trip", () => {
+    const rolex = persistentSetup();
+    rolex.individual.born("Feature: Test", "test-ind");
+    rolex.individual.teach("test-ind", "Feature: Always validate", "always-validate");
+    const r = rolex.individual.retire("test-ind");
+    expect(r.state.name).toBe("past");
+    expect(r.process).toBe("retire");
+  });
+
+  test("born → retire → rehire round-trip", () => {
+    const rolex = persistentSetup();
+    rolex.individual.born("Feature: Test", "test-ind");
+    rolex.individual.retire("test-ind");
+    const r = rolex.individual.rehire("test-ind");
+    expect(r.state.name).toBe("individual");
+    expect(r.state.information).toBe("Feature: Test");
+    const names = r.state.children!.map((c) => c.name);
+    expect(names).toContain("identity");
+  });
+
+  test("archived entity survives cross-instance reload", () => {
+    // First instance: born + retire
+    const rolex1 = persistentSetup();
+    rolex1.individual.born("Feature: Test", "test-ind");
+    rolex1.individual.retire("test-ind");
+    // Second instance: rehire from persisted archive
+    const rolex2 = persistentSetup();
+    const found = rolex2.find("test-ind");
+    expect(found).not.toBeNull();
+    expect(found!.name).toBe("past");
+    const r = rolex2.individual.rehire("test-ind");
+    expect(r.state.name).toBe("individual");
+    expect(r.state.information).toBe("Feature: Test");
   });
 });

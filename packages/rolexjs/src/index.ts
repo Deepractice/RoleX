@@ -24,6 +24,6 @@ export { parse, serialize } from "./feature.js";
 export type { RenderStateOptions } from "./render.js";
 // Render
 export { describe, detail, hint, renderState, world } from "./render.js";
-export type { RolexResult } from "./rolex.js";
+export type { CensusEntry, RolexResult } from "./rolex.js";
 // API
 export { createRoleX, Rolex } from "./rolex.js";

@@ -66,6 +66,8 @@ export class Rolex {
   readonly org: OrgNamespace;
   /** Position management — establish, charge, appoint. */
   readonly position: PositionNamespace;
+  /** Census — society-level queries. */
+  readonly census: CensusNamespace;
   /** Prototype management — summon, banish, list. */
   readonly proto: PrototypeNamespace;
   /** Prototype authoring — write prototype files to a directory. */
@@ -114,6 +116,7 @@ export class Rolex {
     );
     this.org = new OrgNamespace(this.rt, this.society, this.past, resolve);
     this.position = new PositionNamespace(this.rt, this.society, this.past, resolve);
+    this.census = new CensusNamespace(this.rt, this.society, this.past);
     this.proto = new PrototypeNamespace(platform.prototype, platform.resourcex);
     this.author = new AuthorNamespace();
     this.resource = platform.resourcex;
@@ -166,6 +169,8 @@ export class Rolex {
         return this.org;
       case "position":
         return this.position;
+      case "census":
+        return this.census;
       case "prototype":
         return this.proto;
       case "author":
@@ -224,6 +229,10 @@ export class Rolex {
         return [a.position, a.individual];
       case "position.dismiss":
         return [a.position, a.individual];
+
+      // census
+      case "census.list":
+        return [a.type];
 
       // prototype
       case "prototype.summon":
@@ -757,6 +766,58 @@ class PositionNamespace {
     const posNode = this.resolve(position);
     this.rt.unlink(posNode, this.resolve(individual), "appointment", "serve");
     return ok(this.rt, posNode, "dismiss");
+  }
+}
+
+// ================================================================
+//  Census — society-level queries
+// ================================================================
+
+/** Summary entry returned by census.list. */
+export interface CensusEntry {
+  id?: string;
+  name: string;
+  tag?: string;
+}
+
+class CensusNamespace {
+  constructor(
+    private rt: Runtime,
+    private society: Structure,
+    private past: Structure
+  ) {}
+
+  /** List top-level entities under society, optionally filtered by type. */
+  list(type?: string): string {
+    const target = type === "past" ? this.past : this.society;
+    const state = this.rt.project(target);
+    const children = state.children ?? [];
+    const filtered =
+      type === "past"
+        ? children
+        : children.filter((c) => (type ? c.name === type : c.name !== "past"));
+
+    if (filtered.length === 0) {
+      return type ? `No ${type} found.` : "Society is empty.";
+    }
+
+    // Group by type
+    const groups = new Map<string, State[]>();
+    for (const c of filtered) {
+      const key = c.name;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(c);
+    }
+
+    const lines: string[] = [];
+    for (const [name, items] of groups) {
+      lines.push(`[${name}] (${items.length})`);
+      for (const item of items) {
+        const tag = item.tag ? ` #${item.tag}` : "";
+        lines.push(`  ${item.id ?? "(no id)"}${tag}`);
+      }
+    }
+    return lines.join("\n");
   }
 }
 
