@@ -79,6 +79,13 @@
         "@cucumber/messages": "^32.0.0",
       },
     },
+    "packages/prototype": {
+      "name": "@rolexjs/prototype",
+      "version": "0.11.0",
+      "dependencies": {
+        "resourcexjs": "^2.14.0",
+      },
+    },
     "packages/resourcex-types": {
       "name": "@rolexjs/resourcex-types",
       "version": "0.11.0",
@@ -366,6 +373,8 @@
     "@rolexjs/mcp-server": ["@rolexjs/mcp-server@workspace:apps/mcp-server"],
 
     "@rolexjs/parser": ["@rolexjs/parser@workspace:packages/parser"],
+
+    "@rolexjs/prototype": ["@rolexjs/prototype@workspace:packages/prototype"],
 
     "@rolexjs/resourcex-types": ["@rolexjs/resourcex-types@workspace:packages/resourcex-types"],
 

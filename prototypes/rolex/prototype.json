@@ -1,0 +1,29 @@
+[
+  { "op": "!individual.born", "args": { "id": "nuwa", "alias": ["女娲", "nvwa"], "content": "@nuwa.individual.feature" } },
+  { "op": "!individual.train", "args": { "individual": "nuwa", "id": "individual-management", "content": "@individual-management.procedure.feature" } },
+  { "op": "!individual.train", "args": { "individual": "nuwa", "id": "organization-management", "content": "@organization-management.procedure.feature" } },
+  { "op": "!individual.train", "args": { "individual": "nuwa", "id": "position-management", "content": "@position-management.procedure.feature" } },
+  { "op": "!individual.train", "args": { "individual": "nuwa", "id": "prototype-management", "content": "@prototype-management.procedure.feature" } },
+  { "op": "!individual.train", "args": { "individual": "nuwa", "id": "resource-management", "content": "@resource-management.procedure.feature" } },
+  { "op": "!individual.train", "args": { "individual": "nuwa", "id": "prototype-authoring", "content": "@prototype-authoring.procedure.feature" } },
+  { "op": "!individual.train", "args": { "individual": "nuwa", "id": "skill-creator", "content": "@skill-creator.procedure.feature" } },
+
+  { "op": "!org.found", "args": { "id": "rolex", "alias": ["RoleX"], "content": "@rolex.organization.feature" } },
+  { "op": "!org.charter", "args": { "org": "rolex", "content": "@charter.charter.feature" } },
+  { "op": "!org.hire", "args": { "org": "rolex", "individual": "nuwa" } },
+
+  { "op": "!position.establish", "args": { "id": "individual-manager", "content": "@individual-manager.position.feature" } },
+  { "op": "!position.charge", "args": { "position": "individual-manager", "id": "manage-individual-lifecycle", "content": "@manage-individual-lifecycle.duty.feature" } },
+  { "op": "!position.require", "args": { "position": "individual-manager", "id": "individual-management", "content": "@individual-management.requirement.feature" } },
+  { "op": "!position.appoint", "args": { "position": "individual-manager", "individual": "nuwa" } },
+
+  { "op": "!position.establish", "args": { "id": "organization-manager", "content": "@organization-manager.position.feature" } },
+  { "op": "!position.charge", "args": { "position": "organization-manager", "id": "manage-organization-lifecycle", "content": "@manage-organization-lifecycle.duty.feature" } },
+  { "op": "!position.require", "args": { "position": "organization-manager", "id": "organization-management", "content": "@organization-management.requirement.feature" } },
+  { "op": "!position.appoint", "args": { "position": "organization-manager", "individual": "nuwa" } },
+
+  { "op": "!position.establish", "args": { "id": "position-manager", "content": "@position-manager.position.feature" } },
+  { "op": "!position.charge", "args": { "position": "position-manager", "id": "manage-position-lifecycle", "content": "@manage-position-lifecycle.duty.feature" } },
+  { "op": "!position.require", "args": { "position": "position-manager", "id": "organization-management", "content": "@organization-management.requirement.feature" } },
+  { "op": "!position.appoint", "args": { "position": "position-manager", "individual": "nuwa" } }
+]
