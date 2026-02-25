@@ -385,11 +385,17 @@ class RoleNamespace {
     const ctx = new RoleContext(individual);
     ctx.rehydrate(state);
 
-    // Restore persisted focus (overrides rehydrate defaults)
+    // Restore persisted focus (overrides rehydrate defaults), validate nodes still exist
     const persisted = this.persistContext?.load(individual);
     if (persisted) {
-      ctx.focusedGoalId = persisted.focusedGoalId;
-      ctx.focusedPlanId = persisted.focusedPlanId;
+      ctx.focusedGoalId =
+        persisted.focusedGoalId && this.tryFind(persisted.focusedGoalId)
+          ? persisted.focusedGoalId
+          : null;
+      ctx.focusedPlanId =
+        persisted.focusedPlanId && this.tryFind(persisted.focusedPlanId)
+          ? persisted.focusedPlanId
+          : null;
     }
 
     return { state, process: "activate", hint: ctx.cognitiveHint("activate") ?? undefined, ctx };
