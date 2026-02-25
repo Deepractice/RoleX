@@ -237,7 +237,7 @@ server.addTool({
   }),
   execute: async ({ id }) => {
     const ctx = state.requireCtx();
-    const result = await rolex.role.forget(id, ctx.roleId);
+    const result = await rolex.role.forget(id, ctx.roleId, ctx);
     return fmt("forget", id, result);
   },
 });

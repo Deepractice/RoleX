@@ -604,10 +604,15 @@ class RoleNamespace {
   // ---- Knowledge management ----
 
   /** Forget: remove any node under an individual by id. Prototype nodes are read-only. */
-  async forget(nodeId: string, individual: string): Promise<RolexResult> {
+  async forget(nodeId: string, individual: string, ctx?: RoleContext): Promise<RolexResult> {
     try {
       const node = this.resolve(nodeId);
       this.rt.remove(node);
+      if (ctx) {
+        if (ctx.focusedGoalId === nodeId) ctx.focusedGoalId = null;
+        if (ctx.focusedPlanId === nodeId) ctx.focusedPlanId = null;
+        this.saveCtx(ctx);
+      }
       return { state: { ...node, children: [] }, process: "forget" };
     } catch {
       // Not in runtime graph — check if it's a prototype node
