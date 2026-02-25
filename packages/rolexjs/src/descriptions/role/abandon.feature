@@ -6,7 +6,7 @@ Feature: abandon — abandon a plan
     Given a focused plan exists
     And the plan's strategy is no longer viable
     When abandon is called
-    Then the plan is marked abandoned
+    Then the plan is tagged #abandoned and stays in the tree
     And an encounter is created under the role
     And the encounter can be reflected on — failure is also learning
 

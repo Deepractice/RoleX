@@ -16,10 +16,11 @@ Feature: State origin — prototype vs instance
 
   Scenario: Reading the state heading
     Given a state node is rendered as a heading
-    Then the format is: [name] (id) {origin}
+    Then the format is: [name] (id) {origin} #tag
     And [name] identifies the structure type
     And (id) identifies the specific node
     And {origin} shows prototype or instance
+    And #tag shows the node's tag if present (e.g. #done, #abandoned)
     And nodes without origin have no organizational inheritance
 
   Scenario: Forget only works on instance nodes

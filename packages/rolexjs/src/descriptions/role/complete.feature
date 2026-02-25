@@ -6,7 +6,7 @@ Feature: complete — complete a plan
     Given a focused plan exists
     And its tasks are done
     When complete is called
-    Then the plan is marked done
+    Then the plan is tagged #done and stays in the tree
     And an encounter is created under the role
     And the encounter can be reflected on for learning
 

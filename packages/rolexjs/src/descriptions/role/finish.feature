@@ -5,7 +5,7 @@ Feature: finish — complete a task
   Scenario: Finish a task
     Given a task exists
     When finish is called on the task
-    Then the task is marked done
+    Then the task is tagged #done and stays in the tree
     And an encounter is created under the role
 
   Scenario: Finish with experience
@@ -16,8 +16,8 @@ Feature: finish — complete a task
   Scenario: Finish without encounter
     Given a task is completed with no notable learning
     When finish is called without the encounter parameter
-    Then the task is removed but no encounter is created
-    And routine completions leave no trace — keeping the state clean
+    Then the task is tagged #done but no encounter is created
+    And the task stays in the tree — visible via focus on the parent goal
 
   Scenario: Writing the encounter Gherkin
     Given the encounter records what happened — a raw account of the experience
