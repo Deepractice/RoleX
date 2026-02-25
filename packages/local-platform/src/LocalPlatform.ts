@@ -158,6 +158,7 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
       name: state.name,
       description: state.description ?? "",
       parent: null,
+      ...(state.tag ? { tag: state.tag } : {}),
       ...(state.information ? { information: state.information } : {}),
     };
     const treeNode: TreeNode = { node, parent: parentRef, children: [] };

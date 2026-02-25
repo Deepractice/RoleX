@@ -476,9 +476,7 @@ class RoleNamespace {
       const encId = taskNode.id ? `${taskNode.id}-finished` : undefined;
       enc = this.rt.create(this.resolve(individual), C.encounter, encounter, encId);
     }
-    const result: RolexResult = enc
-      ? ok(this.rt, enc, "finish")
-      : { state: this.rt.project(this.resolve(individual)), process: "finish" };
+    const result: RolexResult = enc ? ok(this.rt, enc, "finish") : ok(this.rt, taskNode, "finish");
     if (ctx) {
       if (enc) {
         const encId = result.state.id ?? task;

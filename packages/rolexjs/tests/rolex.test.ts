@@ -255,8 +255,10 @@ describe("Rolex API (stateless)", () => {
       const r = rolex.role.finish("t1", "sean", "Feature: JWT done");
       expect(r.state.name).toBe("encounter");
       expect(r.state.information).toBe("Feature: JWT done");
-      // Task is gone
-      expect(rolex.find("t1")).toBeNull();
+      // Task is tagged done, not removed
+      const task = rolex.find("t1");
+      expect(task).not.toBeNull();
+      expect(task!.tag).toBe("done");
     });
 
     test("complete consumes plan, creates encounter", () => {
@@ -267,7 +269,10 @@ describe("Rolex API (stateless)", () => {
 
       const r = rolex.role.complete("p1", "sean", "Feature: Auth plan done");
       expect(r.state.name).toBe("encounter");
-      expect(rolex.find("p1")).toBeNull();
+      // Plan is tagged done, not removed
+      const plan = rolex.find("p1");
+      expect(plan).not.toBeNull();
+      expect(plan!.tag).toBe("done");
     });
 
     test("abandon consumes plan, creates encounter", () => {
@@ -278,7 +283,10 @@ describe("Rolex API (stateless)", () => {
 
       const r = rolex.role.abandon("p1", "sean", "Feature: No time");
       expect(r.state.name).toBe("encounter");
-      expect(rolex.find("p1")).toBeNull();
+      // Plan is tagged abandoned, not removed
+      const plan = rolex.find("p1");
+      expect(plan).not.toBeNull();
+      expect(plan!.tag).toBe("abandoned");
     });
   });
 
