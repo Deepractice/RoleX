@@ -47,6 +47,12 @@ export class Role {
     this.api = api;
   }
 
+  /** Project the individual's full state tree. */
+  project(): RolexResult {
+    const result = this.api.ops["role.focus"](this.roleId);
+    return this.withHint({ ...result, process: "activate" }, "activate");
+  }
+
   private withHint(result: RolexResult, process: string): RolexResult {
     result.hint = this.ctx.cognitiveHint(process) ?? undefined;
     return result;

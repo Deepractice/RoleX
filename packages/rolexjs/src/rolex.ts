@@ -39,6 +39,7 @@ export class Rolex {
     load: (roleId: string) => ContextData | null;
   };
 
+  private readonly bootstrap: readonly string[];
   private readonly society: Structure;
   private readonly past: Structure;
 
@@ -47,6 +48,7 @@ export class Rolex {
     this.resourcex = platform.resourcex;
     this.protoRegistry = platform.prototype;
     this.initializer = platform.initializer;
+    this.bootstrap = platform.bootstrap ?? [];
 
     if (platform.saveContext && platform.loadContext) {
       this.persistContext = { save: platform.saveContext, load: platform.loadContext };
@@ -77,9 +79,13 @@ export class Rolex {
     });
   }
 
-  /** Genesis — create the world on first run. */
+  /** Genesis — create the world on first run. Settles built-in prototypes. */
   async genesis(): Promise<void> {
     await this.initializer?.bootstrap();
+    // Settle bootstrap prototypes
+    for (const source of this.bootstrap) {
+      await this.direct("!prototype.settle", { source });
+    }
   }
 
   /**

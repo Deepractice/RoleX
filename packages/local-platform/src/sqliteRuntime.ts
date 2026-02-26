@@ -91,6 +91,15 @@ function removeSubtree(db: DB, ref: string): void {
 export function createSqliteRuntime(db: DB): Runtime {
   return {
     create(parent, type, information, id, alias) {
+      // Idempotent: if parent has a child with the same id, return existing node.
+      if (id && parent?.ref) {
+        const existing = db
+          .select()
+          .from(nodes)
+          .where(and(eq(nodes.parentRef, parent.ref), eq(nodes.id, id)))
+          .get();
+        if (existing) return toStructure(existing);
+      }
       const ref = nextRef(db);
       db.insert(nodes)
         .values({

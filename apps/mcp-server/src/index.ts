@@ -6,9 +6,13 @@
  * MCP only translates protocol calls to API calls.
  */
 
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { localPlatform } from "@rolexjs/local-platform";
 import { FastMCP } from "fastmcp";
 import { createRoleX, detail } from "rolexjs";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 import { z } from "zod";
 import { instructions } from "./instructions.js";
 import { render } from "./render.js";
@@ -16,7 +20,9 @@ import { McpState } from "./state.js";
 
 // ========== Setup ==========
 
-const rolex = createRoleX(localPlatform());
+const rolex = createRoleX(localPlatform({
+  bootstrap: [resolve(__dirname, "../../../prototypes/rolex")],
+}));
 await rolex.genesis();
 const state = new McpState();
 
@@ -54,15 +60,8 @@ server.addTool({
   execute: async ({ roleId }) => {
     const role = await rolex.activate(roleId);
     state.role = role;
-    // Use focus to get the projected state for rendering
-    const goalId = role.ctx.focusedGoalId;
-    if (goalId) {
-      const result = role.focus(goalId);
-      return fmt("activate", roleId, result);
-    }
-    // No goal yet — simple activation message
-    const hint = role.ctx.cognitiveHint("activate");
-    return `Role "${roleId}" activated.\n${hint ? `I → ${hint}` : ""}`;
+    const result = role.project();
+    return fmt("activate", roleId, result);
   },
 });
 

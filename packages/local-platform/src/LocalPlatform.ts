@@ -30,6 +30,8 @@ export interface LocalPlatformConfig {
   dataDir?: string | null;
   /** Directory for ResourceX storage. Defaults to ~/.deepractice/resourcex. Set to null to disable. */
   resourceDir?: string | null;
+  /** Prototype sources to settle on genesis. */
+  bootstrap?: string[];
 }
 
 // ===== DDL =====
@@ -62,12 +64,17 @@ const CREATE_INDEXES = [
 
 // ===== Factory =====
 
-/** Create a local Platform. Persistent by default (~/.deepractice/rolex), in-memory if dataDir is null. */
+/** Resolve the DEEPRACTICE_HOME base directory. Env > default (~/.deepractice). */
+function deepracticeHome(): string {
+  return process.env.DEEPRACTICE_HOME ?? join(homedir(), ".deepractice");
+}
+
+/** Create a local Platform. Persistent by default ($DEEPRACTICE_HOME/rolex), in-memory if dataDir is null. */
 export function localPlatform(config: LocalPlatformConfig = {}): Platform {
   const dataDir =
     config.dataDir === null
       ? undefined
-      : (config.dataDir ?? join(homedir(), ".deepractice", "rolex"));
+      : (config.dataDir ?? join(deepracticeHome(), "rolex"));
 
   // ===== SQLite database =====
 
@@ -99,7 +106,7 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
   if (config.resourceDir !== null) {
     setProvider(new NodeProvider());
     resourcex = createResourceX({
-      path: config.resourceDir ?? join(homedir(), ".deepractice", "resourcex"),
+      path: config.resourceDir ?? join(deepracticeHome(), "resourcex"),
       types: [prototypeType],
     });
   }
@@ -161,5 +168,13 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
     return JSON.parse(readFileSync(contextPath, "utf-8"));
   };
 
-  return { runtime, prototype, resourcex, initializer, saveContext, loadContext };
+  return {
+    runtime,
+    prototype,
+    resourcex,
+    initializer,
+    bootstrap: config.bootstrap,
+    saveContext,
+    loadContext,
+  };
 }

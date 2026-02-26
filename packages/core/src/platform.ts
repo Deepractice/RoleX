@@ -36,6 +36,9 @@ export interface Platform {
   /** Initializer — bootstrap the world on first run. */
   readonly initializer?: Initializer;
 
+  /** Prototype sources to settle on genesis (local paths or ResourceX locators). */
+  readonly bootstrap?: readonly string[];
+
   /** Save role context to persistent storage. */
   saveContext?(roleId: string, data: ContextData): void;
 
