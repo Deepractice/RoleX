@@ -21,6 +21,7 @@ import type { Initializer } from "@rolexjs/system";
 import { sql } from "drizzle-orm";
 import { createResourceX, setProvider } from "resourcexjs";
 import { createSqliteRuntime } from "./sqliteRuntime.js";
+import { prototypeType } from "./prototypeType.js";
 
 // ===== Config =====
 
@@ -99,7 +100,7 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
     setProvider(new NodeProvider());
     resourcex = createResourceX({
       path: config.resourceDir ?? join(homedir(), ".deepractice", "resourcex"),
-      types: [],
+      types: [prototypeType],
     });
   }
 

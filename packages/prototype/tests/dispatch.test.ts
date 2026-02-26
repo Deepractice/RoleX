@@ -29,9 +29,9 @@ describe("toArgs", () => {
       .toEqual(["individual"]);
   });
 
-  test("prototype.charge — dir, position, content, id", () => {
-    expect(toArgs("prototype.charge", { dir: "/tmp", position: "dev", content: "Feature: D", id: "d1" }))
-      .toEqual(["/tmp", "dev", "Feature: D", "d1"]);
+  test("prototype.settle — source", () => {
+    expect(toArgs("prototype.settle", { source: "./prototypes/rolex" }))
+      .toEqual(["./prototypes/rolex"]);
   });
 
   // ---- Role instructions ----

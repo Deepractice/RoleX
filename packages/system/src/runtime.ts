@@ -148,6 +148,16 @@ export const createRuntime = (): Runtime => {
 
   return {
     create(parent, type, information, id, alias) {
+      // Idempotent: if parent has a child with the same id, return existing node.
+      if (id && parent?.ref) {
+        const parentTreeNode = nodes.get(parent.ref);
+        if (parentTreeNode) {
+          for (const childRef of parentTreeNode.children) {
+            const child = nodes.get(childRef);
+            if (child && child.node.id === id) return child.node;
+          }
+        }
+      }
       return createNode(parent?.ref ?? null, type, information, id, alias);
     },
 

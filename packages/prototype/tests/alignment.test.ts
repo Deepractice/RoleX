@@ -129,50 +129,6 @@ describe("alignment with rolex.ts toArgs switch", () => {
     expect(toArgs("prototype.evict", a)).toEqual([a.id]);
   });
 
-  test("prototype.born → [dir, content, id, alias]", () => {
-    const a = { dir: "/tmp/proto", content: "Feature: X", id: "nuwa", alias: ["n"] };
-    expect(toArgs("prototype.born", a)).toEqual([a.dir, a.content, a.id, a.alias]);
-  });
-
-  test("prototype.teach → [dir, content, id]", () => {
-    const a = { dir: "/tmp/proto", content: "Feature: P", id: "p1" };
-    expect(toArgs("prototype.teach", a)).toEqual([a.dir, a.content, a.id]);
-  });
-
-  test("prototype.train → [dir, content, id]", () => {
-    const a = { dir: "/tmp/proto", content: "Feature: Proc", id: "proc1" };
-    expect(toArgs("prototype.train", a)).toEqual([a.dir, a.content, a.id]);
-  });
-
-  test("prototype.found → [dir, content, id, alias]", () => {
-    const a = { dir: "/tmp/proto", content: "Feature: Org", id: "rolex", alias: ["rx"] };
-    expect(toArgs("prototype.found", a)).toEqual([a.dir, a.content, a.id, a.alias]);
-  });
-
-  test("prototype.charter → [dir, content, id]", () => {
-    const a = { dir: "/tmp/proto", content: "Feature: Charter", id: "c1" };
-    expect(toArgs("prototype.charter", a)).toEqual([a.dir, a.content, a.id]);
-  });
-
-  test("prototype.member → [dir, id, locator]", () => {
-    const a = { dir: "/tmp/proto", id: "sean", locator: "deepractice/sean" };
-    expect(toArgs("prototype.member", a)).toEqual([a.dir, a.id, a.locator]);
-  });
-
-  test("prototype.establish → [dir, content, id, appointments]", () => {
-    const a = { dir: "/tmp/proto", content: "Feature: Pos", id: "dev", appointments: ["sean"] };
-    expect(toArgs("prototype.establish", a)).toEqual([a.dir, a.content, a.id, a.appointments]);
-  });
-
-  test("prototype.charge → [dir, position, content, id]", () => {
-    const a = { dir: "/tmp/proto", position: "dev", content: "Feature: Duty", id: "d1" };
-    expect(toArgs("prototype.charge", a)).toEqual([a.dir, a.position, a.content, a.id]);
-  });
-
-  test("prototype.require → [dir, position, content, id]", () => {
-    const a = { dir: "/tmp/proto", position: "dev", content: "Feature: Req", id: "r1" };
-    expect(toArgs("prototype.require", a)).toEqual([a.dir, a.position, a.content, a.id]);
-  });
 
   // ================================================================
   //  resource (L268-284)

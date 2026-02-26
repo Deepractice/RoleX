@@ -39,13 +39,9 @@ describe("instructions registry", () => {
     expect(methodsOf("census")).toEqual(["list"]);
   });
 
-  test("prototype — 11 methods", () => {
+  test("prototype — 2 methods", () => {
     const methods = methodsOf("prototype");
-    expect(methods).toEqual([
-      "settle", "evict",
-      "born", "teach", "train",
-      "found", "charter", "member", "establish", "charge", "require",
-    ]);
+    expect(methods).toEqual(["settle", "evict"]);
   });
 
   test("resource — 8 methods", () => {
@@ -53,8 +49,8 @@ describe("instructions registry", () => {
     expect(methods).toEqual(["add", "search", "has", "info", "remove", "push", "pull", "clearCache"]);
   });
 
-  test("total instruction count is 50", () => {
-    expect(Object.keys(instructions).length).toBe(50);
+  test("total instruction count is 41", () => {
+    expect(Object.keys(instructions).length).toBe(41);
   });
 
   test("every instruction has matching namespace.method key", () => {

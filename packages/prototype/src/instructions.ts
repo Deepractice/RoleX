@@ -144,7 +144,8 @@ const orgFound = def("org", "found", {
 const orgCharter = def("org", "charter", {
   org: { type: "string", required: true, description: "Organization id" },
   content: { type: "gherkin", required: true, description: "Gherkin Feature source for the charter" },
-}, ["org", "content"]);
+  id: { type: "string", required: false, description: "Charter id" },
+}, ["org", "content", "id"]);
 
 const orgDissolve = def("org", "dissolve", {
   org: { type: "string", required: true, description: "Organization id" },
@@ -215,65 +216,6 @@ const prototypeSettle = def("prototype", "settle", {
 const prototypeEvict = def("prototype", "evict", {
   id: { type: "string", required: true, description: "Prototype id to unregister" },
 }, ["id"]);
-
-const prototypeBorn = def("prototype", "born", {
-  dir: { type: "string", required: true, description: "Output directory for the prototype" },
-  content: { type: "gherkin", required: false, description: "Gherkin Feature source for the individual" },
-  id: { type: "string", required: true, description: "Individual id (kebab-case)" },
-  alias: { type: "string[]", required: false, description: "Alternative names" },
-}, ["dir", "content", "id", "alias"]);
-
-const prototypeTeach = def("prototype", "teach", {
-  dir: { type: "string", required: true, description: "Prototype directory" },
-  content: { type: "gherkin", required: true, description: "Gherkin Feature source for the principle" },
-  id: { type: "string", required: true, description: "Principle id (keywords joined by hyphens)" },
-}, ["dir", "content", "id"]);
-
-const prototypeTrain = def("prototype", "train", {
-  dir: { type: "string", required: true, description: "Prototype directory" },
-  content: { type: "gherkin", required: true, description: "Gherkin Feature source for the procedure" },
-  id: { type: "string", required: true, description: "Procedure id (keywords joined by hyphens)" },
-}, ["dir", "content", "id"]);
-
-const prototypeFound = def("prototype", "found", {
-  dir: { type: "string", required: true, description: "Output directory for the organization prototype" },
-  content: { type: "gherkin", required: false, description: "Gherkin Feature source for the organization" },
-  id: { type: "string", required: true, description: "Organization id (kebab-case)" },
-  alias: { type: "string[]", required: false, description: "Alternative names" },
-}, ["dir", "content", "id", "alias"]);
-
-const prototypeCharter = def("prototype", "charter", {
-  dir: { type: "string", required: true, description: "Prototype directory" },
-  content: { type: "gherkin", required: true, description: "Gherkin Feature source for the charter" },
-  id: { type: "string", required: false, description: "Charter id" },
-}, ["dir", "content", "id"]);
-
-const prototypeMember = def("prototype", "member", {
-  dir: { type: "string", required: true, description: "Prototype directory" },
-  id: { type: "string", required: true, description: "Member individual id" },
-  locator: { type: "string", required: true, description: "ResourceX locator for the member prototype" },
-}, ["dir", "id", "locator"]);
-
-const prototypeEstablish = def("prototype", "establish", {
-  dir: { type: "string", required: true, description: "Prototype directory" },
-  content: { type: "gherkin", required: false, description: "Gherkin Feature source for the position" },
-  id: { type: "string", required: true, description: "Position id (kebab-case)" },
-  appointments: { type: "string[]", required: false, description: "Individual ids to auto-appoint" },
-}, ["dir", "content", "id", "appointments"]);
-
-const prototypeCharge = def("prototype", "charge", {
-  dir: { type: "string", required: true, description: "Prototype directory" },
-  position: { type: "string", required: true, description: "Position id" },
-  content: { type: "gherkin", required: true, description: "Gherkin Feature source for the duty" },
-  id: { type: "string", required: true, description: "Duty id (keywords joined by hyphens)" },
-}, ["dir", "position", "content", "id"]);
-
-const prototypeRequire = def("prototype", "require", {
-  dir: { type: "string", required: true, description: "Prototype directory" },
-  position: { type: "string", required: true, description: "Position id" },
-  content: { type: "gherkin", required: true, description: "Gherkin Feature source for the skill requirement" },
-  id: { type: "string", required: true, description: "Requirement id (keywords joined by hyphens)" },
-}, ["dir", "position", "content", "id"]);
 
 // ================================================================
 //  Resource — ResourceX proxy
@@ -362,15 +304,6 @@ export const instructions: Record<string, InstructionDef> = {
   // prototype
   "prototype.settle": prototypeSettle,
   "prototype.evict": prototypeEvict,
-  "prototype.born": prototypeBorn,
-  "prototype.teach": prototypeTeach,
-  "prototype.train": prototypeTrain,
-  "prototype.found": prototypeFound,
-  "prototype.charter": prototypeCharter,
-  "prototype.member": prototypeMember,
-  "prototype.establish": prototypeEstablish,
-  "prototype.charge": prototypeCharge,
-  "prototype.require": prototypeRequire,
 
   // resource
   "resource.add": resourceAdd,

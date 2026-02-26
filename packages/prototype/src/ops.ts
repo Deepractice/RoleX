@@ -30,6 +30,12 @@ export interface OpsContext {
   resolve(id: string): Structure;
   find(id: string): Structure | null;
   resourcex?: ResourceX;
+  prototype?: {
+    settle(id: string, source: string): void;
+    evict(id: string): void;
+    list(): Record<string, string>;
+  };
+  direct?(locator: string, args?: Record<string, unknown>): Promise<unknown>;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: ops are dynamically dispatched
@@ -98,7 +104,7 @@ export function createOps(ctx: OpsContext): Ops {
     "individual.born"(content?: string, id?: string, alias?: readonly string[]): OpResult {
       validateGherkin(content);
       const node = rt.create(society, C.individual, content, id, alias);
-      rt.create(node, C.identity);
+      rt.create(node, C.identity, undefined, id);
       return ok(node, "born");
     },
 
@@ -113,7 +119,7 @@ export function createOps(ctx: OpsContext): Ops {
     "individual.rehire"(pastNode: string): OpResult {
       const node = resolve(pastNode);
       const ind = rt.create(society, C.individual, node.information, node.id);
-      rt.create(ind, C.identity);
+      rt.create(ind, C.identity, undefined, node.id);
       rt.remove(node);
       return ok(ind, "rehire");
     },
@@ -251,9 +257,9 @@ export function createOps(ctx: OpsContext): Ops {
       return ok(node, "found");
     },
 
-    "org.charter"(org: string, charter: string): OpResult {
+    "org.charter"(org: string, charter: string, id?: string): OpResult {
       validateGherkin(charter);
-      const node = rt.create(resolve(org), C.charter, charter);
+      const node = rt.create(resolve(org), C.charter, charter, id);
       return ok(node, "charter");
     },
 
@@ -350,6 +356,27 @@ export function createOps(ctx: OpsContext): Ops {
         }
       }
       return lines.join("\n");
+    },
+
+    // ---- Prototype ----
+
+    async "prototype.settle"(source: string): Promise<string> {
+      const rx = requireResourceX();
+      if (!ctx.prototype) throw new Error("Prototype registry is not available.");
+      if (!ctx.direct) throw new Error("Direct dispatch is not available.");
+
+      // Ingest the prototype resource — type resolver resolves @filename references
+      const result = await rx.ingest<{ id: string; instructions: Array<{ op: string; args: Record<string, unknown> }> }>(source);
+
+      // Execute each instruction
+      for (const instr of result.instructions) {
+        await ctx.direct(instr.op, instr.args);
+      }
+
+      // Register in prototype registry
+      ctx.prototype.settle(result.id, source);
+
+      return `Prototype "${result.id}" settled (${result.instructions.length} instructions).`;
     },
 
     // ---- Resource (proxy to ResourceX) ----

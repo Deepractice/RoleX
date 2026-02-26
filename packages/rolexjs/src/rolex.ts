@@ -72,6 +72,8 @@ export class Rolex {
       },
       find: (id: string) => this.find(id),
       resourcex: platform.resourcex,
+      prototype: platform.prototype,
+      direct: (locator: string, args?: Record<string, unknown>) => this.direct(locator, args),
     });
   }
 
