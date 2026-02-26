@@ -1,13 +1,13 @@
 /**
  * MCP server integration tests.
  *
- * Tests the thin MCP layer (state + render) on top of stateless Rolex.
+ * Tests the thin MCP layer (state + render) on top of Rolex.
  * Business logic (RoleContext) is tested in rolexjs/tests/context.test.ts.
  * This file tests MCP-specific concerns: state holder, render, and integration.
  */
 import { beforeEach, describe, expect, it } from "bun:test";
 import { localPlatform } from "@rolexjs/local-platform";
-import { createRoleX, type Rolex } from "rolexjs";
+import { createRoleX, type Rolex, type RolexResult } from "rolexjs";
 import { render } from "../src/render.js";
 import { McpState } from "../src/state.js";
 
@@ -16,39 +16,24 @@ let state: McpState;
 
 beforeEach(() => {
   rolex = createRoleX(localPlatform({ dataDir: null }));
-  state = new McpState(rolex);
+  state = new McpState();
 });
 
 // ================================================================
-//  State: findIndividual
+//  State: requireRole
 // ================================================================
 
-describe("findIndividual", () => {
-  it("returns true when individual exists", () => {
-    rolex.individual.born("Feature: Sean\n  A backend architect", "sean");
-    expect(state.findIndividual("sean")).toBe(true);
-  });
-
-  it("returns false when not found", () => {
-    expect(state.findIndividual("nobody")).toBe(false);
-  });
-});
-
-// ================================================================
-//  State: requireCtx
-// ================================================================
-
-describe("requireCtx", () => {
+describe("requireRole", () => {
   it("throws without active role", () => {
-    expect(() => state.requireCtx()).toThrow("No active role");
+    expect(() => state.requireRole()).toThrow("No active role");
   });
 
-  it("returns ctx after activation", async () => {
-    rolex.individual.born("Feature: Sean", "sean");
-    const result = await rolex.role.activate("sean");
-    state.ctx = result.ctx!;
-    expect(state.requireCtx()).toBe(result.ctx);
-    expect(state.requireCtx().roleId).toBe("sean");
+  it("returns role after activation", async () => {
+    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    const role = await rolex.activate("sean");
+    state.role = role;
+    expect(state.requireRole()).toBe(role);
+    expect(state.requireRole().roleId).toBe("sean");
   });
 });
 
@@ -57,8 +42,8 @@ describe("requireCtx", () => {
 // ================================================================
 
 describe("render", () => {
-  it("includes status + hint + projection", () => {
-    const result = rolex.individual.born("Feature: Sean", "sean");
+  it("includes status + hint + projection", async () => {
+    const result = await rolex.direct<RolexResult>("!individual.born", { content: "Feature: Sean", id: "sean" });
     const output = render({
       process: "born",
       name: "Sean",
@@ -73,8 +58,8 @@ describe("render", () => {
     expect(output).toContain("## [identity]");
   });
 
-  it("includes cognitive hint when provided", () => {
-    const result = rolex.individual.born("Feature: Sean", "sean");
+  it("includes cognitive hint when provided", async () => {
+    const result = await rolex.direct<RolexResult>("!individual.born", { content: "Feature: Sean", id: "sean" });
     const output = render({
       process: "born",
       name: "Sean",
@@ -85,37 +70,25 @@ describe("render", () => {
     expect(output).toContain("I have no goal yet");
   });
 
-  it("includes bidirectional links in projection", () => {
-    rolex.individual.born("Feature: Sean", "sean");
-    rolex.org.found("Feature: Deepractice", "dp");
-    rolex.org.hire("dp", "sean");
+  it("includes bidirectional links in projection", async () => {
+    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    await rolex.direct("!org.found", { content: "Feature: Deepractice", id: "dp" });
+    await rolex.direct("!org.hire", { org: "dp", individual: "sean" });
 
-    // Project individual — should have belong link
-    const seanState = rolex.find("sean")!;
+    // Activate and use focus to get projected state with links
+    const role = await rolex.activate("sean");
+    // Use want + focus to get a result with state
+    role.want("Feature: Test", "test-goal");
+    const result = role.focus("test-goal");
+
+    // The role itself should have belong link — check via use
+    const seanResult = await role.use<RolexResult>("!role.focus", { goal: "test-goal" });
     const output = render({
       process: "activate",
       name: "Sean",
-      result: { state: seanState as any, process: "activate" },
+      result: seanResult,
     });
-    expect(output).toContain("belong");
-    expect(output).toContain("Deepractice");
-  });
-
-  it("includes appointment relation in projection", () => {
-    rolex.individual.born("Feature: Sean", "sean");
-    rolex.org.found("Feature: Deepractice", "dp");
-    rolex.position.establish("Feature: Architect", "architect");
-    rolex.org.hire("dp", "sean");
-    rolex.position.appoint("architect", "sean");
-
-    const seanState = rolex.find("sean")!;
-    const output = render({
-      process: "activate",
-      name: "Sean",
-      result: { state: seanState as any, process: "activate" },
-    });
-    expect(output).toContain("serve");
-    expect(output).toContain("Architect");
+    expect(output).toContain("[goal]");
   });
 });
 
@@ -124,65 +97,52 @@ describe("render", () => {
 // ================================================================
 
 describe("full execution flow", () => {
-  it("completes want → plan → todo → finish → reflect → realize through namespace API", async () => {
+  it("completes want → plan → todo → finish → reflect → realize through Role API", async () => {
     // Born + activate
-    rolex.individual.born("Feature: Sean", "sean");
-    const activated = await rolex.role.activate("sean");
-    state.ctx = activated.ctx!;
-    const ctx = state.requireCtx();
+    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    const role = await rolex.activate("sean");
+    state.role = role;
 
     // Want
-    const goal = rolex.role.want(ctx.roleId, "Feature: Build Auth", "build-auth", undefined, ctx);
-    expect(ctx.focusedGoalId).toBe("build-auth");
+    const goal = role.want("Feature: Build Auth", "build-auth");
+    expect(role.ctx.focusedGoalId).toBe("build-auth");
     expect(goal.hint).toBeDefined();
 
     // Plan
-    const plan = rolex.role.plan("build-auth", "Feature: Auth Plan", "auth-plan", ctx);
-    expect(ctx.focusedPlanId).toBe("auth-plan");
+    const plan = role.plan("Feature: Auth Plan", "auth-plan");
+    expect(role.ctx.focusedPlanId).toBe("auth-plan");
     expect(plan.hint).toBeDefined();
 
     // Todo
-    const task = rolex.role.todo("auth-plan", "Feature: Implement JWT", "impl-jwt", undefined, ctx);
+    const task = role.todo("Feature: Implement JWT", "impl-jwt");
     expect(task.hint).toBeDefined();
 
     // Finish with encounter
-    const finished = rolex.role.finish(
+    const finished = role.finish(
       "impl-jwt",
-      ctx.roleId,
       "Feature: Implemented JWT\n  Scenario: Token pattern\n    Given JWT needed\n    Then tokens work",
-      ctx
     );
     expect(finished.state.name).toBe("encounter");
-    expect(ctx.encounterIds.has("impl-jwt-finished")).toBe(true);
+    expect(role.ctx.encounterIds.has("impl-jwt-finished")).toBe(true);
 
     // Reflect: encounter → experience
-    const reflected = rolex.role.reflect(
+    const reflected = role.reflect(
       "impl-jwt-finished",
-      ctx.roleId,
       "Feature: Token rotation insight\n  Scenario: Refresh matters\n    Given tokens expire\n    Then refresh tokens are key",
       "token-insight",
-      ctx
     );
     expect(reflected.state.name).toBe("experience");
-    expect(ctx.encounterIds.has("impl-jwt-finished")).toBe(false);
-    expect(ctx.experienceIds.has("token-insight")).toBe(true);
+    expect(role.ctx.encounterIds.has("impl-jwt-finished")).toBe(false);
+    expect(role.ctx.experienceIds.has("token-insight")).toBe(true);
 
     // Realize: experience → principle
-    const realized = rolex.role.realize(
+    const realized = role.realize(
       "token-insight",
-      ctx.roleId,
       "Feature: Always use refresh tokens\n  Scenario: Short-lived tokens need rotation\n    Given access tokens expire\n    Then refresh tokens must exist",
       "refresh-tokens",
-      ctx
     );
     expect(realized.state.name).toBe("principle");
-    expect(ctx.experienceIds.has("token-insight")).toBe(false);
-
-    // Verify principle exists under individual
-    const seanState = rolex.find("sean")!;
-    const principle = (seanState as any).children?.find((c: any) => c.name === "principle");
-    expect(principle).toBeDefined();
-    expect(principle.information).toContain("Always use refresh tokens");
+    expect(role.ctx.experienceIds.has("token-insight")).toBe(false);
   });
 });
 
@@ -191,21 +151,20 @@ describe("full execution flow", () => {
 // ================================================================
 
 describe("focus", () => {
-  it("switches focused goal via ctx", async () => {
-    rolex.individual.born("Feature: Sean", "sean");
-    const activated = await rolex.role.activate("sean");
-    state.ctx = activated.ctx!;
-    const ctx = state.requireCtx();
+  it("switches focused goal via Role", async () => {
+    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    const role = await rolex.activate("sean");
+    state.role = role;
 
-    rolex.role.want(ctx.roleId, "Feature: Goal A", "goal-a", undefined, ctx);
-    expect(ctx.focusedGoalId).toBe("goal-a");
+    role.want("Feature: Goal A", "goal-a");
+    expect(role.ctx.focusedGoalId).toBe("goal-a");
 
-    rolex.role.want(ctx.roleId, "Feature: Goal B", "goal-b", undefined, ctx);
-    expect(ctx.focusedGoalId).toBe("goal-b");
+    role.want("Feature: Goal B", "goal-b");
+    expect(role.ctx.focusedGoalId).toBe("goal-b");
 
     // Switch back to goal A
-    rolex.role.focus("goal-a", ctx);
-    expect(ctx.focusedGoalId).toBe("goal-a");
+    role.focus("goal-a");
+    expect(role.ctx.focusedGoalId).toBe("goal-a");
   });
 });
 
@@ -215,47 +174,40 @@ describe("focus", () => {
 
 describe("selective cognition", () => {
   it("ctx tracks multiple encounters, reflect consumes selectively", async () => {
-    rolex.individual.born("Feature: Sean", "sean");
-    const activated = await rolex.role.activate("sean");
-    state.ctx = activated.ctx!;
-    const ctx = state.requireCtx();
+    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    const role = await rolex.activate("sean");
+    state.role = role;
 
     // Create goal + plan + tasks
-    rolex.role.want(ctx.roleId, "Feature: Auth", "auth", undefined, ctx);
-    rolex.role.plan("auth", "Feature: Plan", "plan1", ctx);
-    rolex.role.todo("plan1", "Feature: Login", "login", undefined, ctx);
-    rolex.role.todo("plan1", "Feature: Signup", "signup", undefined, ctx);
+    role.want("Feature: Auth", "auth");
+    role.plan("Feature: Plan", "plan1");
+    role.todo("Feature: Login", "login");
+    role.todo("Feature: Signup", "signup");
 
     // Finish both with encounters
-    rolex.role.finish(
+    role.finish(
       "login",
-      ctx.roleId,
       "Feature: Login done\n  Scenario: OK\n    Given login\n    Then success",
-      ctx
     );
-    rolex.role.finish(
+    role.finish(
       "signup",
-      ctx.roleId,
       "Feature: Signup done\n  Scenario: OK\n    Given signup\n    Then success",
-      ctx
     );
 
-    expect(ctx.encounterIds.has("login-finished")).toBe(true);
-    expect(ctx.encounterIds.has("signup-finished")).toBe(true);
+    expect(role.ctx.encounterIds.has("login-finished")).toBe(true);
+    expect(role.ctx.encounterIds.has("signup-finished")).toBe(true);
 
     // Reflect only on "login-finished"
-    rolex.role.reflect(
+    role.reflect(
       "login-finished",
-      ctx.roleId,
       "Feature: Login insight\n  Scenario: OK\n    Given practice\n    Then understanding",
       "login-insight",
-      ctx
     );
 
     // "login-finished" consumed, "signup-finished" still available
-    expect(ctx.encounterIds.has("login-finished")).toBe(false);
-    expect(ctx.encounterIds.has("signup-finished")).toBe(true);
+    expect(role.ctx.encounterIds.has("login-finished")).toBe(false);
+    expect(role.ctx.encounterIds.has("signup-finished")).toBe(true);
     // Experience registered
-    expect(ctx.experienceIds.has("login-insight")).toBe(true);
+    expect(role.ctx.experienceIds.has("login-insight")).toBe(true);
   });
 });

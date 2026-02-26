@@ -1,23 +1,16 @@
 /**
  * McpState — thin session holder for the MCP server.
  *
- * All business logic (state tracking, cognitive hints, encounter/experience
- * registries) now lives in RoleContext (rolexjs). McpState only holds
- * the ctx reference and provides MCP-specific helpers.
+ * Holds the active Role handle. All business logic (state tracking,
+ * cognitive hints, encounter/experience registries) lives in Role + RoleContext.
  */
-import type { RoleContext, Rolex } from "rolexjs";
+import type { Role } from "rolexjs";
 
 export class McpState {
-  ctx: RoleContext | null = null;
+  role: Role | null = null;
 
-  constructor(readonly rolex: Rolex) {}
-
-  requireCtx(): RoleContext {
-    if (!this.ctx) throw new Error("No active role. Call activate first.");
-    return this.ctx;
-  }
-
-  findIndividual(roleId: string): boolean {
-    return this.rolex.find(roleId) !== null;
+  requireRole(): Role {
+    if (!this.role) throw new Error("No active role. Call activate first.");
+    return this.role;
   }
 }

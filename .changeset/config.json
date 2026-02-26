@@ -8,7 +8,6 @@
       "@rolexjs/parser",
       "@rolexjs/local-platform",
       "rolexjs",
-      "@rolexjs/cli",
       "@rolexjs/mcp-server",
       "@rolexjs/system"
     ]

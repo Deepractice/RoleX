@@ -2,7 +2,7 @@
  * @rolexjs/mcp-server — individual-level MCP tools.
  *
  * Thin wrapper around the Rolex API. All business logic (state tracking,
- * cognitive hints, encounter/experience registries) lives in RoleContext (rolexjs).
+ * cognitive hints, encounter/experience registries) lives in Role + RoleContext.
  * MCP only translates protocol calls to API calls.
  */
 
@@ -17,8 +17,8 @@ import { McpState } from "./state.js";
 // ========== Setup ==========
 
 const rolex = createRoleX(localPlatform());
-await rolex.bootstrap();
-const state = new McpState(rolex);
+await rolex.genesis();
+const state = new McpState();
 
 // ========== Server ==========
 
@@ -52,16 +52,17 @@ server.addTool({
     roleId: z.string().describe("Role name to activate"),
   }),
   execute: async ({ roleId }) => {
-    const result = await rolex.role.activate(roleId);
-    state.ctx = result.ctx!;
-    const ctx = result.ctx!;
-    return render({
-      process: "activate",
-      name: roleId,
-      result,
-      cognitiveHint: result.hint ?? null,
-      fold: (node) => node.name === "goal" && node.id !== ctx.focusedGoalId,
-    });
+    const role = await rolex.activate(roleId);
+    state.role = role;
+    // Use focus to get the projected state for rendering
+    const goalId = role.ctx.focusedGoalId;
+    if (goalId) {
+      const result = role.focus(goalId);
+      return fmt("activate", roleId, result);
+    }
+    // No goal yet — simple activation message
+    const hint = role.ctx.cognitiveHint("activate");
+    return `Role "${roleId}" activated.\n${hint ? `I → ${hint}` : ""}`;
   },
 });
 
@@ -72,9 +73,8 @@ server.addTool({
     id: z.string().optional().describe("Goal id to switch to. Omit to view current."),
   }),
   execute: async ({ id }) => {
-    const ctx = state.requireCtx();
-    const goalId = id ?? ctx.requireGoalId();
-    const result = rolex.role.focus(goalId, ctx);
+    const role = state.requireRole();
+    const result = role.focus(id);
     return fmt("focus", id ?? "current goal", result);
   },
 });
@@ -89,8 +89,8 @@ server.addTool({
     goal: z.string().describe("Gherkin Feature source describing the goal"),
   }),
   execute: async ({ id, goal }) => {
-    const ctx = state.requireCtx();
-    const result = rolex.role.want(ctx.roleId, goal, id, undefined, ctx);
+    const role = state.requireRole();
+    const result = role.want(goal, id);
     return fmt("want", id, result);
   },
 });
@@ -111,9 +111,8 @@ server.addTool({
       .describe("Plan id this plan is a backup for (alternative/strategy relationship)"),
   }),
   execute: async ({ id, plan, after, fallback }) => {
-    const ctx = state.requireCtx();
-    const goalId = ctx.requireGoalId();
-    const result = rolex.role.plan(goalId, plan, id, ctx, after, fallback);
+    const role = state.requireRole();
+    const result = role.plan(plan, id, after, fallback);
     return fmt("plan", id, result);
   },
 });
@@ -126,9 +125,8 @@ server.addTool({
     task: z.string().describe("Gherkin Feature source describing the task"),
   }),
   execute: async ({ id, task }) => {
-    const ctx = state.requireCtx();
-    const planId = ctx.requirePlanId();
-    const result = rolex.role.todo(planId, task, id, undefined, ctx);
+    const role = state.requireRole();
+    const result = role.todo(task, id);
     return fmt("todo", id, result);
   },
 });
@@ -141,8 +139,8 @@ server.addTool({
     encounter: z.string().optional().describe("Optional Gherkin Feature describing what happened"),
   }),
   execute: async ({ id, encounter }) => {
-    const ctx = state.requireCtx();
-    const result = rolex.role.finish(id, ctx.roleId, encounter, ctx);
+    const role = state.requireRole();
+    const result = role.finish(id, encounter);
     return fmt("finish", id, result);
   },
 });
@@ -155,10 +153,9 @@ server.addTool({
     encounter: z.string().optional().describe("Optional Gherkin Feature describing what happened"),
   }),
   execute: async ({ id, encounter }) => {
-    const ctx = state.requireCtx();
-    const planId = id ?? ctx.requirePlanId();
-    const result = rolex.role.complete(planId, ctx.roleId, encounter, ctx);
-    return fmt("complete", planId, result);
+    const role = state.requireRole();
+    const result = role.complete(id, encounter);
+    return fmt("complete", id ?? "focused plan", result);
   },
 });
 
@@ -170,10 +167,9 @@ server.addTool({
     encounter: z.string().optional().describe("Optional Gherkin Feature describing what happened"),
   }),
   execute: async ({ id, encounter }) => {
-    const ctx = state.requireCtx();
-    const planId = id ?? ctx.requirePlanId();
-    const result = rolex.role.abandon(planId, ctx.roleId, encounter, ctx);
-    return fmt("abandon", planId, result);
+    const role = state.requireRole();
+    const result = role.abandon(id, encounter);
+    return fmt("abandon", id ?? "focused plan", result);
   },
 });
 
@@ -190,8 +186,8 @@ server.addTool({
     experience: z.string().optional().describe("Gherkin Feature source for the experience"),
   }),
   execute: async ({ ids, id, experience }) => {
-    const ctx = state.requireCtx();
-    const result = rolex.role.reflect(ids[0], ctx.roleId, experience, id, ctx);
+    const role = state.requireRole();
+    const result = role.reflect(ids[0], experience, id);
     return fmt("reflect", id, result);
   },
 });
@@ -205,8 +201,8 @@ server.addTool({
     principle: z.string().optional().describe("Gherkin Feature source for the principle"),
   }),
   execute: async ({ ids, id, principle }) => {
-    const ctx = state.requireCtx();
-    const result = rolex.role.realize(ids[0], ctx.roleId, principle, id, ctx);
+    const role = state.requireRole();
+    const result = role.realize(ids[0], principle, id);
     return fmt("realize", id, result);
   },
 });
@@ -220,8 +216,8 @@ server.addTool({
     procedure: z.string().describe("Gherkin Feature source for the procedure"),
   }),
   execute: async ({ ids, id, procedure }) => {
-    const ctx = state.requireCtx();
-    const result = rolex.role.master(ctx.roleId, procedure, id, ids?.[0], ctx);
+    const role = state.requireRole();
+    const result = role.master(procedure, id, ids?.[0]);
     return fmt("master", id, result);
   },
 });
@@ -237,8 +233,8 @@ server.addTool({
       .describe("Id of the node to remove (principle, procedure, experience, encounter, etc.)"),
   }),
   execute: async ({ id }) => {
-    const ctx = state.requireCtx();
-    const result = await rolex.role.forget(id, ctx.roleId, ctx);
+    const role = state.requireRole();
+    const result = role.forget(id);
     return fmt("forget", id, result);
   },
 });
@@ -254,8 +250,8 @@ server.addTool({
       .describe("ResourceX locator for the skill (e.g. deepractice/role-management)"),
   }),
   execute: async ({ locator }) => {
-    const content = await rolex.role.skill(locator);
-    return content;
+    const role = state.requireRole();
+    return role.skill(locator);
   },
 });
 
@@ -273,7 +269,8 @@ server.addTool({
     args: z.record(z.unknown()).optional().describe("Named arguments for the command or resource"),
   }),
   execute: async ({ locator, args }) => {
-    const result = await rolex.use(locator, args);
+    const role = state.requireRole();
+    const result = await role.use(locator, args);
     if (result == null) return `${locator} done.`;
     if (typeof result === "string") return result;
     return JSON.stringify(result, null, 2);
