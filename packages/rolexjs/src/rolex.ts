@@ -1,824 +1,25 @@
 /**
- * Rolex — stateless API layer.
+ * Rolex — thin API shell.
  *
- * Every method takes string ids for existing nodes and resolves internally.
- * No internal state — name registry, active role, session are the
- * caller's responsibility (MCP / CLI).
+ * Public API:
+ *   genesis()    — create the world on first run
+ *   activate(id) — returns a stateful Role handle
+ *   direct(loc, args) — direct the world to execute an instruction
  *
- * Runtime is injected — caller decides storage.
- *
- * All textual inputs must be valid Gherkin Feature syntax.
- *
- * Namespaces:
- *   individual — lifecycle (born, retire, die, rehire) + external injection (teach, train)
- *   role       — execution + cognition (activate → complete, reflect → master, skill)
- *   org        — organization management (found, charter, dissolve, hire, fire)
- *   position   — position management (establish, abolish, charge, appoint, dismiss)
- *   prototype  — registry (settle, evict, list) + creation (born, teach, train, found, charter, establish, charge, require)
- *   resource   — ResourceX instance (optional)
- *
- * Unified entry point:
- *   use(locator, args) — `!ns.method` dispatches to runtime, else delegates to ResourceX
+ * All operation implementations live in @rolexjs/prototype (createOps).
+ * Rolex just wires Platform → ops and manages Role lifecycle.
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
 import type { ContextData, Platform } from "@rolexjs/core";
 import * as C from "@rolexjs/core";
-import { parse } from "@rolexjs/parser";
-import {
-  type Initializer,
-  mergeState,
-  type Prototype,
-  type Runtime,
-  type State,
-  type Structure,
-} from "@rolexjs/system";
+import { createOps, toArgs, type Ops } from "@rolexjs/prototype";
+import { type Initializer, type Runtime, type State, type Structure } from "@rolexjs/system";
 import type { ResourceX } from "resourcexjs";
 import { RoleContext } from "./context.js";
+import { Role, type RolexInternal } from "./role.js";
 
-export interface RolexResult {
-  /** Projection of the primary affected node. */
-  state: State;
-  /** Which process was executed (for render). */
-  process: string;
-  /** Cognitive hint — populated when RoleContext is used. */
-  hint?: string;
-  /** Role context — returned by activate, pass to subsequent operations. */
-  ctx?: RoleContext;
-}
-
-/** Resolve an id to a Structure node, throws if not found. */
-type Resolve = (id: string) => Structure;
-
-export class Rolex {
-  private rt: Runtime;
-  private resourcex?: ResourceX;
-
-  /** Root of the world. */
-  readonly society: Structure;
-  /** Container for archived things. */
-  readonly past: Structure;
-
-  /** Individual lifecycle — create, archive, restore, external injection. */
-  readonly individual: IndividualNamespace;
-  /** Role inner cycle — execution + cognition. */
-  readonly role: RoleNamespace;
-  /** Organization management — structure + membership. */
-  readonly org: OrgNamespace;
-  /** Position management — establish, charge, appoint. */
-  readonly position: PositionNamespace;
-  /** Census — society-level queries. */
-  readonly census: CensusNamespace;
-  /** Prototype — registry + creation. */
-  readonly prototype: PrototypeNamespace;
-  /** Resource management (optional — powered by ResourceX). */
-  readonly resource?: ResourceX;
-
-  private readonly initializer?: Initializer;
-
-  constructor(platform: Platform) {
-    this.rt = platform.runtime;
-    this.resourcex = platform.resourcex;
-    this.initializer = platform.initializer;
-
-    // Ensure world roots exist (idempotent — reuse if already created by another process)
-    const roots = this.rt.roots();
-    this.society = roots.find((r) => r.name === "society") ?? this.rt.create(null, C.society);
-
-    const societyState = this.rt.project(this.society);
-    const existingPast = societyState.children?.find((c) => c.name === "past");
-    this.past = existingPast ?? this.rt.create(this.society, C.past);
-
-    // Shared resolver — all namespaces use this to look up nodes by id
-    const resolve: Resolve = (id: string) => {
-      const node = this.find(id);
-      if (!node) throw new Error(`"${id}" not found.`);
-      return node;
-    };
-
-    // Namespaces
-    this.individual = new IndividualNamespace(this.rt, this.society, this.past, resolve);
-    const persistContext =
-      platform.saveContext && platform.loadContext
-        ? { save: platform.saveContext, load: platform.loadContext }
-        : undefined;
-    const tryFind = (id: string) => this.find(id);
-    const born = (id: string) => {
-      this.individual.born(undefined, id);
-      return this.find(id)!;
-    };
-    this.role = new RoleNamespace(
-      this.rt,
-      resolve,
-      tryFind,
-      born,
-      platform.prototype,
-      platform.resourcex,
-      persistContext
-    );
-    this.org = new OrgNamespace(this.rt, this.society, this.past, resolve);
-    this.position = new PositionNamespace(this.rt, this.society, this.past, resolve);
-    this.census = new CensusNamespace(this.rt, this.society, this.past);
-    this.prototype = new PrototypeNamespace(platform.prototype, platform.resourcex);
-    this.resource = platform.resourcex;
-  }
-
-  /** Bootstrap the world — settle built-in prototypes on first run. */
-  async bootstrap(): Promise<void> {
-    await this.initializer?.bootstrap();
-  }
-
-  /** Find a node by id or alias across the entire society tree. */
-  find(id: string): Structure | null {
-    const target = id.toLowerCase();
-    const state = this.rt.project(this.society);
-    return findInState(state, target);
-  }
-
-  /**
-   * Unified execution entry point.
-   *
-   * - `!namespace.method` — dispatch to RoleX runtime (e.g. `!org.found`, `!position.establish`)
-   * - anything else — delegate to ResourceX `ingest`
-   */
-  async use<T = unknown>(locator: string, args?: Record<string, unknown>): Promise<T> {
-    if (locator.startsWith("!")) {
-      return this.dispatch<T>(locator.slice(1), args ?? {});
-    }
-    if (!this.resourcex) throw new Error("ResourceX is not available.");
-    return this.resourcex.ingest<T>(locator, args);
-  }
-
-  /** Dispatch a `!namespace.method` command to the corresponding API. */
-  private dispatch<T>(command: string, args: Record<string, unknown>): T {
-    const dot = command.indexOf(".");
-    if (dot < 0) throw new Error(`Invalid command "${command}". Expected "namespace.method".`);
-    const ns = command.slice(0, dot);
-    const method = command.slice(dot + 1);
-
-    const namespace = this.resolveNamespace(ns);
-    const fn = (namespace as Record<string, unknown>)[method];
-    if (typeof fn !== "function") {
-      throw new Error(`Unknown command "!${command}".`);
-    }
-
-    return fn.call(namespace, ...this.toArgs(ns, method, args));
-  }
-
-  private resolveNamespace(ns: string): object {
-    switch (ns) {
-      case "individual":
-        return this.individual;
-      case "role":
-        return this.role;
-      case "org":
-        return this.org;
-      case "position":
-        return this.position;
-      case "census":
-        return this.census;
-      case "prototype":
-        return this.prototype;
-      case "resource":
-        if (!this.resource) throw new Error("ResourceX is not available.");
-        return this.resource;
-      default:
-        throw new Error(`Unknown namespace "${ns}".`);
-    }
-  }
-
-  /**
-   * Map named args to positional args for each namespace.method.
-   * Keeps dispatch table centralized — one place to maintain.
-   */
-  private toArgs(ns: string, method: string, a: Record<string, unknown>): unknown[] {
-    const key = `${ns}.${method}`;
-
-    // prettier-ignore
-    switch (key) {
-      // individual
-      case "individual.born":
-        return [a.content, a.id, a.alias];
-      case "individual.retire":
-        return [a.individual];
-      case "individual.die":
-        return [a.individual];
-      case "individual.rehire":
-        return [a.individual];
-      case "individual.teach":
-        return [a.individual, a.content, a.id];
-      case "individual.train":
-        return [a.individual, a.content, a.id];
-
-      // org
-      case "org.found":
-        return [a.content, a.id, a.alias];
-      case "org.charter":
-        return [a.org, a.content];
-      case "org.dissolve":
-        return [a.org];
-      case "org.hire":
-        return [a.org, a.individual];
-      case "org.fire":
-        return [a.org, a.individual];
-
-      // position
-      case "position.establish":
-        return [a.content, a.id, a.alias];
-      case "position.charge":
-        return [a.position, a.content, a.id];
-      case "position.require":
-        return [a.position, a.content, a.id];
-      case "position.abolish":
-        return [a.position];
-      case "position.appoint":
-        return [a.position, a.individual];
-      case "position.dismiss":
-        return [a.position, a.individual];
-
-      // census
-      case "census.list":
-        return [a.type];
-
-      // prototype
-      case "prototype.settle":
-        return [a.source];
-      case "prototype.evict":
-        return [a.id];
-      case "prototype.born":
-        return [a.dir, a.content, a.id, a.alias];
-      case "prototype.teach":
-        return [a.dir, a.content, a.id];
-      case "prototype.train":
-        return [a.dir, a.content, a.id];
-      case "prototype.found":
-        return [a.dir, a.content, a.id, a.alias];
-      case "prototype.charter":
-        return [a.dir, a.content, a.id];
-      case "prototype.member":
-        return [a.dir, a.id, a.locator];
-      case "prototype.establish":
-        return [a.dir, a.content, a.id, a.appointments];
-      case "prototype.charge":
-        return [a.dir, a.position, a.content, a.id];
-      case "prototype.require":
-        return [a.dir, a.position, a.content, a.id];
-
-      // resource (ResourceX proxy)
-      case "resource.add":
-        return [a.path];
-      case "resource.search":
-        return [a.query];
-      case "resource.has":
-        return [a.locator];
-      case "resource.info":
-        return [a.locator];
-      case "resource.remove":
-        return [a.locator];
-      case "resource.push":
-        return [a.locator, a.registry ? { registry: a.registry } : undefined];
-      case "resource.pull":
-        return [a.locator, a.registry ? { registry: a.registry } : undefined];
-      case "resource.clearCache":
-        return [a.registry];
-
-      default:
-        throw new Error(`No arg mapping for "!${key}".`);
-    }
-  }
-}
-
-// ================================================================
-//  Individual — lifecycle + external injection
-// ================================================================
-
-class IndividualNamespace {
-  constructor(
-    private rt: Runtime,
-    private society: Structure,
-    private past: Structure,
-    private resolve: Resolve
-  ) {}
-
-  /** Born an individual into society. */
-  born(individual?: string, id?: string, alias?: readonly string[]): RolexResult {
-    validateGherkin(individual);
-    const node = this.rt.create(this.society, C.individual, individual, id, alias);
-    // Scaffolding: every individual has identity
-    this.rt.create(node, C.identity);
-    return ok(this.rt, node, "born");
-  }
-
-  /** Retire an individual (can rehire later). */
-  retire(individual: string): RolexResult {
-    return archive(this.rt, this.past, this.resolve(individual), "retire");
-  }
-
-  /** An individual dies (permanent). */
-  die(individual: string): RolexResult {
-    return archive(this.rt, this.past, this.resolve(individual), "die");
-  }
-
-  /** Rehire a retired individual from past. */
-  rehire(pastNode: string): RolexResult {
-    const past = this.resolve(pastNode);
-    const individual = this.rt.create(this.society, C.individual, past.information, past.id);
-    // Scaffolding: restore identity
-    this.rt.create(individual, C.identity);
-    this.rt.remove(past);
-    return ok(this.rt, individual, "rehire");
-  }
-
-  // ---- External injection ----
-
-  /** Teach: directly inject a principle into an individual — no experience consumed. Upserts by id. */
-  teach(individual: string, principle: string, id?: string): RolexResult {
-    validateGherkin(principle);
-    const parent = this.resolve(individual);
-    if (id) this.removeExisting(parent, id);
-    const prin = this.rt.create(parent, C.principle, principle, id);
-    return ok(this.rt, prin, "teach");
-  }
-
-  /** Train: directly inject a procedure (skill) into an individual — no experience consumed. Upserts by id. */
-  train(individual: string, procedure: string, id?: string): RolexResult {
-    validateGherkin(procedure);
-    const parent = this.resolve(individual);
-    if (id) this.removeExisting(parent, id);
-    const proc = this.rt.create(parent, C.procedure, procedure, id);
-    return ok(this.rt, proc, "train");
-  }
-
-  /** Remove existing child node with matching id (for upsert). */
-  private removeExisting(parent: Structure, id: string): void {
-    const state = this.rt.project(parent);
-    const existing = findInState(state, id);
-    if (existing) this.rt.remove(existing);
-  }
-}
-
-// ================================================================
-//  Role — execution + cognition
-// ================================================================
-
-class RoleNamespace {
-  constructor(
-    private rt: Runtime,
-    private resolve: Resolve,
-    private tryFind: (id: string) => Structure | null,
-    private born: (id: string) => Structure,
-    private prototype?: Prototype,
-    private resourcex?: ResourceX,
-    private persistContext?: {
-      save: (roleId: string, data: ContextData) => void;
-      load: (roleId: string) => ContextData | null;
-    }
-  ) {}
-
-  private saveCtx(ctx?: RoleContext): void {
-    if (!ctx || !this.persistContext) return;
-    this.persistContext.save(ctx.roleId, {
-      focusedGoalId: ctx.focusedGoalId,
-      focusedPlanId: ctx.focusedPlanId,
-    });
-  }
-
-  // ---- Activation ----
-
-  /**
-   * Activate: merge prototype (if any) with instance state.
-   *
-   * If the individual does not exist in runtime but a prototype is registered,
-   * auto-born the individual first, then proceed with normal activation.
-   */
-  async activate(individual: string): Promise<RolexResult> {
-    let node = this.tryFind(individual);
-    if (!node) {
-      // Not in runtime — check prototype registry
-      const hasProto = this.prototype ? Object.hasOwn(this.prototype.list(), individual) : false;
-      if (hasProto) {
-        node = this.born(individual);
-      } else {
-        throw new Error(`"${individual}" not found.`);
-      }
-    }
-    const instanceState = this.rt.project(node);
-    const protoState = instanceState.id
-      ? await this.prototype?.resolve(instanceState.id)
-      : undefined;
-    const state = protoState ? mergeState(protoState, instanceState) : instanceState;
-    const ctx = new RoleContext(individual);
-    ctx.rehydrate(state);
-
-    // Restore persisted focus (overrides rehydrate defaults), validate nodes still exist
-    const persisted = this.persistContext?.load(individual);
-    if (persisted) {
-      ctx.focusedGoalId =
-        persisted.focusedGoalId && this.tryFind(persisted.focusedGoalId)
-          ? persisted.focusedGoalId
-          : null;
-      ctx.focusedPlanId =
-        persisted.focusedPlanId && this.tryFind(persisted.focusedPlanId)
-          ? persisted.focusedPlanId
-          : null;
-    }
-
-    return { state, process: "activate", hint: ctx.cognitiveHint("activate") ?? undefined, ctx };
-  }
-
-  /** Focus: project a goal's state (view / switch context). */
-  focus(goal: string, ctx?: RoleContext): RolexResult {
-    if (ctx) {
-      ctx.focusedGoalId = goal;
-      ctx.focusedPlanId = null;
-    }
-    const result = ok(this.rt, this.resolve(goal), "focus");
-    if (ctx) result.hint = ctx.cognitiveHint("focus") ?? undefined;
-    this.saveCtx(ctx);
-    return result;
-  }
-
-  // ---- Execution ----
-
-  /** Declare a goal under an individual. */
-  want(
-    individual: string,
-    goal?: string,
-    id?: string,
-    alias?: readonly string[],
-    ctx?: RoleContext
-  ): RolexResult {
-    validateGherkin(goal);
-    const node = this.rt.create(this.resolve(individual), C.goal, goal, id, alias);
-    const result = ok(this.rt, node, "want");
-    if (ctx) {
-      if (id) ctx.focusedGoalId = id;
-      ctx.focusedPlanId = null;
-      result.hint = ctx.cognitiveHint("want") ?? undefined;
-      this.saveCtx(ctx);
-    }
-    return result;
-  }
-
-  /** Create a plan for a goal. Optionally link to another plan via after (sequential) or fallback (alternative). */
-  plan(
-    goal: string,
-    plan?: string,
-    id?: string,
-    ctx?: RoleContext,
-    after?: string,
-    fallback?: string
-  ): RolexResult {
-    validateGherkin(plan);
-    const node = this.rt.create(this.resolve(goal), C.plan, plan, id);
-    if (after) this.rt.link(node, this.resolve(after), "after", "before");
-    if (fallback) this.rt.link(node, this.resolve(fallback), "fallback-for", "fallback");
-    const result = ok(this.rt, node, "plan");
-    if (ctx) {
-      if (id) ctx.focusedPlanId = id;
-      result.hint = ctx.cognitiveHint("plan") ?? undefined;
-      this.saveCtx(ctx);
-    }
-    return result;
-  }
-
-  /** Add a task to a plan. */
-  todo(
-    plan: string,
-    task?: string,
-    id?: string,
-    alias?: readonly string[],
-    ctx?: RoleContext
-  ): RolexResult {
-    validateGherkin(task);
-    const node = this.rt.create(this.resolve(plan), C.task, task, id, alias);
-    const result = ok(this.rt, node, "todo");
-    if (ctx) result.hint = ctx.cognitiveHint("todo") ?? undefined;
-    return result;
-  }
-
-  /** Finish a task: tag task as done, optionally create encounter under individual. */
-  finish(task: string, individual: string, encounter?: string, ctx?: RoleContext): RolexResult {
-    validateGherkin(encounter);
-    const taskNode = this.resolve(task);
-    this.rt.tag(taskNode, "done");
-    let enc: Structure | undefined;
-    if (encounter) {
-      const encId = taskNode.id ? `${taskNode.id}-finished` : undefined;
-      enc = this.rt.create(this.resolve(individual), C.encounter, encounter, encId);
-    }
-    const result: RolexResult = enc ? ok(this.rt, enc, "finish") : ok(this.rt, taskNode, "finish");
-    if (ctx) {
-      if (enc) {
-        const encId = result.state.id ?? task;
-        ctx.addEncounter(encId);
-      }
-      result.hint = ctx.cognitiveHint("finish") ?? undefined;
-    }
-    return result;
-  }
-
-  /** Complete a plan: tag plan as done, create encounter under individual. */
-  complete(plan: string, individual: string, encounter?: string, ctx?: RoleContext): RolexResult {
-    validateGherkin(encounter);
-    const planNode = this.resolve(plan);
-    this.rt.tag(planNode, "done");
-    const encId = planNode.id ? `${planNode.id}-completed` : undefined;
-    const enc = this.rt.create(this.resolve(individual), C.encounter, encounter, encId);
-    const result = ok(this.rt, enc, "complete");
-    if (ctx) {
-      ctx.addEncounter(result.state.id ?? plan);
-      if (ctx.focusedPlanId === plan) ctx.focusedPlanId = null;
-      result.hint = ctx.cognitiveHint("complete") ?? undefined;
-      this.saveCtx(ctx);
-    }
-    return result;
-  }
-
-  /** Abandon a plan: tag plan as abandoned, create encounter under individual. */
-  abandon(plan: string, individual: string, encounter?: string, ctx?: RoleContext): RolexResult {
-    validateGherkin(encounter);
-    const planNode = this.resolve(plan);
-    this.rt.tag(planNode, "abandoned");
-    const encId = planNode.id ? `${planNode.id}-abandoned` : undefined;
-    const enc = this.rt.create(this.resolve(individual), C.encounter, encounter, encId);
-    const result = ok(this.rt, enc, "abandon");
-    if (ctx) {
-      ctx.addEncounter(result.state.id ?? plan);
-      if (ctx.focusedPlanId === plan) ctx.focusedPlanId = null;
-      result.hint = ctx.cognitiveHint("abandon") ?? undefined;
-      this.saveCtx(ctx);
-    }
-    return result;
-  }
-
-  // ---- Cognition ----
-
-  /** Reflect: consume encounter, create experience under individual. */
-  reflect(
-    encounter: string,
-    individual: string,
-    experience?: string,
-    id?: string,
-    ctx?: RoleContext
-  ): RolexResult {
-    validateGherkin(experience);
-    if (ctx) ctx.requireEncounterIds([encounter]);
-    const encNode = this.resolve(encounter);
-    const exp = this.rt.create(
-      this.resolve(individual),
-      C.experience,
-      experience || encNode.information,
-      id
-    );
-    this.rt.remove(encNode);
-    const result = ok(this.rt, exp, "reflect");
-    if (ctx) {
-      ctx.consumeEncounters([encounter]);
-      if (id) ctx.addExperience(id);
-      result.hint = ctx.cognitiveHint("reflect") ?? undefined;
-    }
-    return result;
-  }
-
-  /** Realize: consume experience, create principle under individual. */
-  realize(
-    experience: string,
-    individual: string,
-    principle?: string,
-    id?: string,
-    ctx?: RoleContext
-  ): RolexResult {
-    validateGherkin(principle);
-    if (ctx) ctx.requireExperienceIds([experience]);
-    const expNode = this.resolve(experience);
-    const prin = this.rt.create(
-      this.resolve(individual),
-      C.principle,
-      principle || expNode.information,
-      id
-    );
-    this.rt.remove(expNode);
-    const result = ok(this.rt, prin, "realize");
-    if (ctx) {
-      ctx.consumeExperiences([experience]);
-      result.hint = ctx.cognitiveHint("realize") ?? undefined;
-    }
-    return result;
-  }
-
-  /** Master: create procedure under individual, optionally consuming experience. */
-  master(
-    individual: string,
-    procedure: string,
-    id?: string,
-    experience?: string,
-    ctx?: RoleContext
-  ): RolexResult {
-    validateGherkin(procedure);
-    if (ctx && experience) ctx.requireExperienceIds([experience]);
-    const parent = this.resolve(individual);
-    if (id) {
-      const existing = findInState(this.rt.project(parent), id);
-      if (existing) this.rt.remove(existing);
-    }
-    const proc = this.rt.create(parent, C.procedure, procedure, id);
-    if (experience) {
-      this.rt.remove(this.resolve(experience));
-      if (ctx) ctx.consumeExperiences([experience]);
-    }
-    const result = ok(this.rt, proc, "master");
-    if (ctx) result.hint = ctx.cognitiveHint("master") ?? undefined;
-    return result;
-  }
-
-  // ---- Knowledge management ----
-
-  /** Forget: remove any node under an individual by id. Prototype nodes are read-only. */
-  async forget(nodeId: string, individual: string, ctx?: RoleContext): Promise<RolexResult> {
-    try {
-      const node = this.resolve(nodeId);
-      this.rt.remove(node);
-      if (ctx) {
-        if (ctx.focusedGoalId === nodeId) ctx.focusedGoalId = null;
-        if (ctx.focusedPlanId === nodeId) ctx.focusedPlanId = null;
-        this.saveCtx(ctx);
-      }
-      return { state: { ...node, children: [] }, process: "forget" };
-    } catch {
-      // Not in runtime graph — check if it's a prototype node
-      if (this.prototype) {
-        // Resolve individual to get its actual stored id (case-sensitive match for prototype)
-        const indNode = this.resolve(individual);
-        const instanceState = this.rt.project(indNode);
-        const protoState = instanceState.id
-          ? await this.prototype.resolve(instanceState.id)
-          : undefined;
-        if (protoState && findInState(protoState, nodeId.toLowerCase())) {
-          throw new Error(`"${nodeId}" is a prototype node (read-only) and cannot be forgotten.`);
-        }
-      }
-      throw new Error(`"${nodeId}" not found.`);
-    }
-  }
-
-  // ---- Resource interaction ----
-
-  /** Skill: load full skill content by locator — for context injection (progressive disclosure layer 2). */
-  async skill(locator: string): Promise<string> {
-    if (!this.resourcex) throw new Error("ResourceX is not available.");
-    const content = await this.resourcex.ingest<string>(locator);
-    const text = typeof content === "string" ? content : JSON.stringify(content, null, 2);
-
-    // Try to render RXM context alongside content
-    try {
-      const rxm = await this.resourcex.info(locator);
-      return `${formatRXM(rxm)}\n\n${text}`;
-    } catch {
-      // Path-based locator or info unavailable — return content only
-      return text;
-    }
-  }
-}
-
-// ================================================================
-//  Org — organization management
-// ================================================================
-
-class OrgNamespace {
-  constructor(
-    private rt: Runtime,
-    private society: Structure,
-    private past: Structure,
-    private resolve: Resolve
-  ) {}
-
-  // ---- Structure ----
-
-  /** Found an organization. */
-  found(organization?: string, id?: string, alias?: readonly string[]): RolexResult {
-    validateGherkin(organization);
-    const org = this.rt.create(this.society, C.organization, organization, id, alias);
-    return ok(this.rt, org, "found");
-  }
-
-  /** Define the charter for an organization. */
-  charter(org: string, charter: string): RolexResult {
-    validateGherkin(charter);
-    const node = this.rt.create(this.resolve(org), C.charter, charter);
-    return ok(this.rt, node, "charter");
-  }
-
-  // ---- Archival ----
-
-  /** Dissolve an organization. */
-  dissolve(org: string): RolexResult {
-    return archive(this.rt, this.past, this.resolve(org), "dissolve");
-  }
-
-  // ---- Membership ----
-
-  /** Hire: link individual to organization via membership. */
-  hire(org: string, individual: string): RolexResult {
-    const orgNode = this.resolve(org);
-    this.rt.link(orgNode, this.resolve(individual), "membership", "belong");
-    return ok(this.rt, orgNode, "hire");
-  }
-
-  /** Fire: remove membership link. */
-  fire(org: string, individual: string): RolexResult {
-    const orgNode = this.resolve(org);
-    this.rt.unlink(orgNode, this.resolve(individual), "membership", "belong");
-    return ok(this.rt, orgNode, "fire");
-  }
-}
-
-// ================================================================
-//  Position — position management
-// ================================================================
-
-class PositionNamespace {
-  constructor(
-    private rt: Runtime,
-    private society: Structure,
-    private past: Structure,
-    private resolve: Resolve
-  ) {}
-
-  // ---- Structure ----
-
-  /** Establish a position. */
-  establish(position?: string, id?: string, alias?: readonly string[]): RolexResult {
-    validateGherkin(position);
-    const pos = this.rt.create(this.society, C.position, position, id, alias);
-    return ok(this.rt, pos, "establish");
-  }
-
-  /** Add a duty to a position. */
-  charge(position: string, duty: string, id?: string): RolexResult {
-    validateGherkin(duty);
-    const node = this.rt.create(this.resolve(position), C.duty, duty, id);
-    return ok(this.rt, node, "charge");
-  }
-
-  // ---- Skill requirements ----
-
-  /** Require: declare that this position requires a skill. Upserts by id. */
-  require(position: string, procedure: string, id?: string): RolexResult {
-    validateGherkin(procedure);
-    const parent = this.resolve(position);
-    if (id) {
-      const state = this.rt.project(parent);
-      const existing = findInState(state, id);
-      if (existing) this.rt.remove(existing);
-    }
-    const proc = this.rt.create(parent, C.requirement, procedure, id);
-    return ok(this.rt, proc, "require");
-  }
-
-  // ---- Archival ----
-
-  /** Abolish a position. */
-  abolish(position: string): RolexResult {
-    return archive(this.rt, this.past, this.resolve(position), "abolish");
-  }
-
-  // ---- Appointment ----
-
-  /** Appoint: link individual to position via appointment. Auto-trains required skills. */
-  appoint(position: string, individual: string): RolexResult {
-    const posNode = this.resolve(position);
-    const indNode = this.resolve(individual);
-    this.rt.link(posNode, indNode, "appointment", "serve");
-
-    // Auto-train: inject required procedures into the individual
-    const posState = this.rt.project(posNode);
-    const required = (posState.children ?? []).filter((c) => c.name === "requirement");
-    for (const proc of required) {
-      if (proc.id) {
-        // Upsert: remove existing procedure with same id
-        const indState = this.rt.project(indNode);
-        const existing = findInState(indState, proc.id);
-        if (existing) this.rt.remove(existing);
-      }
-      this.rt.create(indNode, C.procedure, proc.information, proc.id);
-    }
-
-    return ok(this.rt, posNode, "appoint");
-  }
-
-  /** Dismiss: remove appointment link. */
-  dismiss(position: string, individual: string): RolexResult {
-    const posNode = this.resolve(position);
-    this.rt.unlink(posNode, this.resolve(individual), "appointment", "serve");
-    return ok(this.rt, posNode, "dismiss");
-  }
-}
-
-// ================================================================
-//  Census — society-level queries
-// ================================================================
+// Re-export from role.ts (canonical definition)
+export type { RolexResult } from "./role.js";
 
 /** Summary entry returned by census.list. */
 export interface CensusEntry {
@@ -827,349 +28,145 @@ export interface CensusEntry {
   tag?: string;
 }
 
-class CensusNamespace {
-  constructor(
-    private rt: Runtime,
-    private society: Structure,
-    private past: Structure
-  ) {}
+export class Rolex {
+  private rt: Runtime;
+  private ops: Ops;
+  private resourcex?: ResourceX;
+  private protoRegistry?: NonNullable<Platform["prototype"]>;
+  private readonly initializer?: Initializer;
+  private readonly persistContext?: {
+    save: (roleId: string, data: ContextData) => void;
+    load: (roleId: string) => ContextData | null;
+  };
 
-  /** List top-level entities under society, optionally filtered by type. */
-  list(type?: string): string {
-    const target = type === "past" ? this.past : this.society;
-    const state = this.rt.project(target);
-    const children = state.children ?? [];
-    const filtered =
-      type === "past"
-        ? children
-        : children.filter((c) => (type ? c.name === type : c.name !== "past"));
+  private readonly society: Structure;
+  private readonly past: Structure;
 
-    if (filtered.length === 0) {
-      return type ? `No ${type} found.` : "Society is empty.";
+  constructor(platform: Platform) {
+    this.rt = platform.runtime;
+    this.resourcex = platform.resourcex;
+    this.protoRegistry = platform.prototype;
+    this.initializer = platform.initializer;
+
+    if (platform.saveContext && platform.loadContext) {
+      this.persistContext = { save: platform.saveContext, load: platform.loadContext };
     }
 
-    // Group by type
-    const groups = new Map<string, State[]>();
-    for (const c of filtered) {
-      const key = c.name;
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key)!.push(c);
-    }
+    // Ensure world roots exist
+    const roots = this.rt.roots();
+    this.society = roots.find((r) => r.name === "society") ?? this.rt.create(null, C.society);
 
-    const lines: string[] = [];
-    for (const [name, items] of groups) {
-      lines.push(`[${name}] (${items.length})`);
-      for (const item of items) {
-        const tag = item.tag ? ` #${item.tag}` : "";
-        lines.push(`  ${item.id ?? "(no id)"}${tag}`);
+    const societyState = this.rt.project(this.society);
+    const existingPast = societyState.children?.find((c) => c.name === "past");
+    this.past = existingPast ?? this.rt.create(this.society, C.past);
+
+    // Create ops from prototype — all operation implementations
+    this.ops = createOps({
+      rt: this.rt,
+      society: this.society,
+      past: this.past,
+      resolve: (id: string) => {
+        const node = this.find(id);
+        if (!node) throw new Error(`"${id}" not found.`);
+        return node;
+      },
+      find: (id: string) => this.find(id),
+      resourcex: platform.resourcex,
+    });
+  }
+
+  /** Genesis — create the world on first run. */
+  async genesis(): Promise<void> {
+    await this.initializer?.bootstrap();
+  }
+
+  /**
+   * Activate a role — returns a stateful Role handle.
+   *
+   * If the individual does not exist in runtime but a prototype is registered,
+   * auto-born the individual first.
+   */
+  async activate(individual: string): Promise<Role> {
+    let node = this.find(individual);
+    if (!node) {
+      const hasProto = this.protoRegistry
+        ? Object.hasOwn(this.protoRegistry.list(), individual)
+        : false;
+      if (hasProto) {
+        this.ops["individual.born"](undefined, individual);
+        node = this.find(individual)!;
+      } else {
+        throw new Error(`"${individual}" not found.`);
       }
     }
-    return lines.join("\n");
+    const state = this.rt.project(node);
+    const ctx = new RoleContext(individual);
+    ctx.rehydrate(state);
+
+    // Restore persisted focus
+    const persisted = this.persistContext?.load(individual) ?? null;
+    if (persisted) {
+      ctx.focusedGoalId =
+        persisted.focusedGoalId && this.find(persisted.focusedGoalId)
+          ? persisted.focusedGoalId
+          : null;
+      ctx.focusedPlanId =
+        persisted.focusedPlanId && this.find(persisted.focusedPlanId)
+          ? persisted.focusedPlanId
+          : null;
+    }
+
+    // Build internal API for Role — ops + ctx persistence
+    const ops = this.ops;
+    const saveCtx = (c: RoleContext) => {
+      this.persistContext?.save(c.roleId, {
+        focusedGoalId: c.focusedGoalId,
+        focusedPlanId: c.focusedPlanId,
+      });
+    };
+
+    const api: RolexInternal = {
+      ops,
+      saveCtx,
+      direct: this.direct.bind(this),
+    };
+
+    return new Role(individual, ctx, api);
   }
-}
 
-// ================================================================
-//  Prototype — settle, evict, list
-// ================================================================
+  /** Find a node by id or alias across the entire society tree. Internal use only. */
+  private find(id: string): Structure | null {
+    const target = id.toLowerCase();
+    const state = this.rt.project(this.society);
+    return findInState(state, target);
+  }
 
-interface PrototypeManifest {
-  id: string;
-  type: string;
-  alias?: readonly string[];
-  members?: Record<string, string>;
-  children?: Record<string, PrototypeManifestChild>;
-}
-
-interface PrototypeManifestChild {
-  type: string;
-  appointments?: string[];
-  children?: Record<string, PrototypeManifestChild>;
-}
-
-class PrototypeNamespace {
-  constructor(
-    private prototype?: Prototype,
-    private resourcex?: ResourceX
-  ) {}
-
-  // ---- Registry ----
-
-  /** Settle: pull a prototype from source, register it in the world. */
-  async settle(source: string): Promise<RolexResult> {
+  /**
+   * Direct the world to execute an instruction.
+   *
+   * - `!namespace.method` — dispatch to ops
+   * - anything else — delegate to ResourceX `ingest`
+   */
+  async direct<T = unknown>(locator: string, args?: Record<string, unknown>): Promise<T> {
+    if (locator.startsWith("!")) {
+      const command = locator.slice(1);
+      const fn = this.ops[command];
+      if (!fn) throw new Error(`Unknown command "${locator}".`);
+      return fn(...toArgs(command, args ?? {})) as T;
+    }
     if (!this.resourcex) throw new Error("ResourceX is not available.");
-    if (!this.prototype) throw new Error("Platform does not support prototypes.");
-    const state = await this.resourcex.ingest<State>(source);
-    if (!state.id) throw new Error("Prototype resource must have an id.");
-    this.prototype.settle(state.id, source);
-    return { state, process: "settle" };
-  }
-
-  /** Evict: unregister a prototype from the world. */
-  evict(id: string): RolexResult {
-    if (!this.prototype) throw new Error("Platform does not support prototypes.");
-    this.prototype.evict(id);
-    return { state: { name: id, description: "", parent: null }, process: "evict" };
-  }
-
-  /** List all registered prototypes. */
-  list(): Record<string, string> {
-    return this.prototype?.list() ?? {};
-  }
-
-  // ---- Individual prototype creation ----
-
-  /** Born: create an individual prototype directory. */
-  born(dir: string, content?: string, id?: string, alias?: readonly string[]): RolexResult {
-    validateGherkin(content);
-    if (!id) throw new Error("id is required.");
-    mkdirSync(dir, { recursive: true });
-
-    const manifest: PrototypeManifest = {
-      id,
-      type: "individual",
-      ...(alias && alias.length > 0 ? { alias } : {}),
-      children: { identity: { type: "identity" } },
-    };
-    writeFileSync(join(dir, "individual.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf-8");
-
-    if (content) {
-      writeFileSync(join(dir, `${id}.individual.feature`), `${content}\n`, "utf-8");
-    }
-
-    const state: State = {
-      id,
-      name: "individual",
-      description: "",
-      parent: null,
-      ...(alias ? { alias } : {}),
-      ...(content ? { information: content } : {}),
-    };
-    return { state, process: "born" };
-  }
-
-  /** Teach: add a principle to an existing prototype directory. */
-  teach(dir: string, principle: string, id?: string): RolexResult {
-    validateGherkin(principle);
-    if (!id) throw new Error("id is required.");
-    const manifest = this.readManifest(dir);
-    if (!manifest.children) manifest.children = {};
-    manifest.children[id] = { type: "principle" };
-    this.writeManifest(dir, manifest);
-
-    writeFileSync(join(dir, `${id}.principle.feature`), `${principle}\n`, "utf-8");
-
-    const state: State = {
-      id,
-      name: "principle",
-      description: "",
-      parent: null,
-      information: principle,
-    };
-    return { state, process: "teach" };
-  }
-
-  /** Train: add a procedure to an existing prototype directory. */
-  train(dir: string, procedure: string, id?: string): RolexResult {
-    validateGherkin(procedure);
-    if (!id) throw new Error("id is required.");
-    const manifest = this.readManifest(dir);
-    if (!manifest.children) manifest.children = {};
-    manifest.children[id] = { type: "procedure" };
-    this.writeManifest(dir, manifest);
-
-    writeFileSync(join(dir, `${id}.procedure.feature`), `${procedure}\n`, "utf-8");
-
-    const state: State = {
-      id,
-      name: "procedure",
-      description: "",
-      parent: null,
-      information: procedure,
-    };
-    return { state, process: "train" };
-  }
-
-  // ---- Organization prototype creation ----
-
-  /** Found: create an organization prototype directory. */
-  found(dir: string, content?: string, id?: string, alias?: readonly string[]): RolexResult {
-    validateGherkin(content);
-    if (!id) throw new Error("id is required.");
-    mkdirSync(dir, { recursive: true });
-
-    const manifest: PrototypeManifest = {
-      id,
-      type: "organization",
-      ...(alias && alias.length > 0 ? { alias } : {}),
-      children: {},
-    };
-    writeFileSync(
-      join(dir, "organization.json"),
-      `${JSON.stringify(manifest, null, 2)}\n`,
-      "utf-8"
-    );
-
-    if (content) {
-      writeFileSync(join(dir, `${id}.organization.feature`), `${content}\n`, "utf-8");
-    }
-
-    const state: State = {
-      id,
-      name: "organization",
-      description: "",
-      parent: null,
-      ...(alias ? { alias } : {}),
-      ...(content ? { information: content } : {}),
-    };
-    return { state, process: "found" };
-  }
-
-  /** Charter: add a charter to an organization prototype. */
-  charter(dir: string, content: string, id?: string): RolexResult {
-    validateGherkin(content);
-    const charterId = id ?? "charter";
-    const manifest = this.readManifest(dir, "organization");
-    if (!manifest.children) manifest.children = {};
-    manifest.children[charterId] = { type: "charter" };
-    this.writeManifest(dir, manifest);
-
-    writeFileSync(join(dir, `${charterId}.charter.feature`), `${content}\n`, "utf-8");
-
-    const state: State = {
-      id: charterId,
-      name: "charter",
-      description: "",
-      parent: null,
-      information: content,
-    };
-    return { state, process: "charter" };
-  }
-
-  /** Member: register a member in an organization prototype. */
-  member(dir: string, id: string, locator: string): RolexResult {
-    if (!id) throw new Error("id is required.");
-    if (!locator) throw new Error("locator is required.");
-    const manifest = this.readManifest(dir, "organization");
-    if (!manifest.members) manifest.members = {};
-    manifest.members[id] = locator;
-    this.writeManifest(dir, manifest);
-
-    const state: State = {
-      id,
-      name: "member",
-      description: locator,
-      parent: null,
-    };
-    return { state, process: "member" };
-  }
-
-  /** Establish: add a position to an organization prototype. */
-  establish(dir: string, content?: string, id?: string, appointments?: string[]): RolexResult {
-    validateGherkin(content);
-    if (!id) throw new Error("id is required.");
-    const manifest = this.readManifest(dir, "organization");
-    if (!manifest.children) manifest.children = {};
-    manifest.children[id] = {
-      type: "position",
-      ...(appointments && appointments.length > 0 ? { appointments } : {}),
-      children: {},
-    };
-    this.writeManifest(dir, manifest);
-
-    if (content) {
-      writeFileSync(join(dir, `${id}.position.feature`), `${content}\n`, "utf-8");
-    }
-
-    const state: State = {
-      id,
-      name: "position",
-      description: "",
-      parent: null,
-      ...(content ? { information: content } : {}),
-    };
-    return { state, process: "establish" };
-  }
-
-  /** Charge: add a duty to a position in an organization prototype. */
-  charge(dir: string, position: string, content: string, id?: string): RolexResult {
-    validateGherkin(content);
-    if (!id) throw new Error("id is required.");
-    const manifest = this.readManifest(dir, "organization");
-    const pos = manifest.children?.[position];
-    if (!pos) throw new Error(`Position "${position}" not found in manifest.`);
-    if (!pos.children) pos.children = {};
-    pos.children[id] = { type: "duty" };
-    this.writeManifest(dir, manifest);
-
-    writeFileSync(join(dir, `${id}.duty.feature`), `${content}\n`, "utf-8");
-
-    const state: State = {
-      id,
-      name: "duty",
-      description: "",
-      parent: null,
-      information: content,
-    };
-    return { state, process: "charge" };
-  }
-
-  /** Require: add a required skill to a position in an organization prototype. */
-  require(dir: string, position: string, content: string, id?: string): RolexResult {
-    validateGherkin(content);
-    if (!id) throw new Error("id is required.");
-    const manifest = this.readManifest(dir, "organization");
-    const pos = manifest.children?.[position];
-    if (!pos) throw new Error(`Position "${position}" not found in manifest.`);
-    if (!pos.children) pos.children = {};
-    pos.children[id] = { type: "requirement" };
-    this.writeManifest(dir, manifest);
-
-    writeFileSync(join(dir, `${id}.requirement.feature`), `${content}\n`, "utf-8");
-
-    const state: State = {
-      id,
-      name: "requirement",
-      description: "",
-      parent: null,
-      information: content,
-    };
-    return { state, process: "require" };
-  }
-
-  // ---- Manifest I/O ----
-
-  private readManifest(dir: string, type?: string): PrototypeManifest {
-    if (type) {
-      const path = join(dir, `${type}.json`);
-      if (!existsSync(path)) throw new Error(`No ${type}.json found in "${dir}".`);
-      return JSON.parse(readFileSync(path, "utf-8"));
-    }
-    // Auto-detect: try individual.json first, then organization.json
-    const indPath = join(dir, "individual.json");
-    if (existsSync(indPath)) return JSON.parse(readFileSync(indPath, "utf-8"));
-    const orgPath = join(dir, "organization.json");
-    if (existsSync(orgPath)) return JSON.parse(readFileSync(orgPath, "utf-8"));
-    throw new Error(`No manifest found in "${dir}". Run prototype.born or prototype.found first.`);
-  }
-
-  private writeManifest(dir: string, manifest: PrototypeManifest): void {
-    const filename = `${manifest.type}.json`;
-    writeFileSync(join(dir, filename), `${JSON.stringify(manifest, null, 2)}\n`, "utf-8");
+    return this.resourcex.ingest<T>(locator, args);
   }
 }
 
-// ================================================================
-//  Shared helpers
-// ================================================================
-
-function validateGherkin(source?: string): void {
-  if (!source) return;
-  try {
-    parse(source);
-  } catch (e: any) {
-    throw new Error(`Invalid Gherkin: ${e.message}`);
-  }
+/** Create a Rolex instance from a Platform. */
+export function createRoleX(platform: Platform): Rolex {
+  return new Rolex(platform);
 }
+
+// ================================================================
+//  Helpers
+// ================================================================
 
 function findInState(state: State, target: string): Structure | null {
   if (state.id && state.id.toLowerCase() === target) return state;
@@ -1183,55 +180,4 @@ function findInState(state: State, target: string): Structure | null {
     if (found) return found;
   }
   return null;
-}
-
-function archive(rt: Runtime, past: Structure, node: Structure, process: string): RolexResult {
-  const archived = rt.create(past, C.past, node.information, node.id);
-  rt.remove(node);
-  return ok(rt, archived, process);
-}
-
-function ok(rt: Runtime, node: Structure, process: string): RolexResult {
-  return {
-    state: rt.project(node),
-    process,
-  };
-}
-
-/** Render file tree from RXM source.files */
-function renderFileTree(files: Record<string, any>, indent = ""): string {
-  const lines: string[] = [];
-  for (const [name, value] of Object.entries(files)) {
-    if (value && typeof value === "object" && !("size" in value)) {
-      // Directory
-      lines.push(`${indent}${name}`);
-      lines.push(renderFileTree(value, `${indent}  `));
-    } else {
-      const size = value?.size ? ` (${value.size} bytes)` : "";
-      lines.push(`${indent}${name}${size}`);
-    }
-  }
-  return lines.filter(Boolean).join("\n");
-}
-
-/** Format RXM info as context header for skill injection. */
-function formatRXM(rxm: any): string {
-  const lines: string[] = [`--- RXM: ${rxm.locator} ---`];
-  const def = rxm.definition;
-  if (def) {
-    if (def.author) lines.push(`Author: ${def.author}`);
-    if (def.description) lines.push(`Description: ${def.description}`);
-  }
-  const source = rxm.source;
-  if (source?.files) {
-    lines.push(`Files:`);
-    lines.push(renderFileTree(source.files, "  "));
-  }
-  lines.push("---");
-  return lines.join("\n");
-}
-
-/** Create a Rolex instance from a Platform. */
-export function createRoleX(platform: Platform): Rolex {
-  return new Rolex(platform);
 }

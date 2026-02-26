@@ -1,15 +1,25 @@
 /**
- * @rolexjs/prototype — Prototype system for RoleX.
+ * @rolexjs/prototype — RoleX operation layer.
  *
- * A prototype is a command-driven instruction list (like a Dockerfile).
- * Each instruction maps to a rolex.use() call.
- *
- * Three exports:
- *   PrototypeInstruction — the instruction format
- *   Prototype            — registry interface (settle/list)
- *   prototypeType        — ResourceX type handler
+ * Schema + implementation, platform-agnostic:
+ *   - Instruction registry (schema for all operations)
+ *   - toArgs dispatch (named → positional argument mapping)
+ *   - createOps (platform-agnostic operation implementations)
+ *   - Process and world descriptions (from .feature files)
  */
 
-export type { PrototypeInstruction } from "./instruction.js";
-export type { Prototype, PrototypeResolver } from "./prototype.js";
-export { prototypeType } from "./resourcex.js";
+// Schema types
+export type { ArgEntry, InstructionDef, ParamDef, ParamType } from "./schema.js";
+
+// Instruction registry
+export { instructions } from "./instructions.js";
+
+// Dispatch
+export { toArgs } from "./dispatch.js";
+
+// Operations
+export type { OpResult, Ops, OpsContext } from "./ops.js";
+export { createOps } from "./ops.js";
+
+// Descriptions (auto-generated from .feature files)
+export { processes, world } from "./descriptions/index.js";

@@ -1,17 +1,18 @@
 {
   "name": "@rolexjs/prototype",
   "version": "0.11.0",
-  "description": "RoleX prototype system — command-driven instruction lists",
+  "description": "RoleX schema-driven API definition layer",
   "keywords": [
     "rolex",
     "prototype",
-    "resourcex"
+    "schema",
+    "instructions"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Deepractice/RoleX.git",
-    "directory": "packages/prototype"
+    "url": "git+https://github.com/Deepractice/RoleX.git"
   },
+  "homepage": "https://github.com/Deepractice/RoleX",
   "license": "MIT",
   "engines": {
     "node": ">=22.0.0"
@@ -30,15 +31,18 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
+    "gen:desc": "bun run scripts/gen-descriptions.ts",
+    "build": "bun run gen:desc && tsup",
     "lint": "biome lint .",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@rolexjs/core": "workspace:*",
+    "@rolexjs/system": "workspace:*",
+    "@rolexjs/parser": "workspace:*",
     "resourcexjs": "^2.14.0"
   },
-  "devDependencies": {},
   "publishConfig": {
     "access": "public"
   }

@@ -10,8 +10,7 @@
       "rolexjs",
       "@rolexjs/cli",
       "@rolexjs/mcp-server",
-      "@rolexjs/system",
-      "@rolexjs/resourcex-types"
+      "@rolexjs/system"
     ]
   ],
   "linked": [],

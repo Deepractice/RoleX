@@ -17,8 +17,7 @@ import { drizzle } from "@deepracticex/drizzle";
 import { openDatabase } from "@deepracticex/sqlite";
 import { NodeProvider } from "@resourcexjs/node-provider";
 import type { ContextData, Platform } from "@rolexjs/core";
-import { organizationType, roleType } from "@rolexjs/resourcex-types";
-import type { Initializer, Prototype, State } from "@rolexjs/system";
+import type { Initializer } from "@rolexjs/system";
 import { sql } from "drizzle-orm";
 import { createResourceX, setProvider } from "resourcexjs";
 import { createSqliteRuntime } from "./sqliteRuntime.js";
@@ -100,7 +99,7 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
     setProvider(new NodeProvider());
     resourcex = createResourceX({
       path: config.resourceDir ?? join(homedir(), ".deepractice", "resourcex"),
-      types: [roleType, organizationType],
+      types: [],
     });
   }
 
@@ -121,65 +120,28 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
     writeFileSync(registryPath, JSON.stringify(registry, null, 2), "utf-8");
   };
 
-  const prototype: Prototype = {
-    async resolve(id) {
-      if (!resourcex) return undefined;
-      const registry = readRegistry();
-      const source = registry[id];
-      if (!source) return undefined;
-      try {
-        return await resourcex.ingest<State>(source);
-      } catch {
-        return undefined;
-      }
-    },
-
-    settle(id, source) {
+  const prototype = {
+    settle(id: string, source: string) {
       const registry = readRegistry();
       registry[id] = source;
       writeRegistry(registry);
     },
 
-    evict(id) {
+    evict(id: string) {
       const registry = readRegistry();
       delete registry[id];
       writeRegistry(registry);
     },
 
-    list() {
+    list(): Record<string, string> {
       return readRegistry();
     },
   };
 
   // ===== Initializer =====
 
-  /** Built-in prototypes to settle on first run. */
-  const BUILTIN_PROTOTYPES = ["nuwa", "rolex"];
-
-  const initializedPath = dataDir ? join(dataDir, "initialized.json") : undefined;
-
   const initializer: Initializer = {
-    async bootstrap() {
-      // In-memory mode or already initialized — skip
-      if (!initializedPath) return;
-      if (existsSync(initializedPath)) return;
-
-      // Settle built-in prototypes
-      for (const name of BUILTIN_PROTOTYPES) {
-        const registry = readRegistry();
-        if (!(name in registry)) {
-          prototype.settle(name, name);
-        }
-      }
-
-      // Mark as initialized
-      mkdirSync(dataDir!, { recursive: true });
-      writeFileSync(
-        initializedPath,
-        JSON.stringify({ version: 1, initializedAt: new Date().toISOString() }, null, 2),
-        "utf-8"
-      );
-    },
+    async bootstrap() {},
   };
 
   // ===== Context persistence =====

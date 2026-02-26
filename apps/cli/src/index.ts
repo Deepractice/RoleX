@@ -691,64 +691,6 @@ const resource = defineCommand({
 
 // ========== Prototype creation — born, teach, train ==========
 
-const prototypeBorn = defineCommand({
-  meta: { name: "born", description: "Create a prototype directory with manifest" },
-  args: {
-    dir: {
-      type: "positional" as const,
-      description: "Directory path for the prototype",
-      required: true,
-    },
-    ...contentArg("individual"),
-    id: { type: "string" as const, description: "Prototype id (kebab-case)", required: true },
-    alias: { type: "string" as const, description: "Comma-separated aliases" },
-  },
-  run({ args }) {
-    const aliasList = args.alias ? args.alias.split(",").map((a: string) => a.trim()) : undefined;
-    const result = rolex.prototype.born(
-      args.dir,
-      resolveContent(args, "individual"),
-      args.id,
-      aliasList
-    );
-    output(result, args.id);
-  },
-});
-
-const prototypeTeach = defineCommand({
-  meta: { name: "teach", description: "Add a principle to a prototype directory" },
-  args: {
-    dir: { type: "positional" as const, description: "Prototype directory path", required: true },
-    ...contentArg("principle"),
-    id: {
-      type: "string" as const,
-      description: "Principle id (keywords joined by hyphens)",
-      required: true,
-    },
-  },
-  run({ args }) {
-    const result = rolex.prototype.teach(args.dir, requireContent(args, "principle"), args.id);
-    output(result, args.id);
-  },
-});
-
-const prototypeTrain = defineCommand({
-  meta: { name: "train", description: "Add a procedure to a prototype directory" },
-  args: {
-    dir: { type: "positional" as const, description: "Prototype directory path", required: true },
-    ...contentArg("procedure"),
-    id: {
-      type: "string" as const,
-      description: "Procedure id (keywords joined by hyphens)",
-      required: true,
-    },
-  },
-  run({ args }) {
-    const result = rolex.prototype.train(args.dir, requireContent(args, "procedure"), args.id);
-    output(result, args.id);
-  },
-});
-
 // ========== Prototype — registry ==========
 
 const protoSettle = defineCommand({
@@ -766,21 +708,6 @@ const protoSettle = defineCommand({
   async run({ args }) {
     const result = await rolex.prototype.settle(args.source);
     output(result, result.state.id ?? args.source);
-  },
-});
-
-const protoEvict = defineCommand({
-  meta: { name: "evict", description: "Evict a prototype from the world" },
-  args: {
-    id: {
-      type: "positional" as const,
-      description: "Prototype id to evict",
-      required: true,
-    },
-  },
-  run({ args }) {
-    const result = rolex.prototype.evict(args.id);
-    output(result, args.id);
   },
 });
 
@@ -803,11 +730,7 @@ const prototype = defineCommand({
   meta: { name: "prototype", description: "Prototype management — registry + creation" },
   subCommands: {
     settle: protoSettle,
-    evict: protoEvict,
     list: protoList,
-    born: prototypeBorn,
-    teach: prototypeTeach,
-    train: prototypeTrain,
   },
 });
 

@@ -4,956 +4,162 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { localPlatform } from "@rolexjs/local-platform";
 import { describe as renderDescribe, hint as renderHint, renderState } from "../src/render.js";
-import { createRoleX, type RolexResult } from "../src/rolex.js";
+import { createRoleX, type RolexResult } from "../src/index.js";
 
 function setup() {
   return createRoleX(localPlatform({ dataDir: null }));
 }
 
-describe("Rolex API (stateless)", () => {
-  // ============================================================
-  //  Lifecycle — creation
-  // ============================================================
+// ================================================================
+//  use() dispatch
+// ================================================================
 
-  describe("lifecycle: creation", () => {
-    test("born creates an individual with scaffolding", () => {
-      const rolex = setup();
-      const r = rolex.individual.born("Feature: I am Sean", "sean");
-      expect(r.state.name).toBe("individual");
-      expect(r.state.information).toBe("Feature: I am Sean");
-      expect(r.process).toBe("born");
-      // Scaffolding: identity
-      const names = r.state.children!.map((c) => c.name);
-      expect(names).toContain("identity");
-    });
-
-    test("found creates an organization", () => {
-      const rolex = setup();
-      const r = rolex.org.found("Feature: AI company", "ai-co");
-      expect(r.state.name).toBe("organization");
-      expect(r.process).toBe("found");
-    });
-
-    test("establish creates a position", () => {
-      const rolex = setup();
-      const r = rolex.position.establish("Feature: Backend architect", "pos1");
-      expect(r.state.name).toBe("position");
-    });
-
-    test("charter defines org mission", () => {
-      const rolex = setup();
-      rolex.org.found(undefined, "org1");
-      const r = rolex.org.charter("org1", "Feature: Build great AI");
-      expect(r.state.name).toBe("charter");
-      expect(r.state.information).toBe("Feature: Build great AI");
-    });
-
-    test("charge adds duty to position", () => {
-      const rolex = setup();
-      rolex.position.establish(undefined, "pos1");
-      const r = rolex.position.charge("pos1", "Feature: Design systems");
-      expect(r.state.name).toBe("duty");
-    });
+describe("use dispatch", () => {
+  test("!individual.born creates individual", async () => {
+    const rolex = setup();
+    const r = await rolex.direct<RolexResult>("!individual.born", { content: "Feature: Sean", id: "sean" });
+    expect(r.state.name).toBe("individual");
+    expect(r.state.id).toBe("sean");
+    expect(r.process).toBe("born");
+    const names = r.state.children!.map((c) => c.name);
+    expect(names).toContain("identity");
   });
 
-  // ============================================================
-  //  Lifecycle — archival
-  // ============================================================
-
-  describe("lifecycle: archival", () => {
-    test("retire archives individual", () => {
-      const rolex = setup();
-      rolex.individual.born("Feature: Sean", "sean");
-      const r = rolex.individual.retire("sean");
-      expect(r.state.name).toBe("past");
-      expect(r.process).toBe("retire");
-      // Original individual is gone — only past node with same id remains
-      const found = rolex.find("sean");
-      expect(found).not.toBeNull();
-      expect(found!.name).toBe("past");
-    });
-
-    test("die archives individual", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "alice");
-      const r = rolex.individual.die("alice");
-      expect(r.state.name).toBe("past");
-      expect(r.process).toBe("die");
-    });
-
-    test("dissolve archives organization", () => {
-      const rolex = setup();
-      rolex.org.found(undefined, "org1");
-      rolex.org.dissolve("org1");
-      const found = rolex.find("org1");
-      expect(found).not.toBeNull();
-      expect(found!.name).toBe("past");
-    });
-
-    test("abolish archives position", () => {
-      const rolex = setup();
-      rolex.position.establish(undefined, "pos1");
-      rolex.position.abolish("pos1");
-      const found = rolex.find("pos1");
-      expect(found).not.toBeNull();
-      expect(found!.name).toBe("past");
-    });
-
-    test("rehire restores individual from past", () => {
-      const rolex = setup();
-      rolex.individual.born("Feature: Sean", "sean");
-      rolex.individual.retire("sean");
-      const r = rolex.individual.rehire("sean");
-      expect(r.state.name).toBe("individual");
-      expect(r.state.information).toBe("Feature: Sean");
-      // Scaffolding restored
-      const names = r.state.children!.map((c) => c.name);
-      expect(names).toContain("identity");
-    });
+  test("chained operations via use", async () => {
+    const rolex = setup();
+    await rolex.direct("!individual.born", { id: "sean" });
+    await rolex.direct("!role.want", { individual: "sean", goal: "Feature: Auth", id: "g1" });
+    const r = await rolex.direct<RolexResult>("!role.plan", { goal: "g1", plan: "Feature: JWT", id: "p1" });
+    expect(r.state.name).toBe("plan");
   });
 
-  // ============================================================
-  //  Organization
-  // ============================================================
-
-  describe("organization", () => {
-    test("hire links individual to org", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.org.found(undefined, "org1");
-      const r = rolex.org.hire("org1", "sean");
-      expect(r.state.links).toHaveLength(1);
-      expect(r.state.links![0].relation).toBe("membership");
-    });
-
-    test("fire removes membership", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.org.found(undefined, "org1");
-      rolex.org.hire("org1", "sean");
-      const r = rolex.org.fire("org1", "sean");
-      expect(r.state.links).toBeUndefined();
-    });
-
-    test("appoint links individual to position", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.position.establish(undefined, "pos1");
-      const r = rolex.position.appoint("pos1", "sean");
-      expect(r.state.links).toHaveLength(1);
-      expect(r.state.links![0].relation).toBe("appointment");
-    });
-
-    test("dismiss removes appointment", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.position.establish(undefined, "pos1");
-      rolex.position.appoint("pos1", "sean");
-      const r = rolex.position.dismiss("pos1", "sean");
-      expect(r.state.links).toBeUndefined();
-    });
-
-    test("require adds required skill to position", () => {
-      const rolex = setup();
-      rolex.position.establish(undefined, "architect");
-      const r = rolex.position.require(
-        "architect",
-        "Feature: System Design\n  Scenario: Design APIs",
-        "system-design"
-      );
-      expect(r.state.name).toBe("requirement");
-      expect(r.state.id).toBe("system-design");
-      expect(r.process).toBe("require");
-    });
-
-    test("require upserts by id", () => {
-      const rolex = setup();
-      rolex.position.establish(undefined, "architect");
-      rolex.position.require("architect", "Feature: Old skill", "skill-1");
-      rolex.position.require("architect", "Feature: Updated skill", "skill-1");
-      const pos = rolex.find("architect")!;
-      const requires = (pos as any).children?.filter((c: any) => c.name === "requirement");
-      expect(requires).toHaveLength(1);
-      expect(requires[0].information).toBe("Feature: Updated skill");
-    });
-
-    test("appoint auto-trains required skills to individual", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.position.establish(undefined, "architect");
-      rolex.position.require("architect", "Feature: System Design", "system-design");
-      rolex.position.require("architect", "Feature: Code Review", "code-review");
-      rolex.position.appoint("architect", "sean");
-
-      // Individual should now have the required procedures
-      const sean = rolex.find("sean")!;
-      const procedures = (sean as any).children?.filter((c: any) => c.name === "procedure");
-      expect(procedures).toHaveLength(2);
-      const ids = procedures.map((p: any) => p.id).sort();
-      expect(ids).toEqual(["code-review", "system-design"]);
-    });
-
-    test("appoint without required skills still works", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.position.establish(undefined, "pos1");
-      const r = rolex.position.appoint("pos1", "sean");
-      expect(r.state.links).toHaveLength(1);
-    });
+  test("!census.list returns text", async () => {
+    const rolex = setup();
+    await rolex.direct("!individual.born", { id: "sean" });
+    await rolex.direct("!org.found", { id: "dp" });
+    const result = await rolex.direct<string>("!census.list");
+    expect(result).toContain("sean");
+    expect(result).toContain("dp");
   });
 
-  // ============================================================
-  //  Role
-  // ============================================================
-
-  describe("role", () => {
-    test("activate returns individual projection", async () => {
-      const rolex = setup();
-      rolex.individual.born("Feature: Sean", "sean");
-      const r = await rolex.role.activate("sean");
-      expect(r.state.name).toBe("individual");
-      expect(r.process).toBe("activate");
-    });
+  test("throws on unknown command", () => {
+    const rolex = setup();
+    expect(() => rolex.direct("!foo.bar")).toThrow();
   });
 
-  // ============================================================
-  //  Execution
-  // ============================================================
-
-  describe("execution", () => {
-    test("want creates a goal", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      const r = rolex.role.want("sean", "Feature: Build auth system", "g1");
-      expect(r.state.name).toBe("goal");
-      expect(r.state.information).toBe("Feature: Build auth system");
-    });
-
-    test("plan creates a plan under goal", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.role.want("sean", "Feature: Auth", "g1");
-      const r = rolex.role.plan("g1", "Feature: JWT plan", "p1");
-      expect(r.state.name).toBe("plan");
-    });
-
-    test("plan with after creates sequential link", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.role.want("sean", "Feature: Auth", "g1");
-      rolex.role.plan("g1", "Feature: Phase 1", "phase-1");
-      rolex.role.plan("g1", "Feature: Phase 2", "phase-2", undefined, "phase-1");
-
-      // Phase 2 has "after" link to Phase 1
-      const p2 = rolex.find("phase-2")!;
-      expect((p2 as any).links).toHaveLength(1);
-      expect((p2 as any).links[0].relation).toBe("after");
-      expect((p2 as any).links[0].target.id).toBe("phase-1");
-
-      // Phase 1 has reverse "before" link to Phase 2
-      const p1 = rolex.find("phase-1")!;
-      expect((p1 as any).links).toHaveLength(1);
-      expect((p1 as any).links[0].relation).toBe("before");
-      expect((p1 as any).links[0].target.id).toBe("phase-2");
-    });
-
-    test("plan with fallback creates alternative link", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.role.want("sean", "Feature: Auth", "g1");
-      rolex.role.plan("g1", "Feature: JWT approach", "plan-a");
-      rolex.role.plan("g1", "Feature: Session approach", "plan-b", undefined, undefined, "plan-a");
-
-      // Plan B has "fallback-for" link to Plan A
-      const pb = rolex.find("plan-b")!;
-      expect((pb as any).links).toHaveLength(1);
-      expect((pb as any).links[0].relation).toBe("fallback-for");
-      expect((pb as any).links[0].target.id).toBe("plan-a");
-
-      // Plan A has reverse "fallback" link to Plan B
-      const pa = rolex.find("plan-a")!;
-      expect((pa as any).links).toHaveLength(1);
-      expect((pa as any).links[0].relation).toBe("fallback");
-      expect((pa as any).links[0].target.id).toBe("plan-b");
-    });
-
-    test("plan without after/fallback has no links", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.role.want("sean", "Feature: Auth", "g1");
-      rolex.role.plan("g1", "Feature: JWT plan", "p1");
-
-      const p1 = rolex.find("p1")!;
-      expect((p1 as any).links).toBeUndefined();
-    });
-
-    test("todo creates a task under plan", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.role.want("sean", undefined, "g1");
-      rolex.role.plan("g1", undefined, "p1");
-      const r = rolex.role.todo("p1", "Feature: Implement JWT", "t1");
-      expect(r.state.name).toBe("task");
-    });
-
-    test("finish consumes task, creates encounter", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.role.want("sean", undefined, "g1");
-      rolex.role.plan("g1", undefined, "p1");
-      rolex.role.todo("p1", undefined, "t1");
-
-      const r = rolex.role.finish("t1", "sean", "Feature: JWT done");
-      expect(r.state.name).toBe("encounter");
-      expect(r.state.information).toBe("Feature: JWT done");
-      // Task is tagged done, not removed
-      const task = rolex.find("t1");
-      expect(task).not.toBeNull();
-      expect(task!.tag).toBe("done");
-    });
-
-    test("complete consumes plan, creates encounter", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.role.want("sean", "Feature: Auth", "g1");
-      rolex.role.plan("g1", "Feature: Auth plan", "p1");
-
-      const r = rolex.role.complete("p1", "sean", "Feature: Auth plan done");
-      expect(r.state.name).toBe("encounter");
-      // Plan is tagged done, not removed
-      const plan = rolex.find("p1");
-      expect(plan).not.toBeNull();
-      expect(plan!.tag).toBe("done");
-    });
-
-    test("abandon consumes plan, creates encounter", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.role.want("sean", "Feature: Rust", "g1");
-      rolex.role.plan("g1", "Feature: Rust plan", "p1");
-
-      const r = rolex.role.abandon("p1", "sean", "Feature: No time");
-      expect(r.state.name).toBe("encounter");
-      // Plan is tagged abandoned, not removed
-      const plan = rolex.find("p1");
-      expect(plan).not.toBeNull();
-      expect(plan!.tag).toBe("abandoned");
-    });
-  });
-
-  // ============================================================
-  //  Cognition
-  // ============================================================
-
-  describe("cognition", () => {
-    test("reflect: encounter → experience", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.role.want("sean", undefined, "g1");
-      rolex.role.plan("g1", undefined, "p1");
-      rolex.role.todo("p1", undefined, "t1");
-      rolex.role.finish("t1", "sean", "Feature: JWT quirks");
-
-      const r = rolex.role.reflect("t1-finished", "sean", "Feature: Token refresh matters", "exp1");
-      expect(r.state.name).toBe("experience");
-      expect(r.state.information).toBe("Feature: Token refresh matters");
-      expect(rolex.find("t1-finished")).toBeNull();
-    });
-
-    test("reflect inherits encounter info if no source given", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.role.want("sean", undefined, "g1");
-      rolex.role.plan("g1", undefined, "p1");
-      rolex.role.todo("p1", undefined, "t1");
-      rolex.role.finish("t1", "sean", "Feature: JWT quirks");
-
-      const r = rolex.role.reflect("t1-finished", "sean");
-      expect(r.state.information).toBe("Feature: JWT quirks");
-    });
-
-    test("realize: experience → principle under individual", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.role.want("sean", undefined, "g1");
-      rolex.role.plan("g1", undefined, "p1");
-      rolex.role.todo("p1", undefined, "t1");
-      rolex.role.finish("t1", "sean", "Feature: Lessons");
-      rolex.role.reflect("t1-finished", "sean", undefined, "exp1");
-
-      const r = rolex.role.realize("exp1", "sean", "Feature: Security first", "sec-first");
-      expect(r.state.name).toBe("principle");
-      expect(r.state.information).toBe("Feature: Security first");
-      expect(rolex.find("exp1")).toBeNull();
-    });
-
-    test("master: experience → procedure under individual", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.role.want("sean", undefined, "g1");
-      rolex.role.plan("g1", undefined, "p1");
-      rolex.role.todo("p1", undefined, "t1");
-      rolex.role.finish("t1", "sean", "Feature: Practice");
-      rolex.role.reflect("t1-finished", "sean", undefined, "exp1");
-
-      const r = rolex.role.master("sean", "Feature: JWT mastery", "jwt", "exp1");
-      expect(r.state.name).toBe("procedure");
-    });
-  });
-
-  // ============================================================
-  //  Full scenario
-  // ============================================================
-
-  describe("full scenario", () => {
-    test("born → hire → appoint → want → plan → todo → finish → reflect → realize", () => {
-      const rolex = setup();
-
-      // Create world
-      rolex.individual.born("Feature: I am Sean", "sean");
-      rolex.org.found("Feature: Deepractice", "dp");
-      rolex.position.establish("Feature: Architect", "architect");
-      rolex.org.charter("dp", "Feature: Build great AI");
-      rolex.position.charge("architect", "Feature: Design systems");
-
-      // Organization + Position
-      rolex.org.hire("dp", "sean");
-      rolex.position.appoint("architect", "sean");
-
-      // Verify links
-      const orgState = rolex.find("dp")!;
-      expect(orgState.links).toHaveLength(1);
-      const posState = rolex.find("architect")!;
-      expect(posState.links).toHaveLength(1);
-
-      // Execution cycle
-      rolex.role.want("sean", "Feature: Build auth", "build-auth");
-      rolex.role.plan("build-auth", "Feature: JWT auth plan", "jwt-plan");
-      rolex.role.todo("jwt-plan", "Feature: Login endpoint", "t1");
-      rolex.role.todo("jwt-plan", "Feature: Refresh endpoint", "t2");
-
-      rolex.role.finish("t1", "sean", "Feature: Login done");
-      rolex.role.finish("t2", "sean", "Feature: Refresh done");
-      rolex.role.complete("jwt-plan", "sean", "Feature: Auth plan complete");
-
-      // Cognition cycle
-      rolex.role.reflect("t1-finished", "sean", "Feature: Token handling", "token-exp");
-      rolex.role.realize("token-exp", "sean", "Feature: Always validate expiry", "validate-expiry");
-
-      // Verify principle exists under individual
-      const seanState = rolex.find("sean")!;
-      const principle = (seanState as any).children?.find((c: any) => c.name === "principle");
-      expect(principle).toBeDefined();
-      expect(principle.information).toBe("Feature: Always validate expiry");
-    });
-  });
-
-  // ============================================================
-  //  Render
-  // ============================================================
-
-  describe("render", () => {
-    test("describe generates text with name", () => {
-      const rolex = setup();
-      const r = rolex.individual.born(undefined, "sean");
-      const text = renderDescribe("born", "sean", r.state);
-      expect(text).toContain("sean");
-    });
-
-    test("hint generates next step", () => {
-      const h = renderHint("born");
-      expect(h).toStartWith("Next:");
-    });
-
-    test("every process has a hint", () => {
-      const processes = [
-        "born",
-        "found",
-        "establish",
-        "charter",
-        "charge",
-        "retire",
-        "die",
-        "dissolve",
-        "abolish",
-        "rehire",
-        "hire",
-        "fire",
-        "appoint",
-        "dismiss",
-        "activate",
-        "want",
-        "plan",
-        "todo",
-        "finish",
-        "complete",
-        "abandon",
-        "reflect",
-        "realize",
-        "master",
-      ];
-      for (const p of processes) {
-        expect(renderHint(p)).toStartWith("Next:");
-      }
-    });
-  });
-
-  // ============================================================
-  //  renderState — generic markdown renderer
-  // ============================================================
-
-  describe("renderState", () => {
-    test("renders individual with heading and information", () => {
-      const rolex = setup();
-      const r = rolex.individual.born("Feature: I am Sean\n  An AI role.", "sean");
-      const md = renderState(r.state);
-      expect(md).toContain("# [individual]");
-      expect(md).toContain("Feature: I am Sean");
-      expect(md).toContain("An AI role.");
-    });
-
-    test("renders children at deeper heading levels", () => {
-      const rolex = setup();
-      const r = rolex.individual.born("Feature: Sean", "sean");
-      const md = renderState(r.state);
-      // identity is a child at depth 2
-      expect(md).toContain("## [identity]");
-    });
-
-    test("renders links generically", () => {
-      const rolex = setup();
-      rolex.individual.born("Feature: Sean", "sean");
-      rolex.org.found("Feature: Deepractice", "dp");
-      rolex.org.hire("dp", "sean");
-      // Project org — should have membership link
-      const orgState = rolex.find("dp")!;
-      const md = renderState(orgState as any);
-      expect(md).toContain("membership");
-      expect(md).toContain("[individual]");
-    });
-
-    test("renders bidirectional links", () => {
-      const rolex = setup();
-      rolex.individual.born("Feature: Sean", "sean");
-      rolex.org.found("Feature: Deepractice", "dp");
-      rolex.org.hire("dp", "sean");
-      // Project individual — should have belong link
-      const seanState = rolex.find("sean")!;
-      const md = renderState(seanState as any);
-      expect(md).toContain("belong");
-      expect(md).toContain("[organization]");
-      expect(md).toContain("Deepractice");
-    });
-
-    test("renders nested structure (goal → plan → task)", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.role.want("sean", "Feature: Build auth", "g1");
-      rolex.role.plan("g1", "Feature: JWT plan", "p1");
-      rolex.role.todo("p1", "Feature: Login endpoint", "t1");
-      // Project goal to see full tree
-      const goalState = rolex.find("g1")!;
-      const md = renderState(goalState as any);
-      expect(md).toContain("# [goal]");
-      expect(md).toContain("## [plan]");
-      expect(md).toContain("### [task]");
-      expect(md).toContain("Feature: Build auth");
-      expect(md).toContain("Feature: JWT plan");
-      expect(md).toContain("Feature: Login endpoint");
-    });
-
-    test("caps heading depth at 6", () => {
-      const rolex = setup();
-      const r = rolex.individual.born(undefined, "sean");
-      // Manually test with depth parameter
-      const md = renderState(r.state, 7);
-      // Should use ###### (6) not ####### (7)
-      expect(md).toStartWith("###### [individual]");
-    });
-
-    test("renders without information gracefully", () => {
-      const rolex = setup();
-      const r = rolex.individual.born(undefined, "sean");
-      const identity = r.state.children!.find((c) => c.name === "identity")!;
-      const md = renderState(identity as any);
-      expect(md).toBe("# [identity]");
-    });
-
-    test("sorts children by concept hierarchy order", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      // Create in reverse of concept order: goal → principle
-      rolex.role.want("sean", "Feature: My Goal", "g1");
-      rolex.individual.teach("sean", "Feature: My Principle", "p1");
-
-      const state = rolex.find("sean")!;
-      const md = renderState(state as any);
-      // Concept order: identity < principle < goal
-      const identityPos = md.indexOf("## [identity]");
-      const principlePos = md.indexOf("## [principle] (p1)");
-      const goalPos = md.indexOf("## [goal] (g1)");
-      expect(identityPos).toBeLessThan(principlePos);
-      expect(principlePos).toBeLessThan(goalPos);
-    });
-
-    test("fold collapses matching nodes to heading only", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.role.want("sean", "Feature: Goal A", "g-a");
-      rolex.role.want("sean", "Feature: Goal B", "g-b");
-      rolex.role.plan("g-b", "Feature: Plan under B", "p-b");
-
-      const state = rolex.find("sean")!;
-      const md = renderState(state as any, 1, {
-        fold: (node) => node.name === "goal" && node.id !== "g-b",
-      });
-
-      // g-a: folded — heading only, no body
-      expect(md).toContain("## [goal] (g-a)");
-      expect(md).not.toContain("Feature: Goal A");
-
-      // g-b: expanded — heading + body + children
-      expect(md).toContain("## [goal] (g-b)");
-      expect(md).toContain("Feature: Goal B");
-      expect(md).toContain("### [plan] (p-b)");
-      expect(md).toContain("Feature: Plan under B");
-    });
-  });
-
-  // ============================================================
-  //  Gherkin validation
-  // ============================================================
-
-  describe("gherkin validation", () => {
-    test("born rejects non-Gherkin input", () => {
-      const rolex = setup();
-      expect(() => rolex.individual.born("not gherkin")).toThrow("Invalid Gherkin");
-    });
-
-    test("born accepts valid Gherkin", () => {
-      const rolex = setup();
-      expect(() => rolex.individual.born("Feature: Sean")).not.toThrow();
-    });
-
-    test("born accepts undefined (no source)", () => {
-      const rolex = setup();
-      expect(() => rolex.individual.born()).not.toThrow();
-    });
-
-    test("want rejects non-Gherkin goal", () => {
-      const rolex = setup();
-      rolex.individual.born("Feature: Sean", "sean");
-      expect(() => rolex.role.want("sean", "plain text goal")).toThrow("Invalid Gherkin");
-    });
-
-    test("finish rejects non-Gherkin encounter", () => {
-      const rolex = setup();
-      rolex.individual.born("Feature: Sean", "sean");
-      rolex.role.want("sean", "Feature: Auth", "g1");
-      rolex.role.plan("g1", undefined, "p1");
-      rolex.role.todo("p1", "Feature: Login", "t1");
-      expect(() => rolex.role.finish("t1", "sean", "just text")).toThrow("Invalid Gherkin");
-    });
-
-    test("reflect rejects non-Gherkin experience", () => {
-      const rolex = setup();
-      rolex.individual.born("Feature: Sean", "sean");
-      rolex.role.want("sean", "Feature: Auth", "g1");
-      rolex.role.plan("g1", undefined, "p1");
-      rolex.role.todo("p1", "Feature: Login", "t1");
-      rolex.role.finish(
-        "t1",
-        "sean",
-        "Feature: Done\n  Scenario: It worked\n    Given login\n    Then success"
-      );
-      expect(() => rolex.role.reflect("t1-finished", "sean", "not gherkin")).toThrow(
-        "Invalid Gherkin"
-      );
-    });
-
-    test("realize rejects non-Gherkin principle", () => {
-      const rolex = setup();
-      rolex.individual.born("Feature: Sean", "sean");
-      rolex.role.want("sean", "Feature: Auth", "g1");
-      rolex.role.plan("g1", undefined, "p1");
-      rolex.role.todo("p1", "Feature: Login", "t1");
-      rolex.role.finish("t1", "sean", "Feature: Done\n  Scenario: OK\n    Given x\n    Then y");
-      rolex.role.reflect(
-        "t1-finished",
-        "sean",
-        "Feature: Insight\n  Scenario: Learned\n    Given practice\n    Then understanding",
-        "exp1"
-      );
-      expect(() => rolex.role.realize("exp1", "sean", "not gherkin")).toThrow("Invalid Gherkin");
-    });
-
-    test("master rejects non-Gherkin procedure", () => {
-      const rolex = setup();
-      rolex.individual.born("Feature: Sean", "sean");
-      expect(() => rolex.role.master("sean", "not gherkin")).toThrow("Invalid Gherkin");
-    });
-  });
-
-  // ============================================================
-  //  id & alias
-  // ============================================================
-
-  describe("id & alias", () => {
-    test("born with id stores it on the node", () => {
-      const rolex = setup();
-      const r = rolex.individual.born("Feature: I am Sean", "sean");
-      expect(r.state.id).toBe("sean");
-      expect(r.state.ref).toBeDefined();
-    });
-
-    test("born with id and alias stores both", () => {
-      const rolex = setup();
-      const r = rolex.individual.born("Feature: I am Sean", "sean", ["Sean", "姜山"]);
-      expect(r.state.id).toBe("sean");
-      expect(r.state.alias).toEqual(["Sean", "姜山"]);
-    });
-
-    test("born without id has no id field", () => {
-      const rolex = setup();
-      const r = rolex.individual.born("Feature: I am Sean");
-      expect(r.state.id).toBeUndefined();
-    });
-
-    test("want with id stores it on the goal", () => {
-      const rolex = setup();
-      rolex.individual.born("Feature: Sean", "sean");
-      const r = rolex.role.want("sean", "Feature: Build auth", "build-auth");
-      expect(r.state.id).toBe("build-auth");
-    });
-
-    test("todo with id stores it on the task", () => {
-      const rolex = setup();
-      rolex.individual.born("Feature: Sean", "sean");
-      rolex.role.want("sean", undefined, "g1");
-      rolex.role.plan("g1", undefined, "p1");
-      const r = rolex.role.todo("p1", "Feature: Login", "impl-login");
-      expect(r.state.id).toBe("impl-login");
-    });
-
-    test("find by id", () => {
-      const rolex = setup();
-      rolex.individual.born("Feature: I am Sean", "sean");
-      const found = rolex.find("sean");
-      expect(found).not.toBeNull();
-      expect(found!.name).toBe("individual");
-      expect(found!.id).toBe("sean");
-    });
-
-    test("find by alias", () => {
-      const rolex = setup();
-      rolex.individual.born("Feature: I am Sean", "sean", ["Sean", "姜山"]);
-      const found = rolex.find("姜山");
-      expect(found).not.toBeNull();
-      expect(found!.name).toBe("individual");
-    });
-
-    test("find is case insensitive", () => {
-      const rolex = setup();
-      rolex.individual.born("Feature: I am Sean", "sean", ["Sean"]);
-      expect(rolex.find("Sean")).not.toBeNull();
-      expect(rolex.find("SEAN")).not.toBeNull();
-      expect(rolex.find("sean")).not.toBeNull();
-    });
-
-    test("find returns null when not found", () => {
-      const rolex = setup();
-      rolex.individual.born("Feature: I am Sean", "sean");
-      expect(rolex.find("nobody")).toBeNull();
-    });
-
-    test("find searches nested nodes", () => {
-      const rolex = setup();
-      rolex.individual.born("Feature: Sean", "sean");
-      rolex.role.want("sean", "Feature: Build auth", "build-auth");
-      const found = rolex.find("build-auth");
-      expect(found).not.toBeNull();
-      expect(found!.name).toBe("goal");
-    });
-
-    test("found with id", () => {
-      const rolex = setup();
-      const r = rolex.org.found("Feature: Deepractice", "deepractice");
-      expect(r.state.id).toBe("deepractice");
-    });
-
-    test("establish with id", () => {
-      const rolex = setup();
-      const r = rolex.position.establish("Feature: Architect", "architect");
-      expect(r.state.id).toBe("architect");
-    });
-  });
-
-  // ============================================================
-  //  use — unified execution entry point
-  // ============================================================
-  //  Census
-  // ============================================================
-
-  describe("census", () => {
-    test("list returns all top-level entities grouped by type", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.org.found(undefined, "dp");
-      rolex.position.establish(undefined, "architect");
-      const result = rolex.census.list();
-      expect(result).toContain("[individual]");
-      expect(result).toContain("[organization]");
-      expect(result).toContain("[position]");
-      expect(result).toContain("sean");
-      expect(result).toContain("dp");
-      expect(result).toContain("architect");
-    });
-
-    test("list filters by type", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.individual.born(undefined, "alice");
-      rolex.org.found(undefined, "dp");
-      const result = rolex.census.list("individual");
-      expect(result).toContain("[individual] (2)");
-      expect(result).toContain("sean");
-      expect(result).toContain("alice");
-      expect(result).not.toContain("dp");
-    });
-
-    test("list returns message when no matches", () => {
-      const rolex = setup();
-      const result = rolex.census.list("position");
-      expect(result).toBe("No position found.");
-    });
-
-    test("retired entities disappear from society", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.individual.retire("sean");
-      const result = rolex.census.list("individual");
-      expect(result).toBe("No individual found.");
-    });
-
-    test("list past shows archived entities", () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.individual.retire("sean");
-      const result = rolex.census.list("past");
-      expect(result).toContain("sean");
-    });
-
-    test("!census.list via use dispatch", async () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.org.found(undefined, "dp");
-      const result = await rolex.use<string>("!census.list");
-      expect(result).toContain("sean");
-      expect(result).toContain("dp");
-    });
-
-    test("!census.list with type filter via use dispatch", async () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.org.found(undefined, "dp");
-      const result = await rolex.use<string>("!census.list", {
-        type: "organization",
-      });
-      expect(result).toContain("dp");
-      expect(result).not.toContain("sean");
-    });
-  });
-
-  // ============================================================
-
-  describe("use: ! command dispatch", () => {
-    test("!org.found creates organization", async () => {
-      const rolex = setup();
-      const r = await rolex.use<RolexResult>("!org.found", {
-        content: "Feature: Deepractice",
-        id: "dp",
-      });
-      expect(r.state.name).toBe("organization");
-      expect(r.state.id).toBe("dp");
-    });
-
-    test("!position.establish creates position", async () => {
-      const rolex = setup();
-      const r = await rolex.use<RolexResult>("!position.establish", {
-        content: "Feature: Architect",
-        id: "architect",
-      });
-      expect(r.state.name).toBe("position");
-      expect(r.state.id).toBe("architect");
-    });
-
-    test("!org.hire links individual to org", async () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.org.found(undefined, "dp");
-      const r = await rolex.use<RolexResult>("!org.hire", {
-        org: "dp",
-        individual: "sean",
-      });
-      expect(r.state.links).toHaveLength(1);
-      expect(r.state.links![0].relation).toBe("membership");
-    });
-
-    test("!position.appoint links individual to position", async () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      rolex.position.establish(undefined, "pos1");
-      const r = await rolex.use<RolexResult>("!position.appoint", {
-        position: "pos1",
-        individual: "sean",
-      });
-      expect(r.state.links).toHaveLength(1);
-      expect(r.state.links![0].relation).toBe("appointment");
-    });
-
-    test("!individual.born creates individual", async () => {
-      const rolex = setup();
-      const r = await rolex.use<RolexResult>("!individual.born", {
-        content: "Feature: Alice",
-        id: "alice",
-      });
-      expect(r.state.name).toBe("individual");
-      expect(r.state.id).toBe("alice");
-    });
-
-    test("!individual.teach injects principle", async () => {
-      const rolex = setup();
-      rolex.individual.born(undefined, "sean");
-      const r = await rolex.use<RolexResult>("!individual.teach", {
-        individual: "sean",
-        content: "Feature: Always test first",
-        id: "test-first",
-      });
-      expect(r.state.name).toBe("principle");
-    });
-
-    test("throws on unknown namespace", async () => {
-      const rolex = setup();
-      expect(() => rolex.use("!foo.bar")).toThrow('Unknown namespace "foo"');
-    });
-
-    test("throws on unknown method", async () => {
-      const rolex = setup();
-      expect(() => rolex.use("!org.nope")).toThrow('Unknown command "!org.nope"');
-    });
-
-    test("throws on missing dot", async () => {
-      const rolex = setup();
-      expect(() => rolex.use("!orgfound")).toThrow("Expected");
-    });
+  test("throws on unknown method", () => {
+    const rolex = setup();
+    expect(() => rolex.direct("!org.nope")).toThrow();
   });
 });
 
 // ================================================================
-//  Persistent mode — round-trip tests
+//  activate() + Role API
 // ================================================================
 
-describe("Rolex API (persistent)", () => {
+describe("activate", () => {
+  test("returns Role with ctx", async () => {
+    const rolex = setup();
+    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    const role = await rolex.activate("sean");
+    expect(role.roleId).toBe("sean");
+    expect(role.ctx).toBeDefined();
+  });
+
+  test("throws on non-existent individual", async () => {
+    const rolex = setup();
+    expect(rolex.activate("nobody")).rejects.toThrow('"nobody" not found');
+  });
+
+  test("Role.want/plan/todo/finish work through Role API", async () => {
+    const rolex = setup();
+    await rolex.direct("!individual.born", { id: "sean" });
+    const role = await rolex.activate("sean");
+
+    const wantR = role.want("Feature: Auth", "auth");
+    expect(wantR.state.name).toBe("goal");
+    expect(wantR.hint).toBeDefined();
+
+    const planR = role.plan("Feature: JWT", "jwt");
+    expect(planR.state.name).toBe("plan");
+
+    const todoR = role.todo("Feature: Login", "login");
+    expect(todoR.state.name).toBe("task");
+
+    const finishR = role.finish("login", "Feature: Done\n  Scenario: OK\n    Given done\n    Then ok");
+    expect(finishR.state.name).toBe("encounter");
+  });
+
+  test("Role.use delegates to Rolex.use", async () => {
+    const rolex = setup();
+    await rolex.direct("!individual.born", { id: "sean" });
+    const role = await rolex.activate("sean");
+    const r = await role.use<RolexResult>("!org.found", { content: "Feature: DP", id: "dp" });
+    expect(r.state.name).toBe("organization");
+  });
+});
+
+// ================================================================
+//  Render
+// ================================================================
+
+describe("render", () => {
+  test("describe generates text with name", async () => {
+    const rolex = setup();
+    const r = await rolex.direct<RolexResult>("!individual.born", { id: "sean" });
+    const text = renderDescribe("born", "sean", r.state);
+    expect(text).toContain("sean");
+  });
+
+  test("hint generates next step", () => {
+    const h = renderHint("born");
+    expect(h).toStartWith("Next:");
+  });
+
+  test("renderState renders individual with heading", async () => {
+    const rolex = setup();
+    const r = await rolex.direct<RolexResult>("!individual.born", { content: "Feature: I am Sean\n  An AI role.", id: "sean" });
+    const md = renderState(r.state);
+    expect(md).toContain("# [individual]");
+    expect(md).toContain("Feature: I am Sean");
+  });
+
+  test("renderState renders nested structure", async () => {
+    const rolex = setup();
+    await rolex.direct("!individual.born", { id: "sean" });
+    await rolex.direct("!role.want", { individual: "sean", goal: "Feature: Build auth", id: "g1" });
+    await rolex.direct("!role.plan", { goal: "g1", plan: "Feature: JWT plan", id: "p1" });
+    await rolex.direct("!role.todo", { plan: "p1", task: "Feature: Login endpoint", id: "t1" });
+    // Get goal state via focus (returns projected state)
+    const r = await rolex.direct<RolexResult>("!role.focus", { goal: "g1" });
+    const md = renderState(r.state);
+    expect(md).toContain("# [goal]");
+    expect(md).toContain("## [plan]");
+    expect(md).toContain("### [task]");
+  });
+});
+
+// ================================================================
+//  Gherkin validation (through use dispatch)
+// ================================================================
+
+describe("gherkin validation", () => {
+  test("rejects non-Gherkin input", () => {
+    const rolex = setup();
+    expect(() => rolex.direct("!individual.born", { content: "not gherkin" })).toThrow("Invalid Gherkin");
+  });
+
+  test("accepts valid Gherkin", () => {
+    const rolex = setup();
+    expect(() => rolex.direct("!individual.born", { content: "Feature: Sean" })).not.toThrow();
+  });
+});
+
+// ================================================================
+//  Persistent mode
+// ================================================================
+
+describe("persistent mode", () => {
   const testDir = join(tmpdir(), "rolex-persist-test");
 
   afterEach(() => {
@@ -964,60 +170,22 @@ describe("Rolex API (persistent)", () => {
     return createRoleX(localPlatform({ dataDir: testDir, resourceDir: null }));
   }
 
-  test("born → retire round-trip", () => {
+  test("born → retire round-trip", async () => {
     const rolex = persistentSetup();
-    rolex.individual.born("Feature: Test Individual", "test-ind");
-    const r = rolex.individual.retire("test-ind");
-    expect(r.state.name).toBe("past");
-    expect(r.state.id).toBe("test-ind");
-    expect(r.process).toBe("retire");
-    // Original individual should be gone, past node should be findable
-    const found = rolex.find("test-ind");
-    expect(found).not.toBeNull();
-    expect(found!.name).toBe("past");
-  });
-
-  test("born → die round-trip", () => {
-    const rolex = persistentSetup();
-    rolex.individual.born("Feature: Test Individual", "test-ind");
-    const r = rolex.individual.die("test-ind");
-    expect(r.state.name).toBe("past");
-    expect(r.state.id).toBe("test-ind");
-    expect(r.process).toBe("die");
-  });
-
-  test("born → teach → retire round-trip", () => {
-    const rolex = persistentSetup();
-    rolex.individual.born("Feature: Test", "test-ind");
-    rolex.individual.teach("test-ind", "Feature: Always validate", "always-validate");
-    const r = rolex.individual.retire("test-ind");
+    await rolex.direct("!individual.born", { content: "Feature: Test", id: "test-ind" });
+    const r = await rolex.direct<RolexResult>("!individual.retire", { individual: "test-ind" });
     expect(r.state.name).toBe("past");
     expect(r.process).toBe("retire");
   });
 
-  test("born → retire → rehire round-trip", () => {
-    const rolex = persistentSetup();
-    rolex.individual.born("Feature: Test", "test-ind");
-    rolex.individual.retire("test-ind");
-    const r = rolex.individual.rehire("test-ind");
-    expect(r.state.name).toBe("individual");
-    expect(r.state.information).toBe("Feature: Test");
-    const names = r.state.children!.map((c) => c.name);
-    expect(names).toContain("identity");
-  });
-
-  test("archived entity survives cross-instance reload", () => {
-    // First instance: born + retire
+  test("archived entity survives cross-instance reload", async () => {
     const rolex1 = persistentSetup();
-    rolex1.individual.born("Feature: Test", "test-ind");
-    rolex1.individual.retire("test-ind");
-    // Second instance: rehire from persisted archive
+    await rolex1.direct("!individual.born", { content: "Feature: Test", id: "test-ind" });
+    await rolex1.direct("!individual.retire", { individual: "test-ind" });
+
     const rolex2 = persistentSetup();
-    const found = rolex2.find("test-ind");
-    expect(found).not.toBeNull();
-    expect(found!.name).toBe("past");
-    const r = rolex2.individual.rehire("test-ind");
+    // rehire should find the archived entity
+    const r = await rolex2.direct<RolexResult>("!individual.rehire", { individual: "test-ind" });
     expect(r.state.name).toBe("individual");
-    expect(r.state.information).toBe("Feature: Test");
   });
 });

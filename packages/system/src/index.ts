@@ -36,18 +36,9 @@ export type {
 } from "./process.js";
 export { create, link, process, remove, transform, unlink } from "./process.js";
 
-// ===== Merge =====
-
-export { mergeState } from "./merge.js";
-
 // ===== Initializer =====
 
 export type { Initializer } from "./initializer.js";
-
-// ===== Prototype =====
-
-export type { Prototype } from "./prototype.js";
-export { createPrototype } from "./prototype.js";
 
 // ===== Runtime =====
 
