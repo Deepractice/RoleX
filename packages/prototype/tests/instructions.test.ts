@@ -18,10 +18,19 @@ describe("instructions registry", () => {
   test("role — 13 methods", () => {
     const methods = methodsOf("role");
     expect(methods).toEqual([
-      "activate", "focus", "want", "plan", "todo",
-      "finish", "complete", "abandon",
-      "reflect", "realize", "master",
-      "forget", "skill",
+      "activate",
+      "focus",
+      "want",
+      "plan",
+      "todo",
+      "finish",
+      "complete",
+      "abandon",
+      "reflect",
+      "realize",
+      "master",
+      "forget",
+      "skill",
     ]);
   });
 
@@ -46,7 +55,16 @@ describe("instructions registry", () => {
 
   test("resource — 8 methods", () => {
     const methods = methodsOf("resource");
-    expect(methods).toEqual(["add", "search", "has", "info", "remove", "push", "pull", "clearCache"]);
+    expect(methods).toEqual([
+      "add",
+      "search",
+      "has",
+      "info",
+      "remove",
+      "push",
+      "pull",
+      "clearCache",
+    ]);
   });
 
   test("total instruction count is 41", () => {

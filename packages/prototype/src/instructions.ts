@@ -19,241 +19,562 @@ function def(
 //  Individual — lifecycle + external injection
 // ================================================================
 
-const individualBorn = def("individual", "born", {
-  content: { type: "gherkin", required: false, description: "Gherkin Feature source for the individual" },
-  id: { type: "string", required: false, description: "User-facing identifier (kebab-case)" },
-  alias: { type: "string[]", required: false, description: "Alternative names" },
-}, ["content", "id", "alias"]);
+const individualBorn = def(
+  "individual",
+  "born",
+  {
+    content: {
+      type: "gherkin",
+      required: false,
+      description: "Gherkin Feature source for the individual",
+    },
+    id: { type: "string", required: false, description: "User-facing identifier (kebab-case)" },
+    alias: { type: "string[]", required: false, description: "Alternative names" },
+  },
+  ["content", "id", "alias"]
+);
 
-const individualRetire = def("individual", "retire", {
-  individual: { type: "string", required: true, description: "Individual id" },
-}, ["individual"]);
+const individualRetire = def(
+  "individual",
+  "retire",
+  {
+    individual: { type: "string", required: true, description: "Individual id" },
+  },
+  ["individual"]
+);
 
-const individualDie = def("individual", "die", {
-  individual: { type: "string", required: true, description: "Individual id" },
-}, ["individual"]);
+const individualDie = def(
+  "individual",
+  "die",
+  {
+    individual: { type: "string", required: true, description: "Individual id" },
+  },
+  ["individual"]
+);
 
-const individualRehire = def("individual", "rehire", {
-  individual: { type: "string", required: true, description: "Individual id (from past)" },
-}, ["individual"]);
+const individualRehire = def(
+  "individual",
+  "rehire",
+  {
+    individual: { type: "string", required: true, description: "Individual id (from past)" },
+  },
+  ["individual"]
+);
 
-const individualTeach = def("individual", "teach", {
-  individual: { type: "string", required: true, description: "Individual id" },
-  content: { type: "gherkin", required: true, description: "Gherkin Feature source for the principle" },
-  id: { type: "string", required: false, description: "Principle id (keywords joined by hyphens)" },
-}, ["individual", "content", "id"]);
+const individualTeach = def(
+  "individual",
+  "teach",
+  {
+    individual: { type: "string", required: true, description: "Individual id" },
+    content: {
+      type: "gherkin",
+      required: true,
+      description: "Gherkin Feature source for the principle",
+    },
+    id: {
+      type: "string",
+      required: false,
+      description: "Principle id (keywords joined by hyphens)",
+    },
+  },
+  ["individual", "content", "id"]
+);
 
-const individualTrain = def("individual", "train", {
-  individual: { type: "string", required: true, description: "Individual id" },
-  content: { type: "gherkin", required: true, description: "Gherkin Feature source for the procedure" },
-  id: { type: "string", required: false, description: "Procedure id (keywords joined by hyphens)" },
-}, ["individual", "content", "id"]);
+const individualTrain = def(
+  "individual",
+  "train",
+  {
+    individual: { type: "string", required: true, description: "Individual id" },
+    content: {
+      type: "gherkin",
+      required: true,
+      description: "Gherkin Feature source for the procedure",
+    },
+    id: {
+      type: "string",
+      required: false,
+      description: "Procedure id (keywords joined by hyphens)",
+    },
+  },
+  ["individual", "content", "id"]
+);
 
 // ================================================================
 //  Role — execution + cognition
 // ================================================================
 
-const roleActivate = def("role", "activate", {
-  individual: { type: "string", required: true, description: "Individual id to activate as role" },
-}, ["individual"]);
+const roleActivate = def(
+  "role",
+  "activate",
+  {
+    individual: {
+      type: "string",
+      required: true,
+      description: "Individual id to activate as role",
+    },
+  },
+  ["individual"]
+);
 
-const roleFocus = def("role", "focus", {
-  goal: { type: "string", required: true, description: "Goal id to switch to" },
-}, ["goal"]);
+const roleFocus = def(
+  "role",
+  "focus",
+  {
+    goal: { type: "string", required: true, description: "Goal id to switch to" },
+  },
+  ["goal"]
+);
 
-const roleWant = def("role", "want", {
-  individual: { type: "string", required: true, description: "Individual id" },
-  goal: { type: "gherkin", required: false, description: "Gherkin Feature source describing the goal" },
-  id: { type: "string", required: false, description: "Goal id (used for focus/reference)" },
-  alias: { type: "string[]", required: false, description: "Alternative names" },
-}, ["individual", "goal", "id", "alias"]);
+const roleWant = def(
+  "role",
+  "want",
+  {
+    individual: { type: "string", required: true, description: "Individual id" },
+    goal: {
+      type: "gherkin",
+      required: false,
+      description: "Gherkin Feature source describing the goal",
+    },
+    id: { type: "string", required: false, description: "Goal id (used for focus/reference)" },
+    alias: { type: "string[]", required: false, description: "Alternative names" },
+  },
+  ["individual", "goal", "id", "alias"]
+);
 
-const rolePlan = def("role", "plan", {
-  goal: { type: "string", required: true, description: "Goal id" },
-  plan: { type: "gherkin", required: false, description: "Gherkin Feature source describing the plan" },
-  id: { type: "string", required: false, description: "Plan id (keywords joined by hyphens)" },
-  after: { type: "string", required: false, description: "Plan id this plan follows (sequential/phase)" },
-  fallback: { type: "string", required: false, description: "Plan id this plan is a backup for (alternative/strategy)" },
-}, ["goal", "plan", "id", "after", "fallback"]);
+const rolePlan = def(
+  "role",
+  "plan",
+  {
+    goal: { type: "string", required: true, description: "Goal id" },
+    plan: {
+      type: "gherkin",
+      required: false,
+      description: "Gherkin Feature source describing the plan",
+    },
+    id: { type: "string", required: false, description: "Plan id (keywords joined by hyphens)" },
+    after: {
+      type: "string",
+      required: false,
+      description: "Plan id this plan follows (sequential/phase)",
+    },
+    fallback: {
+      type: "string",
+      required: false,
+      description: "Plan id this plan is a backup for (alternative/strategy)",
+    },
+  },
+  ["goal", "plan", "id", "after", "fallback"]
+);
 
-const roleTodo = def("role", "todo", {
-  plan: { type: "string", required: true, description: "Plan id" },
-  task: { type: "gherkin", required: false, description: "Gherkin Feature source describing the task" },
-  id: { type: "string", required: false, description: "Task id (used for finish/reference)" },
-  alias: { type: "string[]", required: false, description: "Alternative names" },
-}, ["plan", "task", "id", "alias"]);
+const roleTodo = def(
+  "role",
+  "todo",
+  {
+    plan: { type: "string", required: true, description: "Plan id" },
+    task: {
+      type: "gherkin",
+      required: false,
+      description: "Gherkin Feature source describing the task",
+    },
+    id: { type: "string", required: false, description: "Task id (used for finish/reference)" },
+    alias: { type: "string[]", required: false, description: "Alternative names" },
+  },
+  ["plan", "task", "id", "alias"]
+);
 
-const roleFinish = def("role", "finish", {
-  task: { type: "string", required: true, description: "Task id to finish" },
-  individual: { type: "string", required: true, description: "Individual id (encounter owner)" },
-  encounter: { type: "gherkin", required: false, description: "Optional Gherkin Feature describing what happened" },
-}, ["task", "individual", "encounter"]);
+const roleFinish = def(
+  "role",
+  "finish",
+  {
+    task: { type: "string", required: true, description: "Task id to finish" },
+    individual: { type: "string", required: true, description: "Individual id (encounter owner)" },
+    encounter: {
+      type: "gherkin",
+      required: false,
+      description: "Optional Gherkin Feature describing what happened",
+    },
+  },
+  ["task", "individual", "encounter"]
+);
 
-const roleComplete = def("role", "complete", {
-  plan: { type: "string", required: true, description: "Plan id to complete" },
-  individual: { type: "string", required: true, description: "Individual id (encounter owner)" },
-  encounter: { type: "gherkin", required: false, description: "Optional Gherkin Feature describing what happened" },
-}, ["plan", "individual", "encounter"]);
+const roleComplete = def(
+  "role",
+  "complete",
+  {
+    plan: { type: "string", required: true, description: "Plan id to complete" },
+    individual: { type: "string", required: true, description: "Individual id (encounter owner)" },
+    encounter: {
+      type: "gherkin",
+      required: false,
+      description: "Optional Gherkin Feature describing what happened",
+    },
+  },
+  ["plan", "individual", "encounter"]
+);
 
-const roleAbandon = def("role", "abandon", {
-  plan: { type: "string", required: true, description: "Plan id to abandon" },
-  individual: { type: "string", required: true, description: "Individual id (encounter owner)" },
-  encounter: { type: "gherkin", required: false, description: "Optional Gherkin Feature describing what happened" },
-}, ["plan", "individual", "encounter"]);
+const roleAbandon = def(
+  "role",
+  "abandon",
+  {
+    plan: { type: "string", required: true, description: "Plan id to abandon" },
+    individual: { type: "string", required: true, description: "Individual id (encounter owner)" },
+    encounter: {
+      type: "gherkin",
+      required: false,
+      description: "Optional Gherkin Feature describing what happened",
+    },
+  },
+  ["plan", "individual", "encounter"]
+);
 
-const roleReflect = def("role", "reflect", {
-  encounter: { type: "string", required: true, description: "Encounter id to reflect on" },
-  individual: { type: "string", required: true, description: "Individual id" },
-  experience: { type: "gherkin", required: false, description: "Gherkin Feature source for the experience" },
-  id: { type: "string", required: false, description: "Experience id (keywords joined by hyphens)" },
-}, ["encounter", "individual", "experience", "id"]);
+const roleReflect = def(
+  "role",
+  "reflect",
+  {
+    encounter: { type: "string", required: true, description: "Encounter id to reflect on" },
+    individual: { type: "string", required: true, description: "Individual id" },
+    experience: {
+      type: "gherkin",
+      required: false,
+      description: "Gherkin Feature source for the experience",
+    },
+    id: {
+      type: "string",
+      required: false,
+      description: "Experience id (keywords joined by hyphens)",
+    },
+  },
+  ["encounter", "individual", "experience", "id"]
+);
 
-const roleRealize = def("role", "realize", {
-  experience: { type: "string", required: true, description: "Experience id to distill" },
-  individual: { type: "string", required: true, description: "Individual id" },
-  principle: { type: "gherkin", required: false, description: "Gherkin Feature source for the principle" },
-  id: { type: "string", required: false, description: "Principle id (keywords joined by hyphens)" },
-}, ["experience", "individual", "principle", "id"]);
+const roleRealize = def(
+  "role",
+  "realize",
+  {
+    experience: { type: "string", required: true, description: "Experience id to distill" },
+    individual: { type: "string", required: true, description: "Individual id" },
+    principle: {
+      type: "gherkin",
+      required: false,
+      description: "Gherkin Feature source for the principle",
+    },
+    id: {
+      type: "string",
+      required: false,
+      description: "Principle id (keywords joined by hyphens)",
+    },
+  },
+  ["experience", "individual", "principle", "id"]
+);
 
-const roleMaster = def("role", "master", {
-  individual: { type: "string", required: true, description: "Individual id" },
-  procedure: { type: "gherkin", required: true, description: "Gherkin Feature source for the procedure" },
-  id: { type: "string", required: false, description: "Procedure id (keywords joined by hyphens)" },
-  experience: { type: "string", required: false, description: "Experience id to consume (optional)" },
-}, ["individual", "procedure", "id", "experience"]);
+const roleMaster = def(
+  "role",
+  "master",
+  {
+    individual: { type: "string", required: true, description: "Individual id" },
+    procedure: {
+      type: "gherkin",
+      required: true,
+      description: "Gherkin Feature source for the procedure",
+    },
+    id: {
+      type: "string",
+      required: false,
+      description: "Procedure id (keywords joined by hyphens)",
+    },
+    experience: {
+      type: "string",
+      required: false,
+      description: "Experience id to consume (optional)",
+    },
+  },
+  ["individual", "procedure", "id", "experience"]
+);
 
-const roleForget = def("role", "forget", {
-  id: { type: "string", required: true, description: "Id of the node to remove" },
-  individual: { type: "string", required: true, description: "Individual id (owner)" },
-}, ["id", "individual"]);
+const roleForget = def(
+  "role",
+  "forget",
+  {
+    id: { type: "string", required: true, description: "Id of the node to remove" },
+    individual: { type: "string", required: true, description: "Individual id (owner)" },
+  },
+  ["id", "individual"]
+);
 
-const roleSkill = def("role", "skill", {
-  locator: { type: "string", required: true, description: "ResourceX locator for the skill" },
-}, ["locator"]);
+const roleSkill = def(
+  "role",
+  "skill",
+  {
+    locator: { type: "string", required: true, description: "ResourceX locator for the skill" },
+  },
+  ["locator"]
+);
 
 // ================================================================
 //  Org — organization management
 // ================================================================
 
-const orgFound = def("org", "found", {
-  content: { type: "gherkin", required: false, description: "Gherkin Feature source for the organization" },
-  id: { type: "string", required: false, description: "User-facing identifier (kebab-case)" },
-  alias: { type: "string[]", required: false, description: "Alternative names" },
-}, ["content", "id", "alias"]);
+const orgFound = def(
+  "org",
+  "found",
+  {
+    content: {
+      type: "gherkin",
+      required: false,
+      description: "Gherkin Feature source for the organization",
+    },
+    id: { type: "string", required: false, description: "User-facing identifier (kebab-case)" },
+    alias: { type: "string[]", required: false, description: "Alternative names" },
+  },
+  ["content", "id", "alias"]
+);
 
-const orgCharter = def("org", "charter", {
-  org: { type: "string", required: true, description: "Organization id" },
-  content: { type: "gherkin", required: true, description: "Gherkin Feature source for the charter" },
-  id: { type: "string", required: false, description: "Charter id" },
-}, ["org", "content", "id"]);
+const orgCharter = def(
+  "org",
+  "charter",
+  {
+    org: { type: "string", required: true, description: "Organization id" },
+    content: {
+      type: "gherkin",
+      required: true,
+      description: "Gherkin Feature source for the charter",
+    },
+    id: { type: "string", required: false, description: "Charter id" },
+  },
+  ["org", "content", "id"]
+);
 
-const orgDissolve = def("org", "dissolve", {
-  org: { type: "string", required: true, description: "Organization id" },
-}, ["org"]);
+const orgDissolve = def(
+  "org",
+  "dissolve",
+  {
+    org: { type: "string", required: true, description: "Organization id" },
+  },
+  ["org"]
+);
 
-const orgHire = def("org", "hire", {
-  org: { type: "string", required: true, description: "Organization id" },
-  individual: { type: "string", required: true, description: "Individual id" },
-}, ["org", "individual"]);
+const orgHire = def(
+  "org",
+  "hire",
+  {
+    org: { type: "string", required: true, description: "Organization id" },
+    individual: { type: "string", required: true, description: "Individual id" },
+  },
+  ["org", "individual"]
+);
 
-const orgFire = def("org", "fire", {
-  org: { type: "string", required: true, description: "Organization id" },
-  individual: { type: "string", required: true, description: "Individual id" },
-}, ["org", "individual"]);
+const orgFire = def(
+  "org",
+  "fire",
+  {
+    org: { type: "string", required: true, description: "Organization id" },
+    individual: { type: "string", required: true, description: "Individual id" },
+  },
+  ["org", "individual"]
+);
 
 // ================================================================
 //  Position — position management
 // ================================================================
 
-const positionEstablish = def("position", "establish", {
-  content: { type: "gherkin", required: false, description: "Gherkin Feature source for the position" },
-  id: { type: "string", required: false, description: "User-facing identifier (kebab-case)" },
-  alias: { type: "string[]", required: false, description: "Alternative names" },
-}, ["content", "id", "alias"]);
+const positionEstablish = def(
+  "position",
+  "establish",
+  {
+    content: {
+      type: "gherkin",
+      required: false,
+      description: "Gherkin Feature source for the position",
+    },
+    id: { type: "string", required: false, description: "User-facing identifier (kebab-case)" },
+    alias: { type: "string[]", required: false, description: "Alternative names" },
+  },
+  ["content", "id", "alias"]
+);
 
-const positionCharge = def("position", "charge", {
-  position: { type: "string", required: true, description: "Position id" },
-  content: { type: "gherkin", required: true, description: "Gherkin Feature source for the duty" },
-  id: { type: "string", required: false, description: "Duty id (keywords joined by hyphens)" },
-}, ["position", "content", "id"]);
+const positionCharge = def(
+  "position",
+  "charge",
+  {
+    position: { type: "string", required: true, description: "Position id" },
+    content: {
+      type: "gherkin",
+      required: true,
+      description: "Gherkin Feature source for the duty",
+    },
+    id: { type: "string", required: false, description: "Duty id (keywords joined by hyphens)" },
+  },
+  ["position", "content", "id"]
+);
 
-const positionRequire = def("position", "require", {
-  position: { type: "string", required: true, description: "Position id" },
-  content: { type: "gherkin", required: true, description: "Gherkin Feature source for the skill requirement" },
-  id: { type: "string", required: false, description: "Requirement id (keywords joined by hyphens)" },
-}, ["position", "content", "id"]);
+const positionRequire = def(
+  "position",
+  "require",
+  {
+    position: { type: "string", required: true, description: "Position id" },
+    content: {
+      type: "gherkin",
+      required: true,
+      description: "Gherkin Feature source for the skill requirement",
+    },
+    id: {
+      type: "string",
+      required: false,
+      description: "Requirement id (keywords joined by hyphens)",
+    },
+  },
+  ["position", "content", "id"]
+);
 
-const positionAbolish = def("position", "abolish", {
-  position: { type: "string", required: true, description: "Position id" },
-}, ["position"]);
+const positionAbolish = def(
+  "position",
+  "abolish",
+  {
+    position: { type: "string", required: true, description: "Position id" },
+  },
+  ["position"]
+);
 
-const positionAppoint = def("position", "appoint", {
-  position: { type: "string", required: true, description: "Position id" },
-  individual: { type: "string", required: true, description: "Individual id" },
-}, ["position", "individual"]);
+const positionAppoint = def(
+  "position",
+  "appoint",
+  {
+    position: { type: "string", required: true, description: "Position id" },
+    individual: { type: "string", required: true, description: "Individual id" },
+  },
+  ["position", "individual"]
+);
 
-const positionDismiss = def("position", "dismiss", {
-  position: { type: "string", required: true, description: "Position id" },
-  individual: { type: "string", required: true, description: "Individual id" },
-}, ["position", "individual"]);
+const positionDismiss = def(
+  "position",
+  "dismiss",
+  {
+    position: { type: "string", required: true, description: "Position id" },
+    individual: { type: "string", required: true, description: "Individual id" },
+  },
+  ["position", "individual"]
+);
 
 // ================================================================
 //  Census — society-level queries
 // ================================================================
 
-const censusList = def("census", "list", {
-  type: { type: "string", required: false, description: "Filter by type (individual, organization, position, past)" },
-}, ["type"]);
+const censusList = def(
+  "census",
+  "list",
+  {
+    type: {
+      type: "string",
+      required: false,
+      description: "Filter by type (individual, organization, position, past)",
+    },
+  },
+  ["type"]
+);
 
 // ================================================================
 //  Prototype — registry + creation
 // ================================================================
 
-const prototypeSettle = def("prototype", "settle", {
-  source: { type: "string", required: true, description: "ResourceX source — local path or locator" },
-}, ["source"]);
+const prototypeSettle = def(
+  "prototype",
+  "settle",
+  {
+    source: {
+      type: "string",
+      required: true,
+      description: "ResourceX source — local path or locator",
+    },
+  },
+  ["source"]
+);
 
-const prototypeEvict = def("prototype", "evict", {
-  id: { type: "string", required: true, description: "Prototype id to unregister" },
-}, ["id"]);
+const prototypeEvict = def(
+  "prototype",
+  "evict",
+  {
+    id: { type: "string", required: true, description: "Prototype id to unregister" },
+  },
+  ["id"]
+);
 
 // ================================================================
 //  Resource — ResourceX proxy
 // ================================================================
 
-const resourceAdd = def("resource", "add", {
-  path: { type: "string", required: true, description: "Path to resource directory" },
-}, ["path"]);
+const resourceAdd = def(
+  "resource",
+  "add",
+  {
+    path: { type: "string", required: true, description: "Path to resource directory" },
+  },
+  ["path"]
+);
 
-const resourceSearch = def("resource", "search", {
-  query: { type: "string", required: false, description: "Search query" },
-}, ["query"]);
+const resourceSearch = def(
+  "resource",
+  "search",
+  {
+    query: { type: "string", required: false, description: "Search query" },
+  },
+  ["query"]
+);
 
-const resourceHas = def("resource", "has", {
-  locator: { type: "string", required: true, description: "Resource locator" },
-}, ["locator"]);
+const resourceHas = def(
+  "resource",
+  "has",
+  {
+    locator: { type: "string", required: true, description: "Resource locator" },
+  },
+  ["locator"]
+);
 
-const resourceInfo = def("resource", "info", {
-  locator: { type: "string", required: true, description: "Resource locator" },
-}, ["locator"]);
+const resourceInfo = def(
+  "resource",
+  "info",
+  {
+    locator: { type: "string", required: true, description: "Resource locator" },
+  },
+  ["locator"]
+);
 
-const resourceRemove = def("resource", "remove", {
-  locator: { type: "string", required: true, description: "Resource locator" },
-}, ["locator"]);
+const resourceRemove = def(
+  "resource",
+  "remove",
+  {
+    locator: { type: "string", required: true, description: "Resource locator" },
+  },
+  ["locator"]
+);
 
-const resourcePush = def("resource", "push", {
-  locator: { type: "string", required: true, description: "Resource locator" },
-  registry: { type: "string", required: false, description: "Registry URL (overrides default)" },
-}, ["locator", { pack: ["registry"] }]);
+const resourcePush = def(
+  "resource",
+  "push",
+  {
+    locator: { type: "string", required: true, description: "Resource locator" },
+    registry: { type: "string", required: false, description: "Registry URL (overrides default)" },
+  },
+  ["locator", { pack: ["registry"] }]
+);
 
-const resourcePull = def("resource", "pull", {
-  locator: { type: "string", required: true, description: "Resource locator" },
-  registry: { type: "string", required: false, description: "Registry URL (overrides default)" },
-}, ["locator", { pack: ["registry"] }]);
+const resourcePull = def(
+  "resource",
+  "pull",
+  {
+    locator: { type: "string", required: true, description: "Resource locator" },
+    registry: { type: "string", required: false, description: "Registry URL (overrides default)" },
+  },
+  ["locator", { pack: ["registry"] }]
+);
 
-const resourceClearCache = def("resource", "clearCache", {
-  registry: { type: "string", required: false, description: "Registry to clear cache for" },
-}, ["registry"]);
+const resourceClearCache = def(
+  "resource",
+  "clearCache",
+  {
+    registry: { type: "string", required: false, description: "Registry to clear cache for" },
+  },
+  ["registry"]
+);
 
 // ================================================================
 //  Instruction registry — keyed by "namespace.method"

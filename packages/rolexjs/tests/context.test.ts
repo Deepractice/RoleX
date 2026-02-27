@@ -58,7 +58,7 @@ describe("Role (ctx management)", () => {
 
     const result = role.finish(
       "login",
-      "Feature: Login done\n  Scenario: OK\n    Given login\n    Then success",
+      "Feature: Login done\n  Scenario: OK\n    Given login\n    Then success"
     );
     expect(role.ctx.encounterIds.has("login-finished")).toBe(true);
     expect(result.hint).toBeDefined();
@@ -87,7 +87,7 @@ describe("Role (ctx management)", () => {
 
     const result = role.complete(
       "jwt",
-      "Feature: JWT done\n  Scenario: OK\n    Given jwt\n    Then done",
+      "Feature: JWT done\n  Scenario: OK\n    Given jwt\n    Then done"
     );
     expect(role.ctx.focusedPlanId).toBeNull();
     expect(role.ctx.encounterIds.has("jwt-completed")).toBe(true);
@@ -102,17 +102,14 @@ describe("Role (ctx management)", () => {
     role.want("Feature: Auth", "auth");
     role.plan("Feature: JWT", "jwt");
     role.todo("Feature: Login", "login");
-    role.finish(
-      "login",
-      "Feature: Login done\n  Scenario: OK\n    Given x\n    Then y",
-    );
+    role.finish("login", "Feature: Login done\n  Scenario: OK\n    Given x\n    Then y");
 
     expect(role.ctx.encounterIds.has("login-finished")).toBe(true);
 
     role.reflect(
       "login-finished",
       "Feature: Token insight\n  Scenario: OK\n    Given x\n    Then y",
-      "token-insight",
+      "token-insight"
     );
 
     expect(role.ctx.encounterIds.has("login-finished")).toBe(false);
@@ -203,10 +200,7 @@ describe("Role context persistence", () => {
     const role = await rolex.activate("sean");
     role.want("Feature: Auth", "auth");
     role.plan("Feature: JWT", "jwt");
-    role.complete(
-      "jwt",
-      "Feature: Done\n  Scenario: OK\n    Given done\n    Then ok",
-    );
+    role.complete("jwt", "Feature: Done\n  Scenario: OK\n    Given done\n    Then ok");
 
     const data = JSON.parse(readFileSync(join(dataDir, "context", "sean.json"), "utf-8"));
     expect(data.focusedGoalId).toBe("auth");

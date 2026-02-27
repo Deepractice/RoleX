@@ -12,8 +12,8 @@
 
 import type { ContextData, Platform } from "@rolexjs/core";
 import * as C from "@rolexjs/core";
-import { createOps, toArgs, type Ops } from "@rolexjs/prototype";
-import { type Initializer, type Runtime, type State, type Structure } from "@rolexjs/system";
+import { createOps, type Ops, toArgs } from "@rolexjs/prototype";
+import type { Initializer, Runtime, State, Structure } from "@rolexjs/system";
 import type { ResourceX } from "resourcexjs";
 import { RoleContext } from "./context.js";
 import { Role, type RolexInternal } from "./role.js";

@@ -11,8 +11,9 @@
  *   role.plan("Feature: Phase 1", "phase-1");
  *   role.finish("write-tests", "Feature: Tests written");
  */
-import type { State } from "@rolexjs/system";
+
 import type { Ops } from "@rolexjs/prototype";
+import type { State } from "@rolexjs/system";
 import type { RoleContext } from "./context.js";
 
 export interface RolexResult {

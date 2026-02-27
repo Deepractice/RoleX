@@ -1,0 +1,26 @@
+{
+  "name": "@rolexjs/rolex-prototype",
+  "version": "0.1.0",
+  "description": "The foundational organization of the RoleX world",
+  "keywords": [
+    "rolex",
+    "prototype",
+    "ai-agent",
+    "role-management"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Deepractice/RoleX.git",
+    "directory": "prototypes/rolex"
+  },
+  "homepage": "https://github.com/Deepractice/RoleX",
+  "license": "MIT",
+  "files": [
+    "prototype.json",
+    "resource.json",
+    "*.feature"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

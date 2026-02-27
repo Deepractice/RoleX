@@ -19,7 +19,7 @@ import { McpState } from "./state.js";
 
 const rolex = createRoleX(
   localPlatform({
-    bootstrap: ["registry.deepractice.dev/rolex-world"],
+    bootstrap: ["npm:@rolexjs/rolex-prototype"],
   })
 );
 await rolex.genesis();
@@ -60,7 +60,14 @@ server.addTool({
     const role = await rolex.activate(roleId);
     state.role = role;
     const result = role.project();
-    return fmt("activate", roleId, result);
+    const focusedGoalId = role.ctx.focusedGoalId;
+    return render({
+      process: "activate",
+      name: roleId,
+      result,
+      cognitiveHint: result.hint ?? null,
+      fold: (node) => node.name === "goal" && node.id !== focusedGoalId,
+    });
   },
 });
 

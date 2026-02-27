@@ -129,7 +129,6 @@ describe("alignment with rolex.ts toArgs switch", () => {
     expect(toArgs("prototype.evict", a)).toEqual([a.id]);
   });
 
-
   // ================================================================
   //  resource (L268-284)
   // ================================================================

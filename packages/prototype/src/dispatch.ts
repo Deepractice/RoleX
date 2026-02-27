@@ -5,8 +5,8 @@
  * lookup against the instruction registry.
  */
 
-import type { ArgEntry } from "./schema.js";
 import { instructions } from "./instructions.js";
+import type { ArgEntry } from "./schema.js";
 
 /**
  * Map named arguments to positional arguments for a given operation.

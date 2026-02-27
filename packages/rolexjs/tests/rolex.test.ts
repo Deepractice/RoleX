@@ -3,8 +3,8 @@ import { existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { localPlatform } from "@rolexjs/local-platform";
-import { describe as renderDescribe, hint as renderHint, renderState } from "../src/render.js";
 import { createRoleX, type RolexResult } from "../src/index.js";
+import { describe as renderDescribe, hint as renderHint, renderState } from "../src/render.js";
 
 function setup() {
   return createRoleX(localPlatform({ dataDir: null }));
@@ -17,7 +17,10 @@ function setup() {
 describe("use dispatch", () => {
   test("!individual.born creates individual", async () => {
     const rolex = setup();
-    const r = await rolex.direct<RolexResult>("!individual.born", { content: "Feature: Sean", id: "sean" });
+    const r = await rolex.direct<RolexResult>("!individual.born", {
+      content: "Feature: Sean",
+      id: "sean",
+    });
     expect(r.state.name).toBe("individual");
     expect(r.state.id).toBe("sean");
     expect(r.process).toBe("born");
@@ -29,7 +32,11 @@ describe("use dispatch", () => {
     const rolex = setup();
     await rolex.direct("!individual.born", { id: "sean" });
     await rolex.direct("!role.want", { individual: "sean", goal: "Feature: Auth", id: "g1" });
-    const r = await rolex.direct<RolexResult>("!role.plan", { goal: "g1", plan: "Feature: JWT", id: "p1" });
+    const r = await rolex.direct<RolexResult>("!role.plan", {
+      goal: "g1",
+      plan: "Feature: JWT",
+      id: "p1",
+    });
     expect(r.state.name).toBe("plan");
   });
 
@@ -86,7 +93,10 @@ describe("activate", () => {
     const todoR = role.todo("Feature: Login", "login");
     expect(todoR.state.name).toBe("task");
 
-    const finishR = role.finish("login", "Feature: Done\n  Scenario: OK\n    Given done\n    Then ok");
+    const finishR = role.finish(
+      "login",
+      "Feature: Done\n  Scenario: OK\n    Given done\n    Then ok"
+    );
     expect(finishR.state.name).toBe("encounter");
   });
 
@@ -118,7 +128,10 @@ describe("render", () => {
 
   test("renderState renders individual with heading", async () => {
     const rolex = setup();
-    const r = await rolex.direct<RolexResult>("!individual.born", { content: "Feature: I am Sean\n  An AI role.", id: "sean" });
+    const r = await rolex.direct<RolexResult>("!individual.born", {
+      content: "Feature: I am Sean\n  An AI role.",
+      id: "sean",
+    });
     const md = renderState(r.state);
     expect(md).toContain("# [individual]");
     expect(md).toContain("Feature: I am Sean");
@@ -146,7 +159,9 @@ describe("render", () => {
 describe("gherkin validation", () => {
   test("rejects non-Gherkin input", () => {
     const rolex = setup();
-    expect(() => rolex.direct("!individual.born", { content: "not gherkin" })).toThrow("Invalid Gherkin");
+    expect(() => rolex.direct("!individual.born", { content: "not gherkin" })).toThrow(
+      "Invalid Gherkin"
+    );
   });
 
   test("accepts valid Gherkin", () => {

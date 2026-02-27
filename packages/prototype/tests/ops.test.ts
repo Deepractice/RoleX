@@ -213,7 +213,11 @@ describe("role: execution", () => {
     ops["role.plan"]("g", undefined, "p");
     ops["role.todo"]("p", undefined, "t1");
 
-    const r = ops["role.finish"]("t1", "sean", "Feature: Task complete\n  Scenario: OK\n    Given done\n    Then ok");
+    const r = ops["role.finish"](
+      "t1",
+      "sean",
+      "Feature: Task complete\n  Scenario: OK\n    Given done\n    Then ok"
+    );
     expect(r.state.name).toBe("encounter");
     expect(r.state.id).toBe("t1-finished");
     expect(r.process).toBe("finish");
@@ -239,7 +243,11 @@ describe("role: execution", () => {
     ops["role.want"]("sean", "Feature: Auth", "auth");
     ops["role.plan"]("auth", "Feature: JWT", "jwt");
 
-    const r = ops["role.complete"]("jwt", "sean", "Feature: Done\n  Scenario: OK\n    Given done\n    Then ok");
+    const r = ops["role.complete"](
+      "jwt",
+      "sean",
+      "Feature: Done\n  Scenario: OK\n    Given done\n    Then ok"
+    );
     expect(r.state.name).toBe("encounter");
     expect(r.state.id).toBe("jwt-completed");
     expect(r.process).toBe("complete");
@@ -252,7 +260,11 @@ describe("role: execution", () => {
     ops["role.want"]("sean", "Feature: Auth", "auth");
     ops["role.plan"]("auth", "Feature: JWT", "jwt");
 
-    const r = ops["role.abandon"]("jwt", "sean", "Feature: Abandoned\n  Scenario: No time\n    Given no time\n    Then abandon");
+    const r = ops["role.abandon"](
+      "jwt",
+      "sean",
+      "Feature: Abandoned\n  Scenario: No time\n    Given no time\n    Then abandon"
+    );
     expect(r.state.name).toBe("encounter");
     expect(r.state.id).toBe("jwt-abandoned");
     expect(r.process).toBe("abandon");
@@ -277,7 +289,12 @@ describe("role: cognition", () => {
   test("reflect: encounter → experience", () => {
     const { ops, find } = setup();
     withEncounter(ops);
-    const r = ops["role.reflect"]("t1-finished", "sean", "Feature: Insight\n  Scenario: Learned\n    Given x\n    Then y", "insight-1");
+    const r = ops["role.reflect"](
+      "t1-finished",
+      "sean",
+      "Feature: Insight\n  Scenario: Learned\n    Given x\n    Then y",
+      "insight-1"
+    );
     expect(r.state.name).toBe("experience");
     expect(r.state.id).toBe("insight-1");
     expect(r.process).toBe("reflect");
@@ -298,7 +315,12 @@ describe("role: cognition", () => {
     withEncounter(ops);
     ops["role.reflect"]("t1-finished", "sean", "Feature: Insight", "exp-1");
 
-    const r = ops["role.realize"]("exp-1", "sean", "Feature: Always validate\n  Scenario: Rule\n    Given validate\n    Then safe", "validate-rule");
+    const r = ops["role.realize"](
+      "exp-1",
+      "sean",
+      "Feature: Always validate\n  Scenario: Rule\n    Given validate\n    Then safe",
+      "validate-rule"
+    );
     expect(r.state.name).toBe("principle");
     expect(r.state.id).toBe("validate-rule");
     expect(r.process).toBe("realize");
@@ -311,7 +333,12 @@ describe("role: cognition", () => {
     withEncounter(ops);
     ops["role.reflect"]("t1-finished", "sean", "Feature: Insight", "exp-1");
 
-    const r = ops["role.master"]("sean", "Feature: JWT mastery\n  Scenario: Apply\n    Given jwt\n    Then master", "jwt-skill", "exp-1");
+    const r = ops["role.master"](
+      "sean",
+      "Feature: JWT mastery\n  Scenario: Apply\n    Given jwt\n    Then master",
+      "jwt-skill",
+      "exp-1"
+    );
     expect(r.state.name).toBe("procedure");
     expect(r.state.id).toBe("jwt-skill");
     expect(r.process).toBe("master");
@@ -595,9 +622,21 @@ describe("full lifecycle", () => {
     ops["role.todo"]("jwt-plan", "Feature: Login endpoint", "login");
     ops["role.todo"]("jwt-plan", "Feature: Token refresh", "refresh");
 
-    ops["role.finish"]("login", "sean", "Feature: Login done\n  Scenario: OK\n    Given login\n    Then done");
-    ops["role.finish"]("refresh", "sean", "Feature: Refresh done\n  Scenario: OK\n    Given refresh\n    Then done");
-    ops["role.complete"]("jwt-plan", "sean", "Feature: Auth plan complete\n  Scenario: OK\n    Given plan\n    Then complete");
+    ops["role.finish"](
+      "login",
+      "sean",
+      "Feature: Login done\n  Scenario: OK\n    Given login\n    Then done"
+    );
+    ops["role.finish"](
+      "refresh",
+      "sean",
+      "Feature: Refresh done\n  Scenario: OK\n    Given refresh\n    Then done"
+    );
+    ops["role.complete"](
+      "jwt-plan",
+      "sean",
+      "Feature: Auth plan complete\n  Scenario: OK\n    Given plan\n    Then complete"
+    );
 
     // Verify tags
     expect(find("login")!.tag).toBe("done");
@@ -606,22 +645,26 @@ describe("full lifecycle", () => {
 
     // Cognition cycle
     ops["role.reflect"](
-      "login-finished", "sean",
+      "login-finished",
+      "sean",
       "Feature: Token insight\n  Scenario: Learned\n    Given token handling\n    Then understand refresh",
-      "token-exp",
+      "token-exp"
     );
     expect(find("login-finished")).toBeNull();
 
     ops["role.realize"](
-      "token-exp", "sean",
+      "token-exp",
+      "sean",
       "Feature: Always validate expiry\n  Scenario: Rule\n    Given token\n    Then validate expiry",
-      "validate-expiry",
+      "validate-expiry"
     );
     expect(find("token-exp")).toBeNull();
 
     // Verify final state
     const sean = find("sean")! as unknown as State;
-    const principle = (sean.children ?? []).find((c: State) => c.name === "principle" && c.id === "validate-expiry");
+    const principle = (sean.children ?? []).find(
+      (c: State) => c.name === "principle" && c.id === "validate-expiry"
+    );
     expect(principle).toBeDefined();
     expect(principle!.information).toContain("Always validate expiry");
   });
@@ -633,26 +676,33 @@ describe("full lifecycle", () => {
     ops["role.want"]("sean", "Feature: Learn Rust", "learn-rust");
     ops["role.plan"]("learn-rust", "Feature: Book approach", "book-approach");
 
-    ops["role.abandon"]("book-approach", "sean", "Feature: Too theoretical\n  Scenario: Failed\n    Given reading\n    Then too slow");
+    ops["role.abandon"](
+      "book-approach",
+      "sean",
+      "Feature: Too theoretical\n  Scenario: Failed\n    Given reading\n    Then too slow"
+    );
 
     expect(find("book-approach")!.tag).toBe("abandoned");
 
     ops["role.reflect"](
-      "book-approach-abandoned", "sean",
+      "book-approach-abandoned",
+      "sean",
       "Feature: Hands-on works better\n  Scenario: Insight\n    Given theory vs practice\n    Then practice wins",
-      "hands-on-exp",
+      "hands-on-exp"
     );
 
     ops["role.master"](
       "sean",
       "Feature: Learn by doing\n  Scenario: Apply\n    Given new topic\n    Then build a project first",
       "learn-by-doing",
-      "hands-on-exp",
+      "hands-on-exp"
     );
 
     expect(find("hands-on-exp")).toBeNull();
     const sean = find("sean")! as unknown as State;
-    const proc = (sean.children ?? []).find((c: State) => c.name === "procedure" && c.id === "learn-by-doing");
+    const proc = (sean.children ?? []).find(
+      (c: State) => c.name === "procedure" && c.id === "learn-by-doing"
+    );
     expect(proc).toBeDefined();
   });
 });

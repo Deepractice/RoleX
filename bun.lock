@@ -5,9 +5,9 @@
     "": {
       "name": "rolexjs",
       "dependencies": {
-        "@resourcexjs/core": "^2.16.1",
-        "@resourcexjs/node-provider": "^2.16.1",
-        "resourcexjs": "^2.16.1",
+        "@resourcexjs/core": "^2.17.2",
+        "@resourcexjs/node-provider": "^2.17.2",
+        "resourcexjs": "^2.17.2",
       },
       "devDependencies": {
         "@biomejs/biome": "^2.4.0",
@@ -32,6 +32,7 @@
       },
       "dependencies": {
         "@rolexjs/local-platform": "workspace:*",
+        "@rolexjs/rolex-prototype": "workspace:*",
         "fastmcp": "^3.0.0",
         "rolexjs": "workspace:*",
         "zod": "^3.25.0",
@@ -93,6 +94,10 @@
     "packages/system": {
       "name": "@rolexjs/system",
       "version": "0.11.0",
+    },
+    "prototypes/rolex": {
+      "name": "@rolexjs/rolex-prototype",
+      "version": "0.1.0",
     },
   },
   "overrides": {
@@ -342,11 +347,11 @@
 
     "@pondwader/socks5-server": ["@pondwader/socks5-server@1.0.10", "", {}, "sha512-bQY06wzzR8D2+vVCUoBsr5QS2U6UgPUQRmErNwtsuI6vLcyRKkafjkr3KxbtGFf9aBBIV2mcvlsKD1UYaIV+sg=="],
 
-    "@resourcexjs/arp": ["@resourcexjs/arp@2.16.1", "https://registry.npmmirror.com/@resourcexjs/arp/-/arp-2.16.1.tgz", {}, "sha512-yzlftFkQuO9T7dOnSdT21WYyDzOoLZmKaQS6RZ9v2f3Pev7anTi3nuTnzYMApAVLlY/+DwiKg7LV5FRMwjpy/Q=="],
+    "@resourcexjs/arp": ["@resourcexjs/arp@2.17.2", "https://registry.npmmirror.com/@resourcexjs/arp/-/arp-2.17.2.tgz", {}, "sha512-DN9sBDICZMpQVwmT4V8U/PSlN289tnrwkZie73kRT7VqbuAdJbEih0JmW2OtPEvHyB1fDlJYZKEtx8l6cCcDzg=="],
 
-    "@resourcexjs/core": ["@resourcexjs/core@2.16.1", "https://registry.npmmirror.com/@resourcexjs/core/-/core-2.16.1.tgz", { "dependencies": { "modern-tar": "^0.7.3", "zod": "^4.3.6" } }, "sha512-8i/pQVQg2uvAnRXDG2NNUPoUrDHN+bd+1MEbbmXoeyTM4RilX90OQXxKyyi40UpZGTpyfkCQFucFC3r0GeKweQ=="],
+    "@resourcexjs/core": ["@resourcexjs/core@2.17.2", "https://registry.npmmirror.com/@resourcexjs/core/-/core-2.17.2.tgz", { "dependencies": { "modern-tar": "^0.7.3", "zod": "^4.3.6" } }, "sha512-NdsNbBJOnC5a3TNrA8Qn0wCA/qvnYzEgNSGvL9Bq2kIMU6uSmQyTG1FKJvz/0RXgEa60GrOaJTJGvjQzxpjpdg=="],
 
-    "@resourcexjs/node-provider": ["@resourcexjs/node-provider@2.16.1", "https://registry.npmmirror.com/@resourcexjs/node-provider/-/node-provider-2.16.1.tgz", { "dependencies": { "@resourcexjs/core": "^2.16.1" } }, "sha512-MDGfsam6ReEBDjmJM7qjLZBOnfkGNK/oz3s38d1eqsvnIyBFNA4wB6ixr6GGAZRwf1EVETqfAXoZZzpP56R78A=="],
+    "@resourcexjs/node-provider": ["@resourcexjs/node-provider@2.17.2", "https://registry.npmmirror.com/@resourcexjs/node-provider/-/node-provider-2.17.2.tgz", { "dependencies": { "@resourcexjs/core": "^2.17.2" } }, "sha512-QlCWHhpBOJWbigYoR1wB3oKDLxgxC7g4mp0PRd6QuXCXQzpj3XOwKic8549/FmHN3LRfcn3gLahfCTtuEkH2EQ=="],
 
     "@rolexjs/core": ["@rolexjs/core@workspace:packages/core"],
 
@@ -357,6 +362,8 @@
     "@rolexjs/parser": ["@rolexjs/parser@workspace:packages/parser"],
 
     "@rolexjs/prototype": ["@rolexjs/prototype@workspace:packages/prototype"],
+
+    "@rolexjs/rolex-prototype": ["@rolexjs/rolex-prototype@workspace:prototypes/rolex"],
 
     "@rolexjs/system": ["@rolexjs/system@workspace:packages/system"],
 
@@ -930,7 +937,7 @@
 
     "resolve-from": ["resolve-from@5.0.0", "", {}, "sha512-qYg9KP24dD5qka9J47d0aVky0N+b4fTU89LN9iDnjB5waksiC49rvMB0PrUJQGoTmH50XPiqOvAjDfaijGxYZw=="],
 
-    "resourcexjs": ["resourcexjs@2.16.1", "https://registry.npmmirror.com/resourcexjs/-/resourcexjs-2.16.1.tgz", { "dependencies": { "@resourcexjs/arp": "^2.16.1", "@resourcexjs/core": "^2.16.1", "sandboxxjs": "^0.5.1" } }, "sha512-054JrC6Rvlwnb0aMErRMOcc2N7SvYDhCP/AZg5zYFkoJzS0YB83y811Z4R4ttDQPw0kEWljo5Dxd2YQ34KNxOA=="],
+    "resourcexjs": ["resourcexjs@2.17.2", "https://registry.npmmirror.com/resourcexjs/-/resourcexjs-2.17.2.tgz", { "dependencies": { "@resourcexjs/arp": "^2.17.2", "@resourcexjs/core": "^2.17.2", "sandboxxjs": "^0.5.1" } }, "sha512-xQYMbQ5V107mdTQ/29M6ntAQsdPIcanVvyXd6Iu1SuHihIFp/Fv2whQzQZvEN1KuwJZBFZqVrjYGALnI0lTmsw=="],
 
     "reusify": ["reusify@1.1.0", "", {}, "sha512-g6QUff04oZpHs0eG5p83rFLhHeV00ug/Yf9nZM6fLeUrPguBTkTQOdpAWWspMh55TZfVQDPaN3NQJfbVRAxdIw=="],
 

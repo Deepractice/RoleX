@@ -43,7 +43,10 @@ describe("requireRole", () => {
 
 describe("render", () => {
   it("includes status + hint + projection", async () => {
-    const result = await rolex.direct<RolexResult>("!individual.born", { content: "Feature: Sean", id: "sean" });
+    const result = await rolex.direct<RolexResult>("!individual.born", {
+      content: "Feature: Sean",
+      id: "sean",
+    });
     const output = render({
       process: "born",
       name: "Sean",
@@ -59,7 +62,10 @@ describe("render", () => {
   });
 
   it("includes cognitive hint when provided", async () => {
-    const result = await rolex.direct<RolexResult>("!individual.born", { content: "Feature: Sean", id: "sean" });
+    const result = await rolex.direct<RolexResult>("!individual.born", {
+      content: "Feature: Sean",
+      id: "sean",
+    });
     const output = render({
       process: "born",
       name: "Sean",
@@ -120,7 +126,7 @@ describe("full execution flow", () => {
     // Finish with encounter
     const finished = role.finish(
       "impl-jwt",
-      "Feature: Implemented JWT\n  Scenario: Token pattern\n    Given JWT needed\n    Then tokens work",
+      "Feature: Implemented JWT\n  Scenario: Token pattern\n    Given JWT needed\n    Then tokens work"
     );
     expect(finished.state.name).toBe("encounter");
     expect(role.ctx.encounterIds.has("impl-jwt-finished")).toBe(true);
@@ -129,7 +135,7 @@ describe("full execution flow", () => {
     const reflected = role.reflect(
       "impl-jwt-finished",
       "Feature: Token rotation insight\n  Scenario: Refresh matters\n    Given tokens expire\n    Then refresh tokens are key",
-      "token-insight",
+      "token-insight"
     );
     expect(reflected.state.name).toBe("experience");
     expect(role.ctx.encounterIds.has("impl-jwt-finished")).toBe(false);
@@ -139,7 +145,7 @@ describe("full execution flow", () => {
     const realized = role.realize(
       "token-insight",
       "Feature: Always use refresh tokens\n  Scenario: Short-lived tokens need rotation\n    Given access tokens expire\n    Then refresh tokens must exist",
-      "refresh-tokens",
+      "refresh-tokens"
     );
     expect(realized.state.name).toBe("principle");
     expect(role.ctx.experienceIds.has("token-insight")).toBe(false);
@@ -185,13 +191,10 @@ describe("selective cognition", () => {
     role.todo("Feature: Signup", "signup");
 
     // Finish both with encounters
-    role.finish(
-      "login",
-      "Feature: Login done\n  Scenario: OK\n    Given login\n    Then success",
-    );
+    role.finish("login", "Feature: Login done\n  Scenario: OK\n    Given login\n    Then success");
     role.finish(
       "signup",
-      "Feature: Signup done\n  Scenario: OK\n    Given signup\n    Then success",
+      "Feature: Signup done\n  Scenario: OK\n    Given signup\n    Then success"
     );
 
     expect(role.ctx.encounterIds.has("login-finished")).toBe(true);
@@ -201,7 +204,7 @@ describe("selective cognition", () => {
     role.reflect(
       "login-finished",
       "Feature: Login insight\n  Scenario: OK\n    Given practice\n    Then understanding",
-      "login-insight",
+      "login-insight"
     );
 
     // "login-finished" consumed, "signup-finished" still available

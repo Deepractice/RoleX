@@ -8,18 +8,15 @@
  *   - Process and world descriptions (from .feature files)
  */
 
-// Schema types
-export type { ArgEntry, InstructionDef, ParamDef, ParamType } from "./schema.js";
-
-// Instruction registry
-export { instructions } from "./instructions.js";
-
+// Descriptions (auto-generated from .feature files)
+export { processes, world } from "./descriptions/index.js";
 // Dispatch
 export { toArgs } from "./dispatch.js";
+// Instruction registry
+export { instructions } from "./instructions.js";
 
 // Operations
 export type { OpResult, Ops, OpsContext } from "./ops.js";
 export { createOps } from "./ops.js";
-
-// Descriptions (auto-generated from .feature files)
-export { processes, world } from "./descriptions/index.js";
+// Schema types
+export type { ArgEntry, InstructionDef, ParamDef, ParamType } from "./schema.js";

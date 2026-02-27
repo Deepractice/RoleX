@@ -24,9 +24,19 @@ describe("descriptions", () => {
 
   test("key role operations have process descriptions", () => {
     const expected = [
-      "activate", "focus", "want", "plan", "todo",
-      "finish", "complete", "abandon",
-      "reflect", "realize", "master", "forget", "skill",
+      "activate",
+      "focus",
+      "want",
+      "plan",
+      "todo",
+      "finish",
+      "complete",
+      "abandon",
+      "reflect",
+      "realize",
+      "master",
+      "forget",
+      "skill",
     ];
     for (const name of expected) {
       expect(processes[name]).toBeDefined();
@@ -35,9 +45,16 @@ describe("descriptions", () => {
 
   test("key world features are present", () => {
     const expected = [
-      "cognitive-priority", "role-identity", "nuwa",
-      "execution", "cognition", "memory",
-      "gherkin", "communication", "skill-system", "state-origin",
+      "cognitive-priority",
+      "role-identity",
+      "nuwa",
+      "execution",
+      "cognition",
+      "memory",
+      "gherkin",
+      "communication",
+      "skill-system",
+      "state-origin",
     ];
     for (const name of expected) {
       expect(world[name]).toBeDefined();
