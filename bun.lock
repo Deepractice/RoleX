@@ -5,8 +5,9 @@
     "": {
       "name": "rolexjs",
       "dependencies": {
-        "@resourcexjs/node-provider": "^2.14.0",
-        "resourcexjs": "^2.15.0",
+        "@resourcexjs/core": "^2.16.1",
+        "@resourcexjs/node-provider": "^2.16.1",
+        "resourcexjs": "^2.16.1",
       },
       "devDependencies": {
         "@biomejs/biome": "^2.4.0",
@@ -21,19 +22,6 @@
         "tsup": "^8.5.1",
         "turbo": "^2.5.8",
         "typescript": "^5.9.3",
-      },
-    },
-    "apps/cli": {
-      "name": "@rolexjs/cli",
-      "version": "0.11.0",
-      "bin": {
-        "rolex": "./dist/index.js",
-      },
-      "dependencies": {
-        "@rolexjs/local-platform": "workspace:*",
-        "citty": "^0.1.6",
-        "consola": "^3.4.2",
-        "rolexjs": "workspace:*",
       },
     },
     "apps/mcp-server": {
@@ -65,7 +53,6 @@
         "@deepracticex/sqlite": "^0.2.0",
         "@resourcexjs/node-provider": "^2.14.0",
         "@rolexjs/core": "workspace:*",
-        "@rolexjs/resourcex-types": "workspace:*",
         "@rolexjs/system": "workspace:*",
         "drizzle-orm": "^0.45.1",
         "resourcexjs": "^2.14.0",
@@ -83,13 +70,9 @@
       "name": "@rolexjs/prototype",
       "version": "0.11.0",
       "dependencies": {
-        "resourcexjs": "^2.14.0",
-      },
-    },
-    "packages/resourcex-types": {
-      "name": "@rolexjs/resourcex-types",
-      "version": "0.11.0",
-      "dependencies": {
+        "@rolexjs/core": "workspace:*",
+        "@rolexjs/parser": "workspace:*",
+        "@rolexjs/system": "workspace:*",
         "resourcexjs": "^2.14.0",
       },
     },
@@ -99,6 +82,7 @@
       "dependencies": {
         "@rolexjs/core": "workspace:*",
         "@rolexjs/parser": "workspace:*",
+        "@rolexjs/prototype": "workspace:*",
         "@rolexjs/system": "workspace:*",
         "resourcexjs": "^2.14.0",
       },
@@ -358,13 +342,11 @@
 
     "@pondwader/socks5-server": ["@pondwader/socks5-server@1.0.10", "", {}, "sha512-bQY06wzzR8D2+vVCUoBsr5QS2U6UgPUQRmErNwtsuI6vLcyRKkafjkr3KxbtGFf9aBBIV2mcvlsKD1UYaIV+sg=="],
 
-    "@resourcexjs/arp": ["@resourcexjs/arp@2.15.0", "https://registry.npmmirror.com/@resourcexjs/arp/-/arp-2.15.0.tgz", {}, "sha512-6OqzFbvGmbhploFgBHdK+G/gA5Xihsq4+8oBGBgyDtiLJ5vfyVpwZODBbnV9jhqoE/vkFNBhn6b9etn8a7NDJA=="],
+    "@resourcexjs/arp": ["@resourcexjs/arp@2.16.1", "https://registry.npmmirror.com/@resourcexjs/arp/-/arp-2.16.1.tgz", {}, "sha512-yzlftFkQuO9T7dOnSdT21WYyDzOoLZmKaQS6RZ9v2f3Pev7anTi3nuTnzYMApAVLlY/+DwiKg7LV5FRMwjpy/Q=="],
 
-    "@resourcexjs/core": ["@resourcexjs/core@2.14.0", "https://registry.npmmirror.com/@resourcexjs/core/-/core-2.14.0.tgz", { "dependencies": { "modern-tar": "^0.7.3", "zod": "^4.3.6" } }, "sha512-3QFWVzeKpVtLVMjEb5Qvsg1xFT0aWGutNBndRNS235itM7MhkDLC+tYrebZNJdBp1QnUlVc8TnWGieLhRD17FA=="],
+    "@resourcexjs/core": ["@resourcexjs/core@2.16.1", "https://registry.npmmirror.com/@resourcexjs/core/-/core-2.16.1.tgz", { "dependencies": { "modern-tar": "^0.7.3", "zod": "^4.3.6" } }, "sha512-8i/pQVQg2uvAnRXDG2NNUPoUrDHN+bd+1MEbbmXoeyTM4RilX90OQXxKyyi40UpZGTpyfkCQFucFC3r0GeKweQ=="],
 
-    "@resourcexjs/node-provider": ["@resourcexjs/node-provider@2.14.0", "https://registry.npmmirror.com/@resourcexjs/node-provider/-/node-provider-2.14.0.tgz", { "dependencies": { "@resourcexjs/core": "^2.14.0" } }, "sha512-GrEvaU2JsrcISsoyrSaRwa8J98s9Ecgt2QM5atV5o0+V3CEayA9zUdccddkRdmkUbX4fqNmnnmbxJYplHODh2g=="],
-
-    "@rolexjs/cli": ["@rolexjs/cli@workspace:apps/cli"],
+    "@resourcexjs/node-provider": ["@resourcexjs/node-provider@2.16.1", "https://registry.npmmirror.com/@resourcexjs/node-provider/-/node-provider-2.16.1.tgz", { "dependencies": { "@resourcexjs/core": "^2.16.1" } }, "sha512-MDGfsam6ReEBDjmJM7qjLZBOnfkGNK/oz3s38d1eqsvnIyBFNA4wB6ixr6GGAZRwf1EVETqfAXoZZzpP56R78A=="],
 
     "@rolexjs/core": ["@rolexjs/core@workspace:packages/core"],
 
@@ -375,8 +357,6 @@
     "@rolexjs/parser": ["@rolexjs/parser@workspace:packages/parser"],
 
     "@rolexjs/prototype": ["@rolexjs/prototype@workspace:packages/prototype"],
-
-    "@rolexjs/resourcex-types": ["@rolexjs/resourcex-types@workspace:packages/resourcex-types"],
 
     "@rolexjs/system": ["@rolexjs/system@workspace:packages/system"],
 
@@ -509,8 +489,6 @@
     "chokidar": ["chokidar@4.0.3", "", { "dependencies": { "readdirp": "^4.0.1" } }, "sha512-Qgzu8kfBvo+cA4962jnP1KkS6Dop5NS6g7R5LFYJr4b8Ub94PPQXUksCw9PvXoeXPRRddRNC5C1JQUR2SMGtnA=="],
 
     "ci-info": ["ci-info@3.9.0", "", {}, "sha512-NIxF55hv4nSqQswkAeiOi1r83xy8JldOFDTWiug55KBu9Jnblncd2U6ViHmYgHf01TPZS77NJBhBMKdWj9HQMQ=="],
-
-    "citty": ["citty@0.1.6", "", { "dependencies": { "consola": "^3.2.3" } }, "sha512-tskPPKEs8D2KPafUypv2gxwJP8h/OaJmC82QQGGDQcHvXX43xF2VDACcJVmZ0EuSxkpO9Kc4MlrA3q0+FG58AQ=="],
 
     "class-transformer": ["class-transformer@0.5.1", "", {}, "sha512-SQa1Ws6hUbfC98vKGxZH3KFY0Y1lm5Zm0SY8XX9zbK7FJCyVEac3ATW0RIpwzW+oOfmHE5PMPufDG9hCfoEOMw=="],
 
@@ -952,7 +930,7 @@
 
     "resolve-from": ["resolve-from@5.0.0", "", {}, "sha512-qYg9KP24dD5qka9J47d0aVky0N+b4fTU89LN9iDnjB5waksiC49rvMB0PrUJQGoTmH50XPiqOvAjDfaijGxYZw=="],
 
-    "resourcexjs": ["resourcexjs@2.15.0", "https://registry.npmmirror.com/resourcexjs/-/resourcexjs-2.15.0.tgz", { "dependencies": { "@resourcexjs/arp": "^2.15.0", "@resourcexjs/core": "^2.15.0", "sandboxxjs": "^0.5.1" } }, "sha512-sPwl9spKSsBYVXQU2NGnjGYGXpBA1mztHAgXVEXHmLtZLwy5+aveGd7iP0XfhdSC4RaVee14CybdFZPAXTXnsQ=="],
+    "resourcexjs": ["resourcexjs@2.16.1", "https://registry.npmmirror.com/resourcexjs/-/resourcexjs-2.16.1.tgz", { "dependencies": { "@resourcexjs/arp": "^2.16.1", "@resourcexjs/core": "^2.16.1", "sandboxxjs": "^0.5.1" } }, "sha512-054JrC6Rvlwnb0aMErRMOcc2N7SvYDhCP/AZg5zYFkoJzS0YB83y811Z4R4ttDQPw0kEWljo5Dxd2YQ34KNxOA=="],
 
     "reusify": ["reusify@1.1.0", "", {}, "sha512-g6QUff04oZpHs0eG5p83rFLhHeV00ug/Yf9nZM6fLeUrPguBTkTQOdpAWWspMh55TZfVQDPaN3NQJfbVRAxdIw=="],
 
@@ -1152,11 +1130,11 @@
 
     "read-yaml-file/js-yaml": ["js-yaml@3.14.2", "", { "dependencies": { "argparse": "^1.0.7", "esprima": "^4.0.0" }, "bin": { "js-yaml": "bin/js-yaml.js" } }, "sha512-PMSmkqxr106Xa156c2M265Z+FTrPl+oxd/rgOQy2tijQeK5TxQ43psO1ZCwhVOSdnn+RzkzlRz/eY4BgJBYVpg=="],
 
-    "resourcexjs/@resourcexjs/core": ["@resourcexjs/core@2.15.0", "https://registry.npmmirror.com/@resourcexjs/core/-/core-2.15.0.tgz", { "dependencies": { "modern-tar": "^0.7.3", "zod": "^4.3.6" } }, "sha512-jr0r734ugLriuF/mWb3+/zyHyG0rDKarvdCFXE0+aBlTLCJbKFReq9vXbszTXyT/kPJCeoZ/9X3Sxgkkdc+rlg=="],
-
     "tsup/tinyexec": ["tinyexec@0.3.2", "", {}, "sha512-KQQR9yN7R5+OSwaK0XQoj22pwHoTlgYqmUscPYoknOoWCWfj/5/ABTMRi69FrKU5ffPVh5QcFikpWJI/P1ocHA=="],
 
     "@sandboxxjs/state/resourcexjs/@resourcexjs/arp": ["@resourcexjs/arp@2.14.0", "https://registry.npmmirror.com/@resourcexjs/arp/-/arp-2.14.0.tgz", {}, "sha512-Kw3g7R3/Fkv3ce2Nl31vgv6PLwNJPXkbeya5//rpuR32LyXcWogF0lrGCskcepqhyJnMeAXOO5ZX0paJBVU1Yw=="],
+
+    "@sandboxxjs/state/resourcexjs/@resourcexjs/core": ["@resourcexjs/core@2.14.0", "https://registry.npmmirror.com/@resourcexjs/core/-/core-2.14.0.tgz", { "dependencies": { "modern-tar": "^0.7.3", "zod": "^4.3.6" } }, "sha512-3QFWVzeKpVtLVMjEb5Qvsg1xFT0aWGutNBndRNS235itM7MhkDLC+tYrebZNJdBp1QnUlVc8TnWGieLhRD17FA=="],
 
     "fastmcp/yargs/cliui": ["cliui@9.0.1", "", { "dependencies": { "string-width": "^7.2.0", "strip-ansi": "^7.1.0", "wrap-ansi": "^9.0.0" } }, "sha512-k7ndgKhwoQveBL+/1tqGJYNz097I7WOvwbmmU2AR5+magtbjPWQTS1C5vzGkBC8Ym8UWRzfKUzUUqFLypY4Q+w=="],
 
@@ -1182,7 +1160,7 @@
 
     "read-yaml-file/js-yaml/argparse": ["argparse@1.0.10", "", { "dependencies": { "sprintf-js": "~1.0.2" } }, "sha512-o5Roy6tNG4SL/FOkCAN6RzjiakZS25RLYFrcMttJqbdd8BWrnA+fGz57iN5Pb06pvBGvl5gQ0B48dJlslXvoTg=="],
 
-    "resourcexjs/@resourcexjs/core/zod": ["zod@4.3.6", "", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
+    "@sandboxxjs/state/resourcexjs/@resourcexjs/core/zod": ["zod@4.3.6", "", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
 
     "fastmcp/yargs/cliui/strip-ansi": ["strip-ansi@7.1.2", "", { "dependencies": { "ansi-regex": "^6.0.1" } }, "sha512-gmBGslpoQJtgnMAvOVqGZpEz9dyoKTCzy2nfz/n8aIFhN/jCE/rCmcxabB6jOOHV+0WNnylOxaxBQPSvcWklhA=="],
 

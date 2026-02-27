@@ -30,7 +30,7 @@ export interface Runtime {
   /** Remove a node and its subtree. */
   remove(node: Structure): void;
 
-  /** Produce a new node in target structure's branch, sourced from another branch. */
+  /** Move a node to target structure's branch, preserving its subtree. Updates type and optionally information. */
   transform(source: Structure, target: Structure, information?: string): Structure;
 
   /** Establish a bidirectional cross-branch relation between two nodes. */
@@ -176,18 +176,42 @@ export const createRuntime = (): Runtime => {
       removeSubtree(node.ref);
     },
 
-    transform(_source, target, information) {
+    transform(source, target, information) {
+      if (!source.ref) throw new Error("Source node has no ref");
+      const sourceTreeNode = nodes.get(source.ref);
+      if (!sourceTreeNode) throw new Error(`Source node not found: ${source.ref}`);
+
       const targetParent = target.parent;
       if (!targetParent) {
         throw new Error(`Cannot transform to root structure: ${target.name}`);
       }
 
-      const parentTreeNode = findByStructure(targetParent);
-      if (!parentTreeNode) {
+      const newParentTreeNode = findByStructure(targetParent);
+      if (!newParentTreeNode) {
         throw new Error(`No node found for structure: ${targetParent.name}`);
       }
 
-      return createNode(parentTreeNode.node.ref!, target, information);
+      // Detach from old parent
+      if (sourceTreeNode.parent) {
+        const oldParent = nodes.get(sourceTreeNode.parent);
+        if (oldParent) {
+          oldParent.children = oldParent.children.filter((r) => r !== source.ref);
+        }
+      }
+
+      // Attach to new parent
+      sourceTreeNode.parent = newParentTreeNode.node.ref!;
+      newParentTreeNode.children.push(source.ref);
+
+      // Update type and information
+      sourceTreeNode.node = {
+        ...sourceTreeNode.node,
+        name: target.name,
+        description: target.description,
+        ...(information !== undefined ? { information } : {}),
+      };
+
+      return sourceTreeNode.node;
     },
 
     link(from, to, relationName, reverseName) {

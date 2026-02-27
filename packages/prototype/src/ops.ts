@@ -10,8 +10,8 @@
  */
 
 import * as C from "@rolexjs/core";
-import type { Runtime, State, Structure } from "@rolexjs/system";
 import { parse } from "@rolexjs/parser";
+import type { Runtime, State, Structure } from "@rolexjs/system";
 import type { ResourceX } from "resourcexjs";
 
 // ================================================================
@@ -55,8 +55,7 @@ export function createOps(ctx: OpsContext): Ops {
   }
 
   function archive(node: Structure, process: string): OpResult {
-    const archived = rt.create(past, C.past, node.information, node.id);
-    rt.remove(node);
+    const archived = rt.transform(node, C.past);
     return ok(archived, process);
   }
 
@@ -118,9 +117,7 @@ export function createOps(ctx: OpsContext): Ops {
 
     "individual.rehire"(pastNode: string): OpResult {
       const node = resolve(pastNode);
-      const ind = rt.create(society, C.individual, node.information, node.id);
-      rt.create(ind, C.identity, undefined, node.id);
-      rt.remove(node);
+      const ind = rt.transform(node, C.individual);
       return ok(ind, "rehire");
     },
 
@@ -150,13 +147,24 @@ export function createOps(ctx: OpsContext): Ops {
 
     // ---- Role: execution ----
 
-    "role.want"(individual: string, goal?: string, id?: string, alias?: readonly string[]): OpResult {
+    "role.want"(
+      individual: string,
+      goal?: string,
+      id?: string,
+      alias?: readonly string[]
+    ): OpResult {
       validateGherkin(goal);
       const node = rt.create(resolve(individual), C.goal, goal, id, alias);
       return ok(node, "want");
     },
 
-    "role.plan"(goal: string, plan?: string, id?: string, after?: string, fallback?: string): OpResult {
+    "role.plan"(
+      goal: string,
+      plan?: string,
+      id?: string,
+      after?: string,
+      fallback?: string
+    ): OpResult {
       validateGherkin(plan);
       const node = rt.create(resolve(goal), C.plan, plan, id);
       if (after) rt.link(node, resolve(after), "after", "before");
@@ -202,23 +210,48 @@ export function createOps(ctx: OpsContext): Ops {
 
     // ---- Role: cognition ----
 
-    "role.reflect"(encounter: string, individual: string, experience?: string, id?: string): OpResult {
+    "role.reflect"(
+      encounter: string,
+      individual: string,
+      experience?: string,
+      id?: string
+    ): OpResult {
       validateGherkin(experience);
       const encNode = resolve(encounter);
-      const exp = rt.create(resolve(individual), C.experience, experience || encNode.information, id);
+      const exp = rt.create(
+        resolve(individual),
+        C.experience,
+        experience || encNode.information,
+        id
+      );
       rt.remove(encNode);
       return ok(exp, "reflect");
     },
 
-    "role.realize"(experience: string, individual: string, principle?: string, id?: string): OpResult {
+    "role.realize"(
+      experience: string,
+      individual: string,
+      principle?: string,
+      id?: string
+    ): OpResult {
       validateGherkin(principle);
       const expNode = resolve(experience);
-      const prin = rt.create(resolve(individual), C.principle, principle || expNode.information, id);
+      const prin = rt.create(
+        resolve(individual),
+        C.principle,
+        principle || expNode.information,
+        id
+      );
       rt.remove(expNode);
       return ok(prin, "realize");
     },
 
-    "role.master"(individual: string, procedure: string, id?: string, experience?: string): OpResult {
+    "role.master"(
+      individual: string,
+      procedure: string,
+      id?: string,
+      experience?: string
+    ): OpResult {
       validateGherkin(procedure);
       const parent = resolve(individual);
       if (id) removeExisting(parent, id);
@@ -366,7 +399,10 @@ export function createOps(ctx: OpsContext): Ops {
       if (!ctx.direct) throw new Error("Direct dispatch is not available.");
 
       // Ingest the prototype resource — type resolver resolves @filename references
-      const result = await rx.ingest<{ id: string; instructions: Array<{ op: string; args: Record<string, unknown> }> }>(source);
+      const result = await rx.ingest<{
+        id: string;
+        instructions: Array<{ op: string; args: Record<string, unknown> }>;
+      }>(source);
 
       // Execute each instruction
       for (const instr of result.instructions) {

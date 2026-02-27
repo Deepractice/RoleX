@@ -6,13 +6,10 @@
  * MCP only translates protocol calls to API calls.
  */
 
-import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
 import { localPlatform } from "@rolexjs/local-platform";
 import { FastMCP } from "fastmcp";
 import { createRoleX, detail } from "rolexjs";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
 import { z } from "zod";
 import { instructions } from "./instructions.js";
 import { render } from "./render.js";
@@ -20,9 +17,11 @@ import { McpState } from "./state.js";
 
 // ========== Setup ==========
 
-const rolex = createRoleX(localPlatform({
-  bootstrap: [resolve(__dirname, "../../../prototypes/rolex")],
-}));
+const rolex = createRoleX(
+  localPlatform({
+    bootstrap: ["registry.deepractice.dev/rolex-world"],
+  })
+);
 await rolex.genesis();
 const state = new McpState();
 

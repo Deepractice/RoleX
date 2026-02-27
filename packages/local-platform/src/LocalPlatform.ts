@@ -21,7 +21,6 @@ import type { Initializer } from "@rolexjs/system";
 import { sql } from "drizzle-orm";
 import { createResourceX, setProvider } from "resourcexjs";
 import { createSqliteRuntime } from "./sqliteRuntime.js";
-import { prototypeType } from "./prototypeType.js";
 
 // ===== Config =====
 
@@ -72,9 +71,7 @@ function deepracticeHome(): string {
 /** Create a local Platform. Persistent by default ($DEEPRACTICE_HOME/rolex), in-memory if dataDir is null. */
 export function localPlatform(config: LocalPlatformConfig = {}): Platform {
   const dataDir =
-    config.dataDir === null
-      ? undefined
-      : (config.dataDir ?? join(deepracticeHome(), "rolex"));
+    config.dataDir === null ? undefined : (config.dataDir ?? join(deepracticeHome(), "rolex"));
 
   // ===== SQLite database =====
 
@@ -107,7 +104,6 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
     setProvider(new NodeProvider());
     resourcex = createResourceX({
       path: config.resourceDir ?? join(deepracticeHome(), "resourcex"),
-      types: [prototypeType],
     });
   }
 

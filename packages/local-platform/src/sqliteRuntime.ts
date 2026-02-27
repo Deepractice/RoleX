@@ -125,30 +125,33 @@ export function createSqliteRuntime(db: DB): Runtime {
       removeSubtree(db, node.ref);
     },
 
-    transform(_source, target, information) {
+    transform(source, target, information) {
+      if (!source.ref) throw new Error("Source node has no ref");
+      const row = db.select().from(nodes).where(eq(nodes.ref, source.ref)).get();
+      if (!row) throw new Error(`Source node not found: ${source.ref}`);
+
       const targetParent = target.parent;
       if (!targetParent) {
         throw new Error(`Cannot transform to root structure: ${target.name}`);
       }
 
-      // Find any node matching the parent structure type
       const parentRow = db.select().from(nodes).where(eq(nodes.name, targetParent.name)).get();
       if (!parentRow) {
         throw new Error(`No node found for structure: ${targetParent.name}`);
       }
 
-      const ref = nextRef(db);
-      db.insert(nodes)
-        .values({
-          ref,
+      // Reparent + update type in place — subtree preserved
+      db.update(nodes)
+        .set({
+          parentRef: parentRow.ref,
           name: target.name,
           description: target.description,
-          parentRef: parentRow.ref,
-          information: information ?? null,
-          tag: null,
+          ...(information !== undefined ? { information } : {}),
         })
+        .where(eq(nodes.ref, source.ref))
         .run();
-      return toStructure(db.select().from(nodes).where(eq(nodes.ref, ref)).get()!);
+
+      return toStructure(db.select().from(nodes).where(eq(nodes.ref, source.ref)).get()!);
     },
 
     link(from, to, relationName, reverseName) {
