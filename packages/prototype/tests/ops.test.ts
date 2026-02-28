@@ -493,7 +493,7 @@ describe("position", () => {
     expect(r.state.links![0].relation).toBe("appointment");
   });
 
-  test("appoint auto-trains required skills", () => {
+  test("appoint does not copy requirements as procedures", () => {
     const { ops, find } = setup();
     ops["individual.born"](undefined, "sean");
     ops["position.establish"](undefined, "architect");
@@ -503,9 +503,7 @@ describe("position", () => {
 
     const sean = find("sean")! as unknown as State;
     const procs = (sean.children ?? []).filter((c: State) => c.name === "procedure");
-    expect(procs).toHaveLength(2);
-    const ids = procs.map((p: State) => p.id).sort();
-    expect(ids).toEqual(["code-review", "sys-design"]);
+    expect(procs).toHaveLength(0);
   });
 
   test("dismiss removes appointment", () => {

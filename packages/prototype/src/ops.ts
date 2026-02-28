@@ -342,16 +342,6 @@ export function createOps(ctx: OpsContext): Ops {
       const posNode = resolve(position);
       const indNode = resolve(individual);
       rt.link(posNode, indNode, "appointment", "serve");
-      const posState = rt.project(posNode);
-      const required = (posState.children ?? []).filter((c) => c.name === "requirement");
-      for (const proc of required) {
-        if (proc.id) {
-          const indState = rt.project(indNode);
-          const existing = findInState(indState, proc.id);
-          if (existing) rt.remove(existing);
-        }
-        rt.create(indNode, C.procedure, proc.information, proc.id);
-      }
       return ok(posNode, "appoint");
     },
 
