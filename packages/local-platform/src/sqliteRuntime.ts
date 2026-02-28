@@ -56,17 +56,22 @@ function projectNode(db: DB, ref: string): State {
       ? {
           links: nodeLinks.map((l) => ({
             relation: l.relation,
-            target: projectRef(db, l.toRef),
+            target: projectLinked(db, l.toRef),
           })),
         }
       : {}),
   };
 }
 
-function projectRef(db: DB, ref: string): State {
+/** Project a node with full subtree but without following links (prevents cycles). */
+function projectLinked(db: DB, ref: string): State {
   const row = db.select().from(nodes).where(eq(nodes.ref, ref)).get();
   if (!row) throw new Error(`Node not found: ${ref}`);
-  return { ...toStructure(row), children: [] };
+  const children = db.select().from(nodes).where(eq(nodes.parentRef, ref)).all();
+  return {
+    ...toStructure(row),
+    children: children.map((c) => projectLinked(db, c.ref)),
+  };
 }
 
 // ===== Subtree removal =====

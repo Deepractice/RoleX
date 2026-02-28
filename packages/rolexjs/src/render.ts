@@ -153,8 +153,8 @@ export function renderState(state: State, depth = 1, options?: RenderStateOption
   const tagPart = state.tag ? ` #${state.tag}` : "";
   lines.push(`${heading} [${state.name}]${idPart}${originPart}${tagPart}`);
 
-  // Folded: heading only
-  if (options?.fold?.(state)) {
+  // Folded: heading only (requirement always folds — content duplicates trained procedure)
+  if (state.name === "requirement" || options?.fold?.(state)) {
     return lines.join("\n");
   }
 
