@@ -129,20 +129,28 @@ export class Role {
 
   // ---- Cognition ----
 
-  /** Reflect: consume encounter, create experience. */
-  reflect(encounter: string, experience?: string, id?: string): RolexResult {
-    this.ctx.requireEncounterIds([encounter]);
+  /** Reflect: consume encounter → experience. Empty encounter = direct creation. */
+  reflect(encounter?: string, experience?: string, id?: string): RolexResult {
+    if (encounter) {
+      this.ctx.requireEncounterIds([encounter]);
+    }
     const result = this.api.ops["role.reflect"](encounter, this.roleId, experience, id);
-    this.ctx.consumeEncounters([encounter]);
+    if (encounter) {
+      this.ctx.consumeEncounters([encounter]);
+    }
     if (id) this.ctx.addExperience(id);
     return this.withHint(result, "reflect");
   }
 
-  /** Realize: consume experience, create principle. */
-  realize(experience: string, principle?: string, id?: string): RolexResult {
-    this.ctx.requireExperienceIds([experience]);
+  /** Realize: consume experience → principle. Empty experience = direct creation. */
+  realize(experience?: string, principle?: string, id?: string): RolexResult {
+    if (experience) {
+      this.ctx.requireExperienceIds([experience]);
+    }
     const result = this.api.ops["role.realize"](experience, this.roleId, principle, id);
-    this.ctx.consumeExperiences([experience]);
+    if (experience) {
+      this.ctx.consumeExperiences([experience]);
+    }
     return this.withHint(result, "realize");
   }
 

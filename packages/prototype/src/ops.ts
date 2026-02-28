@@ -211,38 +211,48 @@ export function createOps(ctx: OpsContext): Ops {
     // ---- Role: cognition ----
 
     "role.reflect"(
-      encounter: string,
+      encounter: string | undefined,
       individual: string,
       experience?: string,
       id?: string
     ): OpResult {
       validateGherkin(experience);
-      const encNode = resolve(encounter);
-      const exp = rt.create(
-        resolve(individual),
-        C.experience,
-        experience || encNode.information,
-        id
-      );
-      rt.remove(encNode);
+      if (encounter) {
+        const encNode = resolve(encounter);
+        const exp = rt.create(
+          resolve(individual),
+          C.experience,
+          experience || encNode.information,
+          id
+        );
+        rt.remove(encNode);
+        return ok(exp, "reflect");
+      }
+      // Direct creation — no encounter to consume
+      const exp = rt.create(resolve(individual), C.experience, experience, id);
       return ok(exp, "reflect");
     },
 
     "role.realize"(
-      experience: string,
+      experience: string | undefined,
       individual: string,
       principle?: string,
       id?: string
     ): OpResult {
       validateGherkin(principle);
-      const expNode = resolve(experience);
-      const prin = rt.create(
-        resolve(individual),
-        C.principle,
-        principle || expNode.information,
-        id
-      );
-      rt.remove(expNode);
+      if (experience) {
+        const expNode = resolve(experience);
+        const prin = rt.create(
+          resolve(individual),
+          C.principle,
+          principle || expNode.information,
+          id
+        );
+        rt.remove(expNode);
+        return ok(prin, "realize");
+      }
+      // Direct creation — no experience to consume
+      const prin = rt.create(resolve(individual), C.principle, principle, id);
       return ok(prin, "realize");
     },
 

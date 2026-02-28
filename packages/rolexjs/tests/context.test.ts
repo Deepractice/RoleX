@@ -116,6 +116,59 @@ describe("Role (ctx management)", () => {
     expect(role.ctx.experienceIds.has("token-insight")).toBe(true);
   });
 
+  test("reflect without encounter creates experience directly", async () => {
+    const rolex = setup();
+    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    const role = await rolex.activate("sean");
+
+    const result = role.reflect(
+      undefined,
+      "Feature: Direct insight\n  Scenario: OK\n    Given learned from conversation",
+      "conv-insight"
+    );
+
+    expect(result.state.name).toBe("experience");
+    expect(role.ctx.experienceIds.has("conv-insight")).toBe(true);
+    expect(role.ctx.encounterIds.size).toBe(0);
+  });
+
+  test("realize without experience creates principle directly", async () => {
+    const rolex = setup();
+    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    const role = await rolex.activate("sean");
+
+    const result = role.realize(
+      undefined,
+      "Feature: Direct principle\n  Scenario: OK\n    Given always blame the product",
+      "product-first"
+    );
+
+    expect(result.state.name).toBe("principle");
+    expect(role.ctx.experienceIds.size).toBe(0);
+  });
+
+  test("realize still consumes experience when provided", async () => {
+    const rolex = setup();
+    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    const role = await rolex.activate("sean");
+
+    // Create experience directly
+    role.reflect(
+      undefined,
+      "Feature: Insight\n  Scenario: OK\n    Given something learned",
+      "my-insight"
+    );
+    expect(role.ctx.experienceIds.has("my-insight")).toBe(true);
+
+    // Realize from that experience
+    role.realize(
+      "my-insight",
+      "Feature: Principle\n  Scenario: OK\n    Given a general truth",
+      "my-principle"
+    );
+    expect(role.ctx.experienceIds.has("my-insight")).toBe(false);
+  });
+
   test("cognitiveHint varies by state", () => {
     const ctx = new RoleContext("sean");
     expect(ctx.cognitiveHint("activate")).toContain("no goal");

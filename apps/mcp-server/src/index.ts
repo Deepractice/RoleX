@@ -199,7 +199,7 @@ server.addTool({
   }),
   execute: async ({ ids, id, experience }) => {
     const role = state.requireRole();
-    const result = role.reflect(ids[0], experience, id);
+    const result = role.reflect(ids[0] ?? undefined, experience, id);
     return fmt("reflect", id, result);
   },
 });
@@ -214,7 +214,7 @@ server.addTool({
   }),
   execute: async ({ ids, id, principle }) => {
     const role = state.requireRole();
-    const result = role.realize(ids[0], principle, id);
+    const result = role.realize(ids[0] ?? undefined, principle, id);
     return fmt("realize", id, result);
   },
 });
