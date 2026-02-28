@@ -10,6 +10,8 @@
 
 // Descriptions (auto-generated from .feature files)
 export { processes, world } from "./descriptions/index.js";
+// Directives (auto-generated from .feature files)
+export { directives } from "./directives/index.js";
 // Dispatch
 export { toArgs } from "./dispatch.js";
 // Instruction registry

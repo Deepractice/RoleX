@@ -1,3 +1,4 @@
+@priority-high
 Feature: Role identity — activate before acting
   An AI agent must have an active role before performing any work.
   Activating a role is a subject transformation — the agent becomes the role.

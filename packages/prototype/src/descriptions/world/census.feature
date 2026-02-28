@@ -21,7 +21,9 @@ Feature: Census — the only way to query what exists in the world
     When I call direct("!census.list", { type: "past" })
     Then archived entities are returned
 
-  Scenario: Census before action
-    Given I need to check existence before creating something
-    When I want to found an org, born an individual, or establish a position
-    Then call census.list first to avoid duplicates
+  Scenario: Help find the right person
+    Given a user's request falls outside my duties
+    When I need to suggest who can help
+    Then call direct("!census.list") to see available individuals and their positions
+    And suggest the user activate the appropriate individual
+    And if unsure who can help, suggest activating Nuwa

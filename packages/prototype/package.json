@@ -32,7 +32,8 @@
   ],
   "scripts": {
     "gen:desc": "bun run scripts/gen-descriptions.ts",
-    "build": "bun run gen:desc && tsup",
+    "gen:directives": "bun run scripts/gen-directives.ts",
+    "build": "bun run gen:desc && bun run gen:directives && tsup",
     "lint": "biome lint .",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"

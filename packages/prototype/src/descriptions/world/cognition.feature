@@ -11,14 +11,6 @@ Feature: Cognition — the learning cycle
     And master can also be called without ids — the role masters directly from external information
     And each level builds on the previous — encounter → experience → principle or procedure
 
-  Scenario: External injection
-    Given an external agent needs to equip a role with knowledge or skills
-    Then teach(individual, principle, id) directly injects a principle
-    And train(individual, procedure, id) directly injects a procedure
-    And the difference from realize/master is perspective — external vs self-initiated
-    And teach is the external counterpart of realize
-    And train is the external counterpart of master
-
   Scenario: Selective consumption
     Given multiple encounters or experiences exist
     When the AI calls reflect, realize, or master

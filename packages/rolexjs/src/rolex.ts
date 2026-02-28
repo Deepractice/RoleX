@@ -12,7 +12,7 @@
 
 import type { ContextData, Platform } from "@rolexjs/core";
 import * as C from "@rolexjs/core";
-import { createOps, type Ops, toArgs } from "@rolexjs/prototype";
+import { createOps, directives, type Ops, toArgs } from "@rolexjs/prototype";
 import type { Initializer, Runtime, State, Structure } from "@rolexjs/system";
 import type { ResourceX } from "resourcexjs";
 import { RoleContext } from "./context.js";
@@ -159,7 +159,10 @@ export class Rolex {
     if (locator.startsWith("!")) {
       const command = locator.slice(1);
       const fn = this.ops[command];
-      if (!fn) throw new Error(`Unknown command "${locator}".`);
+      if (!fn) {
+        const cmd = directives["identity-ethics"]?.["on-unknown-command"] ?? "";
+        throw new Error(`Unknown command "${locator}".\n\n${cmd}`);
+      }
       return fn(...toArgs(command, args ?? {})) as T;
     }
     if (!this.resourcex) throw new Error("ResourceX is not available.");

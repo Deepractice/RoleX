@@ -15,10 +15,11 @@ Feature: Use tool — the universal execution entry point
     And dispatched to the corresponding RoleX API with named args
 
   Scenario: Discovering available commands
-    Given available commands are documented in world descriptions and skills
+    Given available commands come from your role's own skills and procedures
     When you need to perform an operation
-    Then look up the correct command from world descriptions or loaded skills first
-    And use only commands you have seen documented
+    Then look up the correct command from your loaded skills first
+    And use only commands you have seen in your own skills or procedures
+    And do not use commands mentioned in other roles' descriptions
 
   Scenario: NEVER guess commands
     Given a command is not found in any loaded skill or world description

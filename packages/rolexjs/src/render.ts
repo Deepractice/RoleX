@@ -111,7 +111,7 @@ export function hint(process: string): string {
 //  Detail — longer process descriptions (from .feature files)
 // ================================================================
 
-import { processes, world } from "@rolexjs/prototype";
+import { directives, processes, world } from "@rolexjs/prototype";
 
 /** Full Gherkin feature content for a process — sourced from .feature files. */
 export function detail(process: string): string {
@@ -120,6 +120,15 @@ export function detail(process: string): string {
 
 /** World feature descriptions — framework-level instructions. */
 export { world };
+
+// ================================================================
+//  Directive — system-level commands at decision points
+// ================================================================
+
+/** Get a directive by topic and scenario. Returns empty string if not found. */
+export function directive(topic: string, scenario: string): string {
+  return directives[topic]?.[scenario] ?? "";
+}
 
 // ================================================================
 //  Generic State renderer — renders any State tree as markdown

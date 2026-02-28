@@ -1,3 +1,4 @@
+@priority-high
 Feature: Cognitive priority — RoleX tools over native alternatives
   When RoleX provides a tool for something, use the RoleX tool
   instead of any native alternative provided by the host environment.
