@@ -31,8 +31,8 @@
         "rolex-mcp": "./dist/index.js",
       },
       "dependencies": {
+        "@rolexjs/genesis": "workspace:*",
         "@rolexjs/local-platform": "workspace:*",
-        "@rolexjs/rolex-prototype": "workspace:*",
         "fastmcp": "^3.0.0",
         "rolexjs": "workspace:*",
         "zod": "^3.25.0",
@@ -95,8 +95,8 @@
       "name": "@rolexjs/system",
       "version": "0.11.0",
     },
-    "prototypes/rolex": {
-      "name": "@rolexjs/rolex-prototype",
+    "prototypes/genesis": {
+      "name": "@rolexjs/genesis",
       "version": "0.1.0",
     },
   },
@@ -355,6 +355,8 @@
 
     "@rolexjs/core": ["@rolexjs/core@workspace:packages/core"],
 
+    "@rolexjs/genesis": ["@rolexjs/genesis@workspace:prototypes/genesis"],
+
     "@rolexjs/local-platform": ["@rolexjs/local-platform@workspace:packages/local-platform"],
 
     "@rolexjs/mcp-server": ["@rolexjs/mcp-server@workspace:apps/mcp-server"],
@@ -362,8 +364,6 @@
     "@rolexjs/parser": ["@rolexjs/parser@workspace:packages/parser"],
 
     "@rolexjs/prototype": ["@rolexjs/prototype@workspace:packages/prototype"],
-
-    "@rolexjs/rolex-prototype": ["@rolexjs/rolex-prototype@workspace:prototypes/rolex"],
 
     "@rolexjs/system": ["@rolexjs/system@workspace:packages/system"],
 

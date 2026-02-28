@@ -120,7 +120,7 @@ describe("alignment with rolex.ts toArgs switch", () => {
   // ================================================================
 
   test("prototype.settle → [source]", () => {
-    const a = { source: "./prototypes/rolex" };
+    const a = { source: "./prototypes/genesis" };
     expect(toArgs("prototype.settle", a)).toEqual([a.source]);
   });
 

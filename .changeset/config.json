@@ -7,6 +7,8 @@
       "@rolexjs/core",
       "@rolexjs/parser",
       "@rolexjs/local-platform",
+      "@rolexjs/prototype",
+      "@rolexjs/genesis",
       "rolexjs",
       "@rolexjs/mcp-server",
       "@rolexjs/system"

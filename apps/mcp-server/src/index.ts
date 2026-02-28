@@ -19,7 +19,7 @@ import { McpState } from "./state.js";
 
 const rolex = createRoleX(
   localPlatform({
-    bootstrap: ["npm:@rolexjs/rolex-prototype"],
+    bootstrap: ["npm:@rolexjs/genesis"],
   })
 );
 await rolex.genesis();
