@@ -46,6 +46,10 @@
         "resourcexjs": "^2.14.0",
       },
     },
+    "packages/genesis": {
+      "name": "@rolexjs/genesis",
+      "version": "0.1.0",
+    },
     "packages/local-platform": {
       "name": "@rolexjs/local-platform",
       "version": "0.11.0",
@@ -94,10 +98,6 @@
     "packages/system": {
       "name": "@rolexjs/system",
       "version": "0.11.0",
-    },
-    "prototypes/genesis": {
-      "name": "@rolexjs/genesis",
-      "version": "0.1.0",
     },
   },
   "overrides": {
@@ -355,7 +355,7 @@
 
     "@rolexjs/core": ["@rolexjs/core@workspace:packages/core"],
 
-    "@rolexjs/genesis": ["@rolexjs/genesis@workspace:prototypes/genesis"],
+    "@rolexjs/genesis": ["@rolexjs/genesis@workspace:packages/genesis"],
 
     "@rolexjs/local-platform": ["@rolexjs/local-platform@workspace:packages/local-platform"],
 

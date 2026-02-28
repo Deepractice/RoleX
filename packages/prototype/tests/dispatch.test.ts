@@ -31,8 +31,8 @@ describe("toArgs", () => {
   });
 
   test("prototype.settle — source", () => {
-    expect(toArgs("prototype.settle", { source: "./prototypes/genesis" })).toEqual([
-      "./prototypes/genesis",
+    expect(toArgs("prototype.settle", { source: "./packages/genesis" })).toEqual([
+      "./packages/genesis",
     ]);
   });
 
