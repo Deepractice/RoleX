@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 import { instructions } from "../src/instructions.js";
-import type { InstructionDef } from "../src/schema.js";
 
 describe("instructions registry", () => {
   test("all expected namespaces are present", () => {
@@ -78,7 +77,7 @@ describe("instructions registry", () => {
   });
 
   test("every instruction has at least one arg entry or zero params", () => {
-    for (const [key, def] of Object.entries(instructions)) {
+    for (const [_key, def] of Object.entries(instructions)) {
       const paramCount = Object.keys(def.params).length;
       if (paramCount > 0) {
         expect(def.args.length).toBeGreaterThan(0);

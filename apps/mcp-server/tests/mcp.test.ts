@@ -85,7 +85,7 @@ describe("render", () => {
     const role = await rolex.activate("sean");
     // Use want + focus to get a result with state
     role.want("Feature: Test", "test-goal");
-    const result = role.focus("test-goal");
+    role.focus("test-goal");
 
     // The role itself should have belong link — check via use
     const seanResult = await role.use<RolexResult>("!role.focus", { goal: "test-goal" });

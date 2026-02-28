@@ -3,7 +3,6 @@ import { drizzle } from "@deepracticex/drizzle";
 import { openDatabase } from "@deepracticex/sqlite";
 import * as C from "@rolexjs/core";
 import { sql } from "drizzle-orm";
-import { links, nodes } from "../src/schema.js";
 import { createSqliteRuntime } from "../src/sqliteRuntime.js";
 
 function setup() {

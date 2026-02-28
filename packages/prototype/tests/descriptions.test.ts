@@ -11,13 +11,13 @@ describe("descriptions", () => {
   });
 
   test("every process description starts with Feature:", () => {
-    for (const [name, content] of Object.entries(processes)) {
+    for (const [_name, content] of Object.entries(processes)) {
       expect(content).toMatch(/^Feature:/);
     }
   });
 
   test("every world description starts with Feature:", () => {
-    for (const [name, content] of Object.entries(world)) {
+    for (const [_name, content] of Object.entries(world)) {
       expect(content).toMatch(/^Feature:/);
     }
   });

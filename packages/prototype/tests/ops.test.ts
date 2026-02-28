@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import * as C from "@rolexjs/core";
-import { createRuntime, type Runtime, type State, type Structure } from "@rolexjs/system";
+import { createRuntime, type State, type Structure } from "@rolexjs/system";
 import { createOps, type Ops } from "../src/ops.js";
 
 // ================================================================
