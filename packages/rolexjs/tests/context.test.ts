@@ -33,7 +33,7 @@ describe("Role (ctx management)", () => {
     const result = role.want("Feature: Build auth", "build-auth");
     expect(role.ctx.focusedGoalId).toBe("build-auth");
     expect(role.ctx.focusedPlanId).toBeNull();
-    expect(result.hint).toBeDefined();
+    expect(result).toContain("I →");
   });
 
   test("plan updates ctx.focusedPlanId", async () => {
@@ -44,7 +44,7 @@ describe("Role (ctx management)", () => {
     role.want("Feature: Auth", "auth-goal");
     const result = role.plan("Feature: JWT strategy", "jwt-plan");
     expect(role.ctx.focusedPlanId).toBe("jwt-plan");
-    expect(result.hint).toBeDefined();
+    expect(result).toContain("I →");
   });
 
   test("finish with encounter registers in ctx", async () => {
@@ -61,7 +61,7 @@ describe("Role (ctx management)", () => {
       "Feature: Login done\n  Scenario: OK\n    Given login\n    Then success"
     );
     expect(role.ctx.encounterIds.has("login-finished")).toBe(true);
-    expect(result.hint).toBeDefined();
+    expect(result).toContain("I →");
   });
 
   test("finish without encounter does not register in ctx", async () => {
@@ -91,7 +91,7 @@ describe("Role (ctx management)", () => {
     );
     expect(role.ctx.focusedPlanId).toBeNull();
     expect(role.ctx.encounterIds.has("jwt-completed")).toBe(true);
-    expect(result.hint).toContain("auth");
+    expect(result).toContain("auth");
   });
 
   test("reflect consumes encounter and adds experience in ctx", async () => {
@@ -127,7 +127,7 @@ describe("Role (ctx management)", () => {
       "conv-insight"
     );
 
-    expect(result.state.name).toBe("experience");
+    expect(result).toContain("[experience]");
     expect(role.ctx.experienceIds.has("conv-insight")).toBe(true);
     expect(role.ctx.encounterIds.size).toBe(0);
   });
@@ -143,7 +143,7 @@ describe("Role (ctx management)", () => {
       "product-first"
     );
 
-    expect(result.state.name).toBe("principle");
+    expect(result).toContain("[principle]");
     expect(role.ctx.experienceIds.size).toBe(0);
   });
 

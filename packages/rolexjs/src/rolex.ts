@@ -18,9 +18,6 @@ import type { ResourceX } from "resourcexjs";
 import { RoleContext } from "./context.js";
 import { Role, type RolexInternal } from "./role.js";
 
-// Re-export from role.ts (canonical definition)
-export type { RolexResult } from "./role.js";
-
 /** Summary entry returned by census.list. */
 export interface CensusEntry {
   id?: string;
@@ -111,17 +108,15 @@ export class Rolex {
     const ctx = new RoleContext(individual);
     ctx.rehydrate(state);
 
-    // Restore persisted focus
+    // Restore persisted focus (only override rehydrate default when persisted value is valid)
     const persisted = this.persistContext?.load(individual) ?? null;
     if (persisted) {
-      ctx.focusedGoalId =
-        persisted.focusedGoalId && this.find(persisted.focusedGoalId)
-          ? persisted.focusedGoalId
-          : null;
-      ctx.focusedPlanId =
-        persisted.focusedPlanId && this.find(persisted.focusedPlanId)
-          ? persisted.focusedPlanId
-          : null;
+      if (persisted.focusedGoalId && this.find(persisted.focusedGoalId)) {
+        ctx.focusedGoalId = persisted.focusedGoalId;
+      }
+      if (persisted.focusedPlanId && this.find(persisted.focusedPlanId)) {
+        ctx.focusedPlanId = persisted.focusedPlanId;
+      }
     }
 
     // Build internal API for Role — ops + ctx persistence

@@ -1,14 +1,14 @@
 /**
  * MCP server integration tests.
  *
- * Tests the thin MCP layer (state + render) on top of Rolex.
+ * Tests the thin MCP layer (state holder) on top of Rolex.
  * Business logic (RoleContext) is tested in rolexjs/tests/context.test.ts.
- * This file tests MCP-specific concerns: state holder, render, and integration.
+ * Render is now in rolexjs — Role methods return rendered strings directly.
  */
 import { beforeEach, describe, expect, it } from "bun:test";
 import { localPlatform } from "@rolexjs/local-platform";
-import { createRoleX, type Rolex, type RolexResult } from "rolexjs";
-import { render } from "../src/render.js";
+import type { OpResult } from "@rolexjs/prototype";
+import { createRoleX, type Rolex, render } from "rolexjs";
 import { McpState } from "../src/state.js";
 
 let rolex: Rolex;
@@ -38,19 +38,19 @@ describe("requireRole", () => {
 });
 
 // ================================================================
-//  Render: 3-layer output
+//  Render: 3-layer output (now in rolexjs)
 // ================================================================
 
 describe("render", () => {
   it("includes status + hint + projection", async () => {
-    const result = await rolex.direct<RolexResult>("!individual.born", {
+    const result = await rolex.direct<OpResult>("!individual.born", {
       content: "Feature: Sean",
       id: "sean",
     });
     const output = render({
       process: "born",
       name: "Sean",
-      result,
+      state: result.state,
     });
     // Layer 1: Status
     expect(output).toContain('Individual "Sean" is born.');
@@ -62,38 +62,30 @@ describe("render", () => {
   });
 
   it("includes cognitive hint when provided", async () => {
-    const result = await rolex.direct<RolexResult>("!individual.born", {
+    const result = await rolex.direct<OpResult>("!individual.born", {
       content: "Feature: Sean",
       id: "sean",
     });
     const output = render({
       process: "born",
       name: "Sean",
-      result,
+      state: result.state,
       cognitiveHint: "I have no goal yet. Declare one with want.",
     });
     expect(output).toContain("I →");
     expect(output).toContain("I have no goal yet");
   });
 
-  it("includes bidirectional links in projection", async () => {
+  it("Role methods return rendered 3-layer output", async () => {
     await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
-    await rolex.direct("!org.found", { content: "Feature: Deepractice", id: "dp" });
-    await rolex.direct("!org.hire", { org: "dp", individual: "sean" });
-
-    // Activate and use focus to get projected state with links
     const role = await rolex.activate("sean");
-    // Use want + focus to get a result with state
-    role.want("Feature: Test", "test-goal");
-    role.focus("test-goal");
 
-    // The role itself should have belong link — check via use
-    const seanResult = await role.use<RolexResult>("!role.focus", { goal: "test-goal" });
-    const output = render({
-      process: "activate",
-      name: "Sean",
-      result: seanResult,
-    });
+    const output = role.want("Feature: Test", "test-goal");
+    // Layer 1: Status
+    expect(output).toContain('Goal "test-goal" declared.');
+    // Layer 2: Hint
+    expect(output).toContain("Next:");
+    // Layer 3: Projection
     expect(output).toContain("[goal]");
   });
 });
@@ -112,23 +104,23 @@ describe("full execution flow", () => {
     // Want
     const goal = role.want("Feature: Build Auth", "build-auth");
     expect(role.ctx.focusedGoalId).toBe("build-auth");
-    expect(goal.hint).toBeDefined();
+    expect(goal).toContain("I →");
 
     // Plan
     const plan = role.plan("Feature: Auth Plan", "auth-plan");
     expect(role.ctx.focusedPlanId).toBe("auth-plan");
-    expect(plan.hint).toBeDefined();
+    expect(plan).toContain("I →");
 
     // Todo
     const task = role.todo("Feature: Implement JWT", "impl-jwt");
-    expect(task.hint).toBeDefined();
+    expect(task).toContain("I →");
 
     // Finish with encounter
     const finished = role.finish(
       "impl-jwt",
       "Feature: Implemented JWT\n  Scenario: Token pattern\n    Given JWT needed\n    Then tokens work"
     );
-    expect(finished.state.name).toBe("encounter");
+    expect(finished).toContain("[encounter]");
     expect(role.ctx.encounterIds.has("impl-jwt-finished")).toBe(true);
 
     // Reflect: encounter → experience
@@ -137,7 +129,7 @@ describe("full execution flow", () => {
       "Feature: Token rotation insight\n  Scenario: Refresh matters\n    Given tokens expire\n    Then refresh tokens are key",
       "token-insight"
     );
-    expect(reflected.state.name).toBe("experience");
+    expect(reflected).toContain("[experience]");
     expect(role.ctx.encounterIds.has("impl-jwt-finished")).toBe(false);
     expect(role.ctx.experienceIds.has("token-insight")).toBe(true);
 
@@ -147,7 +139,7 @@ describe("full execution flow", () => {
       "Feature: Always use refresh tokens\n  Scenario: Short-lived tokens need rotation\n    Given access tokens expire\n    Then refresh tokens must exist",
       "refresh-tokens"
     );
-    expect(realized.state.name).toBe("principle");
+    expect(realized).toContain("[principle]");
     expect(role.ctx.experienceIds.has("token-insight")).toBe(false);
   });
 });

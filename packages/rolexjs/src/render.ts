@@ -1,11 +1,11 @@
 /**
- * Render — description + hint templates for every process.
+ * Render — 3-layer output for all Rolex operations.
  *
- * Each operation produces two pieces of text:
- *   description — what just happened (past tense)
- *   hint        — what to do next (suggestion)
+ * Layer 1: Status     — what just happened (describe)
+ * Layer 2: Hint       — what to do next (hint + cognitive hint)
+ * Layer 3: Projection — full state tree as markdown (renderState)
  *
- * These are shared by MCP and CLI. The I/O layer just presents them.
+ * render() composes the 3 layers. MCP and CLI are pure pass-through.
  */
 import type { State } from "@rolexjs/system";
 
@@ -236,4 +236,42 @@ function sortByConceptOrder(children: readonly State[]): readonly State[] {
     const bOrder = bi >= 0 ? bi : CONCEPT_ORDER.length;
     return aOrder - bOrder;
   });
+}
+
+// ================================================================
+//  Render — 3-layer output for tool results
+// ================================================================
+
+export interface RenderOptions {
+  /** The process that was executed. */
+  process: string;
+  /** Display name for the primary node. */
+  name: string;
+  /** State projection of the affected node. */
+  state: State;
+  /** AI cognitive hint — first-person, state-aware self-direction cue. */
+  cognitiveHint?: string | null;
+  /** Fold predicate — folded nodes render heading only. */
+  fold?: RenderStateOptions["fold"];
+}
+
+/** Render a full 3-layer output string. */
+export function render(opts: RenderOptions): string {
+  const { process, name, state, cognitiveHint, fold } = opts;
+  const lines: string[] = [];
+
+  // Layer 1: Status
+  lines.push(describe(process, name, state));
+
+  // Layer 2: Hint (static) + Cognitive hint (state-aware)
+  lines.push(hint(process));
+  if (cognitiveHint) {
+    lines.push(`I → ${cognitiveHint}`);
+  }
+
+  // Layer 3: Projection — generic markdown rendering of the full state tree
+  lines.push("");
+  lines.push(renderState(state, 1, fold ? { fold } : undefined));
+
+  return lines.join("\n");
 }

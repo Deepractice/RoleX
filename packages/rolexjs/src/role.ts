@@ -2,30 +2,19 @@
  * Role — stateful handle returned by Rolex.activate().
  *
  * Holds roleId + RoleContext internally.
- * All operations are from the role's perspective — no need to pass
- * individual or ctx.
+ * All operations return rendered 3-layer text (status + hint + projection).
+ * MCP and CLI are pure pass-through — no render logic needed.
  *
  * Usage:
  *   const role = await rolex.activate("sean");
- *   role.want("Feature: Ship v1", "ship-v1");
- *   role.plan("Feature: Phase 1", "phase-1");
+ *   role.want("Feature: Ship v1", "ship-v1");   // → rendered string
+ *   role.plan("Feature: Phase 1", "phase-1");    // → rendered string
  *   role.finish("write-tests", "Feature: Tests written");
  */
 
-import type { Ops } from "@rolexjs/prototype";
-import type { State } from "@rolexjs/system";
+import type { OpResult, Ops } from "@rolexjs/prototype";
 import type { RoleContext } from "./context.js";
-
-export interface RolexResult {
-  /** Projection of the primary affected node. */
-  state: State;
-  /** Which process was executed (for render). */
-  process: string;
-  /** Cognitive hint — populated when RoleContext is used. */
-  hint?: string;
-  /** Role context — returned by activate. */
-  ctx?: RoleContext;
-}
+import { render } from "./render.js";
 
 /**
  * Internal API surface that Role delegates to.
@@ -48,15 +37,29 @@ export class Role {
     this.api = api;
   }
 
-  /** Project the individual's full state tree. */
-  project(): RolexResult {
+  /** Project the individual's full state tree (used after activate). */
+  project(): string {
     const result = this.api.ops["role.focus"](this.roleId);
-    return this.withHint({ ...result, process: "activate" }, "activate");
+    const focusedGoalId = this.ctx.focusedGoalId;
+    return this.fmt("activate", this.roleId, result, {
+      fold: (node) => node.name === "goal" && node.id !== focusedGoalId,
+    });
   }
 
-  private withHint(result: RolexResult, process: string): RolexResult {
-    result.hint = this.ctx.cognitiveHint(process) ?? undefined;
-    return result;
+  /** Render an OpResult into a 3-layer output string. */
+  private fmt(
+    process: string,
+    name: string,
+    result: OpResult,
+    extra?: { fold?: (node: import("@rolexjs/system").State) => boolean }
+  ): string {
+    return render({
+      process,
+      name,
+      state: result.state,
+      cognitiveHint: this.ctx.cognitiveHint(process) ?? null,
+      fold: extra?.fold,
+    });
   }
 
   private save(): void {
@@ -66,71 +69,71 @@ export class Role {
   // ---- Execution ----
 
   /** Focus: view or switch focused goal. */
-  focus(goal?: string): RolexResult {
+  focus(goal?: string): string {
     const goalId = goal ?? this.ctx.requireGoalId();
     this.ctx.focusedGoalId = goalId;
     this.ctx.focusedPlanId = null;
     const result = this.api.ops["role.focus"](goalId);
     this.save();
-    return this.withHint(result, "focus");
+    return this.fmt("focus", goalId, result);
   }
 
   /** Want: declare a goal. */
-  want(goal?: string, id?: string, alias?: readonly string[]): RolexResult {
+  want(goal?: string, id?: string, alias?: readonly string[]): string {
     const result = this.api.ops["role.want"](this.roleId, goal, id, alias);
     if (id) this.ctx.focusedGoalId = id;
     this.ctx.focusedPlanId = null;
     this.save();
-    return this.withHint(result, "want");
+    return this.fmt("want", id ?? this.roleId, result);
   }
 
   /** Plan: create a plan for the focused goal. */
-  plan(plan?: string, id?: string, after?: string, fallback?: string): RolexResult {
+  plan(plan?: string, id?: string, after?: string, fallback?: string): string {
     const result = this.api.ops["role.plan"](this.ctx.requireGoalId(), plan, id, after, fallback);
     if (id) this.ctx.focusedPlanId = id;
     this.save();
-    return this.withHint(result, "plan");
+    return this.fmt("plan", id ?? "plan", result);
   }
 
   /** Todo: add a task to the focused plan. */
-  todo(task?: string, id?: string, alias?: readonly string[]): RolexResult {
+  todo(task?: string, id?: string, alias?: readonly string[]): string {
     const result = this.api.ops["role.todo"](this.ctx.requirePlanId(), task, id, alias);
-    return this.withHint(result, "todo");
+    return this.fmt("todo", id ?? "task", result);
   }
 
   /** Finish: complete a task, optionally record an encounter. */
-  finish(task: string, encounter?: string): RolexResult {
+  finish(task: string, encounter?: string): string {
     const result = this.api.ops["role.finish"](task, this.roleId, encounter);
     if (encounter && result.state.id) {
       this.ctx.addEncounter(result.state.id);
     }
-    return this.withHint(result, "finish");
+    return this.fmt("finish", task, result);
   }
 
   /** Complete: close a plan as done, record encounter. */
-  complete(plan?: string, encounter?: string): RolexResult {
+  complete(plan?: string, encounter?: string): string {
     const planId = plan ?? this.ctx.requirePlanId();
     const result = this.api.ops["role.complete"](planId, this.roleId, encounter);
     this.ctx.addEncounter(result.state.id ?? planId);
     if (this.ctx.focusedPlanId === planId) this.ctx.focusedPlanId = null;
     this.save();
-    return this.withHint(result, "complete");
+    return this.fmt("complete", planId, result);
   }
 
   /** Abandon: drop a plan, record encounter. */
-  abandon(plan?: string, encounter?: string): RolexResult {
+  abandon(plan?: string, encounter?: string): string {
     const planId = plan ?? this.ctx.requirePlanId();
     const result = this.api.ops["role.abandon"](planId, this.roleId, encounter);
     this.ctx.addEncounter(result.state.id ?? planId);
     if (this.ctx.focusedPlanId === planId) this.ctx.focusedPlanId = null;
     this.save();
-    return this.withHint(result, "abandon");
+    return this.fmt("abandon", planId, result);
   }
 
   // ---- Cognition ----
 
   /** Reflect: consume encounter → experience. Empty encounter = direct creation. */
-  reflect(encounter?: string, experience?: string, id?: string): RolexResult {
+  reflect(encounter?: string, experience?: string, id?: string): string {
     if (encounter) {
       this.ctx.requireEncounterIds([encounter]);
     }
@@ -139,11 +142,11 @@ export class Role {
       this.ctx.consumeEncounters([encounter]);
     }
     if (id) this.ctx.addExperience(id);
-    return this.withHint(result, "reflect");
+    return this.fmt("reflect", id ?? "experience", result);
   }
 
   /** Realize: consume experience → principle. Empty experience = direct creation. */
-  realize(experience?: string, principle?: string, id?: string): RolexResult {
+  realize(experience?: string, principle?: string, id?: string): string {
     if (experience) {
       this.ctx.requireExperienceIds([experience]);
     }
@@ -151,26 +154,26 @@ export class Role {
     if (experience) {
       this.ctx.consumeExperiences([experience]);
     }
-    return this.withHint(result, "realize");
+    return this.fmt("realize", id ?? "principle", result);
   }
 
   /** Master: create procedure, optionally consuming experience. */
-  master(procedure: string, id?: string, experience?: string): RolexResult {
+  master(procedure: string, id?: string, experience?: string): string {
     if (experience) this.ctx.requireExperienceIds([experience]);
     const result = this.api.ops["role.master"](this.roleId, procedure, id, experience);
     if (experience) this.ctx.consumeExperiences([experience]);
-    return this.withHint(result, "master");
+    return this.fmt("master", id ?? "procedure", result);
   }
 
   // ---- Knowledge management ----
 
   /** Forget: remove any node under the individual by id. */
-  forget(nodeId: string): RolexResult {
+  forget(nodeId: string): string {
     const result = this.api.ops["role.forget"](nodeId);
     if (this.ctx.focusedGoalId === nodeId) this.ctx.focusedGoalId = null;
     if (this.ctx.focusedPlanId === nodeId) this.ctx.focusedPlanId = null;
     this.save();
-    return result;
+    return this.fmt("forget", nodeId, result);
   }
 
   // ---- Skills + unified entry ----
