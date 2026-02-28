@@ -173,9 +173,9 @@ export function renderState(state: State, depth = 1, options?: RenderStateOption
     }
   }
 
-  // Children — sorted by concept hierarchy
+  // Children — sorted by concept hierarchy, empty nodes filtered out
   if (state.children && state.children.length > 0) {
-    const sorted = sortByConceptOrder(state.children);
+    const sorted = sortByConceptOrder(state.children.filter((c) => !isEmpty(c)));
     for (const child of sorted) {
       lines.push("");
       lines.push(renderState(child, depth + 1, options));
@@ -212,6 +212,11 @@ const CONCEPT_ORDER: readonly string[] = [
   "position",
   "duty",
 ];
+
+/** A node is empty when it has no id, no information, and no children. */
+function isEmpty(node: State): boolean {
+  return !node.id && !node.information && (!node.children || node.children.length === 0);
+}
 
 /** Sort children by concept hierarchy order. Unknown names go to the end, preserving relative order. */
 function sortByConceptOrder(children: readonly State[]): readonly State[] {

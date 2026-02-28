@@ -150,6 +150,30 @@ describe("render", () => {
     expect(md).toContain("## [plan]");
     expect(md).toContain("### [task]");
   });
+
+  test("renderState filters empty child nodes", () => {
+    const state = {
+      name: "organization",
+      id: "acme",
+      description: "An org",
+      information: "Feature: ACME\n  A company.",
+      children: [
+        { name: "charter", description: "The rules and mission", children: [] },
+        { name: "charter", description: "The rules and mission", children: [] },
+        {
+          name: "charter",
+          id: "acme-charter",
+          description: "The rules and mission",
+          information: "Feature: ACME Charter\n  Build things.",
+          children: [],
+        },
+      ],
+    } as any;
+    const md = renderState(state);
+    expect(md).not.toContain("[charter]\n");
+    expect(md).toContain("[charter] (acme-charter)");
+    expect(md).toContain("Feature: ACME Charter");
+  });
 });
 
 // ================================================================

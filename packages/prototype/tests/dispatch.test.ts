@@ -107,6 +107,28 @@ describe("toArgs", () => {
     expect(toArgs("resource.clearCache", { registry: "https://r.io" })).toEqual(["https://r.io"]);
   });
 
+  // ---- Required param validation ----
+
+  test("missing required param throws", () => {
+    expect(() => toArgs("position.require", { position: "arch" })).toThrow(
+      'Missing required argument "content" for position.require.'
+    );
+  });
+
+  test("missing required param — org.charter without content", () => {
+    expect(() => toArgs("org.charter", { org: "deepractice" })).toThrow(
+      'Missing required argument "content" for org.charter.'
+    );
+  });
+
+  test("optional params can be omitted", () => {
+    expect(toArgs("position.require", { position: "arch", content: "Feature: X" })).toEqual([
+      "arch",
+      "Feature: X",
+      undefined,
+    ]);
+  });
+
   // ---- Error handling ----
 
   test("unknown instruction throws", () => {

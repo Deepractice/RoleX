@@ -18,6 +18,14 @@ import type { ArgEntry } from "./schema.js";
 export function toArgs(op: string, args: Record<string, unknown>): unknown[] {
   const def = instructions[op];
   if (!def) throw new Error(`Unknown instruction "${op}".`);
+
+  // Validate required params
+  for (const [name, param] of Object.entries(def.params)) {
+    if (param.required && args[name] === undefined) {
+      throw new Error(`Missing required argument "${name}" for ${op}.`);
+    }
+  }
+
   return def.args.map((entry) => resolveArg(entry, args));
 }
 
