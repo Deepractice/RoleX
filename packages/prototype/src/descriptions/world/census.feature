@@ -1,27 +1,27 @@
-Feature: Census — society-level queries
-  Query the RoleX world to see what exists — individuals, organizations, positions.
-  Census is read-only and accessed via the use tool with !census.list.
+Feature: Census — the only way to query what exists in the world
+  Census is the single entry point for all world-level queries.
+  Call it via the MCP direct tool: direct("!census.list").
+  Census works without an active role — it is a stateless world query.
 
-  Scenario: List all top-level entities
-    Given I want to see what exists in the world
-    When I call use("!census.list")
-    Then I get a summary of all individuals, organizations, and positions
-    And each entry includes id, name, and tag if present
+  Scenario: List everything
+    Given the user asks "有哪些人" or "有哪些组织" or "list individuals"
+    Or the user asks "世界里有什么" or "show me what exists"
+    When I need to answer what exists in the RoleX world
+    Then I call direct("!census.list")
+    And it returns all individuals, organizations, and positions
 
   Scenario: Filter by type
-    Given I only want to see entities of a specific type
-    When I call use("!census.list", { type: "individual" })
+    Given I only need one category
+    When I call direct("!census.list", { type: "individual" })
     Then only individuals are returned
     And valid types are individual, organization, position
 
   Scenario: View archived entities
-    Given I want to see what has been retired, dissolved, or abolished
-    When I call use("!census.list", { type: "past" })
-    Then entities in the archive are returned
+    Given I want to see retired, dissolved, or abolished entities
+    When I call direct("!census.list", { type: "past" })
+    Then archived entities are returned
 
-  Scenario: When to use census
-    Given I need to know what exists before acting
-    When I want to check if an organization exists before founding
-    Or I want to see all individuals before hiring
-    Or I want an overview of the world
-    Then census.list is the right tool
+  Scenario: Census before action
+    Given I need to check existence before creating something
+    When I want to found an org, born an individual, or establish a position
+    Then call census.list first to avoid duplicates

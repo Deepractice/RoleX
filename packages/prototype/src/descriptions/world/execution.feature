@@ -27,10 +27,10 @@ Feature: Execution — the doing cycle
     Then an encounter is created for the cognition cycle
 
   Scenario: Goals are long-term directions
-    Given goals do not have achieve or abandon operations
+    Given goals are managed with want and forget
     When a goal is no longer needed
     Then I call forget to remove it
-    And learning is captured at the plan and task level, not the goal level
+    And learning is captured at the plan and task level through encounters
 
   Scenario: Multiple goals
     Given I may have several active goals

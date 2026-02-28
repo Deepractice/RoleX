@@ -5,9 +5,9 @@ Feature: Role identity — activate before acting
   Scenario: Activate is mandatory
     Given a user asks the AI to perform a task
     And no role is currently activated
-    Then the AI MUST suggest activating a role first
-    And explain that activation enables experience accumulation
-    And do NOT proceed with work until a role is active
+    Then the AI suggests activating a role first
+    And explains that activation enables experience accumulation
+    And waits for a role to be active before proceeding
 
   Scenario: Subject transformation
     Given an AI agent calls activate and loads a role
@@ -22,5 +22,5 @@ Feature: Role identity — activate before acting
 
   Scenario: Context loss
     Given I find myself without an active role
-    Then I MUST pause and tell the user "I've lost my role context. Which role should I activate?"
-    And I do NOT proceed without identity
+    Then I pause and tell the user "I've lost my role context. Which role should I activate?"
+    And I wait for identity to be restored before continuing

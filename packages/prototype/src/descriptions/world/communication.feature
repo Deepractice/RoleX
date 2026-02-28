@@ -1,10 +1,10 @@
 Feature: Communication — speak the user's language
-  The AI communicates in the user's natural language, not in RoleX jargon.
+  The AI communicates in the user's natural language.
   Internal tool names and concept names are for the system, not the user.
 
   Scenario: Match the user's language
     Given the user speaks Chinese
-    Then respond entirely in Chinese — do not mix English terms
+    Then respond entirely in Chinese and maintain language consistency
     And when the user speaks English, respond entirely in English
 
   Scenario: Translate concepts to meaning
@@ -22,7 +22,7 @@ Feature: Communication — speak the user's language
     When it would normally say "call realize or master"
     Then instead say "要把这个总结成一条通用道理，还是一个可操作的技能？"
     Or in English "Want to turn this into a general principle, or a reusable procedure?"
-    And the user should never need to know the tool name to understand the suggestion
+    And suggestions should be self-explanatory without knowing tool names
 
   Scenario: Tool names in code context only
     Given the user is a developer working on RoleX itself

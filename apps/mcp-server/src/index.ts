@@ -57,17 +57,24 @@ server.addTool({
     roleId: z.string().describe("Role name to activate"),
   }),
   execute: async ({ roleId }) => {
-    const role = await rolex.activate(roleId);
-    state.role = role;
-    const result = role.project();
-    const focusedGoalId = role.ctx.focusedGoalId;
-    return render({
-      process: "activate",
-      name: roleId,
-      result,
-      cognitiveHint: result.hint ?? null,
-      fold: (node) => node.name === "goal" && node.id !== focusedGoalId,
-    });
+    try {
+      const role = await rolex.activate(roleId);
+      state.role = role;
+      const result = role.project();
+      const focusedGoalId = role.ctx.focusedGoalId;
+      return render({
+        process: "activate",
+        name: roleId,
+        result,
+        cognitiveHint: result.hint ?? null,
+        fold: (node) => node.name === "goal" && node.id !== focusedGoalId,
+      });
+    } catch {
+      const census = await rolex.direct<string>("!census.list");
+      throw new Error(
+        `"${roleId}" not found. Available:\n\n${census}\n\nTry again with the correct id or alias.`
+      );
+    }
   },
 });
 
@@ -276,6 +283,27 @@ server.addTool({
   execute: async ({ locator, args }) => {
     const role = state.requireRole();
     const result = await role.use(locator, args);
+    if (result == null) return `${locator} done.`;
+    if (typeof result === "string") return result;
+    return JSON.stringify(result, null, 2);
+  },
+});
+
+// ========== Tools: Direct ==========
+
+server.addTool({
+  name: "direct",
+  description: detail("direct"),
+  parameters: z.object({
+    locator: z
+      .string()
+      .describe(
+        "Locator string. !namespace.method for RoleX commands, or a ResourceX locator for resources"
+      ),
+    args: z.record(z.unknown()).optional().describe("Named arguments for the command or resource"),
+  }),
+  execute: async ({ locator, args }) => {
+    const result = await rolex.direct(locator, args);
     if (result == null) return `${locator} done.`;
     if (typeof result === "string") return result;
     return JSON.stringify(result, null, 2);

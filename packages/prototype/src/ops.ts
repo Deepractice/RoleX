@@ -374,20 +374,72 @@ export function createOps(ctx: OpsContext): Ops {
       if (filtered.length === 0) {
         return type ? `No ${type} found.` : "Society is empty.";
       }
-      const groups = new Map<string, State[]>();
-      for (const c of filtered) {
-        const key = c.name;
-        if (!groups.has(key)) groups.set(key, []);
-        groups.get(key)!.push(c);
-      }
-      const lines: string[] = [];
-      for (const [name, items] of groups) {
-        lines.push(`[${name}] (${items.length})`);
-        for (const item of items) {
+
+      // If filtering by type, use simple flat rendering
+      if (type) {
+        const lines: string[] = [];
+        for (const item of filtered) {
           const tag = item.tag ? ` #${item.tag}` : "";
-          lines.push(`  ${item.id ?? "(no id)"}${tag}`);
+          const alias = item.alias?.length ? ` (${item.alias.join(", ")})` : "";
+          lines.push(`${item.id ?? "(no id)"}${alias}${tag}`);
+        }
+        return lines.join("\n");
+      }
+
+      // Organization-centric tree view
+      const orgs = filtered.filter((c) => c.name === "organization");
+      const individuals = filtered.filter((c) => c.name === "individual");
+
+      // Build a set of individuals who belong to an org
+      const affiliatedIndividuals = new Set<string>();
+      // Build a map: individual id → positions they serve
+      const individualPositions = new Map<string, string[]>();
+      for (const ind of individuals) {
+        const serves = ind.links?.filter((l) => l.relation === "serve") ?? [];
+        if (serves.length > 0) {
+          individualPositions.set(
+            ind.id ?? "",
+            serves.map((l) => l.target.id ?? "(no id)")
+          );
         }
       }
+
+      const lines: string[] = [];
+
+      for (const org of orgs) {
+        const alias = org.alias?.length ? ` (${org.alias.join(", ")})` : "";
+        const tag = org.tag ? ` #${org.tag}` : "";
+        lines.push(`${org.id}${alias}${tag}`);
+
+        // Members of this org
+        const members = org.links?.filter((l) => l.relation === "membership") ?? [];
+        if (members.length === 0) {
+          lines.push("  (no members)");
+        }
+        for (const m of members) {
+          affiliatedIndividuals.add(m.target.id ?? "");
+          const mAlias = m.target.alias?.length ? ` (${m.target.alias.join(", ")})` : "";
+          const mTag = m.target.tag ? ` #${m.target.tag}` : "";
+          const posLabels = individualPositions.get(m.target.id ?? "");
+          const posStr = posLabels?.length ? ` — ${posLabels.join(", ")}` : "";
+          lines.push(`  ${m.target.id}${mAlias}${mTag}${posStr}`);
+        }
+        lines.push("");
+      }
+
+      // Unaffiliated individuals
+      const unaffiliated = individuals.filter((ind) => !affiliatedIndividuals.has(ind.id ?? ""));
+      if (unaffiliated.length > 0) {
+        lines.push("─── unaffiliated ───");
+        for (const ind of unaffiliated) {
+          const alias = ind.alias?.length ? ` (${ind.alias.join(", ")})` : "";
+          const tag = ind.tag ? ` #${ind.tag}` : "";
+          const posLabels = individualPositions.get(ind.id ?? "");
+          const posStr = posLabels?.length ? ` — ${posLabels.join(", ")}` : "";
+          lines.push(`  ${ind.id}${alias}${tag}${posStr}`);
+        }
+      }
+
       return lines.join("\n");
     },
 
