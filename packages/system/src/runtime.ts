@@ -95,9 +95,13 @@ export const createRuntime = (): Runtime => {
     nodes.delete(ref);
   };
 
-  const projectRef = (ref: string): State => {
+  /** Project a node with full subtree but without following links (prevents cycles). */
+  const projectLinked = (ref: string): State => {
     const treeNode = nodes.get(ref)!;
-    return { ...treeNode.node, children: [] };
+    return {
+      ...treeNode.node,
+      children: treeNode.children.map(projectLinked),
+    };
   };
 
   const projectNode = (ref: string): State => {
@@ -110,7 +114,7 @@ export const createRuntime = (): Runtime => {
         ? {
             links: nodeLinks.map((l) => ({
               relation: l.relation,
-              target: projectRef(l.toId),
+              target: projectLinked(l.toId),
             })),
           }
         : {}),

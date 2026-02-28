@@ -164,12 +164,12 @@ export function renderState(state: State, depth = 1, options?: RenderStateOption
     lines.push(state.information);
   }
 
-  // Links
+  // Links — expanded as subtrees
   if (state.links && state.links.length > 0) {
-    lines.push("");
-    for (const link of state.links) {
-      const targetLabel = extractLabel(link.target);
-      lines.push(`> ${link.relation} → ${targetLabel}`);
+    const targets = sortByConceptOrder(state.links.map((l) => l.target));
+    for (const target of targets) {
+      lines.push("");
+      lines.push(renderState(target, depth + 1, options));
     }
   }
 
@@ -183,14 +183,6 @@ export function renderState(state: State, depth = 1, options?: RenderStateOption
   }
 
   return lines.join("\n");
-}
-
-/** Extract a display label from a State: "[name] FeatureTitle" or just "[name]". */
-function extractLabel(state: State): string {
-  if (!state.information) return `[${state.name}]`;
-  const match = state.information.match(/^Feature:\s*(.+)/m);
-  const title = match ? match[1].trim() : state.information.split("\n")[0].trim();
-  return `[${state.name}] ${title}`;
 }
 
 // ================================================================
