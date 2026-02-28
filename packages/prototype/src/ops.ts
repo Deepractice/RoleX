@@ -103,7 +103,7 @@ export function createOps(ctx: OpsContext): Ops {
     "individual.born"(content?: string, id?: string, alias?: readonly string[]): OpResult {
       validateGherkin(content);
       const node = rt.create(society, C.individual, content, id, alias);
-      rt.create(node, C.identity, undefined, id);
+      rt.create(node, C.identity, undefined, id ? `${id}-identity` : undefined);
       return ok(node, "born");
     },
 

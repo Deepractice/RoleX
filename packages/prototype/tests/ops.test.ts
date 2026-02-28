@@ -75,6 +75,22 @@ describe("individual", () => {
     expect(() => ops["individual.born"]("not gherkin")).toThrow("Invalid Gherkin");
   });
 
+  test("born uses distinct identity id", () => {
+    const { ops } = setup();
+    const r = ops["individual.born"]("Feature: Sean", "sean");
+    const identity = r.state.children!.find((c: State) => c.name === "identity");
+    expect(identity!.id).toBe("sean-identity");
+  });
+
+  test("duplicate id across tree throws", () => {
+    const { ops } = setup();
+    ops["individual.born"](undefined, "sean");
+    ops["org.found"](undefined, "acme");
+    expect(() => ops["org.charter"]("acme", "Feature: Charter", "sean")).toThrow(
+      'Duplicate id "sean"'
+    );
+  });
+
   test("retire archives individual to past", () => {
     const { ops, find } = setup();
     ops["individual.born"]("Feature: Sean", "sean");
