@@ -68,6 +68,7 @@ export function createOps(ctx: OpsContext): Ops {
     }
   }
 
+  /** Scoped search within a subtree. No priority needed — used only by removeExisting. */
   function findInState(state: State, target: string): Structure | null {
     if (state.id && state.id.toLowerCase() === target) return state;
     if (state.alias) {
@@ -352,6 +353,15 @@ export function createOps(ctx: OpsContext): Ops {
       const posNode = resolve(position);
       const indNode = resolve(individual);
       rt.link(posNode, indNode, "appointment", "serve");
+
+      // Auto-train: copy position requirements as individual procedures
+      const posState = rt.project(posNode);
+      for (const child of posState.children ?? []) {
+        if (child.name !== "requirement" || !child.information) continue;
+        // rt.create is idempotent for same parent + same id
+        rt.create(indNode, C.procedure, child.information, child.id);
+      }
+
       return ok(posNode, "appoint");
     },
 

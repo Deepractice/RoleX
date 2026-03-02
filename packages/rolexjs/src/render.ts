@@ -156,11 +156,12 @@ export function renderState(state: State, depth = 1, options?: RenderStateOption
   const level = Math.min(depth, 6);
   const heading = "#".repeat(level);
 
-  // Heading: [name] (id) {origin} #tag
+  // Heading: [name] (id) {origin} #tag [progress]
   const idPart = state.id ? ` (${state.id})` : "";
   const originPart = state.origin ? ` {${state.origin}}` : "";
   const tagPart = state.tag ? ` #${state.tag}` : "";
-  lines.push(`${heading} [${state.name}]${idPart}${originPart}${tagPart}`);
+  const progressPart = state.name === "goal" ? goalProgress(state) : "";
+  lines.push(`${heading} [${state.name}]${idPart}${originPart}${tagPart}${progressPart}`);
 
   // Folded: heading only
   if (options?.fold?.(state)) {
@@ -173,12 +174,22 @@ export function renderState(state: State, depth = 1, options?: RenderStateOption
     lines.push(state.information);
   }
 
-  // Links — expanded as subtrees
+  // Links — plan references are compact, organizational links are expanded
   if (state.links && state.links.length > 0) {
-    const targets = sortByConceptOrder(state.links.map((l) => l.target));
-    for (const target of targets) {
-      lines.push("");
-      lines.push(renderState(target, depth + 1, options));
+    const compactRelations = new Set(["after", "before", "fallback", "fallback-for"]);
+    const compact = state.links.filter((l) => compactRelations.has(l.relation));
+    const expanded = state.links.filter((l) => !compactRelations.has(l.relation));
+    for (const link of compact) {
+      const targetId = link.target.id ? ` (${link.target.id})` : "";
+      const targetTag = link.target.tag ? ` #${link.target.tag}` : "";
+      lines.push(`> ${link.relation}: [${link.target.name}]${targetId}${targetTag}`);
+    }
+    if (expanded.length > 0) {
+      const targets = sortByConceptOrder(expanded.map((l) => l.target));
+      for (const target of targets) {
+        lines.push("");
+        lines.push(renderState(target, depth + 1, options));
+      }
     }
   }
 
@@ -221,6 +232,32 @@ const CONCEPT_ORDER: readonly string[] = [
   "position",
   "duty",
 ];
+
+/** Summarize plan/task completion for a goal heading. */
+function goalProgress(goal: State): string {
+  let plans = 0;
+  let plansDone = 0;
+  let tasks = 0;
+  let tasksDone = 0;
+
+  function walk(node: State): void {
+    if (node.name === "plan") {
+      plans++;
+      if (node.tag === "done" || node.tag === "abandoned") plansDone++;
+    } else if (node.name === "task") {
+      tasks++;
+      if (node.tag === "done") tasksDone++;
+    }
+    for (const child of node.children ?? []) walk(child);
+  }
+
+  for (const child of goal.children ?? []) walk(child);
+  if (plans === 0 && tasks === 0) return "";
+  const parts: string[] = [];
+  if (plans > 0) parts.push(`${plansDone}/${plans} plans`);
+  if (tasks > 0) parts.push(`${tasksDone}/${tasks} tasks`);
+  return ` [${parts.join(", ")}]`;
+}
 
 /** A node is empty when it has no id, no information, and no children. */
 function isEmpty(node: State): boolean {

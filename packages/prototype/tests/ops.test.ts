@@ -82,13 +82,18 @@ describe("individual", () => {
     expect(identity!.id).toBe("sean-identity");
   });
 
-  test("duplicate id across tree throws", () => {
-    const { ops } = setup();
+  test("same id under different parents is allowed", () => {
+    const { ops, find } = setup();
     ops["individual.born"](undefined, "sean");
-    ops["org.found"](undefined, "acme");
-    expect(() => ops["org.charter"]("acme", "Feature: Charter", "sean")).toThrow(
-      'Duplicate id "sean"'
-    );
+    ops["position.establish"](undefined, "architect");
+    ops["position.require"]("architect", "Feature: System design", "sys-design");
+    ops["individual.train"]("sean", "Feature: System design skill", "sys-design");
+
+    // Both exist — requirement under position, procedure under individual
+    const sean = find("sean")! as unknown as State;
+    const procs = (sean.children ?? []).filter((c: State) => c.name === "procedure");
+    expect(procs).toHaveLength(1);
+    expect(procs[0].id).toBe("sys-design");
   });
 
   test("retire archives individual to past", () => {
@@ -509,12 +514,39 @@ describe("position", () => {
     expect(r.state.links![0].relation).toBe("appointment");
   });
 
-  test("appoint does not copy requirements as procedures", () => {
+  test("appoint auto-trains requirements as procedures", () => {
     const { ops, find } = setup();
     ops["individual.born"](undefined, "sean");
     ops["position.establish"](undefined, "architect");
     ops["position.require"]("architect", "Feature: System design", "sys-design");
     ops["position.require"]("architect", "Feature: Code review", "code-review");
+    ops["position.appoint"]("architect", "sean");
+
+    const sean = find("sean")! as unknown as State;
+    const procs = (sean.children ?? []).filter((c: State) => c.name === "procedure");
+    expect(procs).toHaveLength(2);
+    expect(procs.map((p: State) => p.id).sort()).toEqual(["code-review", "sys-design"]);
+    expect(procs[0].information).toBeDefined();
+  });
+
+  test("appoint skips already-trained procedures (idempotent)", () => {
+    const { ops, find } = setup();
+    ops["individual.born"](undefined, "sean");
+    ops["individual.train"]("sean", "Feature: System design skill", "sys-design");
+    ops["position.establish"](undefined, "architect");
+    ops["position.require"]("architect", "Feature: System design", "sys-design");
+    ops["position.appoint"]("architect", "sean");
+
+    const sean = find("sean")! as unknown as State;
+    const procs = (sean.children ?? []).filter((c: State) => c.name === "procedure");
+    // Only 1: the manually trained one (idempotent, not duplicated)
+    expect(procs).toHaveLength(1);
+  });
+
+  test("appoint with no requirements creates no procedures", () => {
+    const { ops, find } = setup();
+    ops["individual.born"](undefined, "sean");
+    ops["position.establish"](undefined, "architect");
     ops["position.appoint"]("architect", "sean");
 
     const sean = find("sean")! as unknown as State;

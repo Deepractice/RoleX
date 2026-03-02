@@ -42,7 +42,8 @@ export class Role {
     const result = this.api.ops["role.focus"](this.roleId);
     const focusedGoalId = this.ctx.focusedGoalId;
     return this.fmt("activate", this.roleId, result, {
-      fold: (node) => node.name === "goal" && node.id !== focusedGoalId,
+      fold: (node) =>
+        (node.name === "goal" && node.id !== focusedGoalId) || node.name === "requirement",
     });
   }
 
@@ -71,8 +72,9 @@ export class Role {
   /** Focus: view or switch focused goal. */
   focus(goal?: string): string {
     const goalId = goal ?? this.ctx.requireGoalId();
+    const switched = goalId !== this.ctx.focusedGoalId;
     this.ctx.focusedGoalId = goalId;
-    this.ctx.focusedPlanId = null;
+    if (switched) this.ctx.focusedPlanId = null;
     const result = this.api.ops["role.focus"](goalId);
     this.save();
     return this.fmt("focus", goalId, result);

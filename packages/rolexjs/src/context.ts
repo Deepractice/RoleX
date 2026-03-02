@@ -115,7 +115,7 @@ export class RoleContext {
 
       case "focus":
         if (!this.focusedPlanId)
-          return "I have a goal but no plan. I should call `plan` to design how to achieve it.";
+          return "I have a goal but no focused plan. I should call `plan` to create or focus on one.";
         return "I have a plan. I should call `todo` to create tasks, or continue working.";
 
       case "want":

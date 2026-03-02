@@ -153,12 +153,10 @@ export const createRuntime = (): Runtime => {
   return {
     create(parent, type, information, id, alias) {
       if (id) {
-        // Global uniqueness: check all nodes for a matching id.
+        // Idempotent: same id under same parent → return existing.
         for (const treeNode of nodes.values()) {
-          if (treeNode.node.id === id) {
-            // Idempotent: same id under same parent → return existing.
-            if (treeNode.parent === (parent?.ref ?? null)) return treeNode.node;
-            throw new Error(`Duplicate id "${id}": already exists elsewhere in the tree.`);
+          if (treeNode.node.id === id && treeNode.parent === (parent?.ref ?? null)) {
+            return treeNode.node;
           }
         }
       }

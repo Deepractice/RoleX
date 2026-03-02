@@ -96,14 +96,14 @@ function removeSubtree(db: DB, ref: string): void {
 export function createSqliteRuntime(db: DB): Runtime {
   return {
     create(parent, type, information, id, alias) {
-      // Global uniqueness: no duplicate ids anywhere in the tree.
+      // Idempotent: same id under same parent → return existing.
       if (id) {
-        const existing = db.select().from(nodes).where(eq(nodes.id, id)).get();
-        if (existing) {
-          // Idempotent: same id under same parent → return existing.
-          if (existing.parentRef === (parent?.ref ?? null)) return toStructure(existing);
-          throw new Error(`Duplicate id "${id}": already exists elsewhere in the tree.`);
-        }
+        const existing = db
+          .select()
+          .from(nodes)
+          .where(and(eq(nodes.id, id), eq(nodes.parentRef, parent?.ref ?? null)))
+          .get();
+        if (existing) return toStructure(existing);
       }
       const ref = nextRef(db);
       db.insert(nodes)

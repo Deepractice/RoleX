@@ -22,7 +22,11 @@ export function toArgs(op: string, args: Record<string, unknown>): unknown[] {
   // Validate required params
   for (const [name, param] of Object.entries(def.params)) {
     if (param.required && args[name] === undefined) {
-      throw new Error(`Missing required argument "${name}" for ${op}.`);
+      throw new Error(
+        `Missing required argument "${name}" for ${op}.\n\n` +
+          "You may be guessing the argument names. " +
+          "Call skill(locator) with the relevant procedure to see the correct syntax."
+      );
     }
   }
 

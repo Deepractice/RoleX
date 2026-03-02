@@ -15,11 +15,6 @@ Feature: use — act as the current role
     Then the command is parsed as `namespace.method`
     And dispatched to the corresponding RoleX API
 
-  Scenario: Discovering available commands
-    Given available commands are documented in world descriptions and skills
-    When you need to perform an operation
-    Then look up the correct command from world descriptions or loaded skills first
-
   Scenario: Load a ResourceX resource
     Given the locator does not start with `!`
     When use is called with the locator

@@ -14,20 +14,20 @@ Feature: Use tool — the universal execution entry point
     Then it is parsed as !namespace.method
     And dispatched to the corresponding RoleX API with named args
 
-  Scenario: Discovering available commands
-    Given available commands come from your role's own skills and procedures
-    When you need to perform an operation
-    Then look up the correct command from your loaded skills first
-    And use only commands you have seen in your own skills or procedures
-    And do not use commands mentioned in other roles' descriptions
+  Scenario: Mandatory skill loading before execution
+    Given your procedures list the skills you have
+    When you need to execute a command you have not seen in a loaded skill
+    Then you MUST call skill(locator) first to load the full instructions
+    And the loaded skill will tell you the exact command name and arguments
+    And only then call use(!namespace.method, args) with the correct syntax
+    And do not use commands from other roles' descriptions — only your own skills
 
   Scenario: NEVER guess commands
-    Given a command is not found in any loaded skill or world description
+    Given a command is not found in any loaded skill
     When the AI considers trying it anyway
     Then STOP — do not call use or direct with unverified commands
-    And guessing wastes tokens, triggers errors, and erodes trust
-    And instead ask the user or load the relevant skill first
-    And there is no fallback — unknown commands simply do not exist
+    And call skill(locator) with the relevant procedure to learn the correct syntax
+    And if no procedure covers this task, it is outside your duties — suggest Nuwa
 
   Scenario: Regular locators delegate to ResourceX
     Given the locator does not start with !

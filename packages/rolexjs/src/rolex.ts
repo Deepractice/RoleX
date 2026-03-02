@@ -13,9 +13,10 @@
 import type { ContextData, Platform } from "@rolexjs/core";
 import * as C from "@rolexjs/core";
 import { createOps, directives, type Ops, toArgs } from "@rolexjs/prototype";
-import type { Initializer, Runtime, State, Structure } from "@rolexjs/system";
+import type { Initializer, Runtime, Structure } from "@rolexjs/system";
 import type { ResourceX } from "resourcexjs";
 import { RoleContext } from "./context.js";
+import { findInState } from "./find.js";
 import { Role, type RolexInternal } from "./role.js";
 
 /** Summary entry returned by census.list. */
@@ -139,9 +140,8 @@ export class Rolex {
 
   /** Find a node by id or alias across the entire society tree. Internal use only. */
   private find(id: string): Structure | null {
-    const target = id.toLowerCase();
     const state = this.rt.project(this.society);
-    return findInState(state, target);
+    return findInState(state, id);
   }
 
   /**
@@ -155,8 +155,13 @@ export class Rolex {
       const command = locator.slice(1);
       const fn = this.ops[command];
       if (!fn) {
-        const cmd = directives["identity-ethics"]?.["on-unknown-command"] ?? "";
-        throw new Error(`Unknown command "${locator}".\n\n${cmd}`);
+        const hint = directives["identity-ethics"]?.["on-unknown-command"] ?? "";
+        throw new Error(
+          `Unknown command "${locator}".\n\n` +
+            "You may be guessing the command name. " +
+            "Load the relevant skill first with skill(locator) to learn the correct syntax.\n\n" +
+            hint
+        );
       }
       return fn(...toArgs(command, args ?? {})) as T;
     }
@@ -168,22 +173,4 @@ export class Rolex {
 /** Create a Rolex instance from a Platform. */
 export function createRoleX(platform: Platform): Rolex {
   return new Rolex(platform);
-}
-
-// ================================================================
-//  Helpers
-// ================================================================
-
-function findInState(state: State, target: string): Structure | null {
-  if (state.id && state.id.toLowerCase() === target) return state;
-  if (state.alias) {
-    for (const a of state.alias) {
-      if (a.toLowerCase() === target) return state;
-    }
-  }
-  for (const child of state.children ?? []) {
-    const found = findInState(child, target);
-    if (found) return found;
-  }
-  return null;
 }
