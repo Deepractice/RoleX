@@ -10,7 +10,7 @@
  * Rolex just wires Platform → ops and manages Role lifecycle.
  */
 
-import type { ContextData, Platform } from "@rolexjs/core";
+import type { Platform, RoleXRepository } from "@rolexjs/core";
 import * as C from "@rolexjs/core";
 import { createOps, directives, type Ops, toArgs } from "@rolexjs/prototype";
 import type { Initializer, Runtime, Structure } from "@rolexjs/system";
@@ -30,27 +30,19 @@ export class Rolex {
   private rt: Runtime;
   private ops: Ops;
   private resourcex?: ResourceX;
-  private protoRegistry?: NonNullable<Platform["prototype"]>;
+  private repo: RoleXRepository;
   private readonly initializer?: Initializer;
-  private readonly persistContext?: {
-    save: (roleId: string, data: ContextData) => void;
-    load: (roleId: string) => ContextData | null;
-  };
 
   private readonly bootstrap: readonly string[];
   private readonly society: Structure;
   private readonly past: Structure;
 
   constructor(platform: Platform) {
-    this.rt = platform.runtime;
+    this.repo = platform.repository;
+    this.rt = this.repo.runtime;
     this.resourcex = platform.resourcex;
-    this.protoRegistry = platform.prototype;
     this.initializer = platform.initializer;
     this.bootstrap = platform.bootstrap ?? [];
-
-    if (platform.saveContext && platform.loadContext) {
-      this.persistContext = { save: platform.saveContext, load: platform.loadContext };
-    }
 
     // Ensure world roots exist
     const roots = this.rt.roots();
@@ -72,7 +64,7 @@ export class Rolex {
       },
       find: (id: string) => this.find(id),
       resourcex: platform.resourcex,
-      prototype: platform.prototype,
+      prototype: this.repo.prototype,
       direct: (locator: string, args?: Record<string, unknown>) => this.direct(locator, args),
     });
   }
@@ -95,9 +87,7 @@ export class Rolex {
   async activate(individual: string): Promise<Role> {
     let node = this.find(individual);
     if (!node) {
-      const hasProto = this.protoRegistry
-        ? Object.hasOwn(this.protoRegistry.list(), individual)
-        : false;
+      const hasProto = Object.hasOwn(this.repo.prototype.list(), individual);
       if (hasProto) {
         this.ops["individual.born"](undefined, individual);
         node = this.find(individual)!;
@@ -110,7 +100,7 @@ export class Rolex {
     ctx.rehydrate(state);
 
     // Restore persisted focus (only override rehydrate default when persisted value is valid)
-    const persisted = this.persistContext?.load(individual) ?? null;
+    const persisted = this.repo.loadContext(individual);
     if (persisted) {
       if (persisted.focusedGoalId && this.find(persisted.focusedGoalId)) {
         ctx.focusedGoalId = persisted.focusedGoalId;
@@ -122,8 +112,9 @@ export class Rolex {
 
     // Build internal API for Role — ops + ctx persistence
     const ops = this.ops;
+    const repo = this.repo;
     const saveCtx = (c: RoleContext) => {
-      this.persistContext?.save(c.roleId, {
+      repo.saveContext(c.roleId, {
         focusedGoalId: c.focusedGoalId,
         focusedPlanId: c.focusedPlanId,
       });

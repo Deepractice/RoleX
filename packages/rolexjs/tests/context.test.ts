@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { localPlatform } from "@rolexjs/local-platform";
@@ -194,7 +194,7 @@ describe("Role context persistence", () => {
   }
 
   test("activate restores persisted focusedGoalId and focusedPlanId", async () => {
-    const { rolex, dataDir } = persistent();
+    const { rolex } = persistent();
     await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
 
     // Session 1: set focus
@@ -204,14 +204,7 @@ describe("Role context persistence", () => {
     expect(role1.ctx.focusedGoalId).toBe("auth");
     expect(role1.ctx.focusedPlanId).toBe("jwt");
 
-    // Verify context.json written
-    const contextPath = join(dataDir, "context", "sean.json");
-    expect(existsSync(contextPath)).toBe(true);
-    const data = JSON.parse(readFileSync(contextPath, "utf-8"));
-    expect(data.focusedGoalId).toBe("auth");
-    expect(data.focusedPlanId).toBe("jwt");
-
-    // Session 2: re-activate restores
+    // Session 2: re-activate restores from SQLite
     const role2 = await rolex.activate("sean");
     expect(role2.ctx.focusedGoalId).toBe("auth");
     expect(role2.ctx.focusedPlanId).toBe("jwt");
@@ -228,7 +221,7 @@ describe("Role context persistence", () => {
   });
 
   test("focus saves updated context", async () => {
-    const { rolex, dataDir } = persistent();
+    const { rolex } = persistent();
     await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
 
     const role = await rolex.activate("sean");
@@ -237,13 +230,14 @@ describe("Role context persistence", () => {
 
     role.focus("goal-a");
 
-    const data = JSON.parse(readFileSync(join(dataDir, "context", "sean.json"), "utf-8"));
-    expect(data.focusedGoalId).toBe("goal-a");
-    expect(data.focusedPlanId).toBeNull();
+    // Re-activate to verify persistence
+    const role2 = await rolex.activate("sean");
+    expect(role2.ctx.focusedGoalId).toBe("goal-a");
+    expect(role2.ctx.focusedPlanId).toBeNull();
   });
 
   test("complete clears focusedPlanId and saves", async () => {
-    const { rolex, dataDir } = persistent();
+    const { rolex } = persistent();
     await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
 
     const role = await rolex.activate("sean");
@@ -251,13 +245,14 @@ describe("Role context persistence", () => {
     role.plan("Feature: JWT", "jwt");
     role.complete("jwt", "Feature: Done\n  Scenario: OK\n    Given done\n    Then ok");
 
-    const data = JSON.parse(readFileSync(join(dataDir, "context", "sean.json"), "utf-8"));
-    expect(data.focusedGoalId).toBe("auth");
-    expect(data.focusedPlanId).toBeNull();
+    // Re-activate to verify persistence
+    const role2 = await rolex.activate("sean");
+    expect(role2.ctx.focusedGoalId).toBe("auth");
+    expect(role2.ctx.focusedPlanId).toBeNull();
   });
 
   test("different roles have independent contexts", async () => {
-    const { rolex, dataDir } = persistent();
+    const { rolex } = persistent();
     await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
     await rolex.direct("!individual.born", { content: "Feature: Nuwa", id: "nuwa" });
 
@@ -267,12 +262,7 @@ describe("Role context persistence", () => {
     const nuwaRole = await rolex.activate("nuwa");
     nuwaRole.want("Feature: Nuwa Goal", "nuwa-goal");
 
-    const seanData = JSON.parse(readFileSync(join(dataDir, "context", "sean.json"), "utf-8"));
-    const nuwaData = JSON.parse(readFileSync(join(dataDir, "context", "nuwa.json"), "utf-8"));
-    expect(seanData.focusedGoalId).toBe("sean-goal");
-    expect(nuwaData.focusedGoalId).toBe("nuwa-goal");
-
-    // Re-activate sean — should get sean's context
+    // Re-activate sean — should get sean's context, not nuwa's
     const seanRole2 = await rolex.activate("sean");
     expect(seanRole2.ctx.focusedGoalId).toBe("sean-goal");
   });

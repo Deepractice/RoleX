@@ -3,7 +3,7 @@ import { relation, structure } from "@rolexjs/system";
 import { localPlatform } from "../src/index.js";
 
 function createGraphRuntime() {
-  return localPlatform({ dataDir: null }).runtime;
+  return localPlatform({ dataDir: null }).repository.runtime;
 }
 
 // ================================================================
