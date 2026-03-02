@@ -8,7 +8,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { Given, When, Then } from "@deepracticex/bdd";
+import { Given, Then, When } from "@deepracticex/bdd";
 import type { BddWorld } from "../support/world";
 
 // ===== Activate =====
@@ -19,12 +19,9 @@ Given("I activate role {string}", async function (this: BddWorld, id: string) {
 
 // ===== Execution =====
 
-Given(
-  "I want goal {string} with {string}",
-  function (this: BddWorld, id: string, content: string) {
-    this.toolResult = this.role!.want(content, id);
-  }
-);
+Given("I want goal {string} with {string}", function (this: BddWorld, id: string, content: string) {
+  this.toolResult = this.role!.want(content, id);
+});
 
 Given("I plan {string} with {string}", function (this: BddWorld, id: string, content: string) {
   this.toolResult = this.role!.plan(content, id);
@@ -145,16 +142,13 @@ Then("focusedPlanId should be null", function (this: BddWorld) {
   assert.equal(this.role.ctx.focusedPlanId, null);
 });
 
-Then(
-  "encounter {string} should be registered",
-  function (this: BddWorld, encounterId: string) {
-    assert.ok(this.role, "No active role");
-    assert.ok(
-      this.role.ctx.encounterIds.has(encounterId),
-      `Encounter "${encounterId}" not registered. Have: ${[...this.role.ctx.encounterIds].join(", ")}`
-    );
-  }
-);
+Then("encounter {string} should be registered", function (this: BddWorld, encounterId: string) {
+  assert.ok(this.role, "No active role");
+  assert.ok(
+    this.role.ctx.encounterIds.has(encounterId),
+    `Encounter "${encounterId}" not registered. Have: ${[...this.role.ctx.encounterIds].join(", ")}`
+  );
+});
 
 Then("encounter {string} should be consumed", function (this: BddWorld, encounterId: string) {
   assert.ok(this.role, "No active role");
@@ -169,16 +163,13 @@ Then("encounter count should be {int}", function (this: BddWorld, count: number)
   assert.equal(this.role.ctx.encounterIds.size, count);
 });
 
-Then(
-  "experience {string} should be registered",
-  function (this: BddWorld, expId: string) {
-    assert.ok(this.role, "No active role");
-    assert.ok(
-      this.role.ctx.experienceIds.has(expId),
-      `Experience "${expId}" not registered. Have: ${[...this.role.ctx.experienceIds].join(", ")}`
-    );
-  }
-);
+Then("experience {string} should be registered", function (this: BddWorld, expId: string) {
+  assert.ok(this.role, "No active role");
+  assert.ok(
+    this.role.ctx.experienceIds.has(expId),
+    `Experience "${expId}" not registered. Have: ${[...this.role.ctx.experienceIds].join(", ")}`
+  );
+});
 
 Then("experience {string} should be consumed", function (this: BddWorld, expId: string) {
   assert.ok(this.role, "No active role");

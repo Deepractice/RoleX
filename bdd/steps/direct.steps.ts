@@ -3,7 +3,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { type DataTable, Given, When, Then } from "@deepracticex/bdd";
+import { type DataTable, Given, Then, When } from "@deepracticex/bdd";
 import type { BddWorld } from "../support/world";
 
 // ===== Setup helpers =====
@@ -40,39 +40,48 @@ Given(
 
 // ===== Direct call =====
 
-When(
-  "I direct {string} with:",
-  async function (this: BddWorld, command: string, table: DataTable) {
-    try {
-      this.error = undefined;
-      const args = table.rowsHash();
-      const raw = await this.rolex!.direct(command, args);
-      // Store both raw result and serialized form
-      this.directRaw = raw as any;
-      this.directResult = typeof raw === "string" ? raw : JSON.stringify(raw, null, 2);
-    } catch (e) {
-      this.error = e as Error;
-      this.directRaw = undefined;
-      this.directResult = undefined;
-    }
+When("I direct {string} with:", async function (this: BddWorld, command: string, table: DataTable) {
+  try {
+    this.error = undefined;
+    const args = table.rowsHash();
+    const raw = await this.rolex!.direct(command, args);
+    // Store both raw result and serialized form
+    this.directRaw = raw as any;
+    this.directResult = typeof raw === "string" ? raw : JSON.stringify(raw, null, 2);
+  } catch (e) {
+    this.error = e as Error;
+    this.directRaw = undefined;
+    this.directResult = undefined;
   }
-);
+});
 
 // ===== Result assertions =====
 
 Then("the result process should be {string}", function (this: BddWorld, process: string) {
   assert.ok(this.directRaw, `Expected a result but got error: ${this.error?.message ?? "none"}`);
-  assert.equal(this.directRaw.process, process, `Expected process "${process}" but got "${this.directRaw.process}"`);
+  assert.equal(
+    this.directRaw.process,
+    process,
+    `Expected process "${process}" but got "${this.directRaw.process}"`
+  );
 });
 
 Then("the result state name should be {string}", function (this: BddWorld, name: string) {
   assert.ok(this.directRaw, `Expected a result but got error: ${this.error?.message ?? "none"}`);
-  assert.equal(this.directRaw.state.name, name, `Expected state name "${name}" but got "${this.directRaw.state.name}"`);
+  assert.equal(
+    this.directRaw.state.name,
+    name,
+    `Expected state name "${name}" but got "${this.directRaw.state.name}"`
+  );
 });
 
 Then("the result state id should be {string}", function (this: BddWorld, id: string) {
   assert.ok(this.directRaw, `Expected a result but got error: ${this.error?.message ?? "none"}`);
-  assert.equal(this.directRaw.state.id, id, `Expected state id "${id}" but got "${this.directRaw.state.id}"`);
+  assert.equal(
+    this.directRaw.state.id,
+    id,
+    `Expected state id "${id}" but got "${this.directRaw.state.id}"`
+  );
 });
 
 Then("the direct result should contain {string}", function (this: BddWorld, text: string) {

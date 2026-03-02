@@ -12,12 +12,11 @@
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { IWorldOptions } from "@deepracticex/bdd";
 import { After, AfterAll, setWorldConstructor, World } from "@deepracticex/bdd";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { localPlatform } from "@rolexjs/local-platform";
-import type { Rolex, Role } from "rolexjs";
+import type { Role, Rolex } from "rolexjs";
 import { createRoleX } from "rolexjs";
 
 // ========== MCP client management ==========
@@ -85,10 +84,6 @@ export class BddWorld extends World {
 
   // --- Shared ---
   error?: Error;
-
-  constructor(options: IWorldOptions) {
-    super(options);
-  }
 
   /** Connect to MCP server (dev mode — local source). */
   async connect(): Promise<void> {

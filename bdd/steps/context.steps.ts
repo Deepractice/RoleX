@@ -3,7 +3,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { Given, When, Then } from "@deepracticex/bdd";
+import { Given, Then, When } from "@deepracticex/bdd";
 import type { BddWorld } from "../support/world";
 
 // ===== Setup =====
@@ -48,13 +48,10 @@ Given("persisted focusedGoalId is null", function (this: BddWorld) {
   this.newSession();
 });
 
-Given(
-  "persisted focusedGoalId is {string}",
-  function (this: BddWorld, goalId: string) {
-    this.writeContext("sean", { focusedGoalId: goalId, focusedPlanId: null });
-    this.newSession();
-  }
-);
+Given("persisted focusedGoalId is {string}", function (this: BddWorld, goalId: string) {
+  this.writeContext("sean", { focusedGoalId: goalId, focusedPlanId: null });
+  this.newSession();
+});
 
 Given("no persisted context exists", function (this: BddWorld) {
   // Don't write any context file — just create a new session
