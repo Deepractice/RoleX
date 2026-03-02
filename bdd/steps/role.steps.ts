@@ -71,14 +71,14 @@ When("I focus on {string}", function (this: BddWorld, goalId: string) {
 Given(
   "I reflect on {string} as {string} with {string}",
   function (this: BddWorld, encounterId: string, expId: string, content: string) {
-    this.toolResult = this.role!.reflect(encounterId, content, expId);
+    this.toolResult = this.role!.reflect([encounterId], content, expId);
   }
 );
 
 When(
   "I reflect directly as {string} with {string}",
   function (this: BddWorld, expId: string, content: string) {
-    this.toolResult = this.role!.reflect(undefined, content, expId);
+    this.toolResult = this.role!.reflect([], content, expId);
   }
 );
 
@@ -87,14 +87,14 @@ When(
 Given(
   "I realize from {string} as {string} with {string}",
   function (this: BddWorld, expId: string, principleId: string, content: string) {
-    this.toolResult = this.role!.realize(expId, content, principleId);
+    this.toolResult = this.role!.realize([expId], content, principleId);
   }
 );
 
 When(
   "I realize directly as {string} with {string}",
   function (this: BddWorld, principleId: string, content: string) {
-    this.toolResult = this.role!.realize(undefined, content, principleId);
+    this.toolResult = this.role!.realize([], content, principleId);
   }
 );
 
@@ -103,7 +103,7 @@ When(
 Given(
   "I master from {string} as {string} with {string}",
   function (this: BddWorld, expId: string, procId: string, content: string) {
-    this.toolResult = this.role!.master(content, procId, expId);
+    this.toolResult = this.role!.master(content, procId, [expId]);
   }
 );
 

@@ -159,7 +159,7 @@ server.addTool({
     experience: z.string().optional().describe("Gherkin Feature source for the experience"),
   }),
   execute: async ({ ids, id, experience }) => {
-    return state.requireRole().reflect(ids[0] ?? undefined, experience, id);
+    return state.requireRole().reflect(ids, experience, id);
   },
 });
 
@@ -172,7 +172,7 @@ server.addTool({
     principle: z.string().optional().describe("Gherkin Feature source for the principle"),
   }),
   execute: async ({ ids, id, principle }) => {
-    return state.requireRole().realize(ids[0] ?? undefined, principle, id);
+    return state.requireRole().realize(ids, principle, id);
   },
 });
 
@@ -185,7 +185,7 @@ server.addTool({
     procedure: z.string().describe("Gherkin Feature source for the procedure"),
   }),
   execute: async ({ ids, id, procedure }) => {
-    return state.requireRole().master(procedure, id, ids?.[0]);
+    return state.requireRole().master(procedure, id, ids);
   },
 });
 

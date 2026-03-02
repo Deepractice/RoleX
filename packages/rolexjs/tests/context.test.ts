@@ -107,7 +107,7 @@ describe("Role (ctx management)", () => {
     expect(role.ctx.encounterIds.has("login-finished")).toBe(true);
 
     role.reflect(
-      "login-finished",
+      ["login-finished"],
       "Feature: Token insight\n  Scenario: OK\n    Given x\n    Then y",
       "token-insight"
     );
@@ -122,7 +122,7 @@ describe("Role (ctx management)", () => {
     const role = await rolex.activate("sean");
 
     const result = role.reflect(
-      undefined,
+      [],
       "Feature: Direct insight\n  Scenario: OK\n    Given learned from conversation",
       "conv-insight"
     );
@@ -138,7 +138,7 @@ describe("Role (ctx management)", () => {
     const role = await rolex.activate("sean");
 
     const result = role.realize(
-      undefined,
+      [],
       "Feature: Direct principle\n  Scenario: OK\n    Given always blame the product",
       "product-first"
     );
@@ -153,16 +153,12 @@ describe("Role (ctx management)", () => {
     const role = await rolex.activate("sean");
 
     // Create experience directly
-    role.reflect(
-      undefined,
-      "Feature: Insight\n  Scenario: OK\n    Given something learned",
-      "my-insight"
-    );
+    role.reflect([], "Feature: Insight\n  Scenario: OK\n    Given something learned", "my-insight");
     expect(role.ctx.experienceIds.has("my-insight")).toBe(true);
 
     // Realize from that experience
     role.realize(
-      "my-insight",
+      ["my-insight"],
       "Feature: Principle\n  Scenario: OK\n    Given a general truth",
       "my-principle"
     );

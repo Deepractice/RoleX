@@ -134,36 +134,58 @@ export class Role {
 
   // ---- Cognition ----
 
-  /** Reflect: consume encounter → experience. Empty encounter = direct creation. */
-  reflect(encounter?: string, experience?: string, id?: string): string {
-    if (encounter) {
-      this.ctx.requireEncounterIds([encounter]);
+  /** Reflect: consume encounters → experience. Empty encounters = direct creation. */
+  reflect(encounters: string[], experience?: string, id?: string): string {
+    if (encounters.length > 0) {
+      this.ctx.requireEncounterIds(encounters);
     }
-    const result = this.api.ops["role.reflect"](encounter, this.roleId, experience, id);
-    if (encounter) {
-      this.ctx.consumeEncounters([encounter]);
+    // First encounter goes through ops (creates experience + removes encounter)
+    const first = encounters[0] as string | undefined;
+    const result = this.api.ops["role.reflect"](first, this.roleId, experience, id);
+    // Remaining encounters are consumed via forget
+    for (let i = 1; i < encounters.length; i++) {
+      this.api.ops["role.forget"](encounters[i]);
+    }
+    if (encounters.length > 0) {
+      this.ctx.consumeEncounters(encounters);
     }
     if (id) this.ctx.addExperience(id);
     return this.fmt("reflect", id ?? "experience", result);
   }
 
-  /** Realize: consume experience → principle. Empty experience = direct creation. */
-  realize(experience?: string, principle?: string, id?: string): string {
-    if (experience) {
-      this.ctx.requireExperienceIds([experience]);
+  /** Realize: consume experiences → principle. Empty experiences = direct creation. */
+  realize(experiences: string[], principle?: string, id?: string): string {
+    if (experiences.length > 0) {
+      this.ctx.requireExperienceIds(experiences);
     }
-    const result = this.api.ops["role.realize"](experience, this.roleId, principle, id);
-    if (experience) {
-      this.ctx.consumeExperiences([experience]);
+    // First experience goes through ops (creates principle + removes experience)
+    const first = experiences[0] as string | undefined;
+    const result = this.api.ops["role.realize"](first, this.roleId, principle, id);
+    // Remaining experiences are consumed via forget
+    for (let i = 1; i < experiences.length; i++) {
+      this.api.ops["role.forget"](experiences[i]);
+    }
+    if (experiences.length > 0) {
+      this.ctx.consumeExperiences(experiences);
     }
     return this.fmt("realize", id ?? "principle", result);
   }
 
-  /** Master: create procedure, optionally consuming experience. */
-  master(procedure: string, id?: string, experience?: string): string {
-    if (experience) this.ctx.requireExperienceIds([experience]);
-    const result = this.api.ops["role.master"](this.roleId, procedure, id, experience);
-    if (experience) this.ctx.consumeExperiences([experience]);
+  /** Master: create procedure, optionally consuming experiences. */
+  master(procedure: string, id?: string, experiences?: string[]): string {
+    if (experiences && experiences.length > 0) {
+      this.ctx.requireExperienceIds(experiences);
+    }
+    // First experience goes through ops (creates procedure + removes experience)
+    const first = experiences?.[0];
+    const result = this.api.ops["role.master"](this.roleId, procedure, id, first);
+    // Remaining experiences are consumed via forget
+    if (experiences) {
+      for (let i = 1; i < experiences.length; i++) {
+        this.api.ops["role.forget"](experiences[i]);
+      }
+      this.ctx.consumeExperiences(experiences);
+    }
     return this.fmt("master", id ?? "procedure", result);
   }
 
