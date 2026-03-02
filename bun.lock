@@ -58,8 +58,8 @@
       "name": "@rolexjs/core",
       "version": "0.11.0",
       "dependencies": {
+        "@resourcexjs/core": "^2.14.0",
         "@rolexjs/system": "workspace:*",
-        "resourcexjs": "^2.14.0",
       },
     },
     "packages/genesis": {
@@ -76,7 +76,6 @@
         "@rolexjs/core": "workspace:*",
         "@rolexjs/system": "workspace:*",
         "drizzle-orm": "^0.45.1",
-        "resourcexjs": "^2.14.0",
       },
     },
     "packages/parser": {

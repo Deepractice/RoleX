@@ -15,7 +15,6 @@ import { openDatabase } from "@deepracticex/sqlite";
 import { NodeProvider } from "@resourcexjs/node-provider";
 import type { Platform } from "@rolexjs/core";
 import type { Initializer } from "@rolexjs/system";
-import { createResourceX, setProvider } from "resourcexjs";
 import { SqliteRepository } from "./SqliteRepository.js";
 
 // ===== Config =====
@@ -58,15 +57,9 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
 
   const repository = new SqliteRepository(db);
 
-  // ===== ResourceX =====
+  // ===== ResourceX Provider =====
 
-  let resourcex: ReturnType<typeof createResourceX> | undefined;
-  if (config.resourceDir !== null) {
-    setProvider(new NodeProvider());
-    resourcex = createResourceX({
-      path: config.resourceDir ?? join(deepracticeHome(), "resourcex"),
-    });
-  }
+  const resourcexProvider = config.resourceDir !== null ? new NodeProvider() : undefined;
 
   // ===== Initializer =====
 
@@ -76,7 +69,7 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
 
   return {
     repository,
-    resourcex,
+    resourcexProvider,
     initializer,
     bootstrap: config.bootstrap,
   };

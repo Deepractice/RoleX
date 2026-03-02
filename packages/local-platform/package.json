@@ -25,8 +25,7 @@
     "@resourcexjs/node-provider": "^2.14.0",
     "@rolexjs/core": "workspace:*",
     "@rolexjs/system": "workspace:*",
-    "drizzle-orm": "^0.45.1",
-    "resourcexjs": "^2.14.0"
+    "drizzle-orm": "^0.45.1"
   },
   "devDependencies": {},
   "publishConfig": {

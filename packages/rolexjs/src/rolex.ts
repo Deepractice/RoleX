@@ -15,6 +15,7 @@ import * as C from "@rolexjs/core";
 import { createOps, directives, type Ops, toArgs } from "@rolexjs/prototype";
 import type { Initializer, Runtime, Structure } from "@rolexjs/system";
 import type { ResourceX } from "resourcexjs";
+import { createResourceX, setProvider } from "resourcexjs";
 import { RoleContext } from "./context.js";
 import { findInState } from "./find.js";
 import { Role, type RolexInternal } from "./role.js";
@@ -40,9 +41,14 @@ export class Rolex {
   constructor(platform: Platform) {
     this.repo = platform.repository;
     this.rt = this.repo.runtime;
-    this.resourcex = platform.resourcex;
     this.initializer = platform.initializer;
     this.bootstrap = platform.bootstrap ?? [];
+
+    // Create ResourceX from injected provider
+    if (platform.resourcexProvider) {
+      setProvider(platform.resourcexProvider);
+      this.resourcex = createResourceX();
+    }
 
     // Ensure world roots exist
     const roots = this.rt.roots();
@@ -63,7 +69,7 @@ export class Rolex {
         return node;
       },
       find: (id: string) => this.find(id),
-      resourcex: platform.resourcex,
+      resourcex: this.resourcex,
       prototype: this.repo.prototype,
       direct: (locator: string, args?: Record<string, unknown>) => this.direct(locator, args),
     });

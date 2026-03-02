@@ -10,8 +10,9 @@
  * Platform combines a RoleXRepository (data access) with external services
  * (ResourceX, bootstrap config) to form a complete runtime environment.
  */
+
+import type { ResourceXProvider } from "@resourcexjs/core";
 import type { Initializer, Runtime } from "@rolexjs/system";
-import type { ResourceX } from "resourcexjs";
 
 /** Serializable context data for persistence. */
 export interface ContextData {
@@ -50,8 +51,8 @@ export interface Platform {
   /** Unified data access layer — graph, prototypes, contexts. */
   readonly repository: RoleXRepository;
 
-  /** Resource management capability (optional — requires resourcexjs). */
-  readonly resourcex?: ResourceX;
+  /** ResourceX provider — injected storage backend for resource management. */
+  readonly resourcexProvider?: ResourceXProvider;
 
   /** Initializer — bootstrap the world on first run. */
   readonly initializer?: Initializer;
