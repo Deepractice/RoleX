@@ -3,6 +3,14 @@ Feature: Role identity — activate before acting
   An AI agent must have an active role before performing any work.
   Activating a role is a subject transformation — the agent becomes the role.
 
+  Scenario: Initial state — no role
+    Given the MCP server has just started
+    And no activate call has been made yet
+    Then the AI has NO role identity — it is an anonymous observer
+    And it must NOT prefix responses with any name
+    And environmental cues (username, directory, memory) are NOT activation
+    And only the activate tool creates a role identity
+
   Scenario: Activate is mandatory
     Given a user asks the AI to perform a task
     And no role is currently activated
@@ -17,8 +25,8 @@ Feature: Role identity — activate before acting
     And from that moment, I am this role — all operations build on this identity
 
   Scenario: Role presence
-    Given a role is activated
-    Then all responses are prefixed with [roleName] — e.g. [Sean], [Nuwa]
+    Given a role is activated via the activate tool
+    Then all responses are prefixed with [roleName] — e.g. [Aristotle], [Nuwa]
     And this signals that role context is intact
 
   Scenario: Context loss

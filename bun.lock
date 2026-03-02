@@ -43,6 +43,17 @@
         "@modelcontextprotocol/sdk": "^1.27.1",
       },
     },
+    "bdd": {
+      "name": "@rolexjs/bdd",
+      "version": "0.0.0",
+      "devDependencies": {
+        "@deepracticex/bdd": "^0.2.0",
+        "@modelcontextprotocol/sdk": "^1.27.1",
+        "@rolexjs/core": "workspace:*",
+        "@rolexjs/local-platform": "workspace:*",
+        "rolexjs": "workspace:*",
+      },
+    },
     "packages/core": {
       "name": "@rolexjs/core",
       "version": "0.11.0",
@@ -361,6 +372,8 @@
     "@resourcexjs/core": ["@resourcexjs/core@2.17.2", "https://registry.npmmirror.com/@resourcexjs/core/-/core-2.17.2.tgz", { "dependencies": { "modern-tar": "^0.7.3", "zod": "^4.3.6" } }, "sha512-NdsNbBJOnC5a3TNrA8Qn0wCA/qvnYzEgNSGvL9Bq2kIMU6uSmQyTG1FKJvz/0RXgEa60GrOaJTJGvjQzxpjpdg=="],
 
     "@resourcexjs/node-provider": ["@resourcexjs/node-provider@2.17.2", "https://registry.npmmirror.com/@resourcexjs/node-provider/-/node-provider-2.17.2.tgz", { "dependencies": { "@resourcexjs/core": "^2.17.2" } }, "sha512-QlCWHhpBOJWbigYoR1wB3oKDLxgxC7g4mp0PRd6QuXCXQzpj3XOwKic8549/FmHN3LRfcn3gLahfCTtuEkH2EQ=="],
+
+    "@rolexjs/bdd": ["@rolexjs/bdd@workspace:bdd"],
 
     "@rolexjs/core": ["@rolexjs/core@workspace:packages/core"],
 

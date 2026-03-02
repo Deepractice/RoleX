@@ -7,14 +7,26 @@
 
 import { loadFeature, setDefaultTimeout } from "@deepracticex/bdd";
 
-// Support
-import "./support/mcp-world";
+// Support (unified world)
+import "./support/world";
 
 // Steps
 import "./steps/mcp.steps";
+import "./steps/context.steps";
+import "./steps/direct.steps";
+import "./steps/role.steps";
 
-// Timeout: MCP server startup can take a few seconds
-setDefaultTimeout(15_000);
+// Timeout: MCP/npx startup can take a while
+setDefaultTimeout(60_000);
 
 // ===== Journeys =====
 loadFeature("bdd/journeys/mcp-startup.feature");
+loadFeature("bdd/journeys/onboarding.feature");
+
+// ===== Features =====
+loadFeature("bdd/features/context-persistence.feature");
+loadFeature("bdd/features/individual-lifecycle.feature");
+loadFeature("bdd/features/organization-lifecycle.feature");
+loadFeature("bdd/features/position-lifecycle.feature");
+loadFeature("bdd/features/execution-loop.feature");
+loadFeature("bdd/features/cognition-loop.feature");

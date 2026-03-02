@@ -6,7 +6,8 @@
   "type": "module",
   "workspaces": [
     "packages/*",
-    "apps/*"
+    "apps/*",
+    "bdd"
   ],
   "scripts": {
     "build": "turbo build",

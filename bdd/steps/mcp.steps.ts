@@ -4,17 +4,21 @@
 
 import { strict as assert } from "node:assert";
 import { type DataTable, Given, Then, When } from "@deepracticex/bdd";
-import type { McpWorld } from "../support/mcp-world";
+import type { BddWorld } from "../support/world";
 
 // ===== Setup =====
 
-Given("the MCP server is running", async function (this: McpWorld) {
+Given("the MCP server is running", async function (this: BddWorld) {
   await this.connect();
+});
+
+Given("the MCP server is running via npx", async function (this: BddWorld) {
+  await this.connectNpx();
 });
 
 // ===== Tool listing =====
 
-Then("the following tools should be available:", async function (this: McpWorld, table: DataTable) {
+Then("the following tools should be available:", async function (this: BddWorld, table: DataTable) {
   const { tools } = await this.client.listTools();
   const names = tools.map((t) => t.name);
   const expected = table.rows().map((row) => row[0]);
@@ -28,7 +32,7 @@ Then("the following tools should be available:", async function (this: McpWorld,
 
 When(
   "I call tool {string} with:",
-  async function (this: McpWorld, toolName: string, table: DataTable) {
+  async function (this: BddWorld, toolName: string, table: DataTable) {
     try {
       this.error = undefined;
       const args = table.rowsHash();
@@ -47,7 +51,7 @@ When(
 
 // ===== Result assertions =====
 
-Then("the tool result should contain {string}", function (this: McpWorld, text: string) {
+Then("the tool result should contain {string}", function (this: BddWorld, text: string) {
   assert.ok(this.toolResult, "Expected a tool result but got none");
   assert.ok(
     this.toolResult.includes(text),

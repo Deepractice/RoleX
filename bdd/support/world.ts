@@ -1,87 +1,131 @@
 /**
- * RoleX BDD World — test context for all systems.
+ * Unified BDD World — test context for all RoleX BDD tests.
  *
- * Each scenario gets a fresh platform, graph, and all four systems.
+ * Combines three layers:
+ *   - MCP (dev): local source via `bun run src/index.ts`
+ *   - MCP (npx): published package via `npx @rolexjs/mcp-server`
+ *   - Rolex: in-process Rolex API with file-based persistence
+ *
+ * Each scenario gets a fresh World instance. MCP clients are shared (expensive startup).
  */
 
-import { setWorldConstructor, World } from "@deepractice/bdd";
-import type { Feature, Platform, SerializedGraph } from "@rolexjs/core";
-import {
-  createGovernanceSystem,
-  createIndividualSystem,
-  createOrgSystem,
-  createRoleSystem,
-  RoleXGraph,
-} from "@rolexjs/core";
-import type { RunnableSystem } from "@rolexjs/system";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import type { IWorldOptions } from "@deepracticex/bdd";
+import { After, AfterAll, setWorldConstructor, World } from "@deepracticex/bdd";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { localPlatform } from "@rolexjs/local-platform";
+import type { Rolex, Role } from "rolexjs";
+import { createRoleX } from "rolexjs";
 
-// ========== MemoryPlatform ==========
+// ========== MCP client management ==========
 
-export class MemoryPlatform implements Platform {
-  private graph: SerializedGraph = { nodes: [], edges: [] };
-  private content = new Map<string, Feature>();
-  private settings: Record<string, unknown> = {};
+const SERVER_PATH = join(import.meta.dirname, "../../apps/mcp-server/src/index.ts");
 
-  loadGraph(): SerializedGraph {
-    return this.graph;
-  }
-  saveGraph(graph: SerializedGraph): void {
-    this.graph = graph;
-  }
-  writeContent(key: string, content: Feature): void {
-    this.content.set(key, content);
-  }
-  readContent(key: string): Feature | null {
-    return this.content.get(key) ?? null;
-  }
-  removeContent(key: string): void {
-    this.content.delete(key);
-  }
-  readSettings(): Record<string, unknown> {
-    return this.settings;
-  }
-  writeSettings(settings: Record<string, unknown>): void {
-    this.settings = { ...this.settings, ...settings };
-  }
+interface McpConnection {
+  client: Client;
+  transport: StdioClientTransport;
 }
+
+const connections = new Map<string, McpConnection>();
+
+async function ensureMcpClient(mode: "dev" | "npx"): Promise<Client> {
+  const existing = connections.get(mode);
+  if (existing) return existing.client;
+
+  let transport: StdioClientTransport;
+  if (mode === "npx") {
+    // Run npx from /tmp to avoid workspace overrides conflict
+    transport = new StdioClientTransport({
+      command: "npx",
+      args: ["@rolexjs/mcp-server@dev"],
+      cwd: tmpdir(),
+    });
+  } else {
+    transport = new StdioClientTransport({
+      command: "bun",
+      args: ["run", SERVER_PATH],
+    });
+  }
+
+  const client = new Client({
+    name: `rolex-bdd-${mode}`,
+    version: "1.0.0",
+  });
+
+  await client.connect(transport);
+  connections.set(mode, { client, transport });
+  return client;
+}
+
+AfterAll(async () => {
+  for (const [, conn] of connections) {
+    await conn.client.close();
+    await conn.transport.close();
+  }
+  connections.clear();
+});
 
 // ========== World ==========
 
-export class RoleXWorld extends World {
-  platform!: MemoryPlatform;
-  graph!: RoleXGraph;
-  roleSystem!: RunnableSystem;
-  individualSystem!: RunnableSystem;
-  orgSystem!: RunnableSystem;
-  govSystem!: RunnableSystem;
+export class BddWorld extends World {
+  // --- MCP layer ---
+  client!: Client;
+  toolResult?: string;
+  tools?: Array<{ name: string }>;
 
-  /** Last operation result */
-  result?: string;
-  /** Last operation error */
+  // --- Rolex layer ---
+  dataDir?: string;
+  rolex?: Rolex;
+  role?: Role;
+  directResult?: string;
+  directRaw?: any;
+
+  // --- Shared ---
   error?: Error;
 
-  /** Initialize fresh systems */
-  init(): void {
-    this.platform = new MemoryPlatform();
-    this.graph = new RoleXGraph();
-    this.roleSystem = createRoleSystem(this.graph, this.platform);
-    this.individualSystem = createIndividualSystem(this.graph, this.platform);
-    this.orgSystem = createOrgSystem(this.graph, this.platform);
-    this.govSystem = createGovernanceSystem(this.graph, this.platform);
-    this.result = undefined;
-    this.error = undefined;
+  constructor(options: IWorldOptions) {
+    super(options);
   }
 
-  /** Execute and capture result or error */
-  async run(system: RunnableSystem, process: string, args: unknown): Promise<void> {
-    try {
-      this.error = undefined;
-      this.result = await system.execute(process, args);
-    } catch (e) {
-      this.error = e as Error;
-      this.result = undefined;
-    }
+  /** Connect to MCP server (dev mode — local source). */
+  async connect(): Promise<void> {
+    this.client = await ensureMcpClient("dev");
+  }
+
+  /** Connect to MCP server (npx mode — published package). */
+  async connectNpx(): Promise<void> {
+    this.client = await ensureMcpClient("npx");
+  }
+
+  /** Initialize Rolex with a temp data directory for persistence tests. */
+  initRolex(): void {
+    this.dataDir = join(tmpdir(), `rolex-bdd-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    mkdirSync(this.dataDir, { recursive: true });
+    this.rolex = createRoleX(localPlatform({ dataDir: this.dataDir, resourceDir: null }));
+  }
+
+  /** Write persisted context JSON directly (simulate a previous session). */
+  writeContext(roleId: string, data: Record<string, unknown>): void {
+    if (!this.dataDir) throw new Error("Call initRolex() first");
+    const contextDir = join(this.dataDir, "context");
+    mkdirSync(contextDir, { recursive: true });
+    writeFileSync(join(contextDir, `${roleId}.json`), JSON.stringify(data, null, 2), "utf-8");
+  }
+
+  /** Re-create Rolex instance (simulate new session with same dataDir). */
+  newSession(): void {
+    if (!this.dataDir) throw new Error("Call initRolex() first");
+    this.rolex = createRoleX(localPlatform({ dataDir: this.dataDir, resourceDir: null }));
   }
 }
 
-setWorldConstructor(RoleXWorld);
+After(function (this: BddWorld) {
+  if (this.dataDir && existsSync(this.dataDir)) {
+    rmSync(this.dataDir, { recursive: true });
+  }
+});
+
+setWorldConstructor(BddWorld);
