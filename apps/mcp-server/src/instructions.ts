@@ -6,14 +6,4 @@
  */
 import { world } from "rolexjs";
 
-export const instructions = [
-  world["cognitive-priority"],
-  world["role-identity"],
-  world.execution,
-  world.cognition,
-  world.memory,
-  world.gherkin,
-  world.communication,
-  world["skill-system"],
-  world["state-origin"],
-].join("\n\n");
+export const instructions = Object.values(world).join("\n\n");

@@ -3,7 +3,7 @@ import { relation, structure } from "@rolexjs/system";
 import { localPlatform } from "../src/index.js";
 
 function createGraphRuntime() {
-  return localPlatform({ dataDir: null }).runtime;
+  return localPlatform({ dataDir: null }).repository.runtime;
 }
 
 // ================================================================
@@ -50,67 +50,67 @@ describe("Graph Runtime", () => {
   // ============================================================
 
   describe("create & project", () => {
-    test("create root node", () => {
+    test("create root node", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
+      const root = await rt.create(null, society);
 
       expect(root.ref).toBeDefined();
       expect(root.name).toBe("society");
 
-      const state = rt.project(root);
+      const state = await rt.project(root);
       expect(state.name).toBe("society");
       expect(state.children).toHaveLength(0);
     });
 
-    test("create child under parent", () => {
+    test("create child under parent", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual);
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual);
 
       expect(sean.name).toBe("individual");
 
-      const state = rt.project(root);
+      const state = await rt.project(root);
       expect(state.children).toHaveLength(1);
       expect(state.children![0].name).toBe("individual");
     });
 
-    test("create node with information", () => {
+    test("create node with information", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual, "Feature: I am Sean");
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual, "Feature: I am Sean");
 
-      const state = rt.project(sean);
+      const state = await rt.project(sean);
       expect(state.information).toBe("Feature: I am Sean");
     });
 
-    test("node is concept + container + information carrier", () => {
+    test("node is concept + container + information carrier", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual);
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual);
 
       // experience as information carrier (no children)
-      const exp1 = rt.create(sean, experience, "Feature: I learned JWT...");
-      const s1 = rt.project(exp1);
+      const exp1 = await rt.create(sean, experience, "Feature: I learned JWT...");
+      const s1 = await rt.project(exp1);
       expect(s1.information).toBe("Feature: I learned JWT...");
       expect(s1.children).toHaveLength(0);
 
       // experience as container (has children)
-      const exp2 = rt.create(sean, experience);
-      const _child = rt.create(exp2, encounter, "Feature: JWT incident");
-      const s2 = rt.project(exp2);
+      const exp2 = await rt.create(sean, experience);
+      const _child = await rt.create(exp2, encounter, "Feature: JWT incident");
+      const s2 = await rt.project(exp2);
       expect(s2.information).toBeUndefined();
       expect(s2.children).toHaveLength(1);
       expect(s2.children![0].name).toBe("encounter");
     });
 
-    test("deep tree — society > individual > identity > background", () => {
+    test("deep tree — society > individual > identity > background", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual);
-      const id = rt.create(sean, identity);
-      const _bg = rt.create(id, background, "Feature: CS from MIT");
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual);
+      const id = await rt.create(sean, identity);
+      const _bg = await rt.create(id, background, "Feature: CS from MIT");
 
-      const state = rt.project(root);
+      const state = await rt.project(root);
       expect(state.children).toHaveLength(1);
       const indState = state.children![0];
       expect(indState.children).toHaveLength(1);
@@ -120,17 +120,17 @@ describe("Graph Runtime", () => {
       expect(idState.children![0].information).toBe("Feature: CS from MIT");
     });
 
-    test("multiple children under same parent", () => {
+    test("multiple children under same parent", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual);
-      const id = rt.create(sean, identity);
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual);
+      const id = await rt.create(sean, identity);
 
-      rt.create(id, background, "Feature: My background");
-      rt.create(id, tone, "Feature: My tone");
-      rt.create(id, mindset, "Feature: My mindset");
+      await rt.create(id, background, "Feature: My background");
+      await rt.create(id, tone, "Feature: My tone");
+      await rt.create(id, mindset, "Feature: My mindset");
 
-      const state = rt.project(id);
+      const state = await rt.project(id);
       expect(state.children).toHaveLength(3);
       const names = state.children!.map((c) => c.name);
       expect(names).toContain("background");
@@ -144,34 +144,34 @@ describe("Graph Runtime", () => {
   // ============================================================
 
   describe("remove", () => {
-    test("remove a leaf node", () => {
+    test("remove a leaf node", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual);
-      const k = rt.create(sean, knowledge);
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual);
+      const k = await rt.create(sean, knowledge);
 
-      rt.remove(k);
-      const state = rt.project(sean);
+      await rt.remove(k);
+      const state = await rt.project(sean);
       expect(state.children).toHaveLength(0);
     });
 
-    test("remove a subtree", () => {
+    test("remove a subtree", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual);
-      const id = rt.create(sean, identity);
-      rt.create(id, background, "bg");
-      rt.create(id, tone, "tone");
-      rt.create(id, mindset, "mindset");
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual);
+      const id = await rt.create(sean, identity);
+      await rt.create(id, background, "bg");
+      await rt.create(id, tone, "tone");
+      await rt.create(id, mindset, "mindset");
 
-      rt.remove(id); // removes identity + background + tone + mindset
-      const state = rt.project(sean);
+      await rt.remove(id); // removes identity + background + tone + mindset
+      const state = await rt.project(sean);
       expect(state.children).toHaveLength(0);
     });
 
-    test("remove node without ref is a no-op", () => {
+    test("remove node without ref is a no-op", async () => {
       const rt = createGraphRuntime();
-      rt.remove(individual); // no ref, should not throw
+      await rt.remove(individual); // no ref, should not throw
     });
   });
 
@@ -180,82 +180,82 @@ describe("Graph Runtime", () => {
   // ============================================================
 
   describe("transform", () => {
-    test("finish: transform task → encounter", () => {
+    test("finish: transform task → encounter", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual);
-      const g = rt.create(sean, goal, "Feature: Build auth");
-      const p = rt.create(g, plan, "Feature: Auth plan");
-      const t = rt.create(p, task, "Feature: Implement login");
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual);
+      const g = await rt.create(sean, goal, "Feature: Build auth");
+      const p = await rt.create(g, plan, "Feature: Auth plan");
+      const t = await rt.create(p, task, "Feature: Implement login");
 
-      const enc = rt.transform(t, encounter, "Feature: Login done, learned about JWT");
+      const enc = await rt.transform(t, encounter, "Feature: Login done, learned about JWT");
       expect(enc.name).toBe("encounter");
       expect(enc.information).toBe("Feature: Login done, learned about JWT");
 
       // encounter should be under individual (sean)
-      const state = rt.project(sean);
+      const state = await rt.project(sean);
       const encounterStates = state.children!.filter((c) => c.name === "encounter");
       expect(encounterStates).toHaveLength(1);
     });
 
-    test("achieve: transform goal → encounter", () => {
+    test("achieve: transform goal → encounter", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual);
-      rt.create(sean, goal, "Feature: Build auth");
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual);
+      await rt.create(sean, goal, "Feature: Build auth");
 
-      const enc = rt.transform(sean, encounter, "Feature: Auth achieved");
+      const enc = await rt.transform(sean, encounter, "Feature: Auth achieved");
       expect(enc.name).toBe("encounter");
 
-      const state = rt.project(sean);
+      const state = await rt.project(sean);
       const encounters = state.children!.filter((c) => c.name === "encounter");
       expect(encounters).toHaveLength(1);
     });
 
-    test("reflect: transform encounter → experience", () => {
+    test("reflect: transform encounter → experience", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual);
-      const enc = rt.create(sean, encounter, "Feature: JWT incident");
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual);
+      const enc = await rt.create(sean, encounter, "Feature: JWT incident");
 
-      const exp = rt.transform(enc, experience, "Feature: Always use refresh tokens");
+      const exp = await rt.transform(enc, experience, "Feature: Always use refresh tokens");
       expect(exp.name).toBe("experience");
 
-      const state = rt.project(sean);
+      const state = await rt.project(sean);
       const experiences = state.children!.filter((c) => c.name === "experience");
       expect(experiences).toHaveLength(1);
       expect(experiences[0].information).toBe("Feature: Always use refresh tokens");
     });
 
-    test("realize: transform experience → principle", () => {
+    test("realize: transform experience → principle", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual);
-      rt.create(sean, knowledge);
-      const exp = rt.create(sean, experience, "Feature: Auth lessons");
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual);
+      await rt.create(sean, knowledge);
+      const exp = await rt.create(sean, experience, "Feature: Auth lessons");
 
-      const prin = rt.transform(exp, principle, "Feature: Security first");
+      const prin = await rt.transform(exp, principle, "Feature: Security first");
       expect(prin.name).toBe("principle");
 
       // principle should be under knowledge
-      const state = rt.project(sean);
+      const state = await rt.project(sean);
       const knowledgeState = state.children!.find((c) => c.name === "knowledge");
       expect(knowledgeState).toBeDefined();
       expect(knowledgeState!.children).toHaveLength(1);
       expect(knowledgeState!.children![0].name).toBe("principle");
     });
 
-    test("retire: transform individual → past", () => {
+    test("retire: transform individual → past", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      rt.create(root, past);
-      const sean = rt.create(root, individual, "Feature: Sean");
+      const root = await rt.create(null, society);
+      await rt.create(root, past);
+      const sean = await rt.create(root, individual, "Feature: Sean");
 
-      const retired = rt.transform(sean, past, "Feature: Sean retired");
+      const retired = await rt.transform(sean, past, "Feature: Sean retired");
       expect(retired.name).toBe("past");
 
       // past node should exist under society
-      const state = rt.project(root);
+      const state = await rt.project(root);
       const pastNodes = state.children!.filter((c) => c.name === "past");
       expect(pastNodes.length).toBeGreaterThanOrEqual(1);
     });
@@ -266,154 +266,158 @@ describe("Graph Runtime", () => {
   // ============================================================
 
   describe("link & unlink", () => {
-    test("hire: link organization membership", () => {
+    test("hire: link organization membership", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual, "Feature: I am Sean");
-      const dp = rt.create(root, organization);
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual, "Feature: I am Sean");
+      const dp = await rt.create(root, organization);
 
-      rt.link(dp, sean, "membership", "belong");
+      await rt.link(dp, sean, "membership", "belong");
 
-      const state = rt.project(dp);
+      const state = await rt.project(dp);
       expect(state.links).toHaveLength(1);
       expect(state.links![0].relation).toBe("membership");
       expect(state.links![0].target.name).toBe("individual");
       expect(state.links![0].target.information).toBe("Feature: I am Sean");
     });
 
-    test("fire: unlink organization membership", () => {
+    test("fire: unlink organization membership", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual);
-      const dp = rt.create(root, organization);
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual);
+      const dp = await rt.create(root, organization);
 
-      rt.link(dp, sean, "membership", "belong");
-      rt.unlink(dp, sean, "membership", "belong");
+      await rt.link(dp, sean, "membership", "belong");
+      await rt.unlink(dp, sean, "membership", "belong");
 
-      const state = rt.project(dp);
+      const state = await rt.project(dp);
       expect(state.links).toBeUndefined();
     });
 
-    test("appoint: link position appointment", () => {
+    test("appoint: link position appointment", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual, "Feature: I am Sean");
-      const dp = rt.create(root, organization);
-      const arch = rt.create(dp, position);
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual, "Feature: I am Sean");
+      const dp = await rt.create(root, organization);
+      const arch = await rt.create(dp, position);
 
-      rt.link(arch, sean, "appointment", "serve");
+      await rt.link(arch, sean, "appointment", "serve");
 
-      const state = rt.project(arch);
+      const state = await rt.project(arch);
       expect(state.links).toHaveLength(1);
       expect(state.links![0].relation).toBe("appointment");
       expect(state.links![0].target.name).toBe("individual");
     });
 
-    test("dismiss: unlink position appointment", () => {
+    test("dismiss: unlink position appointment", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual);
-      const dp = rt.create(root, organization);
-      const arch = rt.create(dp, position);
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual);
+      const dp = await rt.create(root, organization);
+      const arch = await rt.create(dp, position);
 
-      rt.link(arch, sean, "appointment", "serve");
-      rt.unlink(arch, sean, "appointment", "serve");
+      await rt.link(arch, sean, "appointment", "serve");
+      await rt.unlink(arch, sean, "appointment", "serve");
 
-      const state = rt.project(arch);
+      const state = await rt.project(arch);
       expect(state.links).toBeUndefined();
     });
 
-    test("link is idempotent", () => {
+    test("link is idempotent", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual);
-      const dp = rt.create(root, organization);
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual);
+      const dp = await rt.create(root, organization);
 
-      rt.link(dp, sean, "membership", "belong");
-      rt.link(dp, sean, "membership", "belong"); // duplicate
+      await rt.link(dp, sean, "membership", "belong");
+      await rt.link(dp, sean, "membership", "belong"); // duplicate
 
-      const state = rt.project(dp);
+      const state = await rt.project(dp);
       expect(state.links).toHaveLength(1);
     });
 
-    test("multiple members in one organization", () => {
+    test("multiple members in one organization", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual, "Feature: Sean");
-      const alice = rt.create(root, individual, "Feature: Alice");
-      const dp = rt.create(root, organization);
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual, "Feature: Sean");
+      const alice = await rt.create(root, individual, "Feature: Alice");
+      const dp = await rt.create(root, organization);
 
-      rt.link(dp, sean, "membership", "belong");
-      rt.link(dp, alice, "membership", "belong");
+      await rt.link(dp, sean, "membership", "belong");
+      await rt.link(dp, alice, "membership", "belong");
 
-      const state = rt.project(dp);
+      const state = await rt.project(dp);
       expect(state.links).toHaveLength(2);
     });
 
-    test("parent projection includes child links", () => {
+    test("parent projection includes child links", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual, "Feature: Sean");
-      const dp = rt.create(root, organization);
-      const arch = rt.create(dp, position);
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual, "Feature: Sean");
+      const dp = await rt.create(root, organization);
+      const arch = await rt.create(dp, position);
 
-      rt.link(arch, sean, "appointment", "serve");
+      await rt.link(arch, sean, "appointment", "serve");
 
       // project from org level
-      const state = rt.project(dp);
+      const state = await rt.project(dp);
       expect(state.children).toHaveLength(1);
       expect(state.children![0].links).toHaveLength(1);
       expect(state.children![0].links![0].target.name).toBe("individual");
     });
 
-    test("remove source node cleans up outgoing links", () => {
+    test("remove source node cleans up outgoing links", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual);
-      const dp = rt.create(root, organization);
-      const arch = rt.create(dp, position);
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual);
+      const dp = await rt.create(root, organization);
+      const arch = await rt.create(dp, position);
 
-      rt.link(arch, sean, "appointment", "serve");
-      rt.remove(arch);
+      await rt.link(arch, sean, "appointment", "serve");
+      await rt.remove(arch);
 
-      const state = rt.project(dp);
+      const state = await rt.project(dp);
       expect(state.children).toHaveLength(0);
     });
 
-    test("remove target node cleans up incoming links", () => {
+    test("remove target node cleans up incoming links", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual);
-      const dp = rt.create(root, organization);
-      const arch = rt.create(dp, position);
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual);
+      const dp = await rt.create(root, organization);
+      const arch = await rt.create(dp, position);
 
-      rt.link(arch, sean, "appointment", "serve");
-      rt.remove(sean);
+      await rt.link(arch, sean, "appointment", "serve");
+      await rt.remove(sean);
 
-      const state = rt.project(arch);
+      const state = await rt.project(arch);
       expect(state.links).toBeUndefined();
     });
 
-    test("link throws if source has no ref", () => {
+    test("link throws if source has no ref", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual);
-      expect(() => rt.link(individual, sean, "test", "test-rev")).toThrow("Source node has no ref");
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual);
+      expect(rt.link(individual, sean, "test", "test-rev")).rejects.toThrow(
+        "Source node has no ref"
+      );
     });
 
-    test("link throws if target has no ref", () => {
+    test("link throws if target has no ref", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual);
-      expect(() => rt.link(sean, individual, "test", "test-rev")).toThrow("Target node has no ref");
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual);
+      expect(rt.link(sean, individual, "test", "test-rev")).rejects.toThrow(
+        "Target node has no ref"
+      );
     });
 
-    test("node without links has no links in projection", () => {
+    test("node without links has no links in projection", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual);
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual);
 
-      const state = rt.project(sean);
+      const state = await rt.project(sean);
       expect(state.links).toBeUndefined();
     });
   });
@@ -423,34 +427,34 @@ describe("Graph Runtime", () => {
   // ============================================================
 
   describe("execution cycle", () => {
-    test("want → plan → todo → finish → reflect → realize", () => {
+    test("want → plan → todo → finish → reflect → realize", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual);
-      rt.create(sean, knowledge);
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual);
+      await rt.create(sean, knowledge);
 
       // want: create goal
-      const g = rt.create(sean, goal, "Feature: Build auth system");
+      const g = await rt.create(sean, goal, "Feature: Build auth system");
       expect(g.name).toBe("goal");
 
       // plan: create plan under goal
-      const p = rt.create(g, plan, "Feature: Auth implementation plan");
+      const p = await rt.create(g, plan, "Feature: Auth implementation plan");
       expect(p.name).toBe("plan");
 
       // todo: create task under plan
-      const t = rt.create(p, task, "Feature: Implement JWT login");
+      const t = await rt.create(p, task, "Feature: Implement JWT login");
       expect(t.name).toBe("task");
 
       // finish: transform task → encounter
-      const enc = rt.transform(t, encounter, "Feature: JWT login done");
+      const enc = await rt.transform(t, encounter, "Feature: JWT login done");
       expect(enc.name).toBe("encounter");
 
       // reflect: transform encounter → experience
-      const exp = rt.transform(enc, experience, "Feature: JWT refresh tokens are essential");
+      const exp = await rt.transform(enc, experience, "Feature: JWT refresh tokens are essential");
       expect(exp.name).toBe("experience");
 
       // realize: transform experience → principle
-      const prin = rt.transform(
+      const prin = await rt.transform(
         exp,
         principle,
         "Feature: Always use short-lived tokens with refresh"
@@ -458,7 +462,7 @@ describe("Graph Runtime", () => {
       expect(prin.name).toBe("principle");
 
       // verify final state
-      const state = rt.project(sean);
+      const state = await rt.project(sean);
       const knowledgeState = state.children!.find((c) => c.name === "knowledge");
       expect(knowledgeState).toBeDefined();
       expect(knowledgeState!.children).toHaveLength(1);
@@ -474,44 +478,44 @@ describe("Graph Runtime", () => {
   // ============================================================
 
   describe("organization scenario", () => {
-    test("found → establish → born → hire → appoint → dismiss → fire", () => {
+    test("found → establish → born → hire → appoint → dismiss → fire", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
+      const root = await rt.create(null, society);
 
       // found: create organization
-      const dp = rt.create(root, organization);
+      const dp = await rt.create(root, organization);
 
       // establish: create position
-      const arch = rt.create(dp, position);
-      const _archDuty = rt.create(arch, duty, "Feature: Design system architecture");
+      const arch = await rt.create(dp, position);
+      const _archDuty = await rt.create(arch, duty, "Feature: Design system architecture");
 
       // born: create individual
-      const sean = rt.create(root, individual, "Feature: I am Sean");
+      const sean = await rt.create(root, individual, "Feature: I am Sean");
 
       // hire: link membership
-      rt.link(dp, sean, "membership", "belong");
-      let orgState = rt.project(dp);
+      await rt.link(dp, sean, "membership", "belong");
+      let orgState = await rt.project(dp);
       expect(orgState.links).toHaveLength(1);
       expect(orgState.links![0].relation).toBe("membership");
 
       // appoint: link appointment
-      rt.link(arch, sean, "appointment", "serve");
-      let posState = rt.project(arch);
+      await rt.link(arch, sean, "appointment", "serve");
+      let posState = await rt.project(arch);
       expect(posState.links).toHaveLength(1);
       expect(posState.links![0].relation).toBe("appointment");
 
       // dismiss: unlink appointment
-      rt.unlink(arch, sean, "appointment", "serve");
-      posState = rt.project(arch);
+      await rt.unlink(arch, sean, "appointment", "serve");
+      posState = await rt.project(arch);
       expect(posState.links).toBeUndefined();
 
       // fire: unlink membership
-      rt.unlink(dp, sean, "membership", "belong");
-      orgState = rt.project(dp);
+      await rt.unlink(dp, sean, "membership", "belong");
+      orgState = await rt.project(dp);
       expect(orgState.links).toBeUndefined();
 
       // individual still exists
-      const seanState = rt.project(sean);
+      const seanState = await rt.project(sean);
       expect(seanState.name).toBe("individual");
     });
   });
@@ -521,43 +525,43 @@ describe("Graph Runtime", () => {
   // ============================================================
 
   describe("id & alias", () => {
-    test("create with id stores it on node", () => {
+    test("create with id stores it on node", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual, "Feature: Sean", "sean");
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual, "Feature: Sean", "sean");
       expect(sean.ref).toBeDefined();
       expect(sean.id).toBe("sean");
     });
 
-    test("create with id and alias stores both", () => {
+    test("create with id and alias stores both", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual, "Feature: Sean", "sean", ["Sean", "姜山"]);
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual, "Feature: Sean", "sean", ["Sean", "姜山"]);
       expect(sean.id).toBe("sean");
       expect(sean.alias).toEqual(["Sean", "姜山"]);
     });
 
-    test("id and alias appear in projection", () => {
+    test("id and alias appear in projection", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual, "Feature: Sean", "sean", ["Sean"]);
-      const state = rt.project(sean);
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual, "Feature: Sean", "sean", ["Sean"]);
+      const state = await rt.project(sean);
       expect(state.id).toBe("sean");
       expect(state.alias).toEqual(["Sean"]);
     });
 
-    test("create without id has no id field", () => {
+    test("create without id has no id field", async () => {
       const rt = createGraphRuntime();
-      const root = rt.create(null, society);
-      const sean = rt.create(root, individual, "Feature: Sean");
+      const root = await rt.create(null, society);
+      const sean = await rt.create(root, individual, "Feature: Sean");
       expect(sean.id).toBeUndefined();
       expect(sean.alias).toBeUndefined();
     });
 
-    test("id and alias appear in roots()", () => {
+    test("id and alias appear in roots()", async () => {
       const rt = createGraphRuntime();
-      const _root = rt.create(null, society, undefined, "world", ["World"]);
-      const roots = rt.roots();
+      const _root = await rt.create(null, society, undefined, "world", ["World"]);
+      const roots = await rt.roots();
       expect(roots).toHaveLength(1);
       expect(roots[0].id).toBe("world");
       expect(roots[0].alias).toEqual(["World"]);

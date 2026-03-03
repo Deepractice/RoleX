@@ -1,0 +1,7 @@
+{
+  "name": "skill-creator",
+  "type": "skill",
+  "description": "Guide for creating RoleX skills — directory structure, SKILL.md format, procedure contract",
+  "author": "deepractice",
+  "keywords": ["rolex", "skill", "creator", "guide"]
+}

@@ -130,6 +130,30 @@ describe("stateToFiles", () => {
     expect(manifest.links).toEqual({ belong: ["deepractice"] });
   });
 
+  test("child node links are serialized", () => {
+    const plan1 = state("plan", { id: "phase-1", information: "Feature: Phase 1" });
+    const plan2 = state("plan", {
+      id: "phase-2",
+      information: "Feature: Phase 2",
+      links: [{ relation: "after", target: state("plan", { id: "phase-1" }) }],
+    });
+    const s = state("individual", {
+      id: "sean",
+      children: [
+        state("goal", {
+          id: "g1",
+          information: "Feature: Goal",
+          children: [plan1, plan2],
+        }),
+      ],
+    });
+    const { manifest } = stateToFiles(s);
+
+    const goalNode = manifest.children?.g1;
+    expect(goalNode?.children?.["phase-1"]?.links).toBeUndefined();
+    expect(goalNode?.children?.["phase-2"]?.links).toEqual({ after: ["phase-1"] });
+  });
+
   test("multiple links of same relation", () => {
     const org1 = state("organization", { id: "dp" });
     const org2 = state("organization", { id: "acme" });
@@ -270,6 +294,28 @@ describe("filesToState", () => {
     expect(s.links![0].relation).toBe("belong");
     expect(s.links![0].target.id).toBe("deepractice");
   });
+
+  test("child node links are deserialized", () => {
+    const manifest = {
+      id: "sean",
+      type: "individual",
+      children: {
+        g1: {
+          type: "goal",
+          children: {
+            "phase-1": { type: "plan" },
+            "phase-2": { type: "plan", links: { after: ["phase-1"] } },
+          },
+        },
+      },
+    };
+    const s = filesToState(manifest, {});
+    const goal = s.children![0];
+    const phase2 = goal.children!.find((c) => c.id === "phase-2")!;
+    expect(phase2.links).toHaveLength(1);
+    expect(phase2.links![0].relation).toBe("after");
+    expect(phase2.links![0].target.id).toBe("phase-1");
+  });
 });
 
 // ================================================================
@@ -321,6 +367,47 @@ describe("round-trip", () => {
     const naming = knowledge?.children?.find((c) => c.id === "naming");
     expect(naming?.name).toBe("principle");
     expect(naming?.information).toBe("Feature: Name params well");
+  });
+
+  test("child node links survive round-trip", () => {
+    const original = state("individual", {
+      id: "sean",
+      children: [
+        state("goal", {
+          id: "g1",
+          information: "Feature: Goal",
+          children: [
+            state("plan", {
+              id: "phase-1",
+              information: "Feature: Phase 1",
+              links: [{ relation: "before", target: state("plan", { id: "phase-2" }) }],
+            }),
+            state("plan", {
+              id: "phase-2",
+              information: "Feature: Phase 2",
+              links: [{ relation: "after", target: state("plan", { id: "phase-1" }) }],
+            }),
+          ],
+        }),
+      ],
+    });
+
+    const { manifest, files } = stateToFiles(original);
+    const fileContents: Record<string, string> = {};
+    for (const f of files) fileContents[f.path] = f.content;
+
+    const restored = filesToState(manifest, fileContents);
+    const goal = restored.children![0];
+    const p1 = goal.children!.find((c) => c.id === "phase-1")!;
+    const p2 = goal.children!.find((c) => c.id === "phase-2")!;
+
+    expect(p1.links).toHaveLength(1);
+    expect(p1.links![0].relation).toBe("before");
+    expect(p1.links![0].target.id).toBe("phase-2");
+
+    expect(p2.links).toHaveLength(1);
+    expect(p2.links![0].relation).toBe("after");
+    expect(p2.links![0].target.id).toBe("phase-1");
   });
 
   test("multiple encounters with distinct ids survive round-trip", () => {

@@ -43,10 +43,13 @@
   "dependencies": {
     "rolexjs": "workspace:*",
     "@rolexjs/local-platform": "workspace:*",
+    "@rolexjs/genesis": "workspace:*",
     "fastmcp": "^3.0.0",
     "zod": "^3.25.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1"
+  },
   "publishConfig": {
     "access": "public"
   }

@@ -25,25 +25,28 @@ export interface Runtime {
     information?: string,
     id?: string,
     alias?: readonly string[]
-  ): Structure;
+  ): Promise<Structure>;
 
   /** Remove a node and its subtree. */
-  remove(node: Structure): void;
+  remove(node: Structure): Promise<void>;
 
-  /** Produce a new node in target structure's branch, sourced from another branch. */
-  transform(source: Structure, target: Structure, information?: string): Structure;
+  /** Move a node to target structure's branch, preserving its subtree. Updates type and optionally information. */
+  transform(source: Structure, target: Structure, information?: string): Promise<Structure>;
 
   /** Establish a bidirectional cross-branch relation between two nodes. */
-  link(from: Structure, to: Structure, relation: string, reverse: string): void;
+  link(from: Structure, to: Structure, relation: string, reverse: string): Promise<void>;
 
   /** Remove a bidirectional cross-branch relation between two nodes. */
-  unlink(from: Structure, to: Structure, relation: string, reverse: string): void;
+  unlink(from: Structure, to: Structure, relation: string, reverse: string): Promise<void>;
+
+  /** Set a tag on a node (e.g., "done", "abandoned"). */
+  tag(node: Structure, tag: string): Promise<void>;
 
   /** Project the current state of a node and its subtree (including links). */
-  project(node: Structure): State;
+  project(node: Structure): Promise<State>;
 
   /** Return all root nodes (nodes without a parent edge). */
-  roots(): Structure[];
+  roots(): Promise<Structure[]>;
 }
 
 // ===== In-memory implementation =====
@@ -92,9 +95,13 @@ export const createRuntime = (): Runtime => {
     nodes.delete(ref);
   };
 
-  const projectRef = (ref: string): State => {
+  /** Project a node with full subtree but without following links (prevents cycles). */
+  const projectLinked = (ref: string): State => {
     const treeNode = nodes.get(ref)!;
-    return { ...treeNode.node, children: [] };
+    return {
+      ...treeNode.node,
+      children: treeNode.children.map(projectLinked),
+    };
   };
 
   const projectNode = (ref: string): State => {
@@ -107,7 +114,7 @@ export const createRuntime = (): Runtime => {
         ? {
             links: nodeLinks.map((l) => ({
               relation: l.relation,
-              target: projectRef(l.toId),
+              target: projectLinked(l.toId),
             })),
           }
         : {}),
@@ -144,11 +151,19 @@ export const createRuntime = (): Runtime => {
   };
 
   return {
-    create(parent, type, information, id, alias) {
+    async create(parent, type, information, id, alias) {
+      if (id) {
+        // Idempotent: same id under same parent → return existing.
+        for (const treeNode of nodes.values()) {
+          if (treeNode.node.id === id && treeNode.parent === (parent?.ref ?? null)) {
+            return treeNode.node;
+          }
+        }
+      }
       return createNode(parent?.ref ?? null, type, information, id, alias);
     },
 
-    remove(node) {
+    async remove(node) {
       if (!node.ref) return;
       const treeNode = nodes.get(node.ref);
       if (!treeNode) return;
@@ -163,21 +178,45 @@ export const createRuntime = (): Runtime => {
       removeSubtree(node.ref);
     },
 
-    transform(_source, target, information) {
+    async transform(source, target, information) {
+      if (!source.ref) throw new Error("Source node has no ref");
+      const sourceTreeNode = nodes.get(source.ref);
+      if (!sourceTreeNode) throw new Error(`Source node not found: ${source.ref}`);
+
       const targetParent = target.parent;
       if (!targetParent) {
         throw new Error(`Cannot transform to root structure: ${target.name}`);
       }
 
-      const parentTreeNode = findByStructure(targetParent);
-      if (!parentTreeNode) {
+      const newParentTreeNode = findByStructure(targetParent);
+      if (!newParentTreeNode) {
         throw new Error(`No node found for structure: ${targetParent.name}`);
       }
 
-      return createNode(parentTreeNode.node.ref!, target, information);
+      // Detach from old parent
+      if (sourceTreeNode.parent) {
+        const oldParent = nodes.get(sourceTreeNode.parent);
+        if (oldParent) {
+          oldParent.children = oldParent.children.filter((r) => r !== source.ref);
+        }
+      }
+
+      // Attach to new parent
+      sourceTreeNode.parent = newParentTreeNode.node.ref!;
+      newParentTreeNode.children.push(source.ref);
+
+      // Update type and information
+      sourceTreeNode.node = {
+        ...sourceTreeNode.node,
+        name: target.name,
+        description: target.description,
+        ...(information !== undefined ? { information } : {}),
+      };
+
+      return sourceTreeNode.node;
     },
 
-    link(from, to, relationName, reverseName) {
+    async link(from, to, relationName, reverseName) {
       if (!from.ref) throw new Error("Source node has no ref");
       if (!to.ref) throw new Error("Target node has no ref");
 
@@ -196,7 +235,7 @@ export const createRuntime = (): Runtime => {
       }
     },
 
-    unlink(from, to, relationName, reverseName) {
+    async unlink(from, to, relationName, reverseName) {
       if (!from.ref || !to.ref) return;
 
       // Forward
@@ -220,14 +259,21 @@ export const createRuntime = (): Runtime => {
       }
     },
 
-    project(node) {
+    async tag(node, tagValue) {
+      if (!node.ref) throw new Error("Node has no ref");
+      const treeNode = nodes.get(node.ref);
+      if (!treeNode) throw new Error(`Node not found: ${node.ref}`);
+      (treeNode.node as any).tag = tagValue;
+    },
+
+    async project(node) {
       if (!node.ref || !nodes.has(node.ref)) {
         throw new Error(`Node not found: ${node.ref}`);
       }
       return projectNode(node.ref);
     },
 
-    roots() {
+    async roots() {
       const result: Structure[] = [];
       for (const treeNode of nodes.values()) {
         if (treeNode.parent === null) {

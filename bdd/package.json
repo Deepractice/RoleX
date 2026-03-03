@@ -1,0 +1,13 @@
+{
+  "name": "@rolexjs/bdd",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@deepracticex/bdd": "^0.2.0",
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@rolexjs/core": "workspace:*",
+    "@rolexjs/local-platform": "workspace:*",
+    "rolexjs": "workspace:*"
+  }
+}

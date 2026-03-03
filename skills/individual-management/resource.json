@@ -1,0 +1,6 @@
+{
+  "name": "individual-management",
+  "type": "skill",
+  "author": "deepractice",
+  "description": "Manage individual lifecycle (born, retire, die, rehire) and knowledge injection (teach, train)"
+}

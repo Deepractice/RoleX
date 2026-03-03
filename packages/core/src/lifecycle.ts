@@ -20,12 +20,7 @@ export const born = process(
   create(individual)
 );
 export const found = process("found", "Found an organization", society, create(organization));
-export const establish = process(
-  "establish",
-  "Establish a position in an organization",
-  organization,
-  create(position)
-);
+export const establish = process("establish", "Establish a position", society, create(position));
 
 // Retirement & death
 export const retire = process(

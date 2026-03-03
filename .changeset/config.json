@@ -7,11 +7,11 @@
       "@rolexjs/core",
       "@rolexjs/parser",
       "@rolexjs/local-platform",
+      "@rolexjs/prototype",
+      "@rolexjs/genesis",
       "rolexjs",
-      "@rolexjs/cli",
       "@rolexjs/mcp-server",
-      "@rolexjs/system",
-      "@rolexjs/resourcex-types"
+      "@rolexjs/system"
     ]
   ],
   "linked": [],

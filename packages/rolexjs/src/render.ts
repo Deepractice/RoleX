@@ -1,11 +1,11 @@
 /**
- * Render — description + hint templates for every process.
+ * Render — 3-layer output for all Rolex operations.
  *
- * Each operation produces two pieces of text:
- *   description — what just happened (past tense)
- *   hint        — what to do next (suggestion)
+ * Layer 1: Status     — what just happened (describe)
+ * Layer 2: Hint       — what to do next (hint + cognitive hint)
+ * Layer 3: Projection — full state tree as markdown (renderState)
  *
- * These are shared by MCP and CLI. The I/O layer just presents them.
+ * render() composes the 3 layers. MCP and CLI are pure pass-through.
  */
 import type { State } from "@rolexjs/system";
 
@@ -65,7 +65,7 @@ export function describe(process: string, name: string, state: State): string {
 const hints: Record<string, string> = {
   // Lifecycle
   born: "hire into an organization, or activate to start working.",
-  found: "establish positions and define a charter.",
+  found: "define a charter for the organization.",
   establish: "charge with duties, then appoint members.",
   charter: "establish positions for the organization.",
   charge: "appoint someone to this position.",
@@ -95,8 +95,8 @@ const hints: Record<string, string> = {
 
   // Cognition
   reflect: "realize principles or master procedures from experience.",
-  realize: "principle added to knowledge.",
-  master: "procedure added to knowledge.",
+  realize: "principle added.",
+  master: "procedure added.",
 
   // Knowledge management
   forget: "the node has been removed.",
@@ -111,7 +111,7 @@ export function hint(process: string): string {
 //  Detail — longer process descriptions (from .feature files)
 // ================================================================
 
-import { processes, world } from "./descriptions/index.js";
+import { directives, processes, world } from "@rolexjs/prototype";
 
 /** Full Gherkin feature content for a process — sourced from .feature files. */
 export function detail(process: string): string {
@@ -122,30 +122,51 @@ export function detail(process: string): string {
 export { world };
 
 // ================================================================
+//  Directive — system-level commands at decision points
+// ================================================================
+
+/** Get a directive by topic and scenario. Returns empty string if not found. */
+export function directive(topic: string, scenario: string): string {
+  return directives[topic]?.[scenario] ?? "";
+}
+
+// ================================================================
 //  Generic State renderer — renders any State tree as markdown
 // ================================================================
 
 /**
- * renderState — generic markdown renderer for any State tree.
+ * renderState — markdown renderer for State trees.
  *
  * Rules:
  *   - Heading: "#" repeated to depth + " [name]"
  *   - Body: raw information field as-is (full Gherkin preserved)
  *   - Links: "> → relation [target.name]" with target feature name
- *   - Children: recursive at depth+1
+ *   - Children: sorted by concept hierarchy, then rendered at depth+1
+ *   - Fold: when fold(node) returns true, render heading only (no body/links/children)
  *
- * No concept-specific knowledge — purely structural.
  * Markdown heading depth caps at 6 (######).
  */
-export function renderState(state: State, depth = 1): string {
+export interface RenderStateOptions {
+  /** When returns true, render only the heading — skip body, links, and children. */
+  fold?: (node: State) => boolean;
+}
+
+export function renderState(state: State, depth = 1, options?: RenderStateOptions): string {
   const lines: string[] = [];
   const level = Math.min(depth, 6);
   const heading = "#".repeat(level);
 
-  // Heading: [name] (id) {origin}
+  // Heading: [name] (id) {origin} #tag [progress]
   const idPart = state.id ? ` (${state.id})` : "";
   const originPart = state.origin ? ` {${state.origin}}` : "";
-  lines.push(`${heading} [${state.name}]${idPart}${originPart}`);
+  const tagPart = state.tag ? ` #${state.tag}` : "";
+  const progressPart = state.name === "goal" ? goalProgress(state) : "";
+  lines.push(`${heading} [${state.name}]${idPart}${originPart}${tagPart}${progressPart}`);
+
+  // Folded: heading only
+  if (options?.fold?.(state)) {
+    return lines.join("\n");
+  }
 
   // Body: full information as-is
   if (state.information) {
@@ -153,30 +174,141 @@ export function renderState(state: State, depth = 1): string {
     lines.push(state.information);
   }
 
-  // Links
+  // Links — plan references are compact, organizational links are expanded
   if (state.links && state.links.length > 0) {
-    lines.push("");
-    for (const link of state.links) {
-      const targetLabel = extractLabel(link.target);
-      lines.push(`> ${link.relation} → ${targetLabel}`);
+    const compactRelations = new Set(["after", "before", "fallback", "fallback-for"]);
+    const compact = state.links.filter((l) => compactRelations.has(l.relation));
+    const expanded = state.links.filter((l) => !compactRelations.has(l.relation));
+    for (const link of compact) {
+      const targetId = link.target.id ? ` (${link.target.id})` : "";
+      const targetTag = link.target.tag ? ` #${link.target.tag}` : "";
+      lines.push(`> ${link.relation}: [${link.target.name}]${targetId}${targetTag}`);
+    }
+    if (expanded.length > 0) {
+      const targets = sortByConceptOrder(expanded.map((l) => l.target));
+      for (const target of targets) {
+        lines.push("");
+        lines.push(renderState(target, depth + 1, options));
+      }
     }
   }
 
-  // Children
+  // Children — sorted by concept hierarchy, empty nodes filtered out
   if (state.children && state.children.length > 0) {
-    for (const child of state.children) {
+    const sorted = sortByConceptOrder(state.children.filter((c) => !isEmpty(c)));
+    for (const child of sorted) {
       lines.push("");
-      lines.push(renderState(child, depth + 1));
+      lines.push(renderState(child, depth + 1, options));
     }
   }
 
   return lines.join("\n");
 }
 
-/** Extract a display label from a State: "[name] FeatureTitle" or just "[name]". */
-function extractLabel(state: State): string {
-  if (!state.information) return `[${state.name}]`;
-  const match = state.information.match(/^Feature:\s*(.+)/m);
-  const title = match ? match[1].trim() : state.information.split("\n")[0].trim();
-  return `[${state.name}] ${title}`;
+// ================================================================
+//  Concept ordering — children sorted by structure hierarchy
+// ================================================================
+
+/** Concept tree order: identity → cognition → knowledge → execution → organization. */
+const CONCEPT_ORDER: readonly string[] = [
+  // Individual — Identity
+  "identity",
+  "background",
+  "tone",
+  "mindset",
+  // Individual — Cognition
+  "encounter",
+  "experience",
+  // Individual — Knowledge
+  "principle",
+  "procedure",
+  // Individual — Execution
+  "goal",
+  "plan",
+  "task",
+  // Organization
+  "charter",
+  // Position
+  "position",
+  "duty",
+];
+
+/** Summarize plan/task completion for a goal heading. */
+function goalProgress(goal: State): string {
+  let plans = 0;
+  let plansDone = 0;
+  let tasks = 0;
+  let tasksDone = 0;
+
+  function walk(node: State): void {
+    if (node.name === "plan") {
+      plans++;
+      if (node.tag === "done" || node.tag === "abandoned") plansDone++;
+    } else if (node.name === "task") {
+      tasks++;
+      if (node.tag === "done") tasksDone++;
+    }
+    for (const child of node.children ?? []) walk(child);
+  }
+
+  for (const child of goal.children ?? []) walk(child);
+  if (plans === 0 && tasks === 0) return "";
+  const parts: string[] = [];
+  if (plans > 0) parts.push(`${plansDone}/${plans} plans`);
+  if (tasks > 0) parts.push(`${tasksDone}/${tasks} tasks`);
+  return ` [${parts.join(", ")}]`;
+}
+
+/** A node is empty when it has no id, no information, and no children. */
+function isEmpty(node: State): boolean {
+  return !node.id && !node.information && (!node.children || node.children.length === 0);
+}
+
+/** Sort children by concept hierarchy order. Unknown names go to the end, preserving relative order. */
+function sortByConceptOrder(children: readonly State[]): readonly State[] {
+  return [...children].sort((a, b) => {
+    const ai = CONCEPT_ORDER.indexOf(a.name);
+    const bi = CONCEPT_ORDER.indexOf(b.name);
+    const aOrder = ai >= 0 ? ai : CONCEPT_ORDER.length;
+    const bOrder = bi >= 0 ? bi : CONCEPT_ORDER.length;
+    return aOrder - bOrder;
+  });
+}
+
+// ================================================================
+//  Render — 3-layer output for tool results
+// ================================================================
+
+export interface RenderOptions {
+  /** The process that was executed. */
+  process: string;
+  /** Display name for the primary node. */
+  name: string;
+  /** State projection of the affected node. */
+  state: State;
+  /** AI cognitive hint — first-person, state-aware self-direction cue. */
+  cognitiveHint?: string | null;
+  /** Fold predicate — folded nodes render heading only. */
+  fold?: RenderStateOptions["fold"];
+}
+
+/** Render a full 3-layer output string. */
+export function render(opts: RenderOptions): string {
+  const { process, name, state, cognitiveHint, fold } = opts;
+  const lines: string[] = [];
+
+  // Layer 1: Status
+  lines.push(describe(process, name, state));
+
+  // Layer 2: Hint (static) + Cognitive hint (state-aware)
+  lines.push(hint(process));
+  if (cognitiveHint) {
+    lines.push(`I → ${cognitiveHint}`);
+  }
+
+  // Layer 3: Projection — generic markdown rendering of the full state tree
+  lines.push("");
+  lines.push(renderState(state, 1, fold ? { fold } : undefined));
+
+  return lines.join("\n");
 }

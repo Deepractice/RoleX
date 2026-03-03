@@ -1,56 +1,35 @@
 /**
  * @rolexjs/mcp-server — individual-level MCP tools.
  *
- * Thin wrapper around the Rolex API (which accepts string ids).
- * McpState holds session context: activeRoleId, focusedGoalId, encounter/experience ids.
- *
- * Tools:
- *   activate — activate a role
- *   focus    — view / switch focused goal
- *   want     — declare a goal
- *   plan     — plan for focused goal
- *   todo     — add task to focused plan
- *   finish   — finish a task → encounter
- *   complete — complete focused plan → encounter
- *   abandon  — abandon focused plan → encounter
- *   reflect  — encounter(s) → experience
- *   realize  — experience(s) → principle
- *   master   — experience(s) → procedure
- *   forget   — remove a node from the individual
- *   skill    — load full skill content by locator
+ * Pure pass-through: all rendering happens in rolexjs.
+ * MCP only translates protocol calls to API calls.
  */
 
 import { localPlatform } from "@rolexjs/local-platform";
 import { FastMCP } from "fastmcp";
 import { createRoleX, detail } from "rolexjs";
+
 import { z } from "zod";
 import { instructions } from "./instructions.js";
-import { render } from "./render.js";
 import { McpState } from "./state.js";
 
 // ========== Setup ==========
 
-const rolex = createRoleX(localPlatform());
-const state = new McpState(rolex);
+const rolex = await createRoleX(
+  localPlatform({
+    bootstrap: ["npm:@rolexjs/genesis"],
+  })
+);
+await rolex.genesis();
+const state = new McpState();
 
 // ========== Server ==========
 
 const server = new FastMCP({
   name: "rolex",
-  version: "0.11.0",
+  version: "0.12.0",
   instructions,
 });
-
-// ========== Helpers ==========
-
-function fmt(process: string, label: string, result: { state: any; process: string }) {
-  return render({
-    process,
-    name: label,
-    result,
-    cognitiveHint: state.cognitiveHint(process),
-  });
-}
 
 // ========== Tools: Role ==========
 
@@ -61,15 +40,16 @@ server.addTool({
     roleId: z.string().describe("Role name to activate"),
   }),
   execute: async ({ roleId }) => {
-    if (!state.findIndividual(roleId)) {
-      // Auto-born if not found
-      rolex.individual.born(undefined, roleId);
+    try {
+      const role = await rolex.activate(roleId);
+      state.role = role;
+      return await role.project();
+    } catch {
+      const census = await rolex.direct<string>("!census.list");
+      throw new Error(
+        `"${roleId}" not found. Available:\n\n${census}\n\nTry again with the correct id or alias.`
+      );
     }
-    state.reset();
-    state.activeRoleId = roleId;
-    const result = await rolex.role.activate(roleId);
-    state.cacheFromActivation(result.state);
-    return fmt("activate", roleId, result);
   },
 });
 
@@ -80,13 +60,7 @@ server.addTool({
     id: z.string().optional().describe("Goal id to switch to. Omit to view current."),
   }),
   execute: async ({ id }) => {
-    if (id) {
-      state.focusedGoalId = id;
-      state.focusedPlanId = null;
-    }
-    const goalId = state.requireGoalId();
-    const result = rolex.role.focus(goalId);
-    return fmt("focus", id ?? "current goal", result);
+    return await state.requireRole().focus(id);
   },
 });
 
@@ -100,11 +74,7 @@ server.addTool({
     goal: z.string().describe("Gherkin Feature source describing the goal"),
   }),
   execute: async ({ id, goal }) => {
-    const roleId = state.requireRoleId();
-    const result = rolex.role.want(roleId, goal, id);
-    state.focusedGoalId = id;
-    state.focusedPlanId = null;
-    return fmt("want", id, result);
+    return await state.requireRole().want(goal, id);
   },
 });
 
@@ -114,12 +84,17 @@ server.addTool({
   parameters: z.object({
     id: z.string().describe("Plan id — keywords from the plan content joined by hyphens"),
     plan: z.string().describe("Gherkin Feature source describing the plan"),
+    after: z
+      .string()
+      .optional()
+      .describe("Plan id this plan follows (sequential/phase relationship)"),
+    fallback: z
+      .string()
+      .optional()
+      .describe("Plan id this plan is a backup for (alternative/strategy relationship)"),
   }),
-  execute: async ({ id, plan }) => {
-    const goalId = state.requireGoalId();
-    const result = rolex.role.plan(goalId, plan, id);
-    state.focusedPlanId = id;
-    return fmt("plan", id, result);
+  execute: async ({ id, plan, after, fallback }) => {
+    return await state.requireRole().plan(plan, id, after, fallback);
   },
 });
 
@@ -131,9 +106,7 @@ server.addTool({
     task: z.string().describe("Gherkin Feature source describing the task"),
   }),
   execute: async ({ id, task }) => {
-    const planId = state.requirePlanId();
-    const result = rolex.role.todo(planId, task, id);
-    return fmt("todo", id, result);
+    return await state.requireRole().todo(task, id);
   },
 });
 
@@ -145,11 +118,7 @@ server.addTool({
     encounter: z.string().optional().describe("Optional Gherkin Feature describing what happened"),
   }),
   execute: async ({ id, encounter }) => {
-    const roleId = state.requireRoleId();
-    const result = rolex.role.finish(id, roleId, encounter);
-    const encId = result.state.id ?? id;
-    state.addEncounter(encId);
-    return fmt("finish", id, result);
+    return await state.requireRole().finish(id, encounter);
   },
 });
 
@@ -161,13 +130,7 @@ server.addTool({
     encounter: z.string().optional().describe("Optional Gherkin Feature describing what happened"),
   }),
   execute: async ({ id, encounter }) => {
-    const roleId = state.requireRoleId();
-    const planId = id ?? state.requirePlanId();
-    const result = rolex.role.complete(planId, roleId, encounter);
-    const encId = result.state.id ?? planId;
-    state.addEncounter(encId);
-    if (state.focusedPlanId === planId) state.focusedPlanId = null;
-    return fmt("complete", planId, result);
+    return await state.requireRole().complete(id, encounter);
   },
 });
 
@@ -179,13 +142,7 @@ server.addTool({
     encounter: z.string().optional().describe("Optional Gherkin Feature describing what happened"),
   }),
   execute: async ({ id, encounter }) => {
-    const roleId = state.requireRoleId();
-    const planId = id ?? state.requirePlanId();
-    const result = rolex.role.abandon(planId, roleId, encounter);
-    const encId = result.state.id ?? planId;
-    state.addEncounter(encId);
-    if (state.focusedPlanId === planId) state.focusedPlanId = null;
-    return fmt("abandon", planId, result);
+    return await state.requireRole().abandon(id, encounter);
   },
 });
 
@@ -202,12 +159,7 @@ server.addTool({
     experience: z.string().optional().describe("Gherkin Feature source for the experience"),
   }),
   execute: async ({ ids, id, experience }) => {
-    state.requireEncounterIds(ids);
-    const roleId = state.requireRoleId();
-    const result = rolex.role.reflect(ids[0], roleId, experience, id);
-    state.consumeEncounters(ids);
-    state.addExperience(id);
-    return fmt("reflect", id, result);
+    return await state.requireRole().reflect(ids, experience, id);
   },
 });
 
@@ -220,11 +172,7 @@ server.addTool({
     principle: z.string().optional().describe("Gherkin Feature source for the principle"),
   }),
   execute: async ({ ids, id, principle }) => {
-    state.requireExperienceIds(ids);
-    const roleId = state.requireRoleId();
-    const result = rolex.role.realize(ids[0], roleId, principle, id);
-    state.consumeExperiences(ids);
-    return fmt("realize", id, result);
+    return await state.requireRole().realize(ids, principle, id);
   },
 });
 
@@ -232,16 +180,12 @@ server.addTool({
   name: "master",
   description: detail("master"),
   parameters: z.object({
-    ids: z.array(z.string()).describe("Experience ids to distill into a procedure"),
+    ids: z.array(z.string()).optional().describe("Experience ids to distill into a procedure"),
     id: z.string().describe("Procedure id — keywords from the procedure content joined by hyphens"),
-    procedure: z.string().optional().describe("Gherkin Feature source for the procedure"),
+    procedure: z.string().describe("Gherkin Feature source for the procedure"),
   }),
   execute: async ({ ids, id, procedure }) => {
-    state.requireExperienceIds(ids);
-    const roleId = state.requireRoleId();
-    const result = rolex.role.master(ids[0], roleId, procedure, id);
-    state.consumeExperiences(ids);
-    return fmt("master", id, result);
+    return await state.requireRole().master(procedure, id, ids);
   },
 });
 
@@ -256,9 +200,7 @@ server.addTool({
       .describe("Id of the node to remove (principle, procedure, experience, encounter, etc.)"),
   }),
   execute: async ({ id }) => {
-    const roleId = state.requireRoleId();
-    const result = await rolex.role.forget(id, roleId);
-    return fmt("forget", id, result);
+    return await state.requireRole().forget(id);
   },
 });
 
@@ -273,8 +215,49 @@ server.addTool({
       .describe("ResourceX locator for the skill (e.g. deepractice/role-management)"),
   }),
   execute: async ({ locator }) => {
-    const content = await rolex.role.skill(locator);
-    return content;
+    return await state.requireRole().skill(locator);
+  },
+});
+
+// ========== Tools: Use ==========
+
+server.addTool({
+  name: "use",
+  description: detail("use"),
+  parameters: z.object({
+    locator: z
+      .string()
+      .describe(
+        "Locator string. !namespace.method for RoleX commands, or a ResourceX locator for resources"
+      ),
+    args: z.record(z.unknown()).optional().describe("Named arguments for the command or resource"),
+  }),
+  execute: async ({ locator, args }) => {
+    const result = await state.requireRole().use(locator, args);
+    if (result == null) return `${locator} done.`;
+    if (typeof result === "string") return result;
+    return JSON.stringify(result, null, 2);
+  },
+});
+
+// ========== Tools: Direct ==========
+
+server.addTool({
+  name: "direct",
+  description: detail("direct"),
+  parameters: z.object({
+    locator: z
+      .string()
+      .describe(
+        "Locator string. !namespace.method for RoleX commands, or a ResourceX locator for resources"
+      ),
+    args: z.record(z.unknown()).optional().describe("Named arguments for the command or resource"),
+  }),
+  execute: async ({ locator, args }) => {
+    const result = await rolex.direct(locator, args);
+    if (result == null) return `${locator} done.`;
+    if (typeof result === "string") return result;
+    return JSON.stringify(result, null, 2);
   },
 });
 

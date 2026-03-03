@@ -1,0 +1,49 @@
+/**
+ * Dispatch — schema-driven argument mapping.
+ *
+ * Replaces the hand-written toArgs switch in rolex.ts with a single
+ * lookup against the instruction registry.
+ */
+
+import { instructions } from "./instructions.js";
+import type { ArgEntry } from "./schema.js";
+
+/**
+ * Map named arguments to positional arguments for a given operation.
+ *
+ * @param op - Operation key in "namespace.method" format (e.g. "individual.born")
+ * @param args - Named arguments from the caller
+ * @returns Positional argument array matching the method signature
+ */
+export function toArgs(op: string, args: Record<string, unknown>): unknown[] {
+  const def = instructions[op];
+  if (!def) throw new Error(`Unknown instruction "${op}".`);
+
+  // Validate required params
+  for (const [name, param] of Object.entries(def.params)) {
+    if (param.required && args[name] === undefined) {
+      throw new Error(
+        `Missing required argument "${name}" for ${op}.\n\n` +
+          "You may be guessing the argument names. " +
+          "Call skill(locator) with the relevant procedure to see the correct syntax."
+      );
+    }
+  }
+
+  return def.args.map((entry) => resolveArg(entry, args));
+}
+
+function resolveArg(entry: ArgEntry, args: Record<string, unknown>): unknown {
+  if (typeof entry === "string") return args[entry];
+
+  // pack: collect named args into an options object
+  const obj: Record<string, unknown> = {};
+  let hasValue = false;
+  for (const name of entry.pack) {
+    if (args[name] !== undefined) {
+      obj[name] = args[name];
+      hasValue = true;
+    }
+  }
+  return hasValue ? obj : undefined;
+}

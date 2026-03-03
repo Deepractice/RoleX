@@ -3,7 +3,7 @@
  *
  * Domain-specific structures and processes built on @rolexjs/system.
  *
- * Structures — the concept tree (19 concepts, 2 relations)
+ * Structures — the concept tree (18 concepts, 2 relations)
  * Processes  — how the world changes (24 processes, 4 layers)
  *
  *   Layer 1: Execution   — want, plan, todo, finish, complete, abandon
@@ -17,14 +17,11 @@
 export {
   type Create,
   create,
-  createPrototype,
   createRuntime,
   type GraphOp,
   type Link,
   link,
-  mergeState,
   type Process,
-  type Prototype,
   process,
   type Relation,
   type Remove,
@@ -41,7 +38,7 @@ export {
 } from "@rolexjs/system";
 
 // Platform
-export type { Platform } from "./platform.js";
+export type { ContextData, Platform, PrototypeRegistry, RoleXRepository } from "./platform.js";
 
 // ===== Structures =====
 
@@ -60,7 +57,6 @@ export {
   // Level 1
   individual,
   // Individual — Knowledge
-  knowledge,
   mindset,
   organization,
   past,
@@ -68,6 +64,8 @@ export {
   position,
   principle,
   procedure,
+  // Organization — Position
+  requirement,
   // Level 0
   society,
   task,
