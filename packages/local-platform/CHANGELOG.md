@@ -1,5 +1,51 @@
 # @rolexjs/local-platform
 
+## 1.0.0
+
+### Major Changes
+
+- a9a1789: Release 1.0.0 — RoleX AI Agent Role Management Framework
+
+  Highlights:
+
+  - RoleXRepository unified data access layer (SQLite-backed)
+  - Platform integrates ResourceXProvider for pluggable storage
+  - Identity ethics and directive system for role boundaries
+  - Batch consumption in reflect/realize/master
+  - Global ID uniqueness enforcement
+  - BDD test framework with MCP E2E coverage
+  - Render layer sunk from MCP server into rolexjs
+
+### Minor Changes
+
+- 260b06d: Expand link targets in SQLite runtime projection and fold requirement nodes by default
+- d7521ee: feat: enforce global ID uniqueness across the state tree
+
+  - Both in-memory and SQLite runtimes now reject duplicate IDs with a clear error
+  - Same ID under same parent remains idempotent (returns existing node)
+  - Identity nodes now use `{id}-identity` suffix to avoid conflicting with individual ID
+
+- 8449a59: refactor: Platform integrates ResourceXProvider instead of ResourceX
+
+  Platform now declares `resourcexProvider?: ResourceXProvider` instead of `resourcex?: ResourceX`.
+  Rolex internally creates the ResourceX instance from the injected provider.
+  This makes the storage backend decision explicit at the Platform level —
+  swapping providers is all that's needed to move from local to cloud deployment.
+
+- c5a6d7d: Introduce RoleXRepository interface and SqliteRepository implementation. Platform now uses `repository` instead of separate runtime/prototype/saveContext/loadContext. Prototypes and contexts stored in SQLite instead of JSON files.
+- 9180e24: Relax global ID uniqueness to same-parent idempotence, auto-train requirements as procedures on appoint, enhance error messages with skill-loading guidance, fix plan link rendering to compact references, and add goal progress summary in headings
+
+### Patch Changes
+
+- Updated dependencies [d7521ee]
+- Updated dependencies [f7147ad]
+- Updated dependencies [a9a1789]
+- Updated dependencies [8449a59]
+- Updated dependencies [c5a6d7d]
+- Updated dependencies [9180e24]
+  - @rolexjs/system@1.0.0
+  - @rolexjs/core@1.0.0
+
 ## 0.11.0
 
 ### Minor Changes
@@ -33,6 +79,7 @@
 - 3bb910b: fix(local-platform): make reflect() transactional — write before erase
 
   Previously, `reflect()` deleted experience files before creating the knowledge file. If knowledge creation failed, experiences would be permanently lost. Now the operation order is: validate all experiences exist → create knowledge → delete experiences. Also adds input validation for empty arrays and path traversal protection.
+
   - @rolexjs/core@0.9.1
   - @rolexjs/parser@0.9.1
 

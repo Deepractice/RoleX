@@ -1,5 +1,52 @@
 # @rolexjs/mcp-server
 
+## 1.0.0
+
+### Major Changes
+
+- a9a1789: Release 1.0.0 — RoleX AI Agent Role Management Framework
+
+  Highlights:
+
+  - RoleXRepository unified data access layer (SQLite-backed)
+  - Platform integrates ResourceXProvider for pluggable storage
+  - Identity ethics and directive system for role boundaries
+  - Batch consumption in reflect/realize/master
+  - Global ID uniqueness enforcement
+  - BDD test framework with MCP E2E coverage
+  - Render layer sunk from MCP server into rolexjs
+
+### Minor Changes
+
+- e07c999: feat: realize and reflect accept empty source IDs
+
+  Allow calling realize with no experience IDs and reflect with no encounter IDs. This enables direct creation of principles and experiences from conversational insights without requiring the full encounter → experience → principle chain.
+
+  - ops.ts: skip resolve/remove when IDs are empty, directly create target node
+  - role.ts: skip validation and consumption for empty IDs
+  - MCP layer: pass undefined when IDs array is empty
+
+- 9882ecd: Rename @rolexjs/rolex-prototype to @rolexjs/genesis, consolidate descriptions into prototype package, and add direct tool for stateless world-level operations.
+
+### Patch Changes
+
+- 1070a78: Auto-inject all world descriptions into MCP instructions instead of manually listing them
+- Updated dependencies [260b06d]
+- Updated dependencies [d7521ee]
+- Updated dependencies [4240f6b]
+- Updated dependencies [4f4af27]
+- Updated dependencies [f7147ad]
+- Updated dependencies [e07c999]
+- Updated dependencies [a9a1789]
+- Updated dependencies [a96280c]
+- Updated dependencies [9882ecd]
+- Updated dependencies [8449a59]
+- Updated dependencies [c5a6d7d]
+- Updated dependencies [9180e24]
+  - @rolexjs/local-platform@1.0.0
+  - rolexjs@1.0.0
+  - @rolexjs/genesis@1.0.0
+
 ## 0.11.0
 
 ### Minor Changes
@@ -61,6 +108,7 @@
 ### Patch Changes
 
 - 59a8320: feat: enforce nuwa-only permission on society and organization tools
+
   - Add requireNuwa() guard that checks active role is nuwa
   - Society and organization tools return friendly denial message for non-nuwa roles
   - Add cognitive priority section to MCP server instructions
