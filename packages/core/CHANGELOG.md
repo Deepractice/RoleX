@@ -1,5 +1,40 @@
 # @rolexjs/core
 
+## 1.0.0
+
+### Major Changes
+
+- a9a1789: Release 1.0.0 — RoleX AI Agent Role Management Framework
+
+  Highlights:
+
+  - RoleXRepository unified data access layer (SQLite-backed)
+  - Platform integrates ResourceXProvider for pluggable storage
+  - Identity ethics and directive system for role boundaries
+  - Batch consumption in reflect/realize/master
+  - Global ID uniqueness enforcement
+  - BDD test framework with MCP E2E coverage
+  - Render layer sunk from MCP server into rolexjs
+
+### Minor Changes
+
+- 8449a59: refactor: Platform integrates ResourceXProvider instead of ResourceX
+
+  Platform now declares `resourcexProvider?: ResourceXProvider` instead of `resourcex?: ResourceX`.
+  Rolex internally creates the ResourceX instance from the injected provider.
+  This makes the storage backend decision explicit at the Platform level —
+  swapping providers is all that's needed to move from local to cloud deployment.
+
+- c5a6d7d: Introduce RoleXRepository interface and SqliteRepository implementation. Platform now uses `repository` instead of separate runtime/prototype/saveContext/loadContext. Prototypes and contexts stored in SQLite instead of JSON files.
+
+### Patch Changes
+
+- Updated dependencies [d7521ee]
+- Updated dependencies [f7147ad]
+- Updated dependencies [a9a1789]
+- Updated dependencies [9180e24]
+  - @rolexjs/system@1.0.0
+
 ## 0.11.0
 
 ### Minor Changes
@@ -109,6 +144,7 @@
 ### Minor Changes
 
 - a3b4929: refactor: export roleType as BundledType for ResourceX integration
+
   - Add src/builtins/role.type.ts with resolve(ctx) logic
   - Modify build.ts to bundle role type into code string
   - Auto-generate roleType.ts with BundledType export
