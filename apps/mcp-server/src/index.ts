@@ -15,7 +15,7 @@ import { McpState } from "./state.js";
 
 // ========== Setup ==========
 
-const rolex = createRoleX(
+const rolex = await createRoleX(
   localPlatform({
     bootstrap: ["npm:@rolexjs/genesis"],
   })
@@ -43,7 +43,7 @@ server.addTool({
     try {
       const role = await rolex.activate(roleId);
       state.role = role;
-      return role.project();
+      return await role.project();
     } catch {
       const census = await rolex.direct<string>("!census.list");
       throw new Error(
@@ -60,7 +60,7 @@ server.addTool({
     id: z.string().optional().describe("Goal id to switch to. Omit to view current."),
   }),
   execute: async ({ id }) => {
-    return state.requireRole().focus(id);
+    return await state.requireRole().focus(id);
   },
 });
 
@@ -74,7 +74,7 @@ server.addTool({
     goal: z.string().describe("Gherkin Feature source describing the goal"),
   }),
   execute: async ({ id, goal }) => {
-    return state.requireRole().want(goal, id);
+    return await state.requireRole().want(goal, id);
   },
 });
 
@@ -94,7 +94,7 @@ server.addTool({
       .describe("Plan id this plan is a backup for (alternative/strategy relationship)"),
   }),
   execute: async ({ id, plan, after, fallback }) => {
-    return state.requireRole().plan(plan, id, after, fallback);
+    return await state.requireRole().plan(plan, id, after, fallback);
   },
 });
 
@@ -106,7 +106,7 @@ server.addTool({
     task: z.string().describe("Gherkin Feature source describing the task"),
   }),
   execute: async ({ id, task }) => {
-    return state.requireRole().todo(task, id);
+    return await state.requireRole().todo(task, id);
   },
 });
 
@@ -118,7 +118,7 @@ server.addTool({
     encounter: z.string().optional().describe("Optional Gherkin Feature describing what happened"),
   }),
   execute: async ({ id, encounter }) => {
-    return state.requireRole().finish(id, encounter);
+    return await state.requireRole().finish(id, encounter);
   },
 });
 
@@ -130,7 +130,7 @@ server.addTool({
     encounter: z.string().optional().describe("Optional Gherkin Feature describing what happened"),
   }),
   execute: async ({ id, encounter }) => {
-    return state.requireRole().complete(id, encounter);
+    return await state.requireRole().complete(id, encounter);
   },
 });
 
@@ -142,7 +142,7 @@ server.addTool({
     encounter: z.string().optional().describe("Optional Gherkin Feature describing what happened"),
   }),
   execute: async ({ id, encounter }) => {
-    return state.requireRole().abandon(id, encounter);
+    return await state.requireRole().abandon(id, encounter);
   },
 });
 
@@ -159,7 +159,7 @@ server.addTool({
     experience: z.string().optional().describe("Gherkin Feature source for the experience"),
   }),
   execute: async ({ ids, id, experience }) => {
-    return state.requireRole().reflect(ids, experience, id);
+    return await state.requireRole().reflect(ids, experience, id);
   },
 });
 
@@ -172,7 +172,7 @@ server.addTool({
     principle: z.string().optional().describe("Gherkin Feature source for the principle"),
   }),
   execute: async ({ ids, id, principle }) => {
-    return state.requireRole().realize(ids, principle, id);
+    return await state.requireRole().realize(ids, principle, id);
   },
 });
 
@@ -185,7 +185,7 @@ server.addTool({
     procedure: z.string().describe("Gherkin Feature source for the procedure"),
   }),
   execute: async ({ ids, id, procedure }) => {
-    return state.requireRole().master(procedure, id, ids);
+    return await state.requireRole().master(procedure, id, ids);
   },
 });
 
@@ -200,7 +200,7 @@ server.addTool({
       .describe("Id of the node to remove (principle, procedure, experience, encounter, etc.)"),
   }),
   execute: async ({ id }) => {
-    return state.requireRole().forget(id);
+    return await state.requireRole().forget(id);
   },
 });
 
@@ -215,7 +215,7 @@ server.addTool({
       .describe("ResourceX locator for the skill (e.g. deepractice/role-management)"),
   }),
   execute: async ({ locator }) => {
-    return state.requireRole().skill(locator);
+    return await state.requireRole().skill(locator);
   },
 });
 

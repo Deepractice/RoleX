@@ -29,16 +29,16 @@ export interface CensusEntry {
 
 export class Rolex {
   private rt: Runtime;
-  private ops: Ops;
+  private ops!: Ops;
   private resourcex?: ResourceX;
   private repo: RoleXRepository;
   private readonly initializer?: Initializer;
 
   private readonly bootstrap: readonly string[];
-  private readonly society: Structure;
-  private readonly past: Structure;
+  private society!: Structure;
+  private past!: Structure;
 
-  constructor(platform: Platform) {
+  private constructor(platform: Platform) {
     this.repo = platform.repository;
     this.rt = this.repo.runtime;
     this.initializer = platform.initializer;
@@ -49,22 +49,33 @@ export class Rolex {
       setProvider(platform.resourcexProvider);
       this.resourcex = createResourceX();
     }
+  }
 
+  /** Create a Rolex instance from a Platform (async due to Runtime initialization). */
+  static async create(platform: Platform): Promise<Rolex> {
+    const rolex = new Rolex(platform);
+    await rolex.init();
+    return rolex;
+  }
+
+  /** Async initialization — called by Rolex.create(). */
+  private async init(): Promise<void> {
     // Ensure world roots exist
-    const roots = this.rt.roots();
-    this.society = roots.find((r) => r.name === "society") ?? this.rt.create(null, C.society);
+    const roots = await this.rt.roots();
+    this.society =
+      roots.find((r) => r.name === "society") ?? (await this.rt.create(null, C.society));
 
-    const societyState = this.rt.project(this.society);
+    const societyState = await this.rt.project(this.society);
     const existingPast = societyState.children?.find((c) => c.name === "past");
-    this.past = existingPast ?? this.rt.create(this.society, C.past);
+    this.past = existingPast ?? (await this.rt.create(this.society, C.past));
 
     // Create ops from prototype — all operation implementations
     this.ops = createOps({
       rt: this.rt,
       society: this.society,
       past: this.past,
-      resolve: (id: string) => {
-        const node = this.find(id);
+      resolve: async (id: string) => {
+        const node = await this.find(id);
         if (!node) throw new Error(`"${id}" not found.`);
         return node;
       },
@@ -91,27 +102,27 @@ export class Rolex {
    * auto-born the individual first.
    */
   async activate(individual: string): Promise<Role> {
-    let node = this.find(individual);
+    let node = await this.find(individual);
     if (!node) {
       const hasProto = Object.hasOwn(this.repo.prototype.list(), individual);
       if (hasProto) {
-        this.ops["individual.born"](undefined, individual);
-        node = this.find(individual)!;
+        await this.ops["individual.born"](undefined, individual);
+        node = (await this.find(individual))!;
       } else {
         throw new Error(`"${individual}" not found.`);
       }
     }
-    const state = this.rt.project(node);
+    const state = await this.rt.project(node);
     const ctx = new RoleContext(individual);
     ctx.rehydrate(state);
 
     // Restore persisted focus (only override rehydrate default when persisted value is valid)
-    const persisted = this.repo.loadContext(individual);
+    const persisted = await this.repo.loadContext(individual);
     if (persisted) {
-      if (persisted.focusedGoalId && this.find(persisted.focusedGoalId)) {
+      if (persisted.focusedGoalId && (await this.find(persisted.focusedGoalId))) {
         ctx.focusedGoalId = persisted.focusedGoalId;
       }
-      if (persisted.focusedPlanId && this.find(persisted.focusedPlanId)) {
+      if (persisted.focusedPlanId && (await this.find(persisted.focusedPlanId))) {
         ctx.focusedPlanId = persisted.focusedPlanId;
       }
     }
@@ -119,8 +130,8 @@ export class Rolex {
     // Build internal API for Role — ops + ctx persistence
     const ops = this.ops;
     const repo = this.repo;
-    const saveCtx = (c: RoleContext) => {
-      repo.saveContext(c.roleId, {
+    const saveCtx = async (c: RoleContext) => {
+      await repo.saveContext(c.roleId, {
         focusedGoalId: c.focusedGoalId,
         focusedPlanId: c.focusedPlanId,
       });
@@ -136,8 +147,8 @@ export class Rolex {
   }
 
   /** Find a node by id or alias across the entire society tree. Internal use only. */
-  private find(id: string): Structure | null {
-    const state = this.rt.project(this.society);
+  private async find(id: string): Promise<Structure | null> {
+    const state = await this.rt.project(this.society);
     return findInState(state, id);
   }
 
@@ -160,7 +171,7 @@ export class Rolex {
             hint
         );
       }
-      return fn(...toArgs(command, args ?? {})) as T;
+      return (await fn(...toArgs(command, args ?? {}))) as T;
     }
     if (!this.resourcex) throw new Error("ResourceX is not available.");
     return this.resourcex.ingest<T>(locator, args);
@@ -168,6 +179,6 @@ export class Rolex {
 }
 
 /** Create a Rolex instance from a Platform. */
-export function createRoleX(platform: Platform): Rolex {
-  return new Rolex(platform);
+export async function createRoleX(platform: Platform): Promise<Rolex> {
+  return Rolex.create(platform);
 }

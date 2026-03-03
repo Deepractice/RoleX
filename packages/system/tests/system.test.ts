@@ -131,67 +131,67 @@ describe("Runtime", () => {
   const insight = structure("insight", "A specific learning", experience);
 
   describe("create & project", () => {
-    test("create root and project it", () => {
+    test("create root and project it", async () => {
       const rt = createRuntime();
-      const root = rt.create(null, world);
+      const root = await rt.create(null, world);
       expect(root.ref).toBeDefined();
       expect(root.name).toBe("world");
 
-      const state = rt.project(root);
+      const state = await rt.project(root);
       expect(state.name).toBe("world");
       expect(state.children).toHaveLength(0);
     });
 
-    test("create child under parent", () => {
+    test("create child under parent", async () => {
       const rt = createRuntime();
-      const root = rt.create(null, world);
-      const a = rt.create(root, agent);
+      const root = await rt.create(null, world);
+      const a = await rt.create(root, agent);
       expect(a.name).toBe("agent");
 
-      const state = rt.project(root);
+      const state = await rt.project(root);
       expect(state.children).toHaveLength(1);
       expect(state.children![0].name).toBe("agent");
     });
 
-    test("create node with information", () => {
+    test("create node with information", async () => {
       const rt = createRuntime();
-      const root = rt.create(null, world);
-      const a = rt.create(root, agent, "Feature: I am Sean");
+      const root = await rt.create(null, world);
+      const a = await rt.create(root, agent, "Feature: I am Sean");
 
-      const state = rt.project(a);
+      const state = await rt.project(a);
       expect(state.information).toBe("Feature: I am Sean");
     });
 
-    test("node is concept + container + information carrier", () => {
+    test("node is concept + container + information carrier", async () => {
       const rt = createRuntime();
-      const root = rt.create(null, world);
-      const a = rt.create(root, agent);
+      const root = await rt.create(null, world);
+      const a = await rt.create(root, agent);
 
       // experience as information carrier (no children)
-      const exp1 = rt.create(a, experience, "Feature: I learned JWT...");
-      const s1 = rt.project(exp1);
+      const exp1 = await rt.create(a, experience, "Feature: I learned JWT...");
+      const s1 = await rt.project(exp1);
       expect(s1.information).toBe("Feature: I learned JWT...");
       expect(s1.children).toHaveLength(0);
 
       // experience as container (has children, no information)
-      const exp2 = rt.create(a, experience);
-      const _ins = rt.create(exp2, insight, "Feature: JWT refresh is key");
-      const s2 = rt.project(exp2);
+      const exp2 = await rt.create(a, experience);
+      const _ins = await rt.create(exp2, insight, "Feature: JWT refresh is key");
+      const s2 = await rt.project(exp2);
       expect(s2.information).toBeUndefined();
       expect(s2.children).toHaveLength(1);
       expect(s2.children![0].name).toBe("insight");
       expect(s2.children![0].information).toBe("Feature: JWT refresh is key");
     });
 
-    test("deep tree projection", () => {
+    test("deep tree projection", async () => {
       const rt = createRuntime();
-      const root = rt.create(null, world);
-      const a = rt.create(root, agent);
-      const _k = rt.create(a, knowledge);
-      const exp = rt.create(a, experience);
-      const _ins = rt.create(exp, insight, "Feature: learned something");
+      const root = await rt.create(null, world);
+      const a = await rt.create(root, agent);
+      const _k = await rt.create(a, knowledge);
+      const exp = await rt.create(a, experience);
+      const _ins = await rt.create(exp, insight, "Feature: learned something");
 
-      const state = rt.project(root);
+      const state = await rt.project(root);
       expect(state.children).toHaveLength(1); // agent
       expect(state.children![0].children).toHaveLength(2); // knowledge, experience
       const expState = state.children![0].children![1];
@@ -201,50 +201,50 @@ describe("Runtime", () => {
   });
 
   describe("remove", () => {
-    test("remove a leaf node", () => {
+    test("remove a leaf node", async () => {
       const rt = createRuntime();
-      const root = rt.create(null, world);
-      const a = rt.create(root, agent);
-      const k = rt.create(a, knowledge);
+      const root = await rt.create(null, world);
+      const a = await rt.create(root, agent);
+      const k = await rt.create(a, knowledge);
 
-      rt.remove(k);
-      const state = rt.project(a);
+      await rt.remove(k);
+      const state = await rt.project(a);
       expect(state.children).toHaveLength(0);
     });
 
-    test("remove a subtree", () => {
+    test("remove a subtree", async () => {
       const rt = createRuntime();
-      const root = rt.create(null, world);
-      const a = rt.create(root, agent);
-      const exp = rt.create(a, experience);
-      const _ins = rt.create(exp, insight, "data");
+      const root = await rt.create(null, world);
+      const a = await rt.create(root, agent);
+      const exp = await rt.create(a, experience);
+      const _ins = await rt.create(exp, insight, "data");
 
-      rt.remove(exp); // removes experience + insight
-      const state = rt.project(a);
+      await rt.remove(exp); // removes experience + insight
+      const state = await rt.project(a);
       expect(state.children).toHaveLength(0);
     });
 
-    test("remove node without ref is a no-op", () => {
+    test("remove node without ref is a no-op", async () => {
       const rt = createRuntime();
-      rt.remove(agent); // no ref, should not throw
+      await rt.remove(agent); // no ref, should not throw
     });
   });
 
   describe("transform", () => {
-    test("transform creates node in target branch", () => {
+    test("transform creates node in target branch", async () => {
       const rt = createRuntime();
-      const root = rt.create(null, world);
-      const a = rt.create(root, agent);
-      const exp = rt.create(a, experience);
+      const root = await rt.create(null, world);
+      const a = await rt.create(root, agent);
+      const exp = await rt.create(a, experience);
       const goalDef = structure("goal", "A goal", agent);
-      const g = rt.create(a, goalDef, "Feature: Build auth");
+      const g = await rt.create(a, goalDef, "Feature: Build auth");
 
       // transform goal into insight (under experience)
-      const ins = rt.transform(g, insight, "Feature: Auth lessons");
+      const ins = await rt.transform(g, insight, "Feature: Auth lessons");
       expect(ins.name).toBe("insight");
       expect(ins.information).toBe("Feature: Auth lessons");
 
-      const state = rt.project(exp);
+      const state = await rt.project(exp);
       expect(state.children).toHaveLength(1);
       expect(state.children![0].name).toBe("insight");
     });
@@ -260,128 +260,128 @@ describe("Runtime", () => {
       relation("appointment", "Who holds this", agent),
     ]);
 
-    test("link two nodes and see it in projection", () => {
+    test("link two nodes and see it in projection", async () => {
       const rt = createRuntime();
-      const root = rt.create(null, world);
-      const sean = rt.create(root, agent, "Feature: I am Sean");
-      const dp = rt.create(root, org);
-      const arch = rt.create(dp, position);
+      const root = await rt.create(null, world);
+      const sean = await rt.create(root, agent, "Feature: I am Sean");
+      const dp = await rt.create(root, org);
+      const arch = await rt.create(dp, position);
 
-      rt.link(arch, sean, "appointment");
+      await rt.link(arch, sean, "appointment");
 
-      const state = rt.project(arch);
+      const state = await rt.project(arch);
       expect(state.links).toHaveLength(1);
       expect(state.links![0].relation).toBe("appointment");
       expect(state.links![0].target.name).toBe("agent");
       expect(state.links![0].target.information).toBe("Feature: I am Sean");
     });
 
-    test("link is idempotent", () => {
+    test("link is idempotent", async () => {
       const rt = createRuntime();
-      const root = rt.create(null, world);
-      const sean = rt.create(root, agent);
-      const dp = rt.create(root, org);
-      const arch = rt.create(dp, position);
+      const root = await rt.create(null, world);
+      const sean = await rt.create(root, agent);
+      const dp = await rt.create(root, org);
+      const arch = await rt.create(dp, position);
 
-      rt.link(arch, sean, "appointment");
-      rt.link(arch, sean, "appointment"); // duplicate
+      await rt.link(arch, sean, "appointment");
+      await rt.link(arch, sean, "appointment"); // duplicate
 
-      const state = rt.project(arch);
+      const state = await rt.project(arch);
       expect(state.links).toHaveLength(1);
     });
 
-    test("unlink removes the relation", () => {
+    test("unlink removes the relation", async () => {
       const rt = createRuntime();
-      const root = rt.create(null, world);
-      const sean = rt.create(root, agent);
-      const dp = rt.create(root, org);
-      const arch = rt.create(dp, position);
+      const root = await rt.create(null, world);
+      const sean = await rt.create(root, agent);
+      const dp = await rt.create(root, org);
+      const arch = await rt.create(dp, position);
 
-      rt.link(arch, sean, "appointment");
-      rt.unlink(arch, sean, "appointment");
+      await rt.link(arch, sean, "appointment");
+      await rt.unlink(arch, sean, "appointment");
 
-      const state = rt.project(arch);
+      const state = await rt.project(arch);
       expect(state.links).toBeUndefined();
     });
 
-    test("node without links has no links in projection", () => {
+    test("node without links has no links in projection", async () => {
       const rt = createRuntime();
-      const root = rt.create(null, world);
-      const a = rt.create(root, agent);
+      const root = await rt.create(null, world);
+      const a = await rt.create(root, agent);
 
-      const state = rt.project(a);
+      const state = await rt.project(a);
       expect(state.links).toBeUndefined();
     });
 
-    test("multiple links from one node", () => {
+    test("multiple links from one node", async () => {
       const rt = createRuntime();
-      const root = rt.create(null, world);
-      const sean = rt.create(root, agent);
-      const alice = rt.create(root, agent);
-      const dp = rt.create(root, org);
-      const arch = rt.create(dp, position);
+      const root = await rt.create(null, world);
+      const sean = await rt.create(root, agent);
+      const alice = await rt.create(root, agent);
+      const dp = await rt.create(root, org);
+      const arch = await rt.create(dp, position);
 
-      rt.link(arch, sean, "appointment");
-      rt.link(arch, alice, "appointment");
+      await rt.link(arch, sean, "appointment");
+      await rt.link(arch, alice, "appointment");
 
-      const state = rt.project(arch);
+      const state = await rt.project(arch);
       expect(state.links).toHaveLength(2);
     });
 
-    test("remove node cleans up its outgoing links", () => {
+    test("remove node cleans up its outgoing links", async () => {
       const rt = createRuntime();
-      const root = rt.create(null, world);
-      const sean = rt.create(root, agent);
-      const dp = rt.create(root, org);
-      const arch = rt.create(dp, position);
+      const root = await rt.create(null, world);
+      const sean = await rt.create(root, agent);
+      const dp = await rt.create(root, org);
+      const arch = await rt.create(dp, position);
 
-      rt.link(arch, sean, "appointment");
-      rt.remove(arch);
+      await rt.link(arch, sean, "appointment");
+      await rt.remove(arch);
 
       // arch is gone, linking to it should not appear anywhere
-      const state = rt.project(dp);
+      const state = await rt.project(dp);
       expect(state.children).toHaveLength(0);
     });
 
-    test("remove target node cleans up incoming links", () => {
+    test("remove target node cleans up incoming links", async () => {
       const rt = createRuntime();
-      const root = rt.create(null, world);
-      const sean = rt.create(root, agent);
-      const dp = rt.create(root, org);
-      const arch = rt.create(dp, position);
+      const root = await rt.create(null, world);
+      const sean = await rt.create(root, agent);
+      const dp = await rt.create(root, org);
+      const arch = await rt.create(dp, position);
 
-      rt.link(arch, sean, "appointment");
-      rt.remove(sean); // remove the target
+      await rt.link(arch, sean, "appointment");
+      await rt.remove(sean); // remove the target
 
-      const state = rt.project(arch);
+      const state = await rt.project(arch);
       expect(state.links).toBeUndefined(); // link should be cleaned up
     });
 
-    test("link throws if source has no ref", () => {
+    test("link throws if source has no ref", async () => {
       const rt = createRuntime();
-      const root = rt.create(null, world);
-      const sean = rt.create(root, agent);
-      expect(() => rt.link(agent, sean, "test")).toThrow("Source node has no ref");
+      const root = await rt.create(null, world);
+      const sean = await rt.create(root, agent);
+      expect(rt.link(agent, sean, "test")).rejects.toThrow("Source node has no ref");
     });
 
-    test("link throws if target has no ref", () => {
+    test("link throws if target has no ref", async () => {
       const rt = createRuntime();
-      const root = rt.create(null, world);
-      const sean = rt.create(root, agent);
-      expect(() => rt.link(sean, agent, "test")).toThrow("Target node has no ref");
+      const root = await rt.create(null, world);
+      const sean = await rt.create(root, agent);
+      expect(rt.link(sean, agent, "test")).rejects.toThrow("Target node has no ref");
     });
 
-    test("parent projection includes child links", () => {
+    test("parent projection includes child links", async () => {
       const rt = createRuntime();
-      const root = rt.create(null, world);
-      const sean = rt.create(root, agent, "Feature: I am Sean");
-      const dp = rt.create(root, org);
-      const arch = rt.create(dp, position);
+      const root = await rt.create(null, world);
+      const sean = await rt.create(root, agent, "Feature: I am Sean");
+      const dp = await rt.create(root, org);
+      const arch = await rt.create(dp, position);
 
-      rt.link(arch, sean, "appointment");
+      await rt.link(arch, sean, "appointment");
 
       // project from org level — should see position with its link
-      const state = rt.project(dp);
+      const state = await rt.project(dp);
       expect(state.children).toHaveLength(1);
       expect(state.children![0].links).toHaveLength(1);
       expect(state.children![0].links![0].target.name).toBe("agent");

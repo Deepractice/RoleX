@@ -7,9 +7,9 @@
  *
  * Usage:
  *   const role = await rolex.activate("sean");
- *   role.want("Feature: Ship v1", "ship-v1");   // → rendered string
- *   role.plan("Feature: Phase 1", "phase-1");    // → rendered string
- *   role.finish("write-tests", "Feature: Tests written");
+ *   await role.want("Feature: Ship v1", "ship-v1");   // → rendered string
+ *   await role.plan("Feature: Phase 1", "phase-1");    // → rendered string
+ *   await role.finish("write-tests", "Feature: Tests written");
  */
 
 import type { OpResult, Ops } from "@rolexjs/prototype";
@@ -22,7 +22,7 @@ import { render } from "./render.js";
  */
 export interface RolexInternal {
   ops: Ops;
-  saveCtx(ctx: RoleContext): void;
+  saveCtx(ctx: RoleContext): void | Promise<void>;
   direct<T>(locator: string, args?: Record<string, unknown>): Promise<T>;
 }
 
@@ -38,8 +38,8 @@ export class Role {
   }
 
   /** Project the individual's full state tree (used after activate). */
-  project(): string {
-    const result = this.api.ops["role.focus"](this.roleId);
+  async project(): Promise<string> {
+    const result = await this.api.ops["role.focus"](this.roleId);
     const focusedGoalId = this.ctx.focusedGoalId;
     return this.fmt("activate", this.roleId, result, {
       fold: (node) =>
@@ -63,49 +63,55 @@ export class Role {
     });
   }
 
-  private save(): void {
-    this.api.saveCtx(this.ctx);
+  private async save(): Promise<void> {
+    await this.api.saveCtx(this.ctx);
   }
 
   // ---- Execution ----
 
   /** Focus: view or switch focused goal. */
-  focus(goal?: string): string {
+  async focus(goal?: string): Promise<string> {
     const goalId = goal ?? this.ctx.requireGoalId();
     const switched = goalId !== this.ctx.focusedGoalId;
     this.ctx.focusedGoalId = goalId;
     if (switched) this.ctx.focusedPlanId = null;
-    const result = this.api.ops["role.focus"](goalId);
-    this.save();
+    const result = await this.api.ops["role.focus"](goalId);
+    await this.save();
     return this.fmt("focus", goalId, result);
   }
 
   /** Want: declare a goal. */
-  want(goal?: string, id?: string, alias?: readonly string[]): string {
-    const result = this.api.ops["role.want"](this.roleId, goal, id, alias);
+  async want(goal?: string, id?: string, alias?: readonly string[]): Promise<string> {
+    const result = await this.api.ops["role.want"](this.roleId, goal, id, alias);
     if (id) this.ctx.focusedGoalId = id;
     this.ctx.focusedPlanId = null;
-    this.save();
+    await this.save();
     return this.fmt("want", id ?? this.roleId, result);
   }
 
   /** Plan: create a plan for the focused goal. */
-  plan(plan?: string, id?: string, after?: string, fallback?: string): string {
-    const result = this.api.ops["role.plan"](this.ctx.requireGoalId(), plan, id, after, fallback);
+  async plan(plan?: string, id?: string, after?: string, fallback?: string): Promise<string> {
+    const result = await this.api.ops["role.plan"](
+      this.ctx.requireGoalId(),
+      plan,
+      id,
+      after,
+      fallback
+    );
     if (id) this.ctx.focusedPlanId = id;
-    this.save();
+    await this.save();
     return this.fmt("plan", id ?? "plan", result);
   }
 
   /** Todo: add a task to the focused plan. */
-  todo(task?: string, id?: string, alias?: readonly string[]): string {
-    const result = this.api.ops["role.todo"](this.ctx.requirePlanId(), task, id, alias);
+  async todo(task?: string, id?: string, alias?: readonly string[]): Promise<string> {
+    const result = await this.api.ops["role.todo"](this.ctx.requirePlanId(), task, id, alias);
     return this.fmt("todo", id ?? "task", result);
   }
 
   /** Finish: complete a task, optionally record an encounter. */
-  finish(task: string, encounter?: string): string {
-    const result = this.api.ops["role.finish"](task, this.roleId, encounter);
+  async finish(task: string, encounter?: string): Promise<string> {
+    const result = await this.api.ops["role.finish"](task, this.roleId, encounter);
     if (encounter && result.state.id) {
       this.ctx.addEncounter(result.state.id);
     }
@@ -113,38 +119,38 @@ export class Role {
   }
 
   /** Complete: close a plan as done, record encounter. */
-  complete(plan?: string, encounter?: string): string {
+  async complete(plan?: string, encounter?: string): Promise<string> {
     const planId = plan ?? this.ctx.requirePlanId();
-    const result = this.api.ops["role.complete"](planId, this.roleId, encounter);
+    const result = await this.api.ops["role.complete"](planId, this.roleId, encounter);
     this.ctx.addEncounter(result.state.id ?? planId);
     if (this.ctx.focusedPlanId === planId) this.ctx.focusedPlanId = null;
-    this.save();
+    await this.save();
     return this.fmt("complete", planId, result);
   }
 
   /** Abandon: drop a plan, record encounter. */
-  abandon(plan?: string, encounter?: string): string {
+  async abandon(plan?: string, encounter?: string): Promise<string> {
     const planId = plan ?? this.ctx.requirePlanId();
-    const result = this.api.ops["role.abandon"](planId, this.roleId, encounter);
+    const result = await this.api.ops["role.abandon"](planId, this.roleId, encounter);
     this.ctx.addEncounter(result.state.id ?? planId);
     if (this.ctx.focusedPlanId === planId) this.ctx.focusedPlanId = null;
-    this.save();
+    await this.save();
     return this.fmt("abandon", planId, result);
   }
 
   // ---- Cognition ----
 
   /** Reflect: consume encounters → experience. Empty encounters = direct creation. */
-  reflect(encounters: string[], experience?: string, id?: string): string {
+  async reflect(encounters: string[], experience?: string, id?: string): Promise<string> {
     if (encounters.length > 0) {
       this.ctx.requireEncounterIds(encounters);
     }
     // First encounter goes through ops (creates experience + removes encounter)
     const first = encounters[0] as string | undefined;
-    const result = this.api.ops["role.reflect"](first, this.roleId, experience, id);
+    const result = await this.api.ops["role.reflect"](first, this.roleId, experience, id);
     // Remaining encounters are consumed via forget
     for (let i = 1; i < encounters.length; i++) {
-      this.api.ops["role.forget"](encounters[i]);
+      await this.api.ops["role.forget"](encounters[i]);
     }
     if (encounters.length > 0) {
       this.ctx.consumeEncounters(encounters);
@@ -154,16 +160,16 @@ export class Role {
   }
 
   /** Realize: consume experiences → principle. Empty experiences = direct creation. */
-  realize(experiences: string[], principle?: string, id?: string): string {
+  async realize(experiences: string[], principle?: string, id?: string): Promise<string> {
     if (experiences.length > 0) {
       this.ctx.requireExperienceIds(experiences);
     }
     // First experience goes through ops (creates principle + removes experience)
     const first = experiences[0] as string | undefined;
-    const result = this.api.ops["role.realize"](first, this.roleId, principle, id);
+    const result = await this.api.ops["role.realize"](first, this.roleId, principle, id);
     // Remaining experiences are consumed via forget
     for (let i = 1; i < experiences.length; i++) {
-      this.api.ops["role.forget"](experiences[i]);
+      await this.api.ops["role.forget"](experiences[i]);
     }
     if (experiences.length > 0) {
       this.ctx.consumeExperiences(experiences);
@@ -172,17 +178,17 @@ export class Role {
   }
 
   /** Master: create procedure, optionally consuming experiences. */
-  master(procedure: string, id?: string, experiences?: string[]): string {
+  async master(procedure: string, id?: string, experiences?: string[]): Promise<string> {
     if (experiences && experiences.length > 0) {
       this.ctx.requireExperienceIds(experiences);
     }
     // First experience goes through ops (creates procedure + removes experience)
     const first = experiences?.[0];
-    const result = this.api.ops["role.master"](this.roleId, procedure, id, first);
+    const result = await this.api.ops["role.master"](this.roleId, procedure, id, first);
     // Remaining experiences are consumed via forget
     if (experiences) {
       for (let i = 1; i < experiences.length; i++) {
-        this.api.ops["role.forget"](experiences[i]);
+        await this.api.ops["role.forget"](experiences[i]);
       }
       this.ctx.consumeExperiences(experiences);
     }
@@ -192,19 +198,19 @@ export class Role {
   // ---- Knowledge management ----
 
   /** Forget: remove any node under the individual by id. */
-  forget(nodeId: string): string {
-    const result = this.api.ops["role.forget"](nodeId);
+  async forget(nodeId: string): Promise<string> {
+    const result = await this.api.ops["role.forget"](nodeId);
     if (this.ctx.focusedGoalId === nodeId) this.ctx.focusedGoalId = null;
     if (this.ctx.focusedPlanId === nodeId) this.ctx.focusedPlanId = null;
-    this.save();
+    await this.save();
     return this.fmt("forget", nodeId, result);
   }
 
   // ---- Skills + unified entry ----
 
   /** Skill: load full skill content by locator. */
-  skill(locator: string): Promise<string> {
-    return this.api.ops["role.skill"](locator);
+  async skill(locator: string): Promise<string> {
+    return await this.api.ops["role.skill"](locator);
   }
 
   /** Use: subjective execution — `!ns.method` or ResourceX locator. */

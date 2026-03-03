@@ -95,7 +95,7 @@ function removeSubtree(db: DB, ref: string): void {
 
 export function createSqliteRuntime(db: DB): Runtime {
   return {
-    create(parent, type, information, id, alias) {
+    async create(parent, type, information, id, alias) {
       // Idempotent: same id under same parent → return existing.
       if (id) {
         const existing = db
@@ -121,7 +121,7 @@ export function createSqliteRuntime(db: DB): Runtime {
       return toStructure(db.select().from(nodes).where(eq(nodes.ref, ref)).get()!);
     },
 
-    remove(node) {
+    async remove(node) {
       if (!node.ref) return;
       const row = db.select().from(nodes).where(eq(nodes.ref, node.ref)).get();
       if (!row) return;
@@ -130,7 +130,7 @@ export function createSqliteRuntime(db: DB): Runtime {
       removeSubtree(db, node.ref);
     },
 
-    transform(source, target, information) {
+    async transform(source, target, information) {
       if (!source.ref) throw new Error("Source node has no ref");
       const row = db.select().from(nodes).where(eq(nodes.ref, source.ref)).get();
       if (!row) throw new Error(`Source node not found: ${source.ref}`);
@@ -159,7 +159,7 @@ export function createSqliteRuntime(db: DB): Runtime {
       return toStructure(db.select().from(nodes).where(eq(nodes.ref, source.ref)).get()!);
     },
 
-    link(from, to, relationName, reverseName) {
+    async link(from, to, relationName, reverseName) {
       if (!from.ref) throw new Error("Source node has no ref");
       if (!to.ref) throw new Error("Target node has no ref");
 
@@ -192,7 +192,7 @@ export function createSqliteRuntime(db: DB): Runtime {
       }
     },
 
-    unlink(from, to, relationName, reverseName) {
+    async unlink(from, to, relationName, reverseName) {
       if (!from.ref || !to.ref) return;
 
       db.delete(links)
@@ -212,19 +212,19 @@ export function createSqliteRuntime(db: DB): Runtime {
         .run();
     },
 
-    tag(node, tagValue) {
+    async tag(node, tagValue) {
       if (!node.ref) throw new Error("Node has no ref");
       const row = db.select().from(nodes).where(eq(nodes.ref, node.ref)).get();
       if (!row) throw new Error(`Node not found: ${node.ref}`);
       db.update(nodes).set({ tag: tagValue }).where(eq(nodes.ref, node.ref)).run();
     },
 
-    project(node) {
+    async project(node) {
       if (!node.ref) throw new Error(`Node has no ref`);
       return projectNode(db, node.ref);
     },
 
-    roots() {
+    async roots() {
       const rows = db.select().from(nodes).where(isNull(nodes.parentRef)).all();
       return rows.map(toStructure);
     },

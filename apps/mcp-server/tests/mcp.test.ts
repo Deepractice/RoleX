@@ -14,8 +14,8 @@ import { McpState } from "../src/state.js";
 let rolex: Rolex;
 let state: McpState;
 
-beforeEach(() => {
-  rolex = createRoleX(localPlatform({ dataDir: null }));
+beforeEach(async () => {
+  rolex = await createRoleX(localPlatform({ dataDir: null }));
   state = new McpState();
 });
 
@@ -80,7 +80,7 @@ describe("render", () => {
     await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
 
-    const output = role.want("Feature: Test", "test-goal");
+    const output = await role.want("Feature: Test", "test-goal");
     // Layer 1: Status
     expect(output).toContain('Goal "test-goal" declared.');
     // Layer 2: Hint
@@ -102,21 +102,21 @@ describe("full execution flow", () => {
     state.role = role;
 
     // Want
-    const goal = role.want("Feature: Build Auth", "build-auth");
+    const goal = await role.want("Feature: Build Auth", "build-auth");
     expect(role.ctx.focusedGoalId).toBe("build-auth");
     expect(goal).toContain("I →");
 
     // Plan
-    const plan = role.plan("Feature: Auth Plan", "auth-plan");
+    const plan = await role.plan("Feature: Auth Plan", "auth-plan");
     expect(role.ctx.focusedPlanId).toBe("auth-plan");
     expect(plan).toContain("I →");
 
     // Todo
-    const task = role.todo("Feature: Implement JWT", "impl-jwt");
+    const task = await role.todo("Feature: Implement JWT", "impl-jwt");
     expect(task).toContain("I →");
 
     // Finish with encounter
-    const finished = role.finish(
+    const finished = await role.finish(
       "impl-jwt",
       "Feature: Implemented JWT\n  Scenario: Token pattern\n    Given JWT needed\n    Then tokens work"
     );
@@ -124,8 +124,8 @@ describe("full execution flow", () => {
     expect(role.ctx.encounterIds.has("impl-jwt-finished")).toBe(true);
 
     // Reflect: encounter → experience
-    const reflected = role.reflect(
-      "impl-jwt-finished",
+    const reflected = await role.reflect(
+      ["impl-jwt-finished"],
       "Feature: Token rotation insight\n  Scenario: Refresh matters\n    Given tokens expire\n    Then refresh tokens are key",
       "token-insight"
     );
@@ -134,8 +134,8 @@ describe("full execution flow", () => {
     expect(role.ctx.experienceIds.has("token-insight")).toBe(true);
 
     // Realize: experience → principle
-    const realized = role.realize(
-      "token-insight",
+    const realized = await role.realize(
+      ["token-insight"],
       "Feature: Always use refresh tokens\n  Scenario: Short-lived tokens need rotation\n    Given access tokens expire\n    Then refresh tokens must exist",
       "refresh-tokens"
     );
@@ -154,14 +154,14 @@ describe("focus", () => {
     const role = await rolex.activate("sean");
     state.role = role;
 
-    role.want("Feature: Goal A", "goal-a");
+    await role.want("Feature: Goal A", "goal-a");
     expect(role.ctx.focusedGoalId).toBe("goal-a");
 
-    role.want("Feature: Goal B", "goal-b");
+    await role.want("Feature: Goal B", "goal-b");
     expect(role.ctx.focusedGoalId).toBe("goal-b");
 
     // Switch back to goal A
-    role.focus("goal-a");
+    await role.focus("goal-a");
     expect(role.ctx.focusedGoalId).toBe("goal-a");
   });
 });
@@ -177,14 +177,17 @@ describe("selective cognition", () => {
     state.role = role;
 
     // Create goal + plan + tasks
-    role.want("Feature: Auth", "auth");
-    role.plan("Feature: Plan", "plan1");
-    role.todo("Feature: Login", "login");
-    role.todo("Feature: Signup", "signup");
+    await role.want("Feature: Auth", "auth");
+    await role.plan("Feature: Plan", "plan1");
+    await role.todo("Feature: Login", "login");
+    await role.todo("Feature: Signup", "signup");
 
     // Finish both with encounters
-    role.finish("login", "Feature: Login done\n  Scenario: OK\n    Given login\n    Then success");
-    role.finish(
+    await role.finish(
+      "login",
+      "Feature: Login done\n  Scenario: OK\n    Given login\n    Then success"
+    );
+    await role.finish(
       "signup",
       "Feature: Signup done\n  Scenario: OK\n    Given signup\n    Then success"
     );
@@ -193,8 +196,8 @@ describe("selective cognition", () => {
     expect(role.ctx.encounterIds.has("signup-finished")).toBe(true);
 
     // Reflect only on "login-finished"
-    role.reflect(
-      "login-finished",
+    await role.reflect(
+      ["login-finished"],
       "Feature: Login insight\n  Scenario: OK\n    Given practice\n    Then understanding",
       "login-insight"
     );

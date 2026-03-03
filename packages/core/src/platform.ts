@@ -41,10 +41,10 @@ export interface RoleXRepository {
   readonly prototype: PrototypeRegistry;
 
   /** Save role context to persistent storage. */
-  saveContext(roleId: string, data: ContextData): void;
+  saveContext(roleId: string, data: ContextData): Promise<void>;
 
   /** Load role context from persistent storage. Returns null if none exists. */
-  loadContext(roleId: string): ContextData | null;
+  loadContext(roleId: string): Promise<ContextData | null>;
 }
 
 export interface Platform {

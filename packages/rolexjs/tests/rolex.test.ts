@@ -7,8 +7,8 @@ import type { OpResult } from "@rolexjs/prototype";
 import { createRoleX } from "../src/index.js";
 import { describe as renderDescribe, hint as renderHint, renderState } from "../src/render.js";
 
-function setup() {
-  return createRoleX(localPlatform({ dataDir: null }));
+async function setup() {
+  return await createRoleX(localPlatform({ dataDir: null }));
 }
 
 // ================================================================
@@ -17,7 +17,7 @@ function setup() {
 
 describe("use dispatch", () => {
   test("!individual.born creates individual", async () => {
-    const rolex = setup();
+    const rolex = await setup();
     const r = await rolex.direct<OpResult>("!individual.born", {
       content: "Feature: Sean",
       id: "sean",
@@ -30,7 +30,7 @@ describe("use dispatch", () => {
   });
 
   test("chained operations via use", async () => {
-    const rolex = setup();
+    const rolex = await setup();
     await rolex.direct("!individual.born", { id: "sean" });
     await rolex.direct("!role.want", { individual: "sean", goal: "Feature: Auth", id: "g1" });
     const r = await rolex.direct<OpResult>("!role.plan", {
@@ -42,7 +42,7 @@ describe("use dispatch", () => {
   });
 
   test("!census.list returns text", async () => {
-    const rolex = setup();
+    const rolex = await setup();
     await rolex.direct("!individual.born", { id: "sean" });
     await rolex.direct("!org.found", { id: "dp" });
     const result = await rolex.direct<string>("!census.list");
@@ -50,14 +50,14 @@ describe("use dispatch", () => {
     expect(result).toContain("dp");
   });
 
-  test("throws on unknown command", () => {
-    const rolex = setup();
-    expect(() => rolex.direct("!foo.bar")).toThrow();
+  test("throws on unknown command", async () => {
+    const rolex = await setup();
+    expect(rolex.direct("!foo.bar")).rejects.toThrow();
   });
 
-  test("throws on unknown method", () => {
-    const rolex = setup();
-    expect(() => rolex.direct("!org.nope")).toThrow();
+  test("throws on unknown method", async () => {
+    const rolex = await setup();
+    expect(rolex.direct("!org.nope")).rejects.toThrow();
   });
 });
 
@@ -67,7 +67,7 @@ describe("use dispatch", () => {
 
 describe("activate", () => {
   test("returns Role with ctx", async () => {
-    const rolex = setup();
+    const rolex = await setup();
     await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
     expect(role.roleId).toBe("sean");
@@ -75,26 +75,26 @@ describe("activate", () => {
   });
 
   test("throws on non-existent individual", async () => {
-    const rolex = setup();
+    const rolex = await setup();
     expect(rolex.activate("nobody")).rejects.toThrow('"nobody" not found');
   });
 
   test("Role.want/plan/todo/finish work through Role API", async () => {
-    const rolex = setup();
+    const rolex = await setup();
     await rolex.direct("!individual.born", { id: "sean" });
     const role = await rolex.activate("sean");
 
-    const wantR = role.want("Feature: Auth", "auth");
+    const wantR = await role.want("Feature: Auth", "auth");
     expect(wantR).toContain('Goal "auth" declared.');
     expect(wantR).toContain("[goal]");
 
-    const planR = role.plan("Feature: JWT", "jwt");
+    const planR = await role.plan("Feature: JWT", "jwt");
     expect(planR).toContain("[plan]");
 
-    const todoR = role.todo("Feature: Login", "login");
+    const todoR = await role.todo("Feature: Login", "login");
     expect(todoR).toContain("[task]");
 
-    const finishR = role.finish(
+    const finishR = await role.finish(
       "login",
       "Feature: Done\n  Scenario: OK\n    Given done\n    Then ok"
     );
@@ -102,7 +102,7 @@ describe("activate", () => {
   });
 
   test("Role.use delegates to Rolex.use", async () => {
-    const rolex = setup();
+    const rolex = await setup();
     await rolex.direct("!individual.born", { id: "sean" });
     const role = await rolex.activate("sean");
     const r = await role.use<OpResult>("!org.found", { content: "Feature: DP", id: "dp" });
@@ -116,7 +116,7 @@ describe("activate", () => {
 
 describe("render", () => {
   test("describe generates text with name", async () => {
-    const rolex = setup();
+    const rolex = await setup();
     const r = await rolex.direct<OpResult>("!individual.born", { id: "sean" });
     const text = renderDescribe("born", "sean", r.state);
     expect(text).toContain("sean");
@@ -128,7 +128,7 @@ describe("render", () => {
   });
 
   test("renderState renders individual with heading", async () => {
-    const rolex = setup();
+    const rolex = await setup();
     const r = await rolex.direct<OpResult>("!individual.born", {
       content: "Feature: I am Sean\n  An AI role.",
       id: "sean",
@@ -139,7 +139,7 @@ describe("render", () => {
   });
 
   test("renderState renders nested structure", async () => {
-    const rolex = setup();
+    const rolex = await setup();
     await rolex.direct("!individual.born", { id: "sean" });
     await rolex.direct("!role.want", { individual: "sean", goal: "Feature: Build auth", id: "g1" });
     await rolex.direct("!role.plan", { goal: "g1", plan: "Feature: JWT plan", id: "p1" });
@@ -182,16 +182,18 @@ describe("render", () => {
 // ================================================================
 
 describe("gherkin validation", () => {
-  test("rejects non-Gherkin input", () => {
-    const rolex = setup();
-    expect(() => rolex.direct("!individual.born", { content: "not gherkin" })).toThrow(
+  test("rejects non-Gherkin input", async () => {
+    const rolex = await setup();
+    expect(rolex.direct("!individual.born", { content: "not gherkin" })).rejects.toThrow(
       "Invalid Gherkin"
     );
   });
 
-  test("accepts valid Gherkin", () => {
-    const rolex = setup();
-    expect(() => rolex.direct("!individual.born", { content: "Feature: Sean" })).not.toThrow();
+  test("accepts valid Gherkin", async () => {
+    const rolex = await setup();
+    await expect(
+      rolex.direct("!individual.born", { content: "Feature: Sean" })
+    ).resolves.toBeDefined();
   });
 });
 
@@ -206,12 +208,12 @@ describe("persistent mode", () => {
     if (existsSync(testDir)) rmSync(testDir, { recursive: true });
   });
 
-  function persistentSetup() {
-    return createRoleX(localPlatform({ dataDir: testDir, resourceDir: null }));
+  async function persistentSetup() {
+    return await createRoleX(localPlatform({ dataDir: testDir, resourceDir: null }));
   }
 
   test("born → retire round-trip", async () => {
-    const rolex = persistentSetup();
+    const rolex = await persistentSetup();
     await rolex.direct("!individual.born", { content: "Feature: Test", id: "test-ind" });
     const r = await rolex.direct<OpResult>("!individual.retire", { individual: "test-ind" });
     expect(r.state.name).toBe("past");
@@ -219,11 +221,11 @@ describe("persistent mode", () => {
   });
 
   test("archived entity survives cross-instance reload", async () => {
-    const rolex1 = persistentSetup();
+    const rolex1 = await persistentSetup();
     await rolex1.direct("!individual.born", { content: "Feature: Test", id: "test-ind" });
     await rolex1.direct("!individual.retire", { individual: "test-ind" });
 
-    const rolex2 = persistentSetup();
+    const rolex2 = await persistentSetup();
     // rehire should find the archived entity
     const r = await rolex2.direct<RolexResult>("!individual.rehire", { individual: "test-ind" });
     expect(r.state.name).toBe("individual");

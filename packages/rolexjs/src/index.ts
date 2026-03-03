@@ -4,10 +4,10 @@
  * Usage:
  *   import { Rolex, Role, describe, hint } from "rolexjs";
  *
- *   const rolex = createRoleX(platform);
+ *   const rolex = await createRoleX(platform);
  *   await rolex.genesis();
  *   const role = await rolex.activate("sean");
- *   role.want("Feature: Ship v1", "ship-v1");
+ *   await role.want("Feature: Ship v1", "ship-v1");
  */
 
 // Re-export core (structures + processes)

@@ -65,14 +65,14 @@ export class SqliteRepository implements RoleXRepository {
     this.prototype = createPrototypeRegistry(db);
   }
 
-  saveContext(roleId: string, data: ContextData): void {
+  async saveContext(roleId: string, data: ContextData): Promise<void> {
     this.db.run(
       sql`INSERT OR REPLACE INTO contexts (role_id, focused_goal_id, focused_plan_id)
           VALUES (${roleId}, ${data.focusedGoalId}, ${data.focusedPlanId})`
     );
   }
 
-  loadContext(roleId: string): ContextData | null {
+  async loadContext(roleId: string): Promise<ContextData | null> {
     const row = this.db.all<{
       role_id: string;
       focused_goal_id: string | null;

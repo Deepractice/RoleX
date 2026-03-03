@@ -25,28 +25,28 @@ export interface Runtime {
     information?: string,
     id?: string,
     alias?: readonly string[]
-  ): Structure;
+  ): Promise<Structure>;
 
   /** Remove a node and its subtree. */
-  remove(node: Structure): void;
+  remove(node: Structure): Promise<void>;
 
   /** Move a node to target structure's branch, preserving its subtree. Updates type and optionally information. */
-  transform(source: Structure, target: Structure, information?: string): Structure;
+  transform(source: Structure, target: Structure, information?: string): Promise<Structure>;
 
   /** Establish a bidirectional cross-branch relation between two nodes. */
-  link(from: Structure, to: Structure, relation: string, reverse: string): void;
+  link(from: Structure, to: Structure, relation: string, reverse: string): Promise<void>;
 
   /** Remove a bidirectional cross-branch relation between two nodes. */
-  unlink(from: Structure, to: Structure, relation: string, reverse: string): void;
+  unlink(from: Structure, to: Structure, relation: string, reverse: string): Promise<void>;
 
   /** Set a tag on a node (e.g., "done", "abandoned"). */
-  tag(node: Structure, tag: string): void;
+  tag(node: Structure, tag: string): Promise<void>;
 
   /** Project the current state of a node and its subtree (including links). */
-  project(node: Structure): State;
+  project(node: Structure): Promise<State>;
 
   /** Return all root nodes (nodes without a parent edge). */
-  roots(): Structure[];
+  roots(): Promise<Structure[]>;
 }
 
 // ===== In-memory implementation =====
@@ -151,7 +151,7 @@ export const createRuntime = (): Runtime => {
   };
 
   return {
-    create(parent, type, information, id, alias) {
+    async create(parent, type, information, id, alias) {
       if (id) {
         // Idempotent: same id under same parent → return existing.
         for (const treeNode of nodes.values()) {
@@ -163,7 +163,7 @@ export const createRuntime = (): Runtime => {
       return createNode(parent?.ref ?? null, type, information, id, alias);
     },
 
-    remove(node) {
+    async remove(node) {
       if (!node.ref) return;
       const treeNode = nodes.get(node.ref);
       if (!treeNode) return;
@@ -178,7 +178,7 @@ export const createRuntime = (): Runtime => {
       removeSubtree(node.ref);
     },
 
-    transform(source, target, information) {
+    async transform(source, target, information) {
       if (!source.ref) throw new Error("Source node has no ref");
       const sourceTreeNode = nodes.get(source.ref);
       if (!sourceTreeNode) throw new Error(`Source node not found: ${source.ref}`);
@@ -216,7 +216,7 @@ export const createRuntime = (): Runtime => {
       return sourceTreeNode.node;
     },
 
-    link(from, to, relationName, reverseName) {
+    async link(from, to, relationName, reverseName) {
       if (!from.ref) throw new Error("Source node has no ref");
       if (!to.ref) throw new Error("Target node has no ref");
 
@@ -235,7 +235,7 @@ export const createRuntime = (): Runtime => {
       }
     },
 
-    unlink(from, to, relationName, reverseName) {
+    async unlink(from, to, relationName, reverseName) {
       if (!from.ref || !to.ref) return;
 
       // Forward
@@ -259,21 +259,21 @@ export const createRuntime = (): Runtime => {
       }
     },
 
-    tag(node, tagValue) {
+    async tag(node, tagValue) {
       if (!node.ref) throw new Error("Node has no ref");
       const treeNode = nodes.get(node.ref);
       if (!treeNode) throw new Error(`Node not found: ${node.ref}`);
       (treeNode.node as any).tag = tagValue;
     },
 
-    project(node) {
+    async project(node) {
       if (!node.ref || !nodes.has(node.ref)) {
         throw new Error(`Node not found: ${node.ref}`);
       }
       return projectNode(node.ref);
     },
 
-    roots() {
+    async roots() {
       const result: Structure[] = [];
       for (const treeNode of nodes.values()) {
         if (treeNode.parent === null) {
