@@ -1,5 +1,18 @@
 # @rolexjs/core
 
+## 1.1.0
+
+### Minor Changes
+
+- 3de799b: Add resourcexExecutor to Platform interface for custom resolver execution
+
+  Platform now accepts an optional CustomExecutor, passed through to ResourceX
+  as isolator: "custom". Enables QuickJS Wasm execution in Workers environments.
+
+### Patch Changes
+
+- @rolexjs/system@1.1.0
+
 ## 1.0.0
 
 ### Major Changes

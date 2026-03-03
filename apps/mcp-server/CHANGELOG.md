@@ -1,5 +1,15 @@
 # @rolexjs/mcp-server
 
+## 1.1.0
+
+### Patch Changes
+
+- Updated dependencies [3de799b]
+- Updated dependencies [051cfb2]
+  - rolexjs@1.1.0
+  - @rolexjs/local-platform@1.1.0
+  - @rolexjs/genesis@1.1.0
+
 ## 1.0.0
 
 ### Major Changes
