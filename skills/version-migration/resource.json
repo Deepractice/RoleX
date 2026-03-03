@@ -1,0 +1,6 @@
+{
+  "name": "version-migration",
+  "type": "skill",
+  "author": "deepractice",
+  "description": "Migrate legacy RoleX data (~/.rolex) to RoleX 1.0 format"
+}

@@ -36,6 +36,14 @@
       "content": "@skill-creator.procedure.feature"
     }
   },
+  {
+    "op": "!individual.train",
+    "args": {
+      "individual": "nuwa",
+      "id": "version-migration",
+      "content": "@version-migration.procedure.feature"
+    }
+  },
 
   { "op": "!org.hire", "args": { "org": "rolex", "individual": "nuwa" } },
 
