@@ -5,9 +5,9 @@
     "": {
       "name": "rolexjs",
       "dependencies": {
-        "@resourcexjs/core": "^2.17.2",
-        "@resourcexjs/node-provider": "^2.17.2",
-        "resourcexjs": "^2.17.2",
+        "@resourcexjs/core": "^2.18.0",
+        "@resourcexjs/node-provider": "^2.18.0",
+        "resourcexjs": "^2.18.0",
       },
       "devDependencies": {
         "@biomejs/biome": "^2.4.0",
@@ -366,11 +366,11 @@
 
     "@pondwader/socks5-server": ["@pondwader/socks5-server@1.0.10", "", {}, "sha512-bQY06wzzR8D2+vVCUoBsr5QS2U6UgPUQRmErNwtsuI6vLcyRKkafjkr3KxbtGFf9aBBIV2mcvlsKD1UYaIV+sg=="],
 
-    "@resourcexjs/arp": ["@resourcexjs/arp@2.17.2", "https://registry.npmmirror.com/@resourcexjs/arp/-/arp-2.17.2.tgz", {}, "sha512-DN9sBDICZMpQVwmT4V8U/PSlN289tnrwkZie73kRT7VqbuAdJbEih0JmW2OtPEvHyB1fDlJYZKEtx8l6cCcDzg=="],
+    "@resourcexjs/arp": ["@resourcexjs/arp@2.18.0", "", {}, "sha512-rcpdtBM46bwcjLeSoGp8vip6yfeuv6+4Fl99ltKe99LKSXxTxuDgMuhxfBT//ZJaCagIiVaioyqRwLozX5blAg=="],
 
-    "@resourcexjs/core": ["@resourcexjs/core@2.17.2", "https://registry.npmmirror.com/@resourcexjs/core/-/core-2.17.2.tgz", { "dependencies": { "modern-tar": "^0.7.3", "zod": "^4.3.6" } }, "sha512-NdsNbBJOnC5a3TNrA8Qn0wCA/qvnYzEgNSGvL9Bq2kIMU6uSmQyTG1FKJvz/0RXgEa60GrOaJTJGvjQzxpjpdg=="],
+    "@resourcexjs/core": ["@resourcexjs/core@2.18.0", "", { "dependencies": { "modern-tar": "^0.7.3", "zod": "^4.3.6" } }, "sha512-y/Pnp5+s+lmg3kXbo8h8menJvq511z6PIN8/uH/CQjw35BoEHJQpKPSlHcXQY3Npd6MyOPkKBJ4yGsRMxdOlcA=="],
 
-    "@resourcexjs/node-provider": ["@resourcexjs/node-provider@2.17.2", "https://registry.npmmirror.com/@resourcexjs/node-provider/-/node-provider-2.17.2.tgz", { "dependencies": { "@resourcexjs/core": "^2.17.2" } }, "sha512-QlCWHhpBOJWbigYoR1wB3oKDLxgxC7g4mp0PRd6QuXCXQzpj3XOwKic8549/FmHN3LRfcn3gLahfCTtuEkH2EQ=="],
+    "@resourcexjs/node-provider": ["@resourcexjs/node-provider@2.18.0", "", { "dependencies": { "@resourcexjs/core": "^2.18.0" } }, "sha512-8QZNl/YBNQHV7pecvvm6sj54ufgcAQ7U/moO3B6sZIoh3t+54voQtLULDWTLRehlxVITt6eIU6cm4vedVqNPSg=="],
 
     "@rolexjs/bdd": ["@rolexjs/bdd@workspace:bdd"],
 
@@ -964,7 +964,7 @@
 
     "resolve-from": ["resolve-from@5.0.0", "", {}, "sha512-qYg9KP24dD5qka9J47d0aVky0N+b4fTU89LN9iDnjB5waksiC49rvMB0PrUJQGoTmH50XPiqOvAjDfaijGxYZw=="],
 
-    "resourcexjs": ["resourcexjs@2.17.2", "https://registry.npmmirror.com/resourcexjs/-/resourcexjs-2.17.2.tgz", { "dependencies": { "@resourcexjs/arp": "^2.17.2", "@resourcexjs/core": "^2.17.2", "sandboxxjs": "^0.5.1" } }, "sha512-xQYMbQ5V107mdTQ/29M6ntAQsdPIcanVvyXd6Iu1SuHihIFp/Fv2whQzQZvEN1KuwJZBFZqVrjYGALnI0lTmsw=="],
+    "resourcexjs": ["resourcexjs@2.18.0", "", { "dependencies": { "@resourcexjs/arp": "^2.18.0", "@resourcexjs/core": "^2.18.0", "sandboxxjs": "^0.5.1" } }, "sha512-UYEyLoDVvxImopuOyIcZFa2obilOsHkS52Ey2fYKvuMHvl2JEa+zTZyJG2psyZ1HtixeDOD1SIXA2oZXMp09TA=="],
 
     "reusify": ["reusify@1.1.0", "", {}, "sha512-g6QUff04oZpHs0eG5p83rFLhHeV00ug/Yf9nZM6fLeUrPguBTkTQOdpAWWspMh55TZfVQDPaN3NQJfbVRAxdIw=="],
 

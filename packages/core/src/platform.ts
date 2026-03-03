@@ -11,7 +11,7 @@
  * (ResourceX, bootstrap config) to form a complete runtime environment.
  */
 
-import type { ResourceXProvider } from "@resourcexjs/core";
+import type { CustomExecutor, ResourceXProvider } from "@resourcexjs/core";
 import type { Initializer, Runtime } from "@rolexjs/system";
 
 /** Serializable context data for persistence. */
@@ -53,6 +53,9 @@ export interface Platform {
 
   /** ResourceX provider — injected storage backend for resource management. */
   readonly resourcexProvider?: ResourceXProvider;
+
+  /** Custom executor for ResourceX resolver execution (e.g., QuickJS Wasm for Workers). */
+  readonly resourcexExecutor?: CustomExecutor;
 
   /** Initializer — bootstrap the world on first run. */
   readonly initializer?: Initializer;

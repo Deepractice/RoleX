@@ -47,7 +47,11 @@ export class Rolex {
     // Create ResourceX from injected provider
     if (platform.resourcexProvider) {
       setProvider(platform.resourcexProvider);
-      this.resourcex = createResourceX();
+      this.resourcex = createResourceX(
+        platform.resourcexExecutor
+          ? { isolator: "custom", executor: platform.resourcexExecutor }
+          : undefined
+      );
     }
   }
 
