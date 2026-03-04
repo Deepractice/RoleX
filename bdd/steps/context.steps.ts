@@ -8,8 +8,8 @@ import type { BddWorld } from "../support/world";
 
 // ===== Setup =====
 
-Given("a fresh Rolex instance", function (this: BddWorld) {
-  this.initRolex();
+Given("a fresh Rolex instance", async function (this: BddWorld) {
+  await this.initRolex();
 });
 
 Given(
@@ -43,19 +43,19 @@ Given(
 
 // ===== Persistence setup =====
 
-Given("persisted focusedGoalId is null", function (this: BddWorld) {
-  this.writeContext("sean", { focusedGoalId: null, focusedPlanId: null });
-  this.newSession();
+Given("persisted focusedGoalId is null", async function (this: BddWorld) {
+  await this.writeContext("sean", { focusedGoalId: null, focusedPlanId: null });
+  await this.newSession();
 });
 
-Given("persisted focusedGoalId is {string}", function (this: BddWorld, goalId: string) {
-  this.writeContext("sean", { focusedGoalId: goalId, focusedPlanId: null });
-  this.newSession();
+Given("persisted focusedGoalId is {string}", async function (this: BddWorld, goalId: string) {
+  await this.writeContext("sean", { focusedGoalId: goalId, focusedPlanId: null });
+  await this.newSession();
 });
 
-Given("no persisted context exists", function (this: BddWorld) {
+Given("no persisted context exists", async function (this: BddWorld) {
   // Don't write any context file — just create a new session
-  this.newSession();
+  await this.newSession();
 });
 
 // ===== Actions =====

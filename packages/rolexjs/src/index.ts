@@ -28,6 +28,9 @@ export {
   renderIssueList,
   renderIssueResult,
 } from "./issue-render.js";
+// Project Render
+export type { ProjectAction } from "./project-render.js";
+export { renderProject, renderProjectResult } from "./project-render.js";
 export type { RenderOptions, RenderStateOptions } from "./render.js";
 // Render
 export { describe, detail, directive, hint, render, renderState, world } from "./render.js";

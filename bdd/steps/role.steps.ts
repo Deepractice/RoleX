@@ -19,66 +19,75 @@ Given("I activate role {string}", async function (this: BddWorld, id: string) {
 
 // ===== Execution =====
 
-Given("I want goal {string} with {string}", function (this: BddWorld, id: string, content: string) {
-  this.toolResult = this.role!.want(content, id);
-});
+Given(
+  "I want goal {string} with {string}",
+  async function (this: BddWorld, id: string, content: string) {
+    this.toolResult = await this.role!.want(content, id);
+  }
+);
 
-Given("I plan {string} with {string}", function (this: BddWorld, id: string, content: string) {
-  this.toolResult = this.role!.plan(content, id);
-});
+Given(
+  "I plan {string} with {string}",
+  async function (this: BddWorld, id: string, content: string) {
+    this.toolResult = await this.role!.plan(content, id);
+  }
+);
 
-Given("I todo {string} with {string}", function (this: BddWorld, id: string, content: string) {
-  this.toolResult = this.role!.todo(content, id);
-});
+Given(
+  "I todo {string} with {string}",
+  async function (this: BddWorld, id: string, content: string) {
+    this.toolResult = await this.role!.todo(content, id);
+  }
+);
 
 // ===== Finish =====
 
 Given(
   "I finish {string} with encounter {string}",
-  function (this: BddWorld, taskId: string, encounter: string) {
-    this.toolResult = this.role!.finish(taskId, encounter);
+  async function (this: BddWorld, taskId: string, encounter: string) {
+    this.toolResult = await this.role!.finish(taskId, encounter);
   }
 );
 
-When("I finish {string} without encounter", function (this: BddWorld, taskId: string) {
-  this.toolResult = this.role!.finish(taskId);
+When("I finish {string} without encounter", async function (this: BddWorld, taskId: string) {
+  this.toolResult = await this.role!.finish(taskId);
 });
 
 // ===== Complete / Abandon =====
 
 When(
   "I complete plan {string} with encounter {string}",
-  function (this: BddWorld, planId: string, encounter: string) {
-    this.toolResult = this.role!.complete(planId, encounter);
+  async function (this: BddWorld, planId: string, encounter: string) {
+    this.toolResult = await this.role!.complete(planId, encounter);
   }
 );
 
 When(
   "I abandon plan {string} with encounter {string}",
-  function (this: BddWorld, planId: string, encounter: string) {
-    this.toolResult = this.role!.abandon(planId, encounter);
+  async function (this: BddWorld, planId: string, encounter: string) {
+    this.toolResult = await this.role!.abandon(planId, encounter);
   }
 );
 
 // ===== Focus =====
 
-When("I focus on {string}", function (this: BddWorld, goalId: string) {
-  this.toolResult = this.role!.focus(goalId);
+When("I focus on {string}", async function (this: BddWorld, goalId: string) {
+  this.toolResult = await this.role!.focus(goalId);
 });
 
 // ===== Cognition: Reflect =====
 
 Given(
   "I reflect on {string} as {string} with {string}",
-  function (this: BddWorld, encounterId: string, expId: string, content: string) {
-    this.toolResult = this.role!.reflect([encounterId], content, expId);
+  async function (this: BddWorld, encounterId: string, expId: string, content: string) {
+    this.toolResult = await this.role!.reflect([encounterId], content, expId);
   }
 );
 
 When(
   "I reflect directly as {string} with {string}",
-  function (this: BddWorld, expId: string, content: string) {
-    this.toolResult = this.role!.reflect([], content, expId);
+  async function (this: BddWorld, expId: string, content: string) {
+    this.toolResult = await this.role!.reflect([], content, expId);
   }
 );
 
@@ -86,15 +95,15 @@ When(
 
 Given(
   "I realize from {string} as {string} with {string}",
-  function (this: BddWorld, expId: string, principleId: string, content: string) {
-    this.toolResult = this.role!.realize([expId], content, principleId);
+  async function (this: BddWorld, expId: string, principleId: string, content: string) {
+    this.toolResult = await this.role!.realize([expId], content, principleId);
   }
 );
 
 When(
   "I realize directly as {string} with {string}",
-  function (this: BddWorld, principleId: string, content: string) {
-    this.toolResult = this.role!.realize([], content, principleId);
+  async function (this: BddWorld, principleId: string, content: string) {
+    this.toolResult = await this.role!.realize([], content, principleId);
   }
 );
 
@@ -102,22 +111,22 @@ When(
 
 Given(
   "I master from {string} as {string} with {string}",
-  function (this: BddWorld, expId: string, procId: string, content: string) {
-    this.toolResult = this.role!.master(content, procId, [expId]);
+  async function (this: BddWorld, expId: string, procId: string, content: string) {
+    this.toolResult = await this.role!.master(content, procId, [expId]);
   }
 );
 
 When(
   "I master directly as {string} with {string}",
-  function (this: BddWorld, procId: string, content: string) {
-    this.toolResult = this.role!.master(content, procId);
+  async function (this: BddWorld, procId: string, content: string) {
+    this.toolResult = await this.role!.master(content, procId);
   }
 );
 
 // ===== Knowledge management =====
 
-When("I forget {string}", function (this: BddWorld, nodeId: string) {
-  this.toolResult = this.role!.forget(nodeId);
+When("I forget {string}", async function (this: BddWorld, nodeId: string) {
+  this.toolResult = await this.role!.forget(nodeId);
 });
 
 // ===== Output assertions =====

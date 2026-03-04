@@ -456,6 +456,135 @@ const positionDismiss = def(
 );
 
 // ================================================================
+//  Project — project management
+// ================================================================
+
+const projectLaunch = def(
+  "project",
+  "launch",
+  {
+    content: {
+      type: "gherkin",
+      required: false,
+      description: "Gherkin Feature source for the project",
+    },
+    id: { type: "string", required: false, description: "User-facing identifier (kebab-case)" },
+    alias: { type: "string[]", required: false, description: "Alternative names" },
+  },
+  ["content", "id", "alias"]
+);
+
+const projectScope = def(
+  "project",
+  "scope",
+  {
+    project: { type: "string", required: true, description: "Project id" },
+    content: {
+      type: "gherkin",
+      required: true,
+      description: "Gherkin Feature source for the scope",
+    },
+    id: { type: "string", required: false, description: "Scope id" },
+  },
+  ["project", "content", "id"]
+);
+
+const projectMilestone = def(
+  "project",
+  "milestone",
+  {
+    project: { type: "string", required: true, description: "Project id" },
+    content: {
+      type: "gherkin",
+      required: true,
+      description: "Gherkin Feature source for the milestone",
+    },
+    id: {
+      type: "string",
+      required: false,
+      description: "Milestone id (keywords joined by hyphens)",
+    },
+  },
+  ["project", "content", "id"]
+);
+
+const projectAchieve = def(
+  "project",
+  "achieve",
+  {
+    milestone: { type: "string", required: true, description: "Milestone id to mark as done" },
+  },
+  ["milestone"]
+);
+
+const projectEnroll = def(
+  "project",
+  "enroll",
+  {
+    project: { type: "string", required: true, description: "Project id" },
+    individual: { type: "string", required: true, description: "Individual id" },
+  },
+  ["project", "individual"]
+);
+
+const projectRemove = def(
+  "project",
+  "remove",
+  {
+    project: { type: "string", required: true, description: "Project id" },
+    individual: { type: "string", required: true, description: "Individual id" },
+  },
+  ["project", "individual"]
+);
+
+const projectDeliver = def(
+  "project",
+  "deliver",
+  {
+    project: { type: "string", required: true, description: "Project id" },
+    content: {
+      type: "gherkin",
+      required: true,
+      description: "Gherkin Feature source for the deliverable",
+    },
+    id: {
+      type: "string",
+      required: false,
+      description: "Deliverable id (keywords joined by hyphens)",
+    },
+  },
+  ["project", "content", "id"]
+);
+
+const projectWiki = def(
+  "project",
+  "wiki",
+  {
+    project: { type: "string", required: true, description: "Project id" },
+    content: {
+      type: "gherkin",
+      required: true,
+      description: "Gherkin Feature source for the wiki entry",
+    },
+    id: {
+      type: "string",
+      required: false,
+      description: "Wiki entry id (keywords joined by hyphens)",
+    },
+  },
+  ["project", "content", "id"]
+);
+
+const projectArchive = def(
+  "project",
+  "archive",
+  {
+    project: { type: "string", required: true, description: "Project id" },
+  },
+  ["project"]
+);
+
+// ================================================================
 //  Census — society-level queries
 // ================================================================
 
@@ -466,7 +595,7 @@ const censusList = def(
     type: {
       type: "string",
       required: false,
-      description: "Filter by type (individual, organization, position, past)",
+      description: "Filter by type (individual, organization, position, project, past)",
     },
   },
   ["type"]
@@ -735,6 +864,17 @@ export const instructions: Record<string, InstructionDef> = {
   "position.abolish": positionAbolish,
   "position.appoint": positionAppoint,
   "position.dismiss": positionDismiss,
+
+  // project
+  "project.launch": projectLaunch,
+  "project.scope": projectScope,
+  "project.milestone": projectMilestone,
+  "project.achieve": projectAchieve,
+  "project.enroll": projectEnroll,
+  "project.remove": projectRemove,
+  "project.deliver": projectDeliver,
+  "project.wiki": projectWiki,
+  "project.archive": projectArchive,
 
   // census
   "census.list": censusList,

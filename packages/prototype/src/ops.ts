@@ -317,6 +317,64 @@ export function createOps(ctx: OpsContext): Ops {
       }
     },
 
+    // ---- Project ----
+
+    async "project.launch"(
+      content?: string,
+      id?: string,
+      alias?: readonly string[]
+    ): Promise<OpResult> {
+      validateGherkin(content);
+      const node = await rt.create(society, C.project, content, id, alias);
+      return ok(node, "launch");
+    },
+
+    async "project.scope"(project: string, scope: string, id?: string): Promise<OpResult> {
+      validateGherkin(scope);
+      const node = await rt.create(await resolve(project), C.scope, scope, id);
+      return ok(node, "scope");
+    },
+
+    async "project.milestone"(project: string, milestone: string, id?: string): Promise<OpResult> {
+      validateGherkin(milestone);
+      const node = await rt.create(await resolve(project), C.milestone, milestone, id);
+      return ok(node, "milestone");
+    },
+
+    async "project.achieve"(milestone: string): Promise<OpResult> {
+      const node = await resolve(milestone);
+      await rt.tag(node, "done");
+      return ok(node, "achieve");
+    },
+
+    async "project.enroll"(project: string, individual: string): Promise<OpResult> {
+      const projNode = await resolve(project);
+      await rt.link(projNode, await resolve(individual), "participation", "participate");
+      return ok(projNode, "enroll");
+    },
+
+    async "project.remove"(project: string, individual: string): Promise<OpResult> {
+      const projNode = await resolve(project);
+      await rt.unlink(projNode, await resolve(individual), "participation", "participate");
+      return ok(projNode, "remove");
+    },
+
+    async "project.deliver"(project: string, deliverable: string, id?: string): Promise<OpResult> {
+      validateGherkin(deliverable);
+      const node = await rt.create(await resolve(project), C.deliverable, deliverable, id);
+      return ok(node, "deliver");
+    },
+
+    async "project.wiki"(project: string, wiki: string, id?: string): Promise<OpResult> {
+      validateGherkin(wiki);
+      const node = await rt.create(await resolve(project), C.wiki, wiki, id);
+      return ok(node, "wiki");
+    },
+
+    async "project.archive"(project: string): Promise<OpResult> {
+      return archive(await resolve(project), "archive");
+    },
+
     // ---- Org ----
 
     async "org.found"(content?: string, id?: string, alias?: readonly string[]): Promise<OpResult> {
