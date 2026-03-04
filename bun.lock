@@ -28,7 +28,7 @@
     },
     "apps/mcp-server": {
       "name": "@rolexjs/mcp-server",
-      "version": "0.11.0",
+      "version": "1.0.0",
       "bin": {
         "rolex-mcp": "./dist/index.js",
       },
@@ -56,22 +56,24 @@
     },
     "packages/core": {
       "name": "@rolexjs/core",
-      "version": "0.11.0",
+      "version": "1.0.0",
       "dependencies": {
+        "@issuexjs/core": "^0.2.0",
         "@resourcexjs/core": "^2.14.0",
         "@rolexjs/system": "workspace:*",
       },
     },
     "packages/genesis": {
       "name": "@rolexjs/genesis",
-      "version": "0.1.0",
+      "version": "1.0.0",
     },
     "packages/local-platform": {
       "name": "@rolexjs/local-platform",
-      "version": "0.11.0",
+      "version": "1.0.0",
       "dependencies": {
         "@deepracticex/drizzle": "^0.2.0",
         "@deepracticex/sqlite": "^0.2.0",
+        "@issuexjs/node": "^0.2.0",
         "@resourcexjs/node-provider": "^2.14.0",
         "@rolexjs/core": "workspace:*",
         "@rolexjs/system": "workspace:*",
@@ -80,7 +82,7 @@
     },
     "packages/parser": {
       "name": "@rolexjs/parser",
-      "version": "0.11.0",
+      "version": "1.0.0",
       "dependencies": {
         "@cucumber/gherkin": "^38.0.0",
         "@cucumber/messages": "^32.0.0",
@@ -88,22 +90,25 @@
     },
     "packages/prototype": {
       "name": "@rolexjs/prototype",
-      "version": "0.11.0",
+      "version": "1.0.0",
       "dependencies": {
+        "@issuexjs/core": "^0.2.0",
         "@rolexjs/core": "workspace:*",
         "@rolexjs/parser": "workspace:*",
         "@rolexjs/system": "workspace:*",
+        "issuexjs": "^0.2.0",
         "resourcexjs": "^2.14.0",
       },
     },
     "packages/rolexjs": {
       "name": "rolexjs",
-      "version": "0.11.0",
+      "version": "1.0.0",
       "dependencies": {
         "@rolexjs/core": "workspace:*",
         "@rolexjs/parser": "workspace:*",
         "@rolexjs/prototype": "workspace:*",
         "@rolexjs/system": "workspace:*",
+        "issuexjs": "^0.2.0",
         "resourcexjs": "^2.14.0",
       },
       "devDependencies": {
@@ -112,7 +117,7 @@
     },
     "packages/system": {
       "name": "@rolexjs/system",
-      "version": "0.11.0",
+      "version": "1.0.0",
     },
   },
   "overrides": {
@@ -295,6 +300,10 @@
     "@hono/node-server": ["@hono/node-server@1.19.9", "", { "peerDependencies": { "hono": "^4" } }, "sha512-vHL6w3ecZsky+8P5MD+eFfaGTyCeOHUIFYMGpQGbrBTSmNNoxv0if69rEZ5giu36weC5saFuznL411gRX7bJDw=="],
 
     "@inquirer/external-editor": ["@inquirer/external-editor@1.0.3", "", { "dependencies": { "chardet": "^2.1.1", "iconv-lite": "^0.7.0" }, "peerDependencies": { "@types/node": ">=18" }, "optionalPeers": ["@types/node"] }, "sha512-RWbSrDiYmO4LbejWY7ttpxczuwQyZLBUyygsA9Nsv95hpzUWwnNTVQmAq3xuh7vNwCp07UTmE5i11XAEExx4RA=="],
+
+    "@issuexjs/core": ["@issuexjs/core@0.2.0", "", {}, "sha512-6TZqxHJtGv8SMDlr81KOhmAcZIjNkPZS7g748YDJnkwr5lvNZv5NnkjE6y94Co93g0l8xptV7hw9yL6nYBKU7w=="],
+
+    "@issuexjs/node": ["@issuexjs/node@0.2.0", "", { "dependencies": { "@issuexjs/core": "^0.2.0" } }, "sha512-dfa1KCcewe9HJaQbrNTP8wdTPETmA+6oqeZalT0xTwaFMpk/aGqnKkxvVk93v9X4wdqIskK6VUkgTKn0uTqxeg=="],
 
     "@jridgewell/gen-mapping": ["@jridgewell/gen-mapping@0.3.13", "", { "dependencies": { "@jridgewell/sourcemap-codec": "^1.5.0", "@jridgewell/trace-mapping": "^0.3.24" } }, "sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA=="],
 
@@ -755,6 +764,8 @@
     "is-windows": ["is-windows@1.0.2", "", {}, "sha512-eXK1UInq2bPmjyX6e3VHIzMLobc4J94i4AWn+Hpq3OU5KkrRC96OAcR3PRJ/pGu6m8TRnBHP9dkXQVsT/COVIA=="],
 
     "isexe": ["isexe@2.0.0", "", {}, "sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw=="],
+
+    "issuexjs": ["issuexjs@0.2.0", "", { "dependencies": { "@issuexjs/core": "^0.2.0" } }, "sha512-DFSRjtLCgtopBqlBRfPJOfLIqES2yagirEYeRMJPyZrWPeRlgCCbI9W6TEevXnnoOR1k3n21+2YuRCkxnPl08w=="],
 
     "jiti": ["jiti@2.6.1", "", { "bin": { "jiti": "lib/jiti-cli.mjs" } }, "sha512-ekilCSN1jwRvIbgeg/57YFh8qQDNbwDb9xT/qu2DAHbFFZUicIl4ygVaAvzveMhMVr3LnpSKTNnwt8PoOfmKhQ=="],
 

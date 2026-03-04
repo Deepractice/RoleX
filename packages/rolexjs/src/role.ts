@@ -14,6 +14,7 @@
 
 import type { OpResult, Ops } from "@rolexjs/prototype";
 import type { RoleContext } from "./context.js";
+import { type IssueAction, type LabelResolver, renderIssueResult } from "./issue-render.js";
 import { render } from "./render.js";
 
 /**
@@ -24,6 +25,7 @@ export interface RolexInternal {
   ops: Ops;
   saveCtx(ctx: RoleContext): void | Promise<void>;
   direct<T>(locator: string, args?: Record<string, unknown>): Promise<T>;
+  resolveLabels?: LabelResolver;
 }
 
 export class Role {
@@ -69,13 +71,18 @@ export class Role {
 
   // ---- Execution ----
 
-  /** Focus: view or switch focused goal. */
+  /** Focus: view or switch focused goal. Only accepts goal ids. */
   async focus(goal?: string): Promise<string> {
     const goalId = goal ?? this.ctx.requireGoalId();
+    const result = await this.api.ops["role.focus"](goalId);
+    if (result.state.name !== "goal") {
+      throw new Error(
+        `"${goalId}" is a ${result.state.name}, not a goal. focus only accepts goal ids.`
+      );
+    }
     const switched = goalId !== this.ctx.focusedGoalId;
     this.ctx.focusedGoalId = goalId;
     if (switched) this.ctx.focusedPlanId = null;
-    const result = await this.api.ops["role.focus"](goalId);
     await this.save();
     return this.fmt("focus", goalId, result);
   }
@@ -214,7 +221,13 @@ export class Role {
   }
 
   /** Use: subjective execution — `!ns.method` or ResourceX locator. */
-  use<T = unknown>(locator: string, args?: Record<string, unknown>): Promise<T> {
-    return this.api.direct<T>(locator, args);
+  async use<T = unknown>(locator: string, args?: Record<string, unknown>): Promise<T> {
+    const result = await this.api.direct<T>(locator, args);
+    // Render issue results as readable text
+    if (locator.startsWith("!issue.")) {
+      const action = locator.slice("!issue.".length) as IssueAction;
+      return (await renderIssueResult(action, result, this.api.resolveLabels)) as T;
+    }
+    return result;
   }
 }

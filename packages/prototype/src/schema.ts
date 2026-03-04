@@ -6,7 +6,7 @@
  */
 
 /** Supported parameter types for instruction definitions. */
-export type ParamType = "string" | "gherkin" | "string[]" | "record";
+export type ParamType = "string" | "number" | "gherkin" | "string[]" | "record";
 
 /** Definition of a single parameter in an instruction. */
 export interface ParamDef {
