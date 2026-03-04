@@ -1,5 +1,26 @@
 # @rolexjs/mcp-server
 
+## 1.2.0
+
+### Minor Changes
+
+- e35aa19: feat: add Project as a top-level organizational primitive
+
+  - Add project structure with 5 sub-concepts: scope, milestone, deliverable, wiki, and participation relation
+  - Add 9 project operations: launch, scope, milestone, achieve, enroll, remove, deliver, wiki, archive
+  - Add project-render module for human-readable project output (compact member display, milestone progress)
+  - Add project lifecycle BDD feature with full test coverage
+  - Fix BDD test suite for async Runtime refactor (await createRoleX, Role methods, writeContext via SQLite)
+
+### Patch Changes
+
+- Updated dependencies [ca32e1c]
+- Updated dependencies [ca32e1c]
+- Updated dependencies [e35aa19]
+  - rolexjs@1.2.0
+  - @rolexjs/local-platform@1.2.0
+  - @rolexjs/genesis@1.2.0
+
 ## 1.1.0
 
 ### Patch Changes

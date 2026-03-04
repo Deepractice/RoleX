@@ -1,5 +1,14 @@
 # @rolexjs/local-platform
 
+## 1.2.0
+
+### Patch Changes
+
+- Updated dependencies [ca32e1c]
+- Updated dependencies [e35aa19]
+  - @rolexjs/core@1.2.0
+  - @rolexjs/system@1.2.0
+
 ## 1.1.0
 
 ### Patch Changes
