@@ -1,53 +1,24 @@
 /**
  * SqliteRepository — RoleXRepository backed by SQLite via Drizzle.
  *
- * Single database, four tables: nodes, links, prototypes, contexts.
- * All state in one place — swap the db connection to go from local to cloud.
+ * Five tables: nodes, links, prototypes, contexts, prototype_migrations.
+ * Schema managed by Drizzle ORM migrations.
  */
 
+import { join } from "node:path";
 import type { CommonXDatabase } from "@deepracticex/drizzle";
-import type { ContextData, PrototypeRegistry, RoleXRepository } from "@rolexjs/core";
+import { migrate } from "@deepracticex/drizzle";
+import type {
+  ContextData,
+  MigrationRecord,
+  PrototypeRegistry,
+  RoleXRepository,
+} from "@rolexjs/core";
 import type { Runtime } from "@rolexjs/system";
 import { sql } from "drizzle-orm";
 import { createSqliteRuntime } from "./sqliteRuntime.js";
 
 type DB = CommonXDatabase;
-
-// ===== DDL =====
-
-const DDL = [
-  sql`CREATE TABLE IF NOT EXISTS nodes (
-    ref TEXT PRIMARY KEY,
-    id TEXT,
-    alias TEXT,
-    name TEXT NOT NULL,
-    description TEXT DEFAULT '',
-    parent_ref TEXT REFERENCES nodes(ref),
-    information TEXT,
-    tag TEXT
-  )`,
-  sql`CREATE TABLE IF NOT EXISTS links (
-    from_ref TEXT NOT NULL REFERENCES nodes(ref),
-    to_ref TEXT NOT NULL REFERENCES nodes(ref),
-    relation TEXT NOT NULL,
-    PRIMARY KEY (from_ref, to_ref, relation)
-  )`,
-  sql`CREATE TABLE IF NOT EXISTS prototypes (
-    id TEXT PRIMARY KEY,
-    source TEXT NOT NULL
-  )`,
-  sql`CREATE TABLE IF NOT EXISTS contexts (
-    role_id TEXT PRIMARY KEY,
-    focused_goal_id TEXT,
-    focused_plan_id TEXT
-  )`,
-  // Indexes
-  sql`CREATE INDEX IF NOT EXISTS idx_nodes_id ON nodes(id)`,
-  sql`CREATE INDEX IF NOT EXISTS idx_nodes_name ON nodes(name)`,
-  sql`CREATE INDEX IF NOT EXISTS idx_nodes_parent_ref ON nodes(parent_ref)`,
-  sql`CREATE INDEX IF NOT EXISTS idx_links_from ON links(from_ref)`,
-  sql`CREATE INDEX IF NOT EXISTS idx_links_to ON links(to_ref)`,
-];
 
 // ===== Repository =====
 
@@ -56,10 +27,10 @@ export class SqliteRepository implements RoleXRepository {
   readonly prototype: PrototypeRegistry;
 
   constructor(private db: DB) {
-    // Ensure all tables exist
-    for (const stmt of DDL) {
-      db.run(stmt);
-    }
+    // Run Drizzle migrations — handles schema creation and evolution
+    migrate(db, {
+      migrationsFolder: join(import.meta.dirname, "../drizzle"),
+    });
 
     this.runtime = createSqliteRuntime(db);
     this.prototype = createPrototypeRegistry(db);
@@ -98,6 +69,7 @@ function createPrototypeRegistry(db: DB): PrototypeRegistry {
 
     evict(id: string) {
       db.run(sql`DELETE FROM prototypes WHERE id = ${id}`);
+      db.run(sql`DELETE FROM prototype_migrations WHERE prototype_id = ${id}`);
     },
 
     list(): Record<string, string> {
@@ -107,6 +79,43 @@ function createPrototypeRegistry(db: DB): PrototypeRegistry {
         result[row.id] = row.source;
       }
       return result;
+    },
+
+    recordMigration(prototypeId: string, migrationId: string, checksum: string) {
+      const executedAt = new Date().toISOString();
+      db.run(
+        sql`INSERT OR REPLACE INTO prototype_migrations (prototype_id, migration_id, checksum, executed_at)
+            VALUES (${prototypeId}, ${migrationId}, ${checksum}, ${executedAt})`
+      );
+    },
+
+    getMigrationHistory(prototypeId: string): MigrationRecord[] {
+      return db
+        .all<{
+          prototype_id: string;
+          migration_id: string;
+          checksum: string;
+          executed_at: string;
+        }>(
+          sql`SELECT prototype_id, migration_id, checksum, executed_at
+            FROM prototype_migrations
+            WHERE prototype_id = ${prototypeId}
+            ORDER BY executed_at`
+        )
+        .map((row) => ({
+          prototypeId: row.prototype_id,
+          migrationId: row.migration_id,
+          checksum: row.checksum,
+          executedAt: row.executed_at,
+        }));
+    },
+
+    hasMigration(prototypeId: string, migrationId: string): boolean {
+      const rows = db.all<{ cnt: number }>(
+        sql`SELECT COUNT(*) as cnt FROM prototype_migrations
+            WHERE prototype_id = ${prototypeId} AND migration_id = ${migrationId}`
+      );
+      return rows.length > 0 && rows[0].cnt > 0;
     },
   };
 }
