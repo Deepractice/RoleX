@@ -16,8 +16,14 @@ Feature: Prototype Registry
     And the prototype id and source are registered in the prototype registry
     And parameters are:
       """
-      use("!prototype.settle", { source: "./prototypes/rolex" })
-      use("!prototype.settle", { source: "deepractice/rolex" })
+      locator: "!prototype.settle"
+      args:
+        source: "./prototypes/rolex"
+
+      # or by registry locator:
+      locator: "!prototype.settle"
+      args:
+        source: "deepractice/rolex"
       """
 
   Scenario: evict — remove a prototype from the registry
@@ -27,7 +33,9 @@ Feature: Prototype Registry
     And runtime entities created by the prototype are NOT removed
     And parameters are:
       """
-      use("!prototype.evict", { id: "rolex" })
+      locator: "!prototype.evict"
+      args:
+        id: "rolex"
       """
 
   Scenario: Settle is idempotent

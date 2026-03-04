@@ -101,10 +101,10 @@ Feature: Migration Process
     Then for each role:
       """
       1. Read persona.identity.feature → use as born content
-      2. Call: use("!individual.born", {
-           id: "<role-name>",
+      2. locator: "!individual.born"
+         args:
+           id: "<role-name>"
            content: "<persona feature content>"
-         })
       """
     And the role-name from the directory becomes the individual id
 
@@ -115,11 +115,11 @@ Feature: Migration Process
       """
       1. Extract topic from filename: "role-creation.knowledge.identity.feature" → "role-creation"
       2. Read the file content (Gherkin Feature)
-      3. Call: use("!individual.teach", {
-           individual: "<role-name>",
-           content: "<knowledge feature content>",
+      3. locator: "!individual.teach"
+         args:
+           individual: "<role-name>"
+           content: "<knowledge feature content>"
            id: "<topic>"
-         })
       """
     And each knowledge file becomes one principle
 
@@ -128,15 +128,15 @@ Feature: Migration Process
     When the organizations object is not empty
     Then for each organization:
       """
-      1. Call: use("!org.found", {
-           id: "<org-id>",
+      1. locator: "!org.found"
+         args:
+           id: "<org-id>"
            content: "<org feature content>"
-         })
       2. If charter exists:
-         Call: use("!org.charter", {
-           org: "<org-id>",
+         locator: "!org.charter"
+         args:
+           org: "<org-id>"
            content: "<charter content>"
-         })
       """
 
   Scenario: Step 5 — Migrate assignments (membership + appointments)
@@ -144,15 +144,15 @@ Feature: Migration Process
     When the assignments object is not empty
     Then for each assignment:
       """
-      1. Call: use("!org.hire", {
-           org: "<org-id>",
+      1. locator: "!org.hire"
+         args:
+           org: "<org-id>"
            individual: "<role-name>"
-         })
       2. If position exists:
-         Call: use("!position.appoint", {
-           position: "<position-id>",
+         locator: "!position.appoint"
+         args:
+           position: "<position-id>"
            individual: "<role-name>"
-         })
       """
 
   Scenario: Step 6 — Migrate goals (optional)
@@ -161,8 +161,8 @@ Feature: Migration Process
     Then for each goal file:
       """
       1. Read the goal Gherkin content
-      2. Activate the individual: activate({ roleId: "<role-name>" })
-      3. Call: want({ goal: "<goal content>", id: "<goal-id>" })
+      2. Activate the individual with roleId: "<role-name>"
+      3. Call want with goal: "<goal content>", id: "<goal-id>"
       """
     And goal ids are derived from the goal filename
 
@@ -171,7 +171,7 @@ Feature: Migration Process
     When verification is needed
     Then activate each migrated individual and check:
       """
-      1. activate({ roleId: "<role-name>" })
+      1. Activate with roleId: "<role-name>"
       2. Verify identity content matches the old persona
       3. Verify principles match the old knowledge files
       4. Verify organization memberships if applicable
@@ -186,7 +186,8 @@ Feature: Entity Mapping Reference
     Then the mapping is:
       """
       Old: roles/<name>/identity/persona.identity.feature
-      New: use("!individual.born", { id: "<name>", content: "<persona>" })
+      New: locator: "!individual.born"
+           args: { id: "<name>", content: "<persona>" }
       """
 
   Scenario: Knowledge mapping
@@ -194,7 +195,8 @@ Feature: Entity Mapping Reference
     Then the mapping is:
       """
       Old: roles/<name>/identity/<topic>.knowledge.identity.feature
-      New: use("!individual.teach", { individual: "<name>", content: "<knowledge>", id: "<topic>" })
+      New: locator: "!individual.teach"
+           args: { individual: "<name>", content: "<knowledge>", id: "<topic>" }
       """
 
   Scenario: Organization mapping
@@ -202,8 +204,10 @@ Feature: Entity Mapping Reference
     Then the mapping is:
       """
       Old: rolex.json → organizations.<id>
-      New: use("!org.found", { id: "<id>", content: "<org content>" })
-           use("!org.charter", { org: "<id>", content: "<charter>" })
+      New: locator: "!org.found"
+           args: { id: "<id>", content: "<org content>" }
+           locator: "!org.charter"
+           args: { org: "<id>", content: "<charter>" }
       """
 
   Scenario: Assignment mapping
@@ -211,8 +215,10 @@ Feature: Entity Mapping Reference
     Then the mapping is:
       """
       Old: rolex.json → assignments.<role>.<org>
-      New: use("!org.hire", { org: "<org>", individual: "<role>" })
-           use("!position.appoint", { position: "<pos>", individual: "<role>" })
+      New: locator: "!org.hire"
+           args: { org: "<org>", individual: "<role>" }
+           locator: "!position.appoint"
+           args: { position: "<pos>", individual: "<role>" }
       """
 
 Feature: Edge Cases and Troubleshooting

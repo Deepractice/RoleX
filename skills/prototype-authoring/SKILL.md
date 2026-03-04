@@ -134,7 +134,9 @@ Feature: Example — Individual Prototype
     Given the directory is ready
     When you run:
       """
-      use("!prototype.settle", { source: "./prototypes/dev" })
+      locator: "!prototype.settle"
+      args:
+        source: "./prototypes/dev"
       """
     Then the dev individual is born and trained with the code-review procedure
 

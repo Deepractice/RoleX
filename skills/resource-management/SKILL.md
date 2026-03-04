@@ -65,45 +65,83 @@ Feature: Resource Operations
 
   Scenario: add — import a resource from a local directory
     Given you have a resource directory with resource.json
-    When you call use("!resource.add", { path: "/absolute/path/to/resource" })
+    When you call use with !resource.add
     Then the resource is archived and stored in local CAS
     And it gets a digest computed from its content
     And it can then be pushed to a remote registry
+    And parameters are:
+      """
+      locator: "!resource.add"
+      args:
+        path: "/absolute/path/to/resource"
+      """
 
   Scenario: push — publish a resource to a remote registry
     Given a resource has been added to local CAS
-    When you call use("!resource.push", { locator: "name:tag" })
+    When you call use with !resource.push
     Then the resource archive is uploaded to the configured registry
     And the registry stores it by name, tag, and digest
-    And optionally specify a registry: { locator: "name:tag", registry: "https://..." }
+    And parameters are:
+      """
+      locator: "!resource.push"
+      args:
+        locator: "name:tag"
+        registry: "https://..."   # optional
+      """
 
   Scenario: pull — download a resource from a remote registry
     Given a resource exists in a remote registry
-    When you call use("!resource.pull", { locator: "name:tag" })
+    When you call use with !resource.pull
     Then the resource is downloaded and cached in local CAS
     And subsequent resolves use the local cache
+    And parameters are:
+      """
+      locator: "!resource.pull"
+      args:
+        locator: "name:tag"
+      """
 
   Scenario: search — find resources in local CAS
     Given you want to find resources stored locally
-    When you call use("!resource.search", { query: "keyword" })
+    When you call use with !resource.search
     Then matching resources are returned as locator strings
+    And parameters are:
+      """
+      locator: "!resource.search"
+      args:
+        query: "keyword"
+      """
 
   Scenario: has — check if a resource exists locally
     Given you want to verify a resource is in local CAS
-    When you call use("!resource.has", { locator: "name:tag" })
+    When you call use with !resource.has
     Then returns whether the resource exists
+    And parameters are:
+      """
+      locator: "!resource.has"
+      args:
+        locator: "name:tag"
+      """
 
   Scenario: remove — delete a resource from local CAS
     Given you want to remove a resource from local storage
-    When you call use("!resource.remove", { locator: "name:tag" })
+    When you call use with !resource.remove
     Then the resource manifest is removed from local CAS
+    And parameters are:
+      """
+      locator: "!resource.remove"
+      args:
+        locator: "name:tag"
+      """
 
   Scenario: Typical workflow — add then push
     Given you want to publish a resource to a registry
     Then the sequence is:
       """
-      1. use("!resource.add", { path: "./my-resource" })
-      2. use("!resource.push", { locator: "my-resource" })
+      1. locator: "!resource.add"
+         args: { path: "./my-resource" }
+      2. locator: "!resource.push"
+         args: { locator: "my-resource" }
       """
     And add imports to local CAS, push uploads to registry
     And tag defaults to latest when omitted
@@ -118,8 +156,8 @@ Feature: Resource Loading via use
     Then the resource is resolved through ResourceX and its content returned
     And parameters are:
       """
-      use("hello-prompt")                    // by registry locator (tag defaults to latest)
-      use("./path/to/resource")            // by local path
+      locator: "hello-prompt"                 # by registry locator (tag defaults to latest)
+      locator: "./path/to/resource"           # by local path
       """
 
   Scenario: skill — load full skill content by locator
@@ -130,8 +168,8 @@ Feature: Resource Loading via use
     And this is progressive disclosure layer 2 — on-demand knowledge injection
     And parameters are:
       """
-      skill("skill-creator")                 // tag defaults to latest
-      skill("/absolute/path/to/skill-directory")
+      skill locator: "skill-creator"                      # tag defaults to latest
+      skill locator: "/absolute/path/to/skill-directory"
       """
 
   Scenario: Progressive disclosure — three layers
@@ -190,8 +228,10 @@ Feature: Common Workflows
     When you want to make it available via registry
     Then the sequence is:
       """
-      1. use("!resource.add", { path: "/path/to/roles/nuwa" })
-      2. use("!resource.push", { locator: "nuwa" })
+      1. locator: "!resource.add"
+         args: { path: "/path/to/roles/nuwa" }
+      2. locator: "!resource.push"
+         args: { locator: "nuwa" }
       """
     And the prototype is now pullable by anyone with registry access
 
@@ -200,8 +240,10 @@ Feature: Common Workflows
     When you re-add and push with the same tag
     Then the registry updates the tag to point to the new digest
       """
-      1. use("!resource.add", { path: "/path/to/roles/nuwa" })
-      2. use("!resource.push", { locator: "nuwa" })
+      1. locator: "!resource.add"
+         args: { path: "/path/to/roles/nuwa" }
+      2. locator: "!resource.push"
+         args: { locator: "nuwa" }
       """
     And consumers pulling the same tag get the updated content
 
@@ -211,5 +253,5 @@ Feature: Common Workflows
     Then the full SKILL.md content should be returned
     And example:
       """
-      skill("skill-creator")
+      skill locator: "skill-creator"
       """

@@ -15,11 +15,11 @@ Feature: Organization Lifecycle
     And a charter can be defined for it
     And parameters are:
       """
-      use("!org.found", {
-        content: "Feature: Deepractice\n  An AI agent framework company",
-        id: "dp",
-        alias: ["deepractice"]    // optional
-      })
+      locator: "!org.found"
+      args:
+        content: "Feature: Deepractice\n  An AI agent framework company"
+        id: "dp"
+        alias: ["deepractice"]    # optional
       """
 
   Scenario: charter — define the organization's mission
@@ -28,10 +28,10 @@ Feature: Organization Lifecycle
     Then the charter is stored under the organization
     And parameters are:
       """
-      use("!org.charter", {
-        org: "dp",
+      locator: "!org.charter"
+      args:
+        org: "dp"
         content: "Feature: Build great AI\n  Scenario: Mission\n    Given we believe AI agents need identity\n    Then we build frameworks for role-based agents"
-      })
       """
 
   Scenario: dissolve — dissolve an organization
@@ -40,7 +40,9 @@ Feature: Organization Lifecycle
     Then the organization is archived to past
     And parameters are:
       """
-      use("!org.dissolve", { org: "dp" })
+      locator: "!org.dissolve"
+      args:
+        org: "dp"
       """
 
 Feature: Membership
@@ -54,7 +56,10 @@ Feature: Membership
     And the individual can then be appointed to positions
     And parameters are:
       """
-      use("!org.hire", { org: "dp", individual: "sean" })
+      locator: "!org.hire"
+      args:
+        org: "dp"
+        individual: "sean"
       """
 
   Scenario: fire — remove a member
@@ -63,7 +68,10 @@ Feature: Membership
     Then the membership link is removed
     And parameters are:
       """
-      use("!org.fire", { org: "dp", individual: "sean" })
+      locator: "!org.fire"
+      args:
+        org: "dp"
+        individual: "sean"
       """
 
 Feature: Position Lifecycle
@@ -78,10 +86,10 @@ Feature: Position Lifecycle
     And it can be charged with duties and individuals can be appointed to it
     And parameters are:
       """
-      use("!position.establish", {
-        content: "Feature: Backend Architect\n  Responsible for system design and API architecture",
+      locator: "!position.establish"
+      args:
+        content: "Feature: Backend Architect\n  Responsible for system design and API architecture"
         id: "architect"
-      })
       """
 
   Scenario: charge — assign a duty to a position
@@ -91,11 +99,11 @@ Feature: Position Lifecycle
     And individuals appointed to this position inherit the duty
     And parameters are:
       """
-      use("!position.charge", {
-        position: "architect",
-        content: "Feature: Design systems\n  Scenario: API design\n    Given a new service is needed\n    Then design the API contract first",
+      locator: "!position.charge"
+      args:
+        position: "architect"
+        content: "Feature: Design systems\n  Scenario: API design\n    Given a new service is needed\n    Then design the API contract first"
         id: "design-systems"
-      })
       """
 
   Scenario: require — declare a required skill for a position
@@ -106,11 +114,11 @@ Feature: Position Lifecycle
     And upserts by id — if the same id exists, it replaces the old one
     And parameters are:
       """
-      use("!position.require", {
-        position: "architect",
-        content: "Feature: System Design\n  Scenario: When to apply\n    Given a new service is planned\n    Then design the architecture before coding",
+      locator: "!position.require"
+      args:
+        position: "architect"
+        content: "Feature: System Design\n  Scenario: When to apply\n    Given a new service is planned\n    Then design the architecture before coding"
         id: "system-design"
-      })
       """
 
   Scenario: abolish — abolish a position
@@ -119,7 +127,9 @@ Feature: Position Lifecycle
     Then the position is archived to past
     And parameters are:
       """
-      use("!position.abolish", { position: "architect" })
+      locator: "!position.abolish"
+      args:
+        position: "architect"
       """
 
 Feature: Appointment
@@ -134,7 +144,10 @@ Feature: Appointment
     And existing skills with the same id are replaced (upsert)
     And parameters are:
       """
-      use("!position.appoint", { position: "architect", individual: "sean" })
+      locator: "!position.appoint"
+      args:
+        position: "architect"
+        individual: "sean"
       """
 
   Scenario: dismiss — remove an individual from a position
@@ -143,7 +156,10 @@ Feature: Appointment
     Then the appointment link is removed
     And parameters are:
       """
-      use("!position.dismiss", { position: "architect", individual: "sean" })
+      locator: "!position.dismiss"
+      args:
+        position: "architect"
+        individual: "sean"
       """
 
 Feature: Common Workflows
@@ -152,12 +168,19 @@ Feature: Common Workflows
     Given you need an organization with positions and members
     Then follow this sequence:
       """
-      1. use("!org.found", { id: "dp", content: "Feature: Deepractice" })
-      2. use("!org.charter", { org: "dp", content: "Feature: Mission\n  ..." })
-      3. use("!position.establish", { id: "architect", content: "Feature: Architect" })
-      4. use("!position.charge", { position: "architect", content: "Feature: Design\n  ...", id: "design" })
-      5. use("!position.require", { position: "architect", content: "Feature: Skill\n  ...", id: "skill" })
-      6. use("!org.hire", { org: "dp", individual: "sean" })
-      7. use("!position.appoint", { position: "architect", individual: "sean" })
+      1. locator: "!org.found"
+         args: { id: "dp", content: "Feature: Deepractice" }
+      2. locator: "!org.charter"
+         args: { org: "dp", content: "Feature: Mission\n  ..." }
+      3. locator: "!position.establish"
+         args: { id: "architect", content: "Feature: Architect" }
+      4. locator: "!position.charge"
+         args: { position: "architect", content: "Feature: Design\n  ...", id: "design" }
+      5. locator: "!position.require"
+         args: { position: "architect", content: "Feature: Skill\n  ...", id: "skill" }
+      6. locator: "!org.hire"
+         args: { org: "dp", individual: "sean" }
+      7. locator: "!position.appoint"
+         args: { position: "architect", individual: "sean" }
       """
     And step 7 appoint will auto-train the required skill into sean
