@@ -470,8 +470,13 @@ const projectLaunch = def(
     },
     id: { type: "string", required: false, description: "User-facing identifier (kebab-case)" },
     alias: { type: "string[]", required: false, description: "Alternative names" },
+    org: {
+      type: "string",
+      required: false,
+      description: "Organization id that owns this project",
+    },
   },
-  ["content", "id", "alias"]
+  ["content", "id", "alias", "org"]
 );
 
 const projectScope = def(

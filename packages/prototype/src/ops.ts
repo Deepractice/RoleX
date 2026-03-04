@@ -322,10 +322,12 @@ export function createOps(ctx: OpsContext): Ops {
     async "project.launch"(
       content?: string,
       id?: string,
-      alias?: readonly string[]
+      alias?: readonly string[],
+      org?: string
     ): Promise<OpResult> {
       validateGherkin(content);
       const node = await rt.create(society, C.project, content, id, alias);
+      if (org) await rt.link(node, await resolve(org), "ownership", "project");
       return ok(node, "launch");
     },
 
@@ -507,10 +509,18 @@ export function createOps(ctx: OpsContext): Ops {
         const tag = org.tag ? ` #${org.tag}` : "";
         lines.push(`${org.id}${alias}${tag}`);
 
+        // Projects owned by this org
+        const projects = org.links?.filter((l) => l.relation === "project") ?? [];
+        for (const p of projects) {
+          const pAlias = p.target.alias?.length ? ` (${p.target.alias.join(", ")})` : "";
+          const pTag = p.target.tag ? ` #${p.target.tag}` : "";
+          lines.push(`  📦 ${p.target.id ?? "(no id)"}${pAlias}${pTag}`);
+        }
+
         // Members of this org
         const members = org.links?.filter((l) => l.relation === "membership") ?? [];
-        if (members.length === 0) {
-          lines.push("  (no members)");
+        if (members.length === 0 && projects.length === 0) {
+          lines.push("  (empty)");
         }
         for (const m of members) {
           affiliatedIndividuals.add(m.target.id ?? "");
