@@ -1,6 +1,6 @@
 {
   "name": "@rolexjs/system",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "RoleX Systems Theory — six primitives + declarative process composition",
   "keywords": [
     "rolex",
