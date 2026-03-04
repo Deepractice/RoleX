@@ -19,6 +19,18 @@ export type { DataTableRow, Feature, Scenario, Step } from "./feature.js";
 export { parse, serialize } from "./feature.js";
 // Find
 export { findInState } from "./find.js";
+// Issue Render
+export type { IssueAction, LabelResolver } from "./issue-render.js";
+export {
+  renderComment,
+  renderCommentList,
+  renderIssue,
+  renderIssueList,
+  renderIssueResult,
+} from "./issue-render.js";
+// Project Render
+export type { ProjectAction } from "./project-render.js";
+export { renderProject, renderProjectResult } from "./project-render.js";
 export type { RenderOptions, RenderStateOptions } from "./render.js";
 // Render
 export { describe, detail, directive, hint, render, renderState, world } from "./render.js";

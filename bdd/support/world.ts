@@ -9,7 +9,7 @@
  * Each scenario gets a fresh World instance. MCP clients are shared (expensive startup).
  */
 
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { After, AfterAll, setWorldConstructor, World } from "@deepracticex/bdd";
@@ -96,24 +96,23 @@ export class BddWorld extends World {
   }
 
   /** Initialize Rolex with a temp data directory for persistence tests. */
-  initRolex(): void {
+  async initRolex(): Promise<void> {
     this.dataDir = join(tmpdir(), `rolex-bdd-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     mkdirSync(this.dataDir, { recursive: true });
-    this.rolex = createRoleX(localPlatform({ dataDir: this.dataDir, resourceDir: null }));
+    this.rolex = await createRoleX(localPlatform({ dataDir: this.dataDir, resourceDir: null }));
   }
 
-  /** Write persisted context JSON directly (simulate a previous session). */
-  writeContext(roleId: string, data: Record<string, unknown>): void {
-    if (!this.dataDir) throw new Error("Call initRolex() first");
-    const contextDir = join(this.dataDir, "context");
-    mkdirSync(contextDir, { recursive: true });
-    writeFileSync(join(contextDir, `${roleId}.json`), JSON.stringify(data, null, 2), "utf-8");
+  /** Write persisted context directly via Rolex repository (simulate a previous session). */
+  async writeContext(roleId: string, data: Record<string, unknown>): Promise<void> {
+    if (!this.rolex) throw new Error("Call initRolex() first");
+    // Use the internal repository to persist context data to SQLite
+    await (this.rolex as any).repo.saveContext(roleId, data);
   }
 
   /** Re-create Rolex instance (simulate new session with same dataDir). */
-  newSession(): void {
+  async newSession(): Promise<void> {
     if (!this.dataDir) throw new Error("Call initRolex() first");
-    this.rolex = createRoleX(localPlatform({ dataDir: this.dataDir, resourceDir: null }));
+    this.rolex = await createRoleX(localPlatform({ dataDir: this.dataDir, resourceDir: null }));
   }
 }
 

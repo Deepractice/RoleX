@@ -12,6 +12,7 @@
 import * as C from "@rolexjs/core";
 import { parse } from "@rolexjs/parser";
 import type { Runtime, State, Structure } from "@rolexjs/system";
+import type { IssueX } from "issuexjs";
 import type { ResourceX } from "resourcexjs";
 
 // ================================================================
@@ -30,6 +31,7 @@ export interface OpsContext {
   resolve(id: string): Structure | Promise<Structure>;
   find(id: string): (Structure | null) | Promise<Structure | null>;
   resourcex?: ResourceX;
+  issuex?: IssueX;
   prototype?: {
     settle(id: string, source: string): void;
     evict(id: string): void;
@@ -46,7 +48,7 @@ export type Ops = Record<string, (...args: any[]) => any>;
 // ================================================================
 
 export function createOps(ctx: OpsContext): Ops {
-  const { rt, society, past, resolve, resourcex } = ctx;
+  const { rt, society, past, resolve, resourcex, issuex } = ctx;
 
   // ---- Helpers ----
 
@@ -92,6 +94,11 @@ export function createOps(ctx: OpsContext): Ops {
   function requireResourceX(): ResourceX {
     if (!resourcex) throw new Error("ResourceX is not available.");
     return resourcex;
+  }
+
+  function requireIssueX(): IssueX {
+    if (!issuex) throw new Error("IssueX is not available.");
+    return issuex;
   }
 
   // ================================================================
@@ -308,6 +315,64 @@ export function createOps(ctx: OpsContext): Ops {
       } catch {
         return text;
       }
+    },
+
+    // ---- Project ----
+
+    async "project.launch"(
+      content?: string,
+      id?: string,
+      alias?: readonly string[]
+    ): Promise<OpResult> {
+      validateGherkin(content);
+      const node = await rt.create(society, C.project, content, id, alias);
+      return ok(node, "launch");
+    },
+
+    async "project.scope"(project: string, scope: string, id?: string): Promise<OpResult> {
+      validateGherkin(scope);
+      const node = await rt.create(await resolve(project), C.scope, scope, id);
+      return ok(node, "scope");
+    },
+
+    async "project.milestone"(project: string, milestone: string, id?: string): Promise<OpResult> {
+      validateGherkin(milestone);
+      const node = await rt.create(await resolve(project), C.milestone, milestone, id);
+      return ok(node, "milestone");
+    },
+
+    async "project.achieve"(milestone: string): Promise<OpResult> {
+      const node = await resolve(milestone);
+      await rt.tag(node, "done");
+      return ok(node, "achieve");
+    },
+
+    async "project.enroll"(project: string, individual: string): Promise<OpResult> {
+      const projNode = await resolve(project);
+      await rt.link(projNode, await resolve(individual), "participation", "participate");
+      return ok(projNode, "enroll");
+    },
+
+    async "project.remove"(project: string, individual: string): Promise<OpResult> {
+      const projNode = await resolve(project);
+      await rt.unlink(projNode, await resolve(individual), "participation", "participate");
+      return ok(projNode, "remove");
+    },
+
+    async "project.deliver"(project: string, deliverable: string, id?: string): Promise<OpResult> {
+      validateGherkin(deliverable);
+      const node = await rt.create(await resolve(project), C.deliverable, deliverable, id);
+      return ok(node, "deliver");
+    },
+
+    async "project.wiki"(project: string, wiki: string, id?: string): Promise<OpResult> {
+      validateGherkin(wiki);
+      const node = await rt.create(await resolve(project), C.wiki, wiki, id);
+      return ok(node, "wiki");
+    },
+
+    async "project.archive"(project: string): Promise<OpResult> {
+      return archive(await resolve(project), "archive");
     },
 
     // ---- Org ----
@@ -530,6 +595,95 @@ export function createOps(ctx: OpsContext): Ops {
 
     "resource.clearCache"(registry?: string) {
       return requireResourceX().clearCache(registry);
+    },
+
+    // ---- Issue (proxy to IssueX) ----
+
+    async "issue.publish"(title: string, body: string, author: string, assignee?: string) {
+      const ix = requireIssueX();
+      return ix.createIssue({ title, body, author, assignee });
+    },
+
+    async "issue.get"(number: number) {
+      return requireIssueX().getIssueByNumber(number);
+    },
+
+    async "issue.list"(status?: string, author?: string, assignee?: string, label?: string) {
+      const filter: Record<string, string> = {};
+      if (status) filter.status = status;
+      if (author) filter.author = author;
+      if (assignee) filter.assignee = assignee;
+      if (label) filter.label = label;
+      return requireIssueX().listIssues(
+        Object.keys(filter).length > 0 ? (filter as any) : undefined
+      );
+    },
+
+    async "issue.update"(number: number, title?: string, body?: string, assignee?: string) {
+      const ix = requireIssueX();
+      const issue = await ix.getIssueByNumber(number);
+      if (!issue) throw new Error(`Issue #${number} not found.`);
+      const patch: Record<string, unknown> = {};
+      if (title !== undefined) patch.title = title;
+      if (body !== undefined) patch.body = body;
+      if (assignee !== undefined) patch.assignee = assignee;
+      return ix.updateIssue(issue.id, patch);
+    },
+
+    async "issue.close"(number: number) {
+      const ix = requireIssueX();
+      const issue = await ix.getIssueByNumber(number);
+      if (!issue) throw new Error(`Issue #${number} not found.`);
+      return ix.closeIssue(issue.id);
+    },
+
+    async "issue.reopen"(number: number) {
+      const ix = requireIssueX();
+      const issue = await ix.getIssueByNumber(number);
+      if (!issue) throw new Error(`Issue #${number} not found.`);
+      return ix.reopenIssue(issue.id);
+    },
+
+    async "issue.assign"(number: number, assignee: string) {
+      const ix = requireIssueX();
+      const issue = await ix.getIssueByNumber(number);
+      if (!issue) throw new Error(`Issue #${number} not found.`);
+      return ix.updateIssue(issue.id, { assignee });
+    },
+
+    async "issue.comment"(number: number, body: string, author: string) {
+      const ix = requireIssueX();
+      const issue = await ix.getIssueByNumber(number);
+      if (!issue) throw new Error(`Issue #${number} not found.`);
+      return ix.createComment(issue.id, body, author);
+    },
+
+    async "issue.comments"(number: number) {
+      const ix = requireIssueX();
+      const issue = await ix.getIssueByNumber(number);
+      if (!issue) throw new Error(`Issue #${number} not found.`);
+      return ix.listComments(issue.id);
+    },
+
+    async "issue.label"(number: number, label: string) {
+      const ix = requireIssueX();
+      const issue = await ix.getIssueByNumber(number);
+      if (!issue) throw new Error(`Issue #${number} not found.`);
+      // Find or create label by name
+      let labelObj = await ix.getLabelByName(label);
+      if (!labelObj) labelObj = await ix.createLabel({ name: label });
+      await ix.addLabel(issue.id, labelObj.id);
+      return ix.getIssueByNumber(number);
+    },
+
+    async "issue.unlabel"(number: number, label: string) {
+      const ix = requireIssueX();
+      const issue = await ix.getIssueByNumber(number);
+      if (!issue) throw new Error(`Issue #${number} not found.`);
+      const labelObj = await ix.getLabelByName(label);
+      if (!labelObj) throw new Error(`Label "${label}" not found.`);
+      await ix.removeLabel(issue.id, labelObj.id);
+      return ix.getIssueByNumber(number);
     },
   };
 }

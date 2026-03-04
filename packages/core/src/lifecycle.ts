@@ -10,7 +10,7 @@
  * No real deletion — everything transforms to the "past" branch.
  */
 import { create, process, transform } from "@rolexjs/system";
-import { individual, organization, past, position, society } from "./structures.js";
+import { individual, organization, past, position, project, society } from "./structures.js";
 
 // Creation
 export const born = process(
@@ -21,6 +21,7 @@ export const born = process(
 );
 export const found = process("found", "Found an organization", society, create(organization));
 export const establish = process("establish", "Establish a position", society, create(position));
+export const launch = process("launch", "Launch a project", society, create(project));
 
 // Retirement & death
 export const retire = process(
@@ -30,6 +31,9 @@ export const retire = process(
   transform(individual, past)
 );
 export const die = process("die", "An individual dies", individual, transform(individual, past));
+
+// Archive project
+export const archive = process("archive", "Archive a project", project, transform(project, past));
 
 // Dissolution
 export const dissolve = process(

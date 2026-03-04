@@ -14,6 +14,7 @@ import type { Platform, RoleXRepository } from "@rolexjs/core";
 import * as C from "@rolexjs/core";
 import { createOps, directives, type Ops, toArgs } from "@rolexjs/prototype";
 import type { Initializer, Runtime, Structure } from "@rolexjs/system";
+import { createIssueX, type IssueX } from "issuexjs";
 import type { ResourceX } from "resourcexjs";
 import { createResourceX, setProvider } from "resourcexjs";
 import { RoleContext } from "./context.js";
@@ -31,6 +32,7 @@ export class Rolex {
   private rt: Runtime;
   private ops!: Ops;
   private resourcex?: ResourceX;
+  private issuex?: IssueX;
   private repo: RoleXRepository;
   private readonly initializer?: Initializer;
 
@@ -52,6 +54,11 @@ export class Rolex {
           ? { isolator: "custom", executor: platform.resourcexExecutor }
           : undefined
       );
+    }
+
+    // Create IssueX from injected provider
+    if (platform.issuexProvider) {
+      this.issuex = createIssueX({ provider: platform.issuexProvider });
     }
   }
 
@@ -85,6 +92,7 @@ export class Rolex {
       },
       find: (id: string) => this.find(id),
       resourcex: this.resourcex,
+      issuex: this.issuex,
       prototype: this.repo.prototype,
       direct: (locator: string, args?: Record<string, unknown>) => this.direct(locator, args),
     });
@@ -145,6 +153,16 @@ export class Rolex {
       ops,
       saveCtx,
       direct: this.direct.bind(this),
+      resolveLabels: this.issuex
+        ? async (ids: string[]) => {
+            const names: string[] = [];
+            for (const id of ids) {
+              const label = await this.issuex!.getLabel(id);
+              if (label) names.push(label.name);
+            }
+            return names;
+          }
+        : undefined,
     };
 
     return new Role(individual, ctx, api);

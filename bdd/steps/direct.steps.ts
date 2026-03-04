@@ -38,6 +38,28 @@ Given(
   }
 );
 
+Given("project {string} exists", async function (this: BddWorld, id: string) {
+  await this.rolex!.direct("!project.launch", { content: `Feature: ${id}`, id });
+});
+
+Given(
+  "milestone {string} exists in project {string}",
+  async function (this: BddWorld, milestone: string, project: string) {
+    await this.rolex!.direct("!project.milestone", {
+      project,
+      content: `Feature: ${milestone}`,
+      id: milestone,
+    });
+  }
+);
+
+Given(
+  "{string} is enrolled in {string}",
+  async function (this: BddWorld, individual: string, project: string) {
+    await this.rolex!.direct("!project.enroll", { project, individual });
+  }
+);
+
 // ===== Direct call =====
 
 When("I direct {string} with:", async function (this: BddWorld, command: string, table: DataTable) {

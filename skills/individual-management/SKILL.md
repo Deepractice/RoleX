@@ -14,11 +14,11 @@ Feature: Individual Lifecycle
     And the individual can be activated, hired into organizations, and taught skills
     And parameters are:
       """
-      use("!individual.born", {
-        content: "Feature: ...",   // Gherkin persona (optional)
-        id: "sean",                // kebab-case identifier
-        alias: ["小明", "xm"]     // aliases (optional)
-      })
+      locator: "!individual.born"
+      args:
+        content: "Feature: ..."   # Gherkin persona (optional)
+        id: "sean"                # kebab-case identifier
+        alias: ["小明", "xm"]    # aliases (optional)
       """
 
   Scenario: born — persona writing guidelines
@@ -35,7 +35,9 @@ Feature: Individual Lifecycle
     And all data is preserved for potential restoration via rehire
     And parameters are:
       """
-      use("!individual.retire", { individual: "sean" })
+      locator: "!individual.retire"
+      args:
+        individual: "sean"
       """
 
   Scenario: die — permanently remove an individual
@@ -45,7 +47,9 @@ Feature: Individual Lifecycle
     And this is semantically permanent — rehire is technically possible but not intended
     And parameters are:
       """
-      use("!individual.die", { individual: "sean" })
+      locator: "!individual.die"
+      args:
+        individual: "sean"
       """
 
   Scenario: retire vs die — when to use which
@@ -62,7 +66,9 @@ Feature: Individual Lifecycle
     And all previous knowledge, experience, and history are intact
     And parameters are:
       """
-      use("!individual.rehire", { individual: "sean" })
+      locator: "!individual.rehire"
+      args:
+        individual: "sean"
       """
 
 Feature: Knowledge Injection
@@ -77,11 +83,11 @@ Feature: Knowledge Injection
     And if a principle with the same id already exists, it is replaced (upsert)
     And parameters are:
       """
-      use("!individual.teach", {
-        individual: "sean",
-        content: "Feature: Always validate input\n  ...",
+      locator: "!individual.teach"
+      args:
+        individual: "sean"
+        content: "Feature: Always validate input\n  ..."
         id: "always-validate-input"
-      })
       """
 
   Scenario: train — inject a procedure (skill reference)
@@ -92,11 +98,11 @@ Feature: Knowledge Injection
     And the procedure Feature description MUST contain the ResourceX locator for the skill
     And parameters are:
       """
-      use("!individual.train", {
-        individual: "sean",
-        content: "Feature: Skill Creator\n  https://github.com/Deepractice/DeepracticeX/tree/main/skills/skill-creator\n\n  Scenario: When to use\n    Given I need to create a skill\n    Then load this skill",
+      locator: "!individual.train"
+      args:
+        individual: "sean"
+        content: "Feature: Skill Creator\n  https://github.com/Deepractice/DeepracticeX/tree/main/skills/skill-creator\n\n  Scenario: When to use\n    Given I need to create a skill\n    Then load this skill"
         id: "skill-creator"
-      })
       """
 
   Scenario: teach vs realize — when to use which
@@ -136,10 +142,13 @@ Feature: Common Workflows
     When setting up a new role from scratch
     Then follow this sequence:
       """
-      1. use("!individual.born", { id: "sean", content: "Feature: ..." })
-      2. use("!individual.teach", { individual: "sean", content: "...", id: "..." })  // repeat
-      3. use("!individual.train", { individual: "sean", content: "...", id: "..." })  // repeat
-      4. activate({ roleId: "sean" })   // verify the individual's state
+      1. locator: "!individual.born"
+         args: { id: "sean", content: "Feature: ..." }
+      2. locator: "!individual.teach"
+         args: { individual: "sean", content: "...", id: "..." }   # repeat
+      3. locator: "!individual.train"
+         args: { individual: "sean", content: "...", id: "..." }   # repeat
+      4. activate with roleId: "sean"   # verify the individual's state
       """
 
   Scenario: Transfer knowledge between individuals

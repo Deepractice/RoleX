@@ -66,12 +66,14 @@ describe("use dispatch", () => {
 // ================================================================
 
 describe("activate", () => {
-  test("returns Role with ctx", async () => {
+  test("returns Role with ctx and project renders state", async () => {
     const rolex = await setup();
     await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
     expect(role.roleId).toBe("sean");
     expect(role.ctx).toBeDefined();
+    const output = await role.project();
+    expect(output).toContain("[individual]");
   });
 
   test("throws on non-existent individual", async () => {
@@ -99,6 +101,17 @@ describe("activate", () => {
       "Feature: Done\n  Scenario: OK\n    Given done\n    Then ok"
     );
     expect(finishR).toContain("[encounter]");
+  });
+
+  test("focus rejects non-goal ids", async () => {
+    const rolex = await setup();
+    await rolex.direct("!individual.born", { id: "sean" });
+    const role = await rolex.activate("sean");
+    await role.want("Feature: Auth", "auth");
+    await role.plan("Feature: JWT", "jwt");
+    await expect(role.focus("jwt")).rejects.toThrow(
+      '"jwt" is a plan, not a goal. focus only accepts goal ids.'
+    );
   });
 
   test("Role.use delegates to Rolex.use", async () => {

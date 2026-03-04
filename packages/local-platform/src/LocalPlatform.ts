@@ -12,6 +12,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { drizzle } from "@deepracticex/drizzle";
 import { openDatabase } from "@deepracticex/sqlite";
+import { NodeProvider as IssueXNodeProvider } from "@issuexjs/node";
 import { NodeProvider } from "@resourcexjs/node-provider";
 import type { Platform } from "@rolexjs/core";
 import type { Initializer } from "@rolexjs/system";
@@ -61,6 +62,22 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
 
   const resourcexProvider = config.resourceDir !== null ? new NodeProvider() : undefined;
 
+  // ===== IssueX Provider =====
+
+  const issuexProvider = new IssueXNodeProvider({
+    db: {
+      run(sql: string, ...params: unknown[]) {
+        rawDb.prepare(sql).run(...params);
+      },
+      get<T = unknown>(sql: string, ...params: unknown[]): T | null {
+        return rawDb.prepare(sql).get(...params) as T | null;
+      },
+      all<T = unknown>(sql: string, ...params: unknown[]): T[] {
+        return rawDb.prepare(sql).all(...params) as T[];
+      },
+    },
+  });
+
   // ===== Initializer =====
 
   const initializer: Initializer = {
@@ -70,6 +87,7 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
   return {
     repository,
     resourcexProvider,
+    issuexProvider,
     initializer,
     bootstrap: config.bootstrap,
   };

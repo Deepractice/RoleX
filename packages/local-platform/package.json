@@ -22,6 +22,7 @@
   "dependencies": {
     "@deepracticex/drizzle": "^0.2.0",
     "@deepracticex/sqlite": "^0.2.0",
+    "@issuexjs/node": "^0.2.0",
     "@resourcexjs/node-provider": "^2.14.0",
     "@rolexjs/core": "workspace:*",
     "@rolexjs/system": "workspace:*",

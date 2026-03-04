@@ -39,6 +39,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@issuexjs/core": "^0.2.0",
     "@rolexjs/system": "workspace:*",
     "@resourcexjs/core": "^2.14.0"
   },

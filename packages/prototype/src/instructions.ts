@@ -456,6 +456,135 @@ const positionDismiss = def(
 );
 
 // ================================================================
+//  Project — project management
+// ================================================================
+
+const projectLaunch = def(
+  "project",
+  "launch",
+  {
+    content: {
+      type: "gherkin",
+      required: false,
+      description: "Gherkin Feature source for the project",
+    },
+    id: { type: "string", required: false, description: "User-facing identifier (kebab-case)" },
+    alias: { type: "string[]", required: false, description: "Alternative names" },
+  },
+  ["content", "id", "alias"]
+);
+
+const projectScope = def(
+  "project",
+  "scope",
+  {
+    project: { type: "string", required: true, description: "Project id" },
+    content: {
+      type: "gherkin",
+      required: true,
+      description: "Gherkin Feature source for the scope",
+    },
+    id: { type: "string", required: false, description: "Scope id" },
+  },
+  ["project", "content", "id"]
+);
+
+const projectMilestone = def(
+  "project",
+  "milestone",
+  {
+    project: { type: "string", required: true, description: "Project id" },
+    content: {
+      type: "gherkin",
+      required: true,
+      description: "Gherkin Feature source for the milestone",
+    },
+    id: {
+      type: "string",
+      required: false,
+      description: "Milestone id (keywords joined by hyphens)",
+    },
+  },
+  ["project", "content", "id"]
+);
+
+const projectAchieve = def(
+  "project",
+  "achieve",
+  {
+    milestone: { type: "string", required: true, description: "Milestone id to mark as done" },
+  },
+  ["milestone"]
+);
+
+const projectEnroll = def(
+  "project",
+  "enroll",
+  {
+    project: { type: "string", required: true, description: "Project id" },
+    individual: { type: "string", required: true, description: "Individual id" },
+  },
+  ["project", "individual"]
+);
+
+const projectRemove = def(
+  "project",
+  "remove",
+  {
+    project: { type: "string", required: true, description: "Project id" },
+    individual: { type: "string", required: true, description: "Individual id" },
+  },
+  ["project", "individual"]
+);
+
+const projectDeliver = def(
+  "project",
+  "deliver",
+  {
+    project: { type: "string", required: true, description: "Project id" },
+    content: {
+      type: "gherkin",
+      required: true,
+      description: "Gherkin Feature source for the deliverable",
+    },
+    id: {
+      type: "string",
+      required: false,
+      description: "Deliverable id (keywords joined by hyphens)",
+    },
+  },
+  ["project", "content", "id"]
+);
+
+const projectWiki = def(
+  "project",
+  "wiki",
+  {
+    project: { type: "string", required: true, description: "Project id" },
+    content: {
+      type: "gherkin",
+      required: true,
+      description: "Gherkin Feature source for the wiki entry",
+    },
+    id: {
+      type: "string",
+      required: false,
+      description: "Wiki entry id (keywords joined by hyphens)",
+    },
+  },
+  ["project", "content", "id"]
+);
+
+const projectArchive = def(
+  "project",
+  "archive",
+  {
+    project: { type: "string", required: true, description: "Project id" },
+  },
+  ["project"]
+);
+
+// ================================================================
 //  Census — society-level queries
 // ================================================================
 
@@ -466,7 +595,7 @@ const censusList = def(
     type: {
       type: "string",
       required: false,
-      description: "Filter by type (individual, organization, position, past)",
+      description: "Filter by type (individual, organization, position, project, past)",
     },
   },
   ["type"]
@@ -577,6 +706,123 @@ const resourceClearCache = def(
 );
 
 // ================================================================
+//  Issue — IssueX proxy
+// ================================================================
+
+const issuePublish = def(
+  "issue",
+  "publish",
+  {
+    title: { type: "string", required: true, description: "Issue title" },
+    body: { type: "string", required: true, description: "Issue body/description" },
+    author: { type: "string", required: true, description: "Author individual id" },
+    assignee: { type: "string", required: false, description: "Assignee individual id" },
+  },
+  ["title", "body", "author", "assignee"]
+);
+
+const issueGet = def(
+  "issue",
+  "get",
+  {
+    number: { type: "number", required: true, description: "Issue number" },
+  },
+  ["number"]
+);
+
+const issueList = def(
+  "issue",
+  "list",
+  {
+    status: { type: "string", required: false, description: "Filter by status (open/closed)" },
+    author: { type: "string", required: false, description: "Filter by author" },
+    assignee: { type: "string", required: false, description: "Filter by assignee" },
+    label: { type: "string", required: false, description: "Filter by label name" },
+  },
+  ["status", "author", "assignee", "label"]
+);
+
+const issueUpdate = def(
+  "issue",
+  "update",
+  {
+    number: { type: "number", required: true, description: "Issue number" },
+    title: { type: "string", required: false, description: "New title" },
+    body: { type: "string", required: false, description: "New body" },
+    assignee: { type: "string", required: false, description: "New assignee" },
+  },
+  ["number", "title", "body", "assignee"]
+);
+
+const issueClose = def(
+  "issue",
+  "close",
+  {
+    number: { type: "number", required: true, description: "Issue number to close" },
+  },
+  ["number"]
+);
+
+const issueReopen = def(
+  "issue",
+  "reopen",
+  {
+    number: { type: "number", required: true, description: "Issue number to reopen" },
+  },
+  ["number"]
+);
+
+const issueAssign = def(
+  "issue",
+  "assign",
+  {
+    number: { type: "number", required: true, description: "Issue number" },
+    assignee: { type: "string", required: true, description: "Individual id to assign" },
+  },
+  ["number", "assignee"]
+);
+
+const issueComment = def(
+  "issue",
+  "comment",
+  {
+    number: { type: "number", required: true, description: "Issue number" },
+    body: { type: "string", required: true, description: "Comment body" },
+    author: { type: "string", required: true, description: "Author individual id" },
+  },
+  ["number", "body", "author"]
+);
+
+const issueComments = def(
+  "issue",
+  "comments",
+  {
+    number: { type: "number", required: true, description: "Issue number" },
+  },
+  ["number"]
+);
+
+const issueLabel = def(
+  "issue",
+  "label",
+  {
+    number: { type: "number", required: true, description: "Issue number" },
+    label: { type: "string", required: true, description: "Label name" },
+  },
+  ["number", "label"]
+);
+
+const issueUnlabel = def(
+  "issue",
+  "unlabel",
+  {
+    number: { type: "number", required: true, description: "Issue number" },
+    label: { type: "string", required: true, description: "Label name to remove" },
+  },
+  ["number", "label"]
+);
+
+// ================================================================
 //  Instruction registry — keyed by "namespace.method"
 // ================================================================
 
@@ -619,6 +865,17 @@ export const instructions: Record<string, InstructionDef> = {
   "position.appoint": positionAppoint,
   "position.dismiss": positionDismiss,
 
+  // project
+  "project.launch": projectLaunch,
+  "project.scope": projectScope,
+  "project.milestone": projectMilestone,
+  "project.achieve": projectAchieve,
+  "project.enroll": projectEnroll,
+  "project.remove": projectRemove,
+  "project.deliver": projectDeliver,
+  "project.wiki": projectWiki,
+  "project.archive": projectArchive,
+
   // census
   "census.list": censusList,
 
@@ -635,4 +892,17 @@ export const instructions: Record<string, InstructionDef> = {
   "resource.push": resourcePush,
   "resource.pull": resourcePull,
   "resource.clearCache": resourceClearCache,
+
+  // issue
+  "issue.publish": issuePublish,
+  "issue.get": issueGet,
+  "issue.list": issueList,
+  "issue.update": issueUpdate,
+  "issue.close": issueClose,
+  "issue.reopen": issueReopen,
+  "issue.assign": issueAssign,
+  "issue.comment": issueComment,
+  "issue.comments": issueComments,
+  "issue.label": issueLabel,
+  "issue.unlabel": issueUnlabel,
 };

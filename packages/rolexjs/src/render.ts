@@ -32,6 +32,17 @@ const descriptions: Record<string, (name: string, state: State) => string> = {
   appoint: (n) => `"${n}" appointed.`,
   dismiss: (n) => `"${n}" dismissed.`,
 
+  // Project
+  launch: (n) => `Project "${n}" launched.`,
+  scope: (n) => `Scope defined for "${n}".`,
+  milestone: (n) => `Milestone "${n}" added.`,
+  achieve: (n) => `Milestone "${n}" achieved.`,
+  enroll: (n) => `"${n}" enrolled.`,
+  remove: (n) => `"${n}" removed.`,
+  deliver: (n) => `Deliverable "${n}" added.`,
+  wiki: (n) => `Wiki entry "${n}" added.`,
+  archive: (n) => `Project "${n}" archived.`,
+
   // Role
   activate: (n) => `Role "${n}" activated.`,
   focus: (n) => `Focused on goal "${n}".`,
@@ -80,6 +91,17 @@ const hints: Record<string, string> = {
   fire: "the individual is no longer a member.",
   appoint: "the individual now holds this position.",
   dismiss: "the position is now vacant.",
+
+  // Project
+  launch: "define scope, add milestones, or enroll members.",
+  scope: "add milestones to break down the project.",
+  milestone: "enroll members and start working.",
+  achieve: "continue with remaining milestones, or archive the project.",
+  enroll: "assign milestones and start working.",
+  remove: "the individual is no longer a participant.",
+  deliver: "deliverable recorded.",
+  wiki: "knowledge entry recorded.",
+  archive: "the project is archived.",
 
   // Role
   activate: "want a goal, or check the current state.",
@@ -231,6 +253,11 @@ const CONCEPT_ORDER: readonly string[] = [
   // Position
   "position",
   "duty",
+  // Project
+  "scope",
+  "milestone",
+  "deliverable",
+  "wiki",
 ];
 
 /** Summarize plan/task completion for a goal heading. */

@@ -98,3 +98,11 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Published packages:" >> $GITHUB_STEP_SUMMARY
           echo '${{ steps.changesets.outputs.publishedPackages }}' | jq -r '.[] | "- `\(.name)@\(.version)`"' >> $GITHUB_STEP_SUMMARY
+
+      - name: Sync main back to dev
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          git fetch origin dev
+          git checkout dev
+          git merge main --no-edit
+          git push origin dev

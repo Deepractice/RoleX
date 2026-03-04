@@ -43,6 +43,7 @@
     "@rolexjs/prototype": "workspace:*",
     "@rolexjs/system": "workspace:*",
     "@rolexjs/parser": "workspace:*",
+    "issuexjs": "^0.2.0",
     "resourcexjs": "^2.14.0"
   },
   "devDependencies": {

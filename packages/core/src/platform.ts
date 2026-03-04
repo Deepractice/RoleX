@@ -11,6 +11,7 @@
  * (ResourceX, bootstrap config) to form a complete runtime environment.
  */
 
+import type { IssueXProvider } from "@issuexjs/core";
 import type { CustomExecutor, ResourceXProvider } from "@resourcexjs/core";
 import type { Initializer, Runtime } from "@rolexjs/system";
 
@@ -56,6 +57,9 @@ export interface Platform {
 
   /** Custom executor for ResourceX resolver execution (e.g., QuickJS Wasm for Workers). */
   readonly resourcexExecutor?: CustomExecutor;
+
+  /** IssueX provider — injected storage backend for issue tracking. */
+  readonly issuexProvider?: IssueXProvider;
 
   /** Initializer — bootstrap the world on first run. */
   readonly initializer?: Initializer;

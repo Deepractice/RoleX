@@ -7,7 +7,7 @@
 
 import { localPlatform } from "@rolexjs/local-platform";
 import { FastMCP } from "fastmcp";
-import { createRoleX, detail } from "rolexjs";
+import { createRoleX, detail, type ProjectAction, renderProjectResult, type State } from "rolexjs";
 
 import { z } from "zod";
 import { instructions } from "./instructions.js";
@@ -257,6 +257,12 @@ server.addTool({
     const result = await rolex.direct(locator, args);
     if (result == null) return `${locator} done.`;
     if (typeof result === "string") return result;
+    // Render project results as readable text
+    if (locator.startsWith("!project.")) {
+      const action = locator.slice("!project.".length) as ProjectAction;
+      const opResult = result as { state: State };
+      return renderProjectResult(action, opResult.state);
+    }
     return JSON.stringify(result, null, 2);
   },
 });

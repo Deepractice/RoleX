@@ -25,6 +25,12 @@
  * │ ├── position            "A role held by an individual"  │
  * │ │   │  ∿ appointment → individual                       │
  * │ │   └── duty            "Responsibilities of position"  │
+ * │ ├── project             "A process container"           │
+ * │ │   │  ∿ participation → individual                     │
+ * │ │   ├── scope           "Project boundary"              │
+ * │ │   ├── milestone       "Key checkpoint"                │
+ * │ │   ├── deliverable     "Project output"                │
+ * │ │   └── wiki            "Project knowledge base"        │
  * │ └── past                "Things no longer active"        │
  * └─────────────────────────────────────────────────────────┘
  */
@@ -92,3 +98,23 @@ export const position = structure("position", "A role held by an individual", so
 ]);
 export const duty = structure("duty", "Responsibilities of this position", position);
 export const requirement = structure("requirement", "Required skill for this position", position);
+
+// ================================================================
+//  Project — process management entity
+// ================================================================
+
+export const project = structure("project", "A process container for organized work", society, [
+  relation("participation", "Who participates in this project", individual),
+]);
+export const scope = structure(
+  "scope",
+  "Project boundary — what to do and what not to do",
+  project
+);
+export const milestone = structure(
+  "milestone",
+  "Key checkpoint with achievement criteria",
+  project
+);
+export const deliverable = structure("deliverable", "Project output and delivery", project);
+export const wiki = structure("wiki", "Project-level knowledge base entry", project);
