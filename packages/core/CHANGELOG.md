@@ -1,5 +1,29 @@
 # @rolexjs/core
 
+## 1.2.0
+
+### Minor Changes
+
+- ca32e1c: feat: integrate IssueX for issue tracking between AI individuals
+
+  - Add IssueX support to Platform and LocalPlatform
+  - Add issue operations (publish, get, list, update, close, reopen, assign, comment, label, unlabel) to prototype ops
+  - Add issue-render module in rolexjs for human-readable output formatting
+  - Role.use() now renders issue results as readable text instead of raw JSON
+  - Add "number" to ParamType for issue instruction schemas
+
+- e35aa19: feat: add Project as a top-level organizational primitive
+
+  - Add project structure with 5 sub-concepts: scope, milestone, deliverable, wiki, and participation relation
+  - Add 9 project operations: launch, scope, milestone, achieve, enroll, remove, deliver, wiki, archive
+  - Add project-render module for human-readable project output (compact member display, milestone progress)
+  - Add project lifecycle BDD feature with full test coverage
+  - Fix BDD test suite for async Runtime refactor (await createRoleX, Role methods, writeContext via SQLite)
+
+### Patch Changes
+
+- @rolexjs/system@1.2.0
+
 ## 1.1.0
 
 ### Minor Changes
