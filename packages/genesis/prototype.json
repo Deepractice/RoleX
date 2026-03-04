@@ -44,6 +44,14 @@
       "content": "@version-migration.procedure.feature"
     }
   },
+  {
+    "op": "!individual.train",
+    "args": {
+      "individual": "nuwa",
+      "id": "project-management",
+      "content": "@project-management.procedure.feature"
+    }
+  },
 
   { "op": "!org.hire", "args": { "org": "rolex", "individual": "nuwa" } },
 
@@ -114,5 +122,27 @@
       "content": "@position-management.requirement.feature"
     }
   },
-  { "op": "!position.appoint", "args": { "position": "position-manager", "individual": "nuwa" } }
+  { "op": "!position.appoint", "args": { "position": "position-manager", "individual": "nuwa" } },
+
+  {
+    "op": "!position.establish",
+    "args": { "id": "project-manager", "content": "@project-manager.position.feature" }
+  },
+  {
+    "op": "!position.charge",
+    "args": {
+      "position": "project-manager",
+      "id": "manage-project-lifecycle",
+      "content": "@manage-project-lifecycle.duty.feature"
+    }
+  },
+  {
+    "op": "!position.require",
+    "args": {
+      "position": "project-manager",
+      "id": "project-management",
+      "content": "@project-management.requirement.feature"
+    }
+  },
+  { "op": "!position.appoint", "args": { "position": "project-manager", "individual": "nuwa" } }
 ]
