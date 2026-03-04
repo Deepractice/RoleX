@@ -12,14 +12,15 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "drizzle"
   ],
   "scripts": {
     "build": "tsup",
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@deepracticex/drizzle": "^0.2.0",
+    "@deepracticex/drizzle": "^0.3.1",
     "@deepracticex/sqlite": "^0.2.0",
     "@issuexjs/node": "^0.2.0",
     "@resourcexjs/node-provider": "^2.14.0",

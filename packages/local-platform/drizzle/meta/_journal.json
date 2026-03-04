@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1772631387631,
+      "tag": "0000_spooky_amazoness",
+      "breakpoints": true
+    }
+  ]
+}

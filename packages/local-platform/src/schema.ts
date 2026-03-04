@@ -1,9 +1,12 @@
 /**
- * Drizzle schema — SQLite tables for the RoleX runtime graph.
+ * Drizzle schema — SQLite tables for RoleX.
  *
- * Two tables:
- *   nodes — tree backbone (Structure instances)
- *   links — cross-branch relations (bidirectional)
+ * Five tables:
+ *   nodes                — tree backbone (Structure instances)
+ *   links                — cross-branch relations (bidirectional)
+ *   prototypes           — which prototype packages are settled
+ *   contexts             — per-role session focus state
+ *   prototype_migrations — Flyway-style migration history
  */
 
 import { index, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
@@ -62,4 +65,37 @@ export const links = sqliteTable(
     index("idx_links_from").on(table.fromRef),
     index("idx_links_to").on(table.toRef),
   ]
+);
+
+/**
+ * prototypes — which prototype packages are settled.
+ */
+export const prototypes = sqliteTable("prototypes", {
+  id: text("id").primaryKey(),
+  source: text("source").notNull(),
+});
+
+/**
+ * contexts — per-role session focus state.
+ */
+export const contexts = sqliteTable("contexts", {
+  roleId: text("role_id").primaryKey(),
+  focusedGoalId: text("focused_goal_id"),
+  focusedPlanId: text("focused_plan_id"),
+});
+
+/**
+ * prototype_migrations — Flyway-style migration history.
+ *
+ * Records which migrations have been executed for each prototype.
+ */
+export const prototypeMigrations = sqliteTable(
+  "prototype_migrations",
+  {
+    prototypeId: text("prototype_id").notNull(),
+    migrationId: text("migration_id").notNull(),
+    checksum: text("checksum").notNull(),
+    executedAt: text("executed_at").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.prototypeId, table.migrationId] })]
 );

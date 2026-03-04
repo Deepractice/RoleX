@@ -1,11 +1,13 @@
 /**
  * SqliteRepository — RoleXRepository backed by SQLite via Drizzle.
  *
- * Single database, four tables: nodes, links, prototypes, contexts.
- * All state in one place — swap the db connection to go from local to cloud.
+ * Five tables: nodes, links, prototypes, contexts, prototype_migrations.
+ * Schema managed by Drizzle ORM migrations.
  */
 
+import { join } from "node:path";
 import type { CommonXDatabase } from "@deepracticex/drizzle";
+import { migrate } from "@deepracticex/drizzle";
 import type {
   ContextData,
   MigrationRecord,
@@ -18,49 +20,6 @@ import { createSqliteRuntime } from "./sqliteRuntime.js";
 
 type DB = CommonXDatabase;
 
-// ===== DDL =====
-
-const DDL = [
-  sql`CREATE TABLE IF NOT EXISTS nodes (
-    ref TEXT PRIMARY KEY,
-    id TEXT,
-    alias TEXT,
-    name TEXT NOT NULL,
-    description TEXT DEFAULT '',
-    parent_ref TEXT REFERENCES nodes(ref),
-    information TEXT,
-    tag TEXT
-  )`,
-  sql`CREATE TABLE IF NOT EXISTS links (
-    from_ref TEXT NOT NULL REFERENCES nodes(ref),
-    to_ref TEXT NOT NULL REFERENCES nodes(ref),
-    relation TEXT NOT NULL,
-    PRIMARY KEY (from_ref, to_ref, relation)
-  )`,
-  sql`CREATE TABLE IF NOT EXISTS prototypes (
-    id TEXT PRIMARY KEY,
-    source TEXT NOT NULL
-  )`,
-  sql`CREATE TABLE IF NOT EXISTS contexts (
-    role_id TEXT PRIMARY KEY,
-    focused_goal_id TEXT,
-    focused_plan_id TEXT
-  )`,
-  sql`CREATE TABLE IF NOT EXISTS prototype_migrations (
-    prototype_id TEXT NOT NULL,
-    migration_id TEXT NOT NULL,
-    checksum TEXT NOT NULL,
-    executed_at TEXT NOT NULL,
-    PRIMARY KEY (prototype_id, migration_id)
-  )`,
-  // Indexes
-  sql`CREATE INDEX IF NOT EXISTS idx_nodes_id ON nodes(id)`,
-  sql`CREATE INDEX IF NOT EXISTS idx_nodes_name ON nodes(name)`,
-  sql`CREATE INDEX IF NOT EXISTS idx_nodes_parent_ref ON nodes(parent_ref)`,
-  sql`CREATE INDEX IF NOT EXISTS idx_links_from ON links(from_ref)`,
-  sql`CREATE INDEX IF NOT EXISTS idx_links_to ON links(to_ref)`,
-];
-
 // ===== Repository =====
 
 export class SqliteRepository implements RoleXRepository {
@@ -68,10 +27,10 @@ export class SqliteRepository implements RoleXRepository {
   readonly prototype: PrototypeRegistry;
 
   constructor(private db: DB) {
-    // Ensure all tables exist
-    for (const stmt of DDL) {
-      db.run(stmt);
-    }
+    // Run Drizzle migrations — handles schema creation and evolution
+    migrate(db, {
+      migrationsFolder: join(import.meta.dirname, "../drizzle"),
+    });
 
     this.runtime = createSqliteRuntime(db);
     this.prototype = createPrototypeRegistry(db);
