@@ -1,5 +1,15 @@
 # @rolexjs/core
 
+## 1.2.1
+
+### Patch Changes
+
+- a2ad0d5: Remove "bun" export condition from all packages
+
+  The "bun" condition in exports pointed to ./src/index.ts which is not included in published npm packages, causing "Cannot find package" errors when consumed by bun runtime. All environments now use the compiled dist/ output.
+
+  - @rolexjs/system@1.2.1
+
 ## 1.2.0
 
 ### Minor Changes

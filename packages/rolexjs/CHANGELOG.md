@@ -1,5 +1,15 @@
 # rolexjs
 
+## 1.2.1
+
+### Patch Changes
+
+- Updated dependencies [a2ad0d5]
+  - @rolexjs/core@1.2.1
+  - @rolexjs/prototype@1.2.1
+  - @rolexjs/parser@1.2.1
+  - @rolexjs/system@1.2.1
+
 ## 1.2.0
 
 ### Minor Changes
