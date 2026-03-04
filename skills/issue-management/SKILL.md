@@ -31,7 +31,7 @@ Feature: Issue Lifecycle Commands
     And optional: assignee can be set at creation
     And parameters are:
       """
-      locator: "!issue.publish"
+      command: "!issue.publish"
 title: "Issue title"
         body: "Issue description"
         author: "individual-id"
@@ -44,7 +44,7 @@ title: "Issue title"
     Then the full issue is returned including labels
     And parameters are:
       """
-      locator: "!issue.get"
+      command: "!issue.get"
 number: 1
       """
 
@@ -55,7 +55,7 @@ number: 1
     And all filter parameters are optional — omit for all issues
     And parameters are:
       """
-      locator: "!issue.list"
+      command: "!issue.list"
 status: "open"        # optional
         author: "id"          # optional
         assignee: "id"        # optional
@@ -68,7 +68,7 @@ status: "open"        # optional
     Then the specified fields are updated
     And parameters are:
       """
-      locator: "!issue.update"
+      command: "!issue.update"
 number: 1
         title: "New title"    # optional
         body: "New body"      # optional
@@ -81,7 +81,7 @@ number: 1
     Then status changes to "closed" and closedAt is set
     And parameters are:
       """
-      locator: "!issue.close"
+      command: "!issue.close"
 number: 1
       """
 
@@ -91,7 +91,7 @@ number: 1
     Then status changes back to "open" and closedAt is cleared
     And parameters are:
       """
-      locator: "!issue.reopen"
+      command: "!issue.reopen"
 number: 1
       """
 
@@ -101,7 +101,7 @@ number: 1
     Then the issue's assignee is updated
     And parameters are:
       """
-      locator: "!issue.assign"
+      command: "!issue.assign"
 number: 1
         assignee: "individual-id"
       """
@@ -115,7 +115,7 @@ Feature: Comment Commands
     Then a comment is added to the issue
     And parameters are:
       """
-      locator: "!issue.comment"
+      command: "!issue.comment"
 number: 1
         body: "Comment text"
         author: "individual-id"
@@ -127,7 +127,7 @@ number: 1
     Then all comments are returned ordered by creation time
     And parameters are:
       """
-      locator: "!issue.comments"
+      command: "!issue.comments"
 number: 1
       """
 
@@ -141,7 +141,7 @@ Feature: Label Commands
     And if the label doesn't exist yet, it is auto-created
     And parameters are:
       """
-      locator: "!issue.label"
+      command: "!issue.label"
 number: 1
         label: "bug"
       """
@@ -152,7 +152,7 @@ number: 1
     Then the label is removed from the issue
     And parameters are:
       """
-      locator: "!issue.unlabel"
+      command: "!issue.unlabel"
 number: 1
         label: "bug"
       """

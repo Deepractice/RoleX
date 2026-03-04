@@ -14,7 +14,7 @@ Feature: Individual Lifecycle
     And the individual can be activated, hired into organizations, and taught skills
     And parameters are:
       """
-      locator: "!individual.born"
+      command: "!individual.born"
       content: "Feature: ..."   # Gherkin persona (optional)
       id: "sean"                # kebab-case identifier
       alias: ["小明", "xm"]    # aliases (optional)
@@ -34,7 +34,7 @@ Feature: Individual Lifecycle
     And all data is preserved for potential restoration via rehire
     And parameters are:
       """
-      locator: "!individual.retire"
+      command: "!individual.retire"
       individual: "sean"
       """
 
@@ -45,7 +45,7 @@ Feature: Individual Lifecycle
     And this is semantically permanent — rehire is technically possible but not intended
     And parameters are:
       """
-      locator: "!individual.die"
+      command: "!individual.die"
       individual: "sean"
       """
 
@@ -63,7 +63,7 @@ Feature: Individual Lifecycle
     And all previous knowledge, experience, and history are intact
     And parameters are:
       """
-      locator: "!individual.rehire"
+      command: "!individual.rehire"
       individual: "sean"
       """
 
@@ -79,7 +79,7 @@ Feature: Knowledge Injection
     And if a principle with the same id already exists, it is replaced (upsert)
     And parameters are:
       """
-      locator: "!individual.teach"
+      command: "!individual.teach"
       individual: "sean"
       content: "Feature: Always validate input\n  ..."
       id: "always-validate-input"
@@ -93,7 +93,7 @@ Feature: Knowledge Injection
     And the procedure Feature description MUST contain the ResourceX locator for the skill
     And parameters are:
       """
-      locator: "!individual.train"
+      command: "!individual.train"
       individual: "sean"
       content: "Feature: Skill Creator\n  https://github.com/Deepractice/DeepracticeX/tree/main/skills/skill-creator\n\n  Scenario: When to use\n    Given I need to create a skill\n    Then load this skill"
       id: "skill-creator"
@@ -136,9 +136,9 @@ Feature: Common Workflows
     When setting up a new role from scratch
     Then follow this sequence:
       """
-      1. locator: "!individual.born", id: "sean", content: "Feature: ..."
-      2. locator: "!individual.teach", individual: "sean", content: "...", id: "..."   # repeat
-      3. locator: "!individual.train", individual: "sean", content: "...", id: "..."   # repeat
+      1. command: "!individual.born", id: "sean", content: "Feature: ..."
+      2. command: "!individual.teach", individual: "sean", content: "...", id: "..."   # repeat
+      3. command: "!individual.train", individual: "sean", content: "...", id: "..."   # repeat
       4. activate with roleId: "sean"   # verify the individual's state
       """
 

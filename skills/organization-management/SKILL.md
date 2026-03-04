@@ -15,7 +15,7 @@ Feature: Organization Lifecycle
     And a charter can be defined for it
     And parameters are:
       """
-      locator: "!org.found"
+      command: "!org.found"
       content: "Feature: Deepractice\n  An AI agent framework company"
       id: "dp"
       alias: ["deepractice"]    # optional
@@ -27,7 +27,7 @@ Feature: Organization Lifecycle
     Then the charter is stored under the organization
     And parameters are:
       """
-      locator: "!org.charter"
+      command: "!org.charter"
       org: "dp"
       content: "Feature: Build great AI\n  Scenario: Mission\n    Given we believe AI agents need identity\n    Then we build frameworks for role-based agents"
       """
@@ -38,7 +38,7 @@ Feature: Organization Lifecycle
     Then the organization is archived to past
     And parameters are:
       """
-      locator: "!org.dissolve"
+      command: "!org.dissolve"
       org: "dp"
       """
 
@@ -53,7 +53,7 @@ Feature: Membership
     And the individual can then be appointed to positions
     And parameters are:
       """
-      locator: "!org.hire"
+      command: "!org.hire"
       org: "dp"
       individual: "sean"
       """
@@ -64,7 +64,7 @@ Feature: Membership
     Then the membership link is removed
     And parameters are:
       """
-      locator: "!org.fire"
+      command: "!org.fire"
       org: "dp"
       individual: "sean"
       """
@@ -81,7 +81,7 @@ Feature: Position Lifecycle
     And it can be charged with duties and individuals can be appointed to it
     And parameters are:
       """
-      locator: "!position.establish"
+      command: "!position.establish"
       content: "Feature: Backend Architect\n  Responsible for system design and API architecture"
       id: "architect"
       """
@@ -93,7 +93,7 @@ Feature: Position Lifecycle
     And individuals appointed to this position inherit the duty
     And parameters are:
       """
-      locator: "!position.charge"
+      command: "!position.charge"
       position: "architect"
       content: "Feature: Design systems\n  Scenario: API design\n    Given a new service is needed\n    Then design the API contract first"
       id: "design-systems"
@@ -107,7 +107,7 @@ Feature: Position Lifecycle
     And upserts by id — if the same id exists, it replaces the old one
     And parameters are:
       """
-      locator: "!position.require"
+      command: "!position.require"
       position: "architect"
       content: "Feature: System Design\n  Scenario: When to apply\n    Given a new service is planned\n    Then design the architecture before coding"
       id: "system-design"
@@ -119,7 +119,7 @@ Feature: Position Lifecycle
     Then the position is archived to past
     And parameters are:
       """
-      locator: "!position.abolish"
+      command: "!position.abolish"
       position: "architect"
       """
 
@@ -135,7 +135,7 @@ Feature: Appointment
     And existing skills with the same id are replaced (upsert)
     And parameters are:
       """
-      locator: "!position.appoint"
+      command: "!position.appoint"
       position: "architect"
       individual: "sean"
       """
@@ -146,7 +146,7 @@ Feature: Appointment
     Then the appointment link is removed
     And parameters are:
       """
-      locator: "!position.dismiss"
+      command: "!position.dismiss"
       position: "architect"
       individual: "sean"
       """
@@ -157,12 +157,12 @@ Feature: Common Workflows
     Given you need an organization with positions and members
     Then follow this sequence:
       """
-      1. locator: "!org.found", id: "dp", content: "Feature: Deepractice"
-      2. locator: "!org.charter", org: "dp", content: "Feature: Mission\n  ..."
-      3. locator: "!position.establish", id: "architect", content: "Feature: Architect"
-      4. locator: "!position.charge", position: "architect", content: "Feature: Design\n  ...", id: "design"
-      5. locator: "!position.require", position: "architect", content: "Feature: Skill\n  ...", id: "skill"
-      6. locator: "!org.hire", org: "dp", individual: "sean"
-      7. locator: "!position.appoint", position: "architect", individual: "sean"
+      1. command: "!org.found", id: "dp", content: "Feature: Deepractice"
+      2. command: "!org.charter", org: "dp", content: "Feature: Mission\n  ..."
+      3. command: "!position.establish", id: "architect", content: "Feature: Architect"
+      4. command: "!position.charge", position: "architect", content: "Feature: Design\n  ...", id: "design"
+      5. command: "!position.require", position: "architect", content: "Feature: Skill\n  ...", id: "skill"
+      6. command: "!org.hire", org: "dp", individual: "sean"
+      7. command: "!position.appoint", position: "architect", individual: "sean"
       """
     And step 7 appoint will auto-train the required skill into sean

@@ -16,11 +16,11 @@ Feature: Prototype Registry
     And the prototype id and source are registered in the prototype registry
     And parameters are:
       """
-      locator: "!prototype.settle"
+      command: "!prototype.settle"
       source: "./prototypes/rolex"
 
       # or by registry locator:
-      locator: "!prototype.settle"
+      command: "!prototype.settle"
       source: "deepractice/rolex"
       """
 
@@ -31,7 +31,7 @@ Feature: Prototype Registry
     And runtime entities created by the prototype are NOT removed
     And parameters are:
       """
-      locator: "!prototype.evict"
+      command: "!prototype.evict"
       id: "rolex"
       """
 

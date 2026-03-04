@@ -226,19 +226,17 @@ server.addTool({
   description: detail("use"),
   parameters: z
     .object({
-      locator: z
+      command: z
         .string()
-        .describe(
-          "Locator string. !namespace.method for RoleX commands, or a ResourceX locator for resources"
-        ),
+        .describe("!namespace.method for RoleX commands, or a ResourceX locator for resources"),
     })
     .catchall(z.unknown()),
   execute: async (params) => {
-    const { locator, ...args } = params;
+    const { command, ...args } = params;
     const result = await state
       .requireRole()
-      .use(locator, Object.keys(args).length > 0 ? args : undefined);
-    if (result == null) return `${locator} done.`;
+      .use(command as string, Object.keys(args).length > 0 ? args : undefined);
+    if (result == null) return `${command} done.`;
     if (typeof result === "string") return result;
     return JSON.stringify(result, null, 2);
   },
@@ -251,24 +249,22 @@ server.addTool({
   description: detail("direct"),
   parameters: z
     .object({
-      locator: z
+      command: z
         .string()
-        .describe(
-          "Locator string. !namespace.method for RoleX commands, or a ResourceX locator for resources"
-        ),
+        .describe("!namespace.method for RoleX commands, or a ResourceX locator for resources"),
     })
     .catchall(z.unknown()),
   execute: async (params) => {
-    const { locator, ...args } = params;
+    const { command, ...args } = params;
     const result = await rolex.direct(
-      locator as string,
+      command as string,
       Object.keys(args).length > 0 ? args : undefined
     );
-    if (result == null) return `${locator} done.`;
+    if (result == null) return `${command} done.`;
     if (typeof result === "string") return result;
     // Render project results as readable text
-    if (locator.startsWith("!project.")) {
-      const action = locator.slice("!project.".length) as ProjectAction;
+    if ((command as string).startsWith("!project.")) {
+      const action = (command as string).slice("!project.".length) as ProjectAction;
       const opResult = result as { state: State };
       return renderProjectResult(action, opResult.state);
     }

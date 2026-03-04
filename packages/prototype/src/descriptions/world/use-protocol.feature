@@ -1,17 +1,17 @@
 Feature: Use tool — the universal execution entry point
   The MCP use tool is how you execute ALL RoleX operations beyond the core MCP tools.
   Whenever you see use("...") or a !namespace.method pattern in skills or documentation,
-  it is an instruction to call the MCP use tool with that locator.
+  it is an instruction to call the MCP use tool with that command.
 
   Scenario: How to read use instructions in skills
     Given a skill document contains use("!resource.add", { path: "..." })
-    Then this means: call the MCP use tool with locator "!resource.add" and path "..."
-    And all named arguments are passed as flat top-level parameters alongside locator
+    Then this means: call the MCP use tool with command "!resource.add" and path "..."
+    And all named arguments are passed as flat top-level parameters alongside command
     And always use the MCP use tool for RoleX operations
     And this applies to every use("...") pattern you encounter in any skill or documentation
 
   Scenario: ! prefix dispatches to RoleX runtime
-    Given the locator starts with !
+    Given the command starts with !
     Then it is parsed as !namespace.method
     And dispatched to the corresponding RoleX API with named args
 
@@ -20,7 +20,7 @@ Feature: Use tool — the universal execution entry point
     When you need to execute a command you have not seen in a loaded skill
     Then you MUST call skill(locator) first to load the full instructions
     And the loaded skill will tell you the exact command name and arguments
-    And only then call use with the correct locator and flat named parameters
+    And only then call use with the correct command and flat named parameters
     And do not use commands from other roles' descriptions — only your own skills
 
   Scenario: NEVER guess commands
@@ -30,7 +30,7 @@ Feature: Use tool — the universal execution entry point
     And call skill(locator) with the relevant procedure to learn the correct syntax
     And if no procedure covers this task, it is outside your duties — suggest Nuwa
 
-  Scenario: Regular locators delegate to ResourceX
-    Given the locator does not start with !
+  Scenario: Regular commands delegate to ResourceX
+    Given the command does not start with !
     Then it is treated as a ResourceX locator
     And resolved through the ResourceX ingest pipeline

@@ -71,7 +71,7 @@ Feature: Resource Operations
     And it can then be pushed to a remote registry
     And parameters are:
       """
-      locator: "!resource.add"
+      command: "!resource.add"
 path: "/absolute/path/to/resource"
       """
 
@@ -82,7 +82,7 @@ path: "/absolute/path/to/resource"
     And the registry stores it by name, tag, and digest
     And parameters are:
       """
-      locator: "!resource.push"
+      command: "!resource.push"
 locator: "name:tag"
         registry: "https://..."   # optional
       """
@@ -94,7 +94,7 @@ locator: "name:tag"
     And subsequent resolves use the local cache
     And parameters are:
       """
-      locator: "!resource.pull"
+      command: "!resource.pull"
 locator: "name:tag"
       """
 
@@ -104,7 +104,7 @@ locator: "name:tag"
     Then matching resources are returned as locator strings
     And parameters are:
       """
-      locator: "!resource.search"
+      command: "!resource.search"
 query: "keyword"
       """
 
@@ -114,7 +114,7 @@ query: "keyword"
     Then returns whether the resource exists
     And parameters are:
       """
-      locator: "!resource.has"
+      command: "!resource.has"
 locator: "name:tag"
       """
 
@@ -124,7 +124,7 @@ locator: "name:tag"
     Then the resource manifest is removed from local CAS
     And parameters are:
       """
-      locator: "!resource.remove"
+      command: "!resource.remove"
 locator: "name:tag"
       """
 
@@ -132,8 +132,8 @@ locator: "name:tag"
     Given you want to publish a resource to a registry
     Then the sequence is:
       """
-      1. locator: "!resource.add", path: "./my-resource"
-      2. locator: "!resource.push", locator: "my-resource"
+      1. command: "!resource.add", path: "./my-resource"
+      2. command: "!resource.push", locator: "my-resource"
       """
     And add imports to local CAS, push uploads to registry
     And tag defaults to latest when omitted
@@ -220,9 +220,9 @@ Feature: Common Workflows
     When you want to make it available via registry
     Then the sequence is:
       """
-      1. locator: "!resource.add"
+      1. command: "!resource.add"
          path: "/path/to/roles/nuwa"
-      2. locator: "!resource.push", locator: "nuwa"
+      2. command: "!resource.push", locator: "nuwa"
       """
     And the prototype is now pullable by anyone with registry access
 
@@ -231,8 +231,8 @@ Feature: Common Workflows
     When you re-add and push with the same tag
     Then the registry updates the tag to point to the new digest
       """
-      1. locator: "!resource.add", path: "/path/to/roles/nuwa"
-      2. locator: "!resource.push", locator: "nuwa"
+      1. command: "!resource.add", path: "/path/to/roles/nuwa"
+      2. command: "!resource.push", locator: "nuwa"
       """
     And consumers pulling the same tag get the updated content
 
