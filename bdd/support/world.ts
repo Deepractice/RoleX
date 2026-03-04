@@ -82,6 +82,10 @@ export class BddWorld extends World {
   directResult?: string;
   directRaw?: any;
 
+  // --- Prototype migration layer ---
+  protoMigrations?: Record<string, Array<{ file: string; ops: unknown[] }>>;
+  settleResult?: string;
+
   // --- Shared ---
   error?: Error;
 

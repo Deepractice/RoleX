@@ -39,7 +39,13 @@ export {
 } from "@rolexjs/system";
 
 // Platform
-export type { ContextData, Platform, PrototypeRegistry, RoleXRepository } from "./platform.js";
+export type {
+  ContextData,
+  MigrationRecord,
+  Platform,
+  PrototypeRegistry,
+  RoleXRepository,
+} from "./platform.js";
 
 // ===== Structures =====
 

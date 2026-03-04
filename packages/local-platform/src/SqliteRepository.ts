@@ -6,7 +6,12 @@
  */
 
 import type { CommonXDatabase } from "@deepracticex/drizzle";
-import type { ContextData, PrototypeRegistry, RoleXRepository } from "@rolexjs/core";
+import type {
+  ContextData,
+  MigrationRecord,
+  PrototypeRegistry,
+  RoleXRepository,
+} from "@rolexjs/core";
 import type { Runtime } from "@rolexjs/system";
 import { sql } from "drizzle-orm";
 import { createSqliteRuntime } from "./sqliteRuntime.js";
@@ -40,6 +45,13 @@ const DDL = [
     role_id TEXT PRIMARY KEY,
     focused_goal_id TEXT,
     focused_plan_id TEXT
+  )`,
+  sql`CREATE TABLE IF NOT EXISTS prototype_migrations (
+    prototype_id TEXT NOT NULL,
+    migration_id TEXT NOT NULL,
+    checksum TEXT NOT NULL,
+    executed_at TEXT NOT NULL,
+    PRIMARY KEY (prototype_id, migration_id)
   )`,
   // Indexes
   sql`CREATE INDEX IF NOT EXISTS idx_nodes_id ON nodes(id)`,
@@ -98,6 +110,7 @@ function createPrototypeRegistry(db: DB): PrototypeRegistry {
 
     evict(id: string) {
       db.run(sql`DELETE FROM prototypes WHERE id = ${id}`);
+      db.run(sql`DELETE FROM prototype_migrations WHERE prototype_id = ${id}`);
     },
 
     list(): Record<string, string> {
@@ -107,6 +120,43 @@ function createPrototypeRegistry(db: DB): PrototypeRegistry {
         result[row.id] = row.source;
       }
       return result;
+    },
+
+    recordMigration(prototypeId: string, migrationId: string, checksum: string) {
+      const executedAt = new Date().toISOString();
+      db.run(
+        sql`INSERT OR REPLACE INTO prototype_migrations (prototype_id, migration_id, checksum, executed_at)
+            VALUES (${prototypeId}, ${migrationId}, ${checksum}, ${executedAt})`
+      );
+    },
+
+    getMigrationHistory(prototypeId: string): MigrationRecord[] {
+      return db
+        .all<{
+          prototype_id: string;
+          migration_id: string;
+          checksum: string;
+          executed_at: string;
+        }>(
+          sql`SELECT prototype_id, migration_id, checksum, executed_at
+            FROM prototype_migrations
+            WHERE prototype_id = ${prototypeId}
+            ORDER BY executed_at`
+        )
+        .map((row) => ({
+          prototypeId: row.prototype_id,
+          migrationId: row.migration_id,
+          checksum: row.checksum,
+          executedAt: row.executed_at,
+        }));
+    },
+
+    hasMigration(prototypeId: string, migrationId: string): boolean {
+      const rows = db.all<{ cnt: number }>(
+        sql`SELECT COUNT(*) as cnt FROM prototype_migrations
+            WHERE prototype_id = ${prototypeId} AND migration_id = ${migrationId}`
+      );
+      return rows.length > 0 && rows[0].cnt > 0;
     },
   };
 }

@@ -21,11 +21,28 @@ export interface ContextData {
   focusedPlanId: string | null;
 }
 
-/** Prototype registry — tracks which prototypes are settled. */
+/** Migration history entry — records a single executed migration. */
+export interface MigrationRecord {
+  prototypeId: string;
+  migrationId: string;
+  checksum: string;
+  executedAt: string;
+}
+
+/** Prototype registry — tracks which prototypes are settled and their migration history. */
 export interface PrototypeRegistry {
   settle(id: string, source: string): void;
   evict(id: string): void;
   list(): Record<string, string>;
+
+  /** Record a migration as executed. */
+  recordMigration(prototypeId: string, migrationId: string, checksum: string): void;
+
+  /** Get all executed migrations for a prototype, ordered by execution time. */
+  getMigrationHistory(prototypeId: string): MigrationRecord[];
+
+  /** Check if a specific migration has been executed. */
+  hasMigration(prototypeId: string, migrationId: string): boolean;
 }
 
 /**
