@@ -32,8 +32,7 @@ Feature: Issue Lifecycle Commands
     And parameters are:
       """
       locator: "!issue.publish"
-      args:
-        title: "Issue title"
+title: "Issue title"
         body: "Issue description"
         author: "individual-id"
         assignee: "other-id"   # optional
@@ -46,8 +45,7 @@ Feature: Issue Lifecycle Commands
     And parameters are:
       """
       locator: "!issue.get"
-      args:
-        number: 1
+number: 1
       """
 
   Scenario: List issues with filters
@@ -58,8 +56,7 @@ Feature: Issue Lifecycle Commands
     And parameters are:
       """
       locator: "!issue.list"
-      args:
-        status: "open"        # optional
+status: "open"        # optional
         author: "id"          # optional
         assignee: "id"        # optional
         label: "bug"          # optional
@@ -72,8 +69,7 @@ Feature: Issue Lifecycle Commands
     And parameters are:
       """
       locator: "!issue.update"
-      args:
-        number: 1
+number: 1
         title: "New title"    # optional
         body: "New body"      # optional
         assignee: "id"        # optional
@@ -86,8 +82,7 @@ Feature: Issue Lifecycle Commands
     And parameters are:
       """
       locator: "!issue.close"
-      args:
-        number: 1
+number: 1
       """
 
   Scenario: Reopen an issue
@@ -97,8 +92,7 @@ Feature: Issue Lifecycle Commands
     And parameters are:
       """
       locator: "!issue.reopen"
-      args:
-        number: 1
+number: 1
       """
 
   Scenario: Assign an issue
@@ -108,8 +102,7 @@ Feature: Issue Lifecycle Commands
     And parameters are:
       """
       locator: "!issue.assign"
-      args:
-        number: 1
+number: 1
         assignee: "individual-id"
       """
 
@@ -123,8 +116,7 @@ Feature: Comment Commands
     And parameters are:
       """
       locator: "!issue.comment"
-      args:
-        number: 1
+number: 1
         body: "Comment text"
         author: "individual-id"
       """
@@ -136,8 +128,7 @@ Feature: Comment Commands
     And parameters are:
       """
       locator: "!issue.comments"
-      args:
-        number: 1
+number: 1
       """
 
 Feature: Label Commands
@@ -151,8 +142,7 @@ Feature: Label Commands
     And parameters are:
       """
       locator: "!issue.label"
-      args:
-        number: 1
+number: 1
         label: "bug"
       """
 
@@ -163,8 +153,7 @@ Feature: Label Commands
     And parameters are:
       """
       locator: "!issue.unlabel"
-      args:
-        number: 1
+number: 1
         label: "bug"
       """
 

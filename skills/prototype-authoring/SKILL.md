@@ -135,8 +135,7 @@ Feature: Example — Individual Prototype
     When you run:
       """
       locator: "!prototype.settle"
-      args:
-        source: "./prototypes/dev"
+      source: "./prototypes/dev"
       """
     Then the dev individual is born and trained with the code-review procedure
 

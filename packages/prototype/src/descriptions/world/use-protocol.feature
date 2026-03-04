@@ -5,7 +5,8 @@ Feature: Use tool — the universal execution entry point
 
   Scenario: How to read use instructions in skills
     Given a skill document contains use("!resource.add", { path: "..." })
-    Then this means: call the MCP use tool with locator "!resource.add" and args { path: "..." }
+    Then this means: call the MCP use tool with locator "!resource.add" and path "..."
+    And all named arguments are passed as flat top-level parameters alongside locator
     And always use the MCP use tool for RoleX operations
     And this applies to every use("...") pattern you encounter in any skill or documentation
 
@@ -19,7 +20,7 @@ Feature: Use tool — the universal execution entry point
     When you need to execute a command you have not seen in a loaded skill
     Then you MUST call skill(locator) first to load the full instructions
     And the loaded skill will tell you the exact command name and arguments
-    And only then call use(!namespace.method, args) with the correct syntax
+    And only then call use with the correct locator and flat named parameters
     And do not use commands from other roles' descriptions — only your own skills
 
   Scenario: NEVER guess commands

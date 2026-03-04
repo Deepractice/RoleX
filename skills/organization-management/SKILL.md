@@ -16,10 +16,9 @@ Feature: Organization Lifecycle
     And parameters are:
       """
       locator: "!org.found"
-      args:
-        content: "Feature: Deepractice\n  An AI agent framework company"
-        id: "dp"
-        alias: ["deepractice"]    # optional
+      content: "Feature: Deepractice\n  An AI agent framework company"
+      id: "dp"
+      alias: ["deepractice"]    # optional
       """
 
   Scenario: charter — define the organization's mission
@@ -29,9 +28,8 @@ Feature: Organization Lifecycle
     And parameters are:
       """
       locator: "!org.charter"
-      args:
-        org: "dp"
-        content: "Feature: Build great AI\n  Scenario: Mission\n    Given we believe AI agents need identity\n    Then we build frameworks for role-based agents"
+      org: "dp"
+      content: "Feature: Build great AI\n  Scenario: Mission\n    Given we believe AI agents need identity\n    Then we build frameworks for role-based agents"
       """
 
   Scenario: dissolve — dissolve an organization
@@ -41,8 +39,7 @@ Feature: Organization Lifecycle
     And parameters are:
       """
       locator: "!org.dissolve"
-      args:
-        org: "dp"
+      org: "dp"
       """
 
 Feature: Membership
@@ -57,9 +54,8 @@ Feature: Membership
     And parameters are:
       """
       locator: "!org.hire"
-      args:
-        org: "dp"
-        individual: "sean"
+      org: "dp"
+      individual: "sean"
       """
 
   Scenario: fire — remove a member
@@ -69,9 +65,8 @@ Feature: Membership
     And parameters are:
       """
       locator: "!org.fire"
-      args:
-        org: "dp"
-        individual: "sean"
+      org: "dp"
+      individual: "sean"
       """
 
 Feature: Position Lifecycle
@@ -87,9 +82,8 @@ Feature: Position Lifecycle
     And parameters are:
       """
       locator: "!position.establish"
-      args:
-        content: "Feature: Backend Architect\n  Responsible for system design and API architecture"
-        id: "architect"
+      content: "Feature: Backend Architect\n  Responsible for system design and API architecture"
+      id: "architect"
       """
 
   Scenario: charge — assign a duty to a position
@@ -100,10 +94,9 @@ Feature: Position Lifecycle
     And parameters are:
       """
       locator: "!position.charge"
-      args:
-        position: "architect"
-        content: "Feature: Design systems\n  Scenario: API design\n    Given a new service is needed\n    Then design the API contract first"
-        id: "design-systems"
+      position: "architect"
+      content: "Feature: Design systems\n  Scenario: API design\n    Given a new service is needed\n    Then design the API contract first"
+      id: "design-systems"
       """
 
   Scenario: require — declare a required skill for a position
@@ -115,10 +108,9 @@ Feature: Position Lifecycle
     And parameters are:
       """
       locator: "!position.require"
-      args:
-        position: "architect"
-        content: "Feature: System Design\n  Scenario: When to apply\n    Given a new service is planned\n    Then design the architecture before coding"
-        id: "system-design"
+      position: "architect"
+      content: "Feature: System Design\n  Scenario: When to apply\n    Given a new service is planned\n    Then design the architecture before coding"
+      id: "system-design"
       """
 
   Scenario: abolish — abolish a position
@@ -128,8 +120,7 @@ Feature: Position Lifecycle
     And parameters are:
       """
       locator: "!position.abolish"
-      args:
-        position: "architect"
+      position: "architect"
       """
 
 Feature: Appointment
@@ -145,9 +136,8 @@ Feature: Appointment
     And parameters are:
       """
       locator: "!position.appoint"
-      args:
-        position: "architect"
-        individual: "sean"
+      position: "architect"
+      individual: "sean"
       """
 
   Scenario: dismiss — remove an individual from a position
@@ -157,9 +147,8 @@ Feature: Appointment
     And parameters are:
       """
       locator: "!position.dismiss"
-      args:
-        position: "architect"
-        individual: "sean"
+      position: "architect"
+      individual: "sean"
       """
 
 Feature: Common Workflows
@@ -168,19 +157,12 @@ Feature: Common Workflows
     Given you need an organization with positions and members
     Then follow this sequence:
       """
-      1. locator: "!org.found"
-         args: { id: "dp", content: "Feature: Deepractice" }
-      2. locator: "!org.charter"
-         args: { org: "dp", content: "Feature: Mission\n  ..." }
-      3. locator: "!position.establish"
-         args: { id: "architect", content: "Feature: Architect" }
-      4. locator: "!position.charge"
-         args: { position: "architect", content: "Feature: Design\n  ...", id: "design" }
-      5. locator: "!position.require"
-         args: { position: "architect", content: "Feature: Skill\n  ...", id: "skill" }
-      6. locator: "!org.hire"
-         args: { org: "dp", individual: "sean" }
-      7. locator: "!position.appoint"
-         args: { position: "architect", individual: "sean" }
+      1. locator: "!org.found", id: "dp", content: "Feature: Deepractice"
+      2. locator: "!org.charter", org: "dp", content: "Feature: Mission\n  ..."
+      3. locator: "!position.establish", id: "architect", content: "Feature: Architect"
+      4. locator: "!position.charge", position: "architect", content: "Feature: Design\n  ...", id: "design"
+      5. locator: "!position.require", position: "architect", content: "Feature: Skill\n  ...", id: "skill"
+      6. locator: "!org.hire", org: "dp", individual: "sean"
+      7. locator: "!position.appoint", position: "architect", individual: "sean"
       """
     And step 7 appoint will auto-train the required skill into sean

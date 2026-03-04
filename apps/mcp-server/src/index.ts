@@ -224,16 +224,20 @@ server.addTool({
 server.addTool({
   name: "use",
   description: detail("use"),
-  parameters: z.object({
-    locator: z
-      .string()
-      .describe(
-        "Locator string. !namespace.method for RoleX commands, or a ResourceX locator for resources"
-      ),
-    args: z.record(z.unknown()).optional().describe("Named arguments for the command or resource"),
-  }),
-  execute: async ({ locator, args }) => {
-    const result = await state.requireRole().use(locator, args);
+  parameters: z
+    .object({
+      locator: z
+        .string()
+        .describe(
+          "Locator string. !namespace.method for RoleX commands, or a ResourceX locator for resources"
+        ),
+    })
+    .catchall(z.unknown()),
+  execute: async (params) => {
+    const { locator, ...args } = params;
+    const result = await state
+      .requireRole()
+      .use(locator, Object.keys(args).length > 0 ? args : undefined);
     if (result == null) return `${locator} done.`;
     if (typeof result === "string") return result;
     return JSON.stringify(result, null, 2);
@@ -245,16 +249,21 @@ server.addTool({
 server.addTool({
   name: "direct",
   description: detail("direct"),
-  parameters: z.object({
-    locator: z
-      .string()
-      .describe(
-        "Locator string. !namespace.method for RoleX commands, or a ResourceX locator for resources"
-      ),
-    args: z.record(z.unknown()).optional().describe("Named arguments for the command or resource"),
-  }),
-  execute: async ({ locator, args }) => {
-    const result = await rolex.direct(locator, args);
+  parameters: z
+    .object({
+      locator: z
+        .string()
+        .describe(
+          "Locator string. !namespace.method for RoleX commands, or a ResourceX locator for resources"
+        ),
+    })
+    .catchall(z.unknown()),
+  execute: async (params) => {
+    const { locator, ...args } = params;
+    const result = await rolex.direct(
+      locator as string,
+      Object.keys(args).length > 0 ? args : undefined
+    );
     if (result == null) return `${locator} done.`;
     if (typeof result === "string") return result;
     // Render project results as readable text

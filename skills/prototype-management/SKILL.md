@@ -17,13 +17,11 @@ Feature: Prototype Registry
     And parameters are:
       """
       locator: "!prototype.settle"
-      args:
-        source: "./prototypes/rolex"
+      source: "./prototypes/rolex"
 
       # or by registry locator:
       locator: "!prototype.settle"
-      args:
-        source: "deepractice/rolex"
+      source: "deepractice/rolex"
       """
 
   Scenario: evict — remove a prototype from the registry
@@ -34,8 +32,7 @@ Feature: Prototype Registry
     And parameters are:
       """
       locator: "!prototype.evict"
-      args:
-        id: "rolex"
+      id: "rolex"
       """
 
   Scenario: Settle is idempotent

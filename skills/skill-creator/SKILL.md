@@ -86,10 +86,9 @@ Feature: Skill Creation Process
     And example:
       """
       locator: "!individual.train"
-      args:
-        individual: "sean"
-        id: "my-skill"
-        content: "Feature: My Skill\n  https://github.com/org/repo/tree/main/skills/my-skill\n\n  Scenario: When to use\n    Given I need to do X\n    Then load this skill"
+      individual: "sean"
+      id: "my-skill"
+      content: "Feature: My Skill\n  https://github.com/org/repo/tree/main/skills/my-skill\n\n  Scenario: When to use\n    Given I need to do X\n    Then load this skill"
       """
 
   Scenario: Step 5 — Test the skill
