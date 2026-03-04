@@ -103,6 +103,7 @@ jobs:
         if: steps.changesets.outputs.published == 'true'
         run: |
           git checkout -- .
+          git fetch --unshallow origin || true
           git fetch origin dev
           git checkout dev
           git merge main --no-edit
