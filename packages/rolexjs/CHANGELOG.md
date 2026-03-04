@@ -1,5 +1,15 @@
 # rolexjs
 
+## 1.3.0
+
+### Patch Changes
+
+- Updated dependencies [23552e0]
+  - @rolexjs/core@1.3.0
+  - @rolexjs/prototype@1.3.0
+  - @rolexjs/parser@1.3.0
+  - @rolexjs/system@1.3.0
+
 ## 1.2.1
 
 ### Patch Changes
