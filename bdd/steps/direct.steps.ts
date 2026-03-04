@@ -114,6 +114,19 @@ Then("the direct result should contain {string}", function (this: BddWorld, text
   );
 });
 
+Then(
+  "the result state should have link {string} to {string}",
+  function (this: BddWorld, relation: string, targetId: string) {
+    assert.ok(this.directRaw, `Expected a result but got error: ${this.error?.message ?? "none"}`);
+    const links = this.directRaw.state.links ?? [];
+    const found = links.some((l: any) => l.relation === relation && l.target.id === targetId);
+    assert.ok(
+      found,
+      `Expected link "${relation}" to "${targetId}" but got: ${JSON.stringify(links.map((l: any) => `${l.relation} → ${l.target.id}`))}`
+    );
+  }
+);
+
 Then("it should fail", function (this: BddWorld) {
   assert.ok(this.error, "Expected an error but operation succeeded");
 });

@@ -15,6 +15,16 @@ Feature: Project lifecycle
     And the result state name should be "project"
     And the result state id should be "rolex-v2"
 
+  Scenario: Launch creates a project owned by an organization
+    Given organization "deepractice" exists
+    When I direct "!project.launch" with:
+      | content | Feature: RoleX v2 |
+      | id      | rolex-v2-org      |
+      | org     | deepractice       |
+    Then the result process should be "launch"
+    And the result state id should be "rolex-v2-org"
+    And the result state should have link "ownership" to "deepractice"
+
   # ===== scope =====
 
   Scenario: Scope defines project boundary

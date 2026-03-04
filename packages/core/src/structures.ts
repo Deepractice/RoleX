@@ -27,6 +27,7 @@
  * │ │   └── duty            "Responsibilities of position"  │
  * │ ├── project             "A process container"           │
  * │ │   │  ∿ participation → individual                     │
+ * │ │   │  ∿ ownership → organization                       │
  * │ │   ├── scope           "Project boundary"              │
  * │ │   ├── milestone       "Key checkpoint"                │
  * │ │   ├── deliverable     "Project output"                │
@@ -105,6 +106,7 @@ export const requirement = structure("requirement", "Required skill for this pos
 
 export const project = structure("project", "A process container for organized work", society, [
   relation("participation", "Who participates in this project", individual),
+  relation("ownership", "Which organization owns this project", organization),
 ]);
 export const scope = structure(
   "scope",
