@@ -102,6 +102,7 @@ jobs:
       - name: Sync main back to dev
         if: steps.changesets.outputs.published == 'true'
         run: |
+          git checkout -- .
           git fetch origin dev
           git checkout dev
           git merge main --no-edit
