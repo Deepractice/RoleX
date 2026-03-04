@@ -1,5 +1,13 @@
 # @rolexjs/mcp-server
 
+## 1.3.0
+
+### Patch Changes
+
+- @rolexjs/local-platform@1.3.0
+- rolexjs@1.3.0
+- @rolexjs/genesis@1.3.0
+
 ## 1.2.1
 
 ### Patch Changes

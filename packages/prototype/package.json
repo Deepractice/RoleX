@@ -1,6 +1,6 @@
 {
   "name": "@rolexjs/prototype",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "RoleX schema-driven API definition layer",
   "keywords": [
     "rolex",

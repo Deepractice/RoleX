@@ -1,5 +1,20 @@
 # @rolexjs/core
 
+## 1.3.0
+
+### Minor Changes
+
+- 23552e0: feat: add bidirectional ownership relation between project and organization
+
+  - Add ownership relation on project structure pointing to organization
+  - project.launch accepts optional `org` parameter to link project to an organization
+  - census.list tree view displays projects under their owning organization
+  - Add BDD scenario and link assertion step for ownership verification
+
+### Patch Changes
+
+- @rolexjs/system@1.3.0
+
 ## 1.2.1
 
 ### Patch Changes
