@@ -14,9 +14,11 @@ import type { Platform, PrototypeData, RoleXRepository } from "@rolexjs/core";
 import * as C from "@rolexjs/core";
 import {
   applyPrototype,
+  type CommandResult,
   type Commands,
   createCommands,
   directives,
+  type Renderer,
   toArgs,
 } from "@rolexjs/prototype";
 import type { Initializer, Runtime, Structure } from "@rolexjs/system";
@@ -25,8 +27,7 @@ import type { ResourceX } from "resourcexjs";
 import { createResourceX, setProvider } from "resourcexjs";
 import { RoleContext } from "./context.js";
 import { findInState } from "./find.js";
-import type { Renderer } from "./renderers/renderer.js";
-import { RoleRenderer } from "./renderers/role.js";
+import { createRendererRouter } from "./renderers/index.js";
 import { Role, type RolexInternal } from "./role.js";
 
 /** Summary entry returned by census.list. */
@@ -54,7 +55,7 @@ export class Rolex {
     this.rt = this.repo.runtime;
     this.initializer = platform.initializer;
     this.prototypes = platform.prototypes ?? [];
-    this.renderer = renderer ?? new RoleRenderer();
+    this.renderer = renderer ?? createRendererRouter();
 
     // Create ResourceX from injected provider
     if (platform.resourcexProvider) {
@@ -104,13 +105,16 @@ export class Rolex {
       resourcex: this.resourcex,
       issuex: this.issuex,
       prototype: this.repo.prototype,
-      direct: (locator: string, args?: Record<string, unknown>) => this.direct(locator, args),
+      direct: (locator: string, args?: Record<string, unknown>) =>
+        this.direct(locator, args, { raw: true }),
     });
 
     // Apply prototypes — idempotent, only runs unapplied migrations
     await this.initializer?.bootstrap();
     for (const proto of this.prototypes) {
-      await applyPrototype(proto, this.repo.prototype, (op, args) => this.direct(op, args));
+      await applyPrototype(proto, this.repo.prototype, (op, args) =>
+        this.direct(op, args, { raw: true })
+      );
     }
   }
 
@@ -185,10 +189,18 @@ export class Rolex {
   /**
    * Direct the world to execute an instruction.
    *
-   * - `!namespace.method` — dispatch to ops
+   * - `!namespace.method` — dispatch to commands
    * - anything else — delegate to ResourceX `ingest`
+   *
+   * By default, CommandResult is rendered via the router.
+   * Pass `{ render: false }` to get raw data.
    */
-  async direct<T = unknown>(locator: string, args?: Record<string, unknown>): Promise<T> {
+  async direct<T = unknown>(
+    locator: string,
+    args?: Record<string, unknown>,
+    options?: { raw?: boolean }
+  ): Promise<T> {
+    const shouldRender = !options?.raw;
     if (locator.startsWith("!")) {
       const command = locator.slice(1);
       const fn = this.commands[command];
@@ -201,7 +213,11 @@ export class Rolex {
             hint
         );
       }
-      return (await fn(...toArgs(command, args ?? {}))) as T;
+      const result = await fn(...toArgs(command, args ?? {}));
+      if (shouldRender && isCommandResult(result)) {
+        return this.renderer.render(command, result) as T;
+      }
+      return result as T;
     }
     if (!this.resourcex) throw new Error("ResourceX is not available.");
     return this.resourcex.ingest<T>(locator, args);
@@ -211,4 +227,9 @@ export class Rolex {
 /** Create a Rolex instance from a Platform. */
 export async function createRoleX(platform: Platform, renderer?: Renderer): Promise<Rolex> {
   return Rolex.create(platform, renderer);
+}
+
+/** Check if a value is a CommandResult (has state + process). */
+function isCommandResult(value: unknown): value is CommandResult {
+  return typeof value === "object" && value !== null && "state" in value && "process" in value;
 }

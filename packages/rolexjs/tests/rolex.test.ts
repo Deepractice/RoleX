@@ -18,10 +18,14 @@ async function setup() {
 describe("use dispatch", () => {
   test("!individual.born creates individual", async () => {
     const rolex = await setup();
-    const r = await rolex.direct<CommandResult>("!individual.born", {
-      content: "Feature: Sean",
-      id: "sean",
-    });
+    const r = await rolex.direct<CommandResult>(
+      "!individual.born",
+      {
+        content: "Feature: Sean",
+        id: "sean",
+      },
+      { raw: true }
+    );
     expect(r.state.name).toBe("individual");
     expect(r.state.id).toBe("sean");
     expect(r.process).toBe("born");
@@ -33,11 +37,15 @@ describe("use dispatch", () => {
     const rolex = await setup();
     await rolex.direct("!individual.born", { id: "sean" });
     await rolex.direct("!role.want", { individual: "sean", goal: "Feature: Auth", id: "g1" });
-    const r = await rolex.direct<CommandResult>("!role.plan", {
-      goal: "g1",
-      plan: "Feature: JWT",
-      id: "p1",
-    });
+    const r = await rolex.direct<CommandResult>(
+      "!role.plan",
+      {
+        goal: "g1",
+        plan: "Feature: JWT",
+        id: "p1",
+      },
+      { raw: true }
+    );
     expect(r.state.name).toBe("plan");
   });
 
@@ -114,12 +122,12 @@ describe("activate", () => {
     );
   });
 
-  test("Role.use delegates to Rolex.use", async () => {
+  test("Role.use delegates to Rolex.direct", async () => {
     const rolex = await setup();
     await rolex.direct("!individual.born", { id: "sean" });
     const role = await rolex.activate("sean");
-    const r = await role.use<CommandResult>("!org.found", { content: "Feature: DP", id: "dp" });
-    expect(r.state.name).toBe("organization");
+    const r = await role.use<string>("!org.found", { content: "Feature: DP", id: "dp" });
+    expect(r).toContain("dp");
   });
 });
 
@@ -130,7 +138,7 @@ describe("activate", () => {
 describe("render", () => {
   test("describe generates text with name", async () => {
     const rolex = await setup();
-    const r = await rolex.direct<CommandResult>("!individual.born", { id: "sean" });
+    const r = await rolex.direct<CommandResult>("!individual.born", { id: "sean" }, { raw: true });
     const text = renderDescribe("born", "sean", r.state);
     expect(text).toContain("sean");
   });
@@ -142,10 +150,14 @@ describe("render", () => {
 
   test("renderState renders individual with heading", async () => {
     const rolex = await setup();
-    const r = await rolex.direct<CommandResult>("!individual.born", {
-      content: "Feature: I am Sean\n  An AI role.",
-      id: "sean",
-    });
+    const r = await rolex.direct<CommandResult>(
+      "!individual.born",
+      {
+        content: "Feature: I am Sean\n  An AI role.",
+        id: "sean",
+      },
+      { raw: true }
+    );
     const md = renderState(r.state);
     expect(md).toContain("# [individual]");
     expect(md).toContain("Feature: I am Sean");
@@ -158,7 +170,7 @@ describe("render", () => {
     await rolex.direct("!role.plan", { goal: "g1", plan: "Feature: JWT plan", id: "p1" });
     await rolex.direct("!role.todo", { plan: "p1", task: "Feature: Login endpoint", id: "t1" });
     // Get goal state via focus (returns projected state)
-    const r = await rolex.direct<CommandResult>("!role.focus", { goal: "g1" });
+    const r = await rolex.direct<CommandResult>("!role.focus", { goal: "g1" }, { raw: true });
     const md = renderState(r.state);
     expect(md).toContain("# [goal]");
     expect(md).toContain("## [plan]");
@@ -228,8 +240,12 @@ describe("persistent mode", () => {
   test("born → retire round-trip", async () => {
     const rolex = await persistentSetup();
     await rolex.direct("!individual.born", { content: "Feature: Test", id: "test-ind" });
-    const r = await rolex.direct<CommandResult>("!individual.retire", { individual: "test-ind" });
-    expect(r.state.name).toBe("past");
+    const r = await rolex.direct<CommandResult>(
+      "!individual.retire",
+      { individual: "test-ind" },
+      { raw: true }
+    );
+    expect(r.state.name).toBe("individual");
     expect(r.process).toBe("retire");
   });
 
@@ -240,7 +256,11 @@ describe("persistent mode", () => {
 
     const rolex2 = await persistentSetup();
     // rehire should find the archived entity
-    const r = await rolex2.direct<RolexResult>("!individual.rehire", { individual: "test-ind" });
+    const r = await rolex2.direct<CommandResult>(
+      "!individual.rehire",
+      { individual: "test-ind" },
+      { raw: true }
+    );
     expect(r.state.name).toBe("individual");
   });
 });

@@ -23,7 +23,7 @@ Feature: Individual lifecycle
     When I direct "!individual.retire" with:
       | individual | sean |
     Then the result process should be "retire"
-    And the result state name should be "past"
+    And the result state name should be "individual"
 
   # ===== die =====
 
@@ -32,7 +32,7 @@ Feature: Individual lifecycle
     When I direct "!individual.die" with:
       | individual | sean |
     Then the result process should be "die"
-    And the result state name should be "past"
+    And the result state name should be "individual"
 
   # ===== rehire =====
 

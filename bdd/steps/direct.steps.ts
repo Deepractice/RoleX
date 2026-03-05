@@ -66,7 +66,7 @@ When("I direct {string} with:", async function (this: BddWorld, command: string,
   try {
     this.error = undefined;
     const args = table.rowsHash();
-    const raw = await this.rolex!.direct(command, args);
+    const raw = await this.rolex!.direct(command, args, { raw: true });
     // Store both raw result and serialized form
     this.directRaw = raw as any;
     this.directResult = typeof raw === "string" ? raw : JSON.stringify(raw, null, 2);

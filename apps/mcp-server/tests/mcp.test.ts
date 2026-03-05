@@ -43,10 +43,14 @@ describe("requireRole", () => {
 
 describe("render", () => {
   it("includes status + hint + projection", async () => {
-    const result = await rolex.direct<CommandResult>("!individual.born", {
-      content: "Feature: Sean",
-      id: "sean",
-    });
+    const result = await rolex.direct<CommandResult>(
+      "!individual.born",
+      {
+        content: "Feature: Sean",
+        id: "sean",
+      },
+      { raw: true }
+    );
     const output = render({
       process: "born",
       name: "Sean",
@@ -62,10 +66,14 @@ describe("render", () => {
   });
 
   it("includes cognitive hint when provided", async () => {
-    const result = await rolex.direct<CommandResult>("!individual.born", {
-      content: "Feature: Sean",
-      id: "sean",
-    });
+    const result = await rolex.direct<CommandResult>(
+      "!individual.born",
+      {
+        content: "Feature: Sean",
+        id: "sean",
+      },
+      { raw: true }
+    );
     const output = render({
       process: "born",
       name: "Sean",

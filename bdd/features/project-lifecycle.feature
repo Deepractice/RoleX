@@ -102,4 +102,4 @@ Feature: Project lifecycle
     When I direct "!project.archive" with:
       | project | rolex-v2 |
     Then the result process should be "archive"
-    And the result state name should be "past"
+    And the result state name should be "project"

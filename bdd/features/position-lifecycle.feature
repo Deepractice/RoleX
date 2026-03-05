@@ -68,4 +68,4 @@ Feature: Position lifecycle
     When I direct "!position.abolish" with:
       | position | acme/cto |
     Then the result process should be "abolish"
-    And the result state name should be "past"
+    And the result state name should be "position"

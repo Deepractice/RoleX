@@ -22,6 +22,9 @@ export { directives } from "./directives/index.js";
 export { toArgs } from "./dispatch.js";
 // Instruction registry
 export { instructions } from "./instructions.js";
+// Renderer framework
+export type { Renderer } from "./renderer.js";
+export { RendererRouter } from "./renderer.js";
 // Schema types
 export type { ArgEntry, InstructionDef, ParamDef, ParamType, ToolDef } from "./schema.js";
 // Tool definitions

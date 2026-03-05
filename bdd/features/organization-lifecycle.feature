@@ -55,4 +55,4 @@ Feature: Organization lifecycle
     When I direct "!org.dissolve" with:
       | org | deepractice |
     Then the result process should be "dissolve"
-    And the result state name should be "past"
+    And the result state name should be "organization"

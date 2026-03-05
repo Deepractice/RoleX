@@ -12,10 +12,9 @@
  *   await role.finish("write-tests", "Feature: Tests written");
  */
 
-import type { CommandResult, Commands } from "@rolexjs/prototype";
+import type { CommandResult, Commands, Renderer } from "@rolexjs/prototype";
 import type { RoleContext } from "./context.js";
 import { type IssueAction, type LabelResolver, renderIssueResult } from "./issue-render.js";
-import type { Renderer } from "./renderers/renderer.js";
 
 /**
  * Internal API surface that Role delegates to.
@@ -220,11 +219,6 @@ export class Role {
     if (locator.startsWith("!issue.")) {
       const action = locator.slice("!issue.".length) as IssueAction;
       return (await renderIssueResult(action, result, this.api.resolveLabels)) as T;
-    }
-    // Render project results via renderer
-    if (locator.startsWith("!project.")) {
-      const command = locator.slice(1); // "project.launch" etc.
-      return this.api.renderer.render(command, result as CommandResult) as T;
     }
     return result;
   }
