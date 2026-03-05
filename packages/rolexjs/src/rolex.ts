@@ -25,6 +25,8 @@ import type { ResourceX } from "resourcexjs";
 import { createResourceX, setProvider } from "resourcexjs";
 import { RoleContext } from "./context.js";
 import { findInState } from "./find.js";
+import type { Renderer } from "./renderers/renderer.js";
+import { RoleRenderer } from "./renderers/role.js";
 import { Role, type RolexInternal } from "./role.js";
 
 /** Summary entry returned by census.list. */
@@ -41,16 +43,18 @@ export class Rolex {
   private issuex?: IssueX;
   private repo: RoleXRepository;
   private readonly initializer?: Initializer;
+  private readonly renderer: Renderer;
 
   private readonly prototypes: readonly PrototypeData[];
   private society!: Structure;
   private past!: Structure;
 
-  private constructor(platform: Platform) {
+  private constructor(platform: Platform, renderer?: Renderer) {
     this.repo = platform.repository;
     this.rt = this.repo.runtime;
     this.initializer = platform.initializer;
     this.prototypes = platform.prototypes ?? [];
+    this.renderer = renderer ?? new RoleRenderer();
 
     // Create ResourceX from injected provider
     if (platform.resourcexProvider) {
@@ -69,8 +73,8 @@ export class Rolex {
   }
 
   /** Create a Rolex instance from a Platform (async due to Runtime initialization). */
-  static async create(platform: Platform): Promise<Rolex> {
-    const rolex = new Rolex(platform);
+  static async create(platform: Platform, renderer?: Renderer): Promise<Rolex> {
+    const rolex = new Rolex(platform, renderer);
     await rolex.init();
     return rolex;
   }
@@ -154,6 +158,7 @@ export class Rolex {
 
     const api: RolexInternal = {
       commands,
+      renderer: this.renderer,
       saveCtx,
       direct: this.direct.bind(this),
       resolveLabels: this.issuex
@@ -204,6 +209,6 @@ export class Rolex {
 }
 
 /** Create a Rolex instance from a Platform. */
-export async function createRoleX(platform: Platform): Promise<Rolex> {
-  return Rolex.create(platform);
+export async function createRoleX(platform: Platform, renderer?: Renderer): Promise<Rolex> {
+  return Rolex.create(platform, renderer);
 }

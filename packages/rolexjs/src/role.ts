@@ -15,8 +15,7 @@
 import type { CommandResult, Commands } from "@rolexjs/prototype";
 import type { RoleContext } from "./context.js";
 import { type IssueAction, type LabelResolver, renderIssueResult } from "./issue-render.js";
-import { type ProjectAction, renderProjectResult } from "./project-render.js";
-import { render } from "./render.js";
+import type { Renderer } from "./renderers/renderer.js";
 
 /**
  * Internal API surface that Role delegates to.
@@ -24,6 +23,7 @@ import { render } from "./render.js";
  */
 export interface RolexInternal {
   commands: Commands;
+  renderer: Renderer;
   saveCtx(ctx: RoleContext): void | Promise<void>;
   direct<T>(locator: string, args?: Record<string, unknown>): Promise<T>;
   resolveLabels?: LabelResolver;
@@ -43,27 +43,12 @@ export class Role {
   /** Project the individual's full state tree (used after activate). */
   async project(): Promise<string> {
     const result = await this.api.commands["role.focus"](this.roleId);
-    const focusedGoalId = this.ctx.focusedGoalId;
-    return this.fmt("activate", this.roleId, result, {
-      fold: (node) =>
-        (node.name === "goal" && node.id !== focusedGoalId) || node.name === "requirement",
-    });
+    return this.fmt("role.activate", result);
   }
 
-  /** Render a CommandResult into a 3-layer output string. */
-  private fmt(
-    process: string,
-    name: string,
-    result: CommandResult,
-    extra?: { fold?: (node: import("@rolexjs/system").State) => boolean }
-  ): string {
-    return render({
-      process,
-      name,
-      state: result.state,
-      cognitiveHint: this.ctx.cognitiveHint(process) ?? null,
-      fold: extra?.fold,
-    });
+  /** Render a CommandResult via the injected Renderer. */
+  private fmt(command: string, result: CommandResult): string {
+    return this.api.renderer.render(command, result);
   }
 
   private async save(): Promise<void> {
@@ -85,7 +70,7 @@ export class Role {
     this.ctx.focusedGoalId = goalId;
     if (switched) this.ctx.focusedPlanId = null;
     await this.save();
-    return this.fmt("focus", goalId, result);
+    return this.fmt("role.focus", result);
   }
 
   /** Want: declare a goal. */
@@ -94,7 +79,7 @@ export class Role {
     if (id) this.ctx.focusedGoalId = id;
     this.ctx.focusedPlanId = null;
     await this.save();
-    return this.fmt("want", id ?? this.roleId, result);
+    return this.fmt("role.want", result);
   }
 
   /** Plan: create a plan for the focused goal. */
@@ -108,13 +93,13 @@ export class Role {
     );
     if (id) this.ctx.focusedPlanId = id;
     await this.save();
-    return this.fmt("plan", id ?? "plan", result);
+    return this.fmt("role.plan", result);
   }
 
   /** Todo: add a task to the focused plan. */
   async todo(task?: string, id?: string, alias?: readonly string[]): Promise<string> {
     const result = await this.api.commands["role.todo"](this.ctx.requirePlanId(), task, id, alias);
-    return this.fmt("todo", id ?? "task", result);
+    return this.fmt("role.todo", result);
   }
 
   /** Finish: complete a task, optionally record an encounter. */
@@ -123,7 +108,7 @@ export class Role {
     if (encounter && result.state.id) {
       this.ctx.addEncounter(result.state.id);
     }
-    return this.fmt("finish", task, result);
+    return this.fmt("role.finish", result);
   }
 
   /** Complete: close a plan as done, record encounter. */
@@ -133,7 +118,7 @@ export class Role {
     this.ctx.addEncounter(result.state.id ?? planId);
     if (this.ctx.focusedPlanId === planId) this.ctx.focusedPlanId = null;
     await this.save();
-    return this.fmt("complete", planId, result);
+    return this.fmt("role.complete", result);
   }
 
   /** Abandon: drop a plan, record encounter. */
@@ -143,7 +128,7 @@ export class Role {
     this.ctx.addEncounter(result.state.id ?? planId);
     if (this.ctx.focusedPlanId === planId) this.ctx.focusedPlanId = null;
     await this.save();
-    return this.fmt("abandon", planId, result);
+    return this.fmt("role.abandon", result);
   }
 
   // ---- Cognition ----
@@ -164,7 +149,7 @@ export class Role {
       this.ctx.consumeEncounters(encounters);
     }
     if (id) this.ctx.addExperience(id);
-    return this.fmt("reflect", id ?? "experience", result);
+    return this.fmt("role.reflect", result);
   }
 
   /** Realize: consume experiences → principle. Empty experiences = direct creation. */
@@ -182,7 +167,7 @@ export class Role {
     if (experiences.length > 0) {
       this.ctx.consumeExperiences(experiences);
     }
-    return this.fmt("realize", id ?? "principle", result);
+    return this.fmt("role.realize", result);
   }
 
   /** Master: create procedure, optionally consuming experiences. */
@@ -200,7 +185,7 @@ export class Role {
       }
       this.ctx.consumeExperiences(experiences);
     }
-    return this.fmt("master", id ?? "procedure", result);
+    return this.fmt("role.master", result);
   }
 
   // ---- Knowledge management ----
@@ -211,7 +196,7 @@ export class Role {
     if (this.ctx.focusedGoalId === nodeId) this.ctx.focusedGoalId = null;
     if (this.ctx.focusedPlanId === nodeId) this.ctx.focusedPlanId = null;
     await this.save();
-    return this.fmt("forget", nodeId, result);
+    return this.fmt("role.forget", result);
   }
 
   // ---- Skills + unified entry ----
@@ -224,16 +209,15 @@ export class Role {
   /** Use: subjective execution — `!ns.method` or ResourceX locator. */
   async use<T = unknown>(locator: string, args?: Record<string, unknown>): Promise<T> {
     const result = await this.api.direct<T>(locator, args);
-    // Render issue results as readable text
+    // Render issue results as readable text (non-CommandResult, stays in upper layer)
     if (locator.startsWith("!issue.")) {
       const action = locator.slice("!issue.".length) as IssueAction;
       return (await renderIssueResult(action, result, this.api.resolveLabels)) as T;
     }
-    // Render project results as readable text
+    // Render project results via renderer
     if (locator.startsWith("!project.")) {
-      const action = locator.slice("!project.".length) as ProjectAction;
-      const opResult = result as { state: import("@rolexjs/system").State };
-      return renderProjectResult(action, opResult.state) as T;
+      const command = locator.slice(1); // "project.launch" etc.
+      return this.api.renderer.render(command, result as CommandResult) as T;
     }
     return result;
   }

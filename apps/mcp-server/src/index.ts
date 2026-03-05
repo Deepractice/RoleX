@@ -3,15 +3,27 @@
  *
  * Pure pass-through: all rendering happens in rolexjs.
  * MCP only translates protocol calls to API calls.
+ *
+ * Tool schemas are defined once in @rolexjs/prototype (tools)
+ * and converted to Zod here for FastMCP registration.
  */
 
 import { genesis } from "@rolexjs/genesis";
 import { localPlatform } from "@rolexjs/local-platform";
 import { FastMCP } from "fastmcp";
-import { createRoleX, detail, type ProjectAction, renderProjectResult, type State } from "rolexjs";
+import {
+  createRoleX,
+  detail,
+  type ParamDef,
+  type ProjectAction,
+  renderProjectResult,
+  type State,
+  type ToolDef,
+  tools,
+  worldInstructions,
+} from "rolexjs";
 
 import { z } from "zod";
-import { instructions } from "./instructions.js";
 import { McpState } from "./state.js";
 
 // ========== Setup ==========
@@ -23,25 +35,49 @@ const rolex = await createRoleX(
 );
 const state = new McpState();
 
-// ========== Server ==========
+// ========== Zod conversion ==========
 
-const server = new FastMCP({
-  name: "rolex",
-  version: "0.12.0",
-  instructions,
-});
+function paramToZod(param: ParamDef, required: boolean): z.ZodTypeAny {
+  let zodType: z.ZodTypeAny;
+  switch (param.type) {
+    case "string":
+    case "gherkin":
+      zodType = z.string();
+      break;
+    case "string[]":
+      zodType = z.array(z.string());
+      break;
+    case "number":
+      zodType = z.number();
+      break;
+    case "record":
+      zodType = z.record(z.unknown());
+      break;
+    default:
+      zodType = z.unknown();
+  }
+  zodType = zodType.describe(param.description);
+  if (!required) zodType = zodType.optional();
+  return zodType;
+}
 
-// ========== Tools: Role ==========
+function toZodSchema(def: ToolDef): z.ZodTypeAny {
+  const shape: Record<string, z.ZodTypeAny> = {};
+  for (const [key, param] of Object.entries(def.params)) {
+    shape[key] = paramToZod(param, param.required);
+  }
+  const schema = z.object(shape);
+  return def.additionalProperties ? schema.catchall(z.unknown()) : schema;
+}
 
-server.addTool({
-  name: "activate",
-  description: detail("activate"),
-  parameters: z.object({
-    roleId: z.string().describe("Role name to activate"),
-  }),
-  execute: async ({ roleId }) => {
+// ========== Tool execution ==========
+
+type ToolExecutor = (params: Record<string, unknown>) => Promise<string>;
+
+const executors: Record<string, ToolExecutor> = {
+  async activate({ roleId }) {
     try {
-      const role = await rolex.activate(roleId);
+      const role = await rolex.activate(roleId as string);
       state.role = role;
       return await role.project();
     } catch {
@@ -51,187 +87,73 @@ server.addTool({
       );
     }
   },
-});
 
-server.addTool({
-  name: "focus",
-  description: detail("focus"),
-  parameters: z.object({
-    id: z.string().optional().describe("Goal id to switch to. Omit to view current."),
-  }),
-  execute: async ({ id }) => {
-    return await state.requireRole().focus(id);
+  async focus({ id }) {
+    return await state.requireRole().focus(id as string | undefined);
   },
-});
 
-// ========== Tools: Execution ==========
-
-server.addTool({
-  name: "want",
-  description: detail("want"),
-  parameters: z.object({
-    id: z.string().describe("Goal id (used for focus/reference)"),
-    goal: z.string().describe("Gherkin Feature source describing the goal"),
-  }),
-  execute: async ({ id, goal }) => {
-    return await state.requireRole().want(goal, id);
+  async want({ id, goal }) {
+    return await state.requireRole().want(goal as string, id as string);
   },
-});
 
-server.addTool({
-  name: "plan",
-  description: detail("plan"),
-  parameters: z.object({
-    id: z.string().describe("Plan id — keywords from the plan content joined by hyphens"),
-    plan: z.string().describe("Gherkin Feature source describing the plan"),
-    after: z
-      .string()
-      .optional()
-      .describe("Plan id this plan follows (sequential/phase relationship)"),
-    fallback: z
-      .string()
-      .optional()
-      .describe("Plan id this plan is a backup for (alternative/strategy relationship)"),
-  }),
-  execute: async ({ id, plan, after, fallback }) => {
-    return await state.requireRole().plan(plan, id, after, fallback);
+  async plan({ id, plan, after, fallback }) {
+    return await state
+      .requireRole()
+      .plan(
+        plan as string,
+        id as string,
+        after as string | undefined,
+        fallback as string | undefined
+      );
   },
-});
 
-server.addTool({
-  name: "todo",
-  description: detail("todo"),
-  parameters: z.object({
-    id: z.string().describe("Task id (used for finish/reference)"),
-    task: z.string().describe("Gherkin Feature source describing the task"),
-  }),
-  execute: async ({ id, task }) => {
-    return await state.requireRole().todo(task, id);
+  async todo({ id, task }) {
+    return await state.requireRole().todo(task as string, id as string);
   },
-});
 
-server.addTool({
-  name: "finish",
-  description: detail("finish"),
-  parameters: z.object({
-    id: z.string().describe("Task id to finish"),
-    encounter: z.string().optional().describe("Optional Gherkin Feature describing what happened"),
-  }),
-  execute: async ({ id, encounter }) => {
-    return await state.requireRole().finish(id, encounter);
+  async finish({ id, encounter }) {
+    return await state.requireRole().finish(id as string, encounter as string | undefined);
   },
-});
 
-server.addTool({
-  name: "complete",
-  description: detail("complete"),
-  parameters: z.object({
-    id: z.string().optional().describe("Plan id to complete (defaults to focused plan)"),
-    encounter: z.string().optional().describe("Optional Gherkin Feature describing what happened"),
-  }),
-  execute: async ({ id, encounter }) => {
-    return await state.requireRole().complete(id, encounter);
+  async complete({ id, encounter }) {
+    return await state
+      .requireRole()
+      .complete(id as string | undefined, encounter as string | undefined);
   },
-});
 
-server.addTool({
-  name: "abandon",
-  description: detail("abandon"),
-  parameters: z.object({
-    id: z.string().optional().describe("Plan id to abandon (defaults to focused plan)"),
-    encounter: z.string().optional().describe("Optional Gherkin Feature describing what happened"),
-  }),
-  execute: async ({ id, encounter }) => {
-    return await state.requireRole().abandon(id, encounter);
+  async abandon({ id, encounter }) {
+    return await state
+      .requireRole()
+      .abandon(id as string | undefined, encounter as string | undefined);
   },
-});
 
-// ========== Tools: Cognition ==========
-
-server.addTool({
-  name: "reflect",
-  description: detail("reflect"),
-  parameters: z.object({
-    ids: z.array(z.string()).describe("Encounter ids to reflect on (selective consumption)"),
-    id: z
-      .string()
-      .describe("Experience id — keywords from the experience content joined by hyphens"),
-    experience: z.string().optional().describe("Gherkin Feature source for the experience"),
-  }),
-  execute: async ({ ids, id, experience }) => {
-    return await state.requireRole().reflect(ids, experience, id);
+  async reflect({ ids, id, experience }) {
+    return await state
+      .requireRole()
+      .reflect(ids as string[], experience as string | undefined, id as string);
   },
-});
 
-server.addTool({
-  name: "realize",
-  description: detail("realize"),
-  parameters: z.object({
-    ids: z.array(z.string()).describe("Experience ids to distill into a principle"),
-    id: z.string().describe("Principle id — keywords from the principle content joined by hyphens"),
-    principle: z.string().optional().describe("Gherkin Feature source for the principle"),
-  }),
-  execute: async ({ ids, id, principle }) => {
-    return await state.requireRole().realize(ids, principle, id);
+  async realize({ ids, id, principle }) {
+    return await state
+      .requireRole()
+      .realize(ids as string[], principle as string | undefined, id as string);
   },
-});
 
-server.addTool({
-  name: "master",
-  description: detail("master"),
-  parameters: z.object({
-    ids: z.array(z.string()).optional().describe("Experience ids to distill into a procedure"),
-    id: z.string().describe("Procedure id — keywords from the procedure content joined by hyphens"),
-    procedure: z.string().describe("Gherkin Feature source for the procedure"),
-  }),
-  execute: async ({ ids, id, procedure }) => {
-    return await state.requireRole().master(procedure, id, ids);
+  async master({ ids, id, procedure }) {
+    return await state
+      .requireRole()
+      .master(procedure as string, id as string, ids as string[] | undefined);
   },
-});
 
-// ========== Tools: Knowledge management ==========
-
-server.addTool({
-  name: "forget",
-  description: detail("forget"),
-  parameters: z.object({
-    id: z
-      .string()
-      .describe("Id of the node to remove (principle, procedure, experience, encounter, etc.)"),
-  }),
-  execute: async ({ id }) => {
-    return await state.requireRole().forget(id);
+  async forget({ id }) {
+    return await state.requireRole().forget(id as string);
   },
-});
 
-// ========== Tools: Skill loading ==========
-
-server.addTool({
-  name: "skill",
-  description: detail("skill"),
-  parameters: z.object({
-    locator: z
-      .string()
-      .describe("ResourceX locator for the skill (e.g. deepractice/role-management)"),
-  }),
-  execute: async ({ locator }) => {
-    return await state.requireRole().skill(locator);
+  async skill({ locator }) {
+    return await state.requireRole().skill(locator as string);
   },
-});
 
-// ========== Tools: Use ==========
-
-server.addTool({
-  name: "use",
-  description: detail("use"),
-  parameters: z
-    .object({
-      command: z
-        .string()
-        .describe("!namespace.method for RoleX commands, or a ResourceX locator for resources"),
-    })
-    .catchall(z.unknown()),
-  execute: async (params) => {
+  async use(params) {
     const { command, ...args } = params;
     const result = await state
       .requireRole()
@@ -240,21 +162,8 @@ server.addTool({
     if (typeof result === "string") return result;
     return JSON.stringify(result, null, 2);
   },
-});
 
-// ========== Tools: Direct ==========
-
-server.addTool({
-  name: "direct",
-  description: detail("direct"),
-  parameters: z
-    .object({
-      command: z
-        .string()
-        .describe("!namespace.method for RoleX commands, or a ResourceX locator for resources"),
-    })
-    .catchall(z.unknown()),
-  execute: async (params) => {
+  async direct(params) {
     const { command, ...args } = params;
     const result = await rolex.direct(
       command as string,
@@ -262,7 +171,6 @@ server.addTool({
     );
     if (result == null) return `${command} done.`;
     if (typeof result === "string") return result;
-    // Render project results as readable text
     if ((command as string).startsWith("!project.")) {
       const action = (command as string).slice("!project.".length) as ProjectAction;
       const opResult = result as { state: State };
@@ -270,7 +178,32 @@ server.addTool({
     }
     return JSON.stringify(result, null, 2);
   },
+};
+
+// ========== Server ==========
+
+const server = new FastMCP({
+  name: "rolex",
+  version: "0.12.0",
+  instructions: worldInstructions,
 });
+
+// Register all tools from unified schema
+for (const toolDef of tools) {
+  const executor = executors[toolDef.name];
+  if (!executor) {
+    throw new Error(`No executor for tool "${toolDef.name}"`);
+  }
+
+  server.addTool({
+    name: toolDef.name,
+    description: detail(toolDef.name),
+    parameters: toZodSchema(toolDef),
+    execute: async (params) => {
+      return await executor(params as Record<string, unknown>);
+    },
+  });
+}
 
 // ========== Start ==========
 

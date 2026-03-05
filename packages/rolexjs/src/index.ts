@@ -15,8 +15,8 @@ export * from "@rolexjs/core";
 // Re-export genesis
 export { genesis } from "@rolexjs/genesis";
 // MCP tool schema (from prototype)
-export type { McpToolDef, ParamDef } from "@rolexjs/prototype";
-export { mcpTools } from "@rolexjs/prototype";
+export type { ParamDef, ToolDef } from "@rolexjs/prototype";
+export { tools, worldInstructions } from "@rolexjs/prototype";
 // Context
 export { RoleContext } from "./context.js";
 // Feature (Gherkin type + parse/serialize)

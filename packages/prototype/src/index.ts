@@ -23,4 +23,6 @@ export { toArgs } from "./dispatch.js";
 // Instruction registry
 export { instructions } from "./instructions.js";
 // Schema types
-export type { ArgEntry, InstructionDef, ParamDef, ParamType } from "./schema.js";
+export type { ArgEntry, InstructionDef, ParamDef, ParamType, ToolDef } from "./schema.js";
+// Tool definitions
+export { tools, worldInstructions } from "./tools.js";

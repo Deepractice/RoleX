@@ -33,3 +33,13 @@ export interface InstructionDef {
   /** Positional argument order — maps named args to method call positions. */
   args: readonly ArgEntry[];
 }
+
+/** RoleX tool definition — schema for a top-level tool (activate, want, use, etc.). */
+export interface ToolDef {
+  /** Tool name (e.g. "activate", "use"). */
+  name: string;
+  /** Parameter definitions — keyed by param name. */
+  params: Record<string, ParamDef>;
+  /** Whether the tool accepts additional unnamed parameters (e.g. use/direct). */
+  additionalProperties?: boolean;
+}
