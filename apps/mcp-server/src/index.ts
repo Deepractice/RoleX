@@ -67,7 +67,7 @@ function toZodSchema(def: ToolDef): z.ZodTypeAny {
     shape[key] = paramToZod(param, param.required);
   }
   const schema = z.object(shape);
-  return def.additionalProperties ? schema.catchall(z.unknown()) : schema;
+  return schema;
 }
 
 // ========== Tool execution ==========
@@ -153,21 +153,21 @@ const executors: Record<string, ToolExecutor> = {
     return await state.requireRole().skill(locator as string);
   },
 
-  async use(params) {
-    const { command, ...args } = params;
+  async use({ command, args }) {
+    const a = args as Record<string, unknown> | undefined;
     const result = await state
       .requireRole()
-      .use(command as string, Object.keys(args).length > 0 ? args : undefined);
+      .use(command as string, a && Object.keys(a).length > 0 ? a : undefined);
     if (result == null) return `${command} done.`;
     if (typeof result === "string") return result;
     return JSON.stringify(result, null, 2);
   },
 
-  async direct(params) {
-    const { command, ...args } = params;
+  async direct({ command, args }) {
+    const a = args as Record<string, unknown> | undefined;
     const result = await rolex.direct(
       command as string,
-      Object.keys(args).length > 0 ? args : undefined
+      a && Object.keys(a).length > 0 ? a : undefined
     );
     if (result == null) return `${command} done.`;
     if (typeof result === "string") return result;

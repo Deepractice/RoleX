@@ -214,8 +214,13 @@ export const tools: ToolDef[] = [
         required: true,
         description: "!namespace.method for RoleX commands, or a ResourceX locator for resources",
       },
+      args: {
+        type: "record",
+        required: false,
+        description:
+          "Named arguments for the command. Load the relevant skill first to learn what args to pass.",
+      },
     },
-    additionalProperties: true,
   },
   {
     name: "direct",
@@ -225,7 +230,12 @@ export const tools: ToolDef[] = [
         required: true,
         description: "!namespace.method for RoleX commands, or a ResourceX locator for resources",
       },
+      args: {
+        type: "record",
+        required: false,
+        description:
+          "Named arguments for the command. Load the relevant skill first to learn what args to pass.",
+      },
     },
-    additionalProperties: true,
   },
 ];

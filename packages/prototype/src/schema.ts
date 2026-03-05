@@ -40,6 +40,4 @@ export interface ToolDef {
   name: string;
   /** Parameter definitions — keyed by param name. */
   params: Record<string, ParamDef>;
-  /** Whether the tool accepts additional unnamed parameters (e.g. use/direct). */
-  additionalProperties?: boolean;
 }
