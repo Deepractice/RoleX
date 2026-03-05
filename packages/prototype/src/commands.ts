@@ -1,12 +1,12 @@
 /**
- * Ops — platform-agnostic operation implementations.
+ * Commands — platform-agnostic command implementations.
  *
- * Every RoleX operation is a pure function of (Runtime, args) → OpResult.
+ * Every RoleX command is a pure function of (Runtime, args) → CommandResult.
  * No platform-specific code — all I/O goes through injected interfaces.
  *
  * Usage:
- *   const ops = createOps({ rt, society, past, resolve, find, resourcex });
- *   const result = ops["individual.born"]("Feature: Sean", "sean");
+ *   const commands = createCommands({ rt, society, past, resolve, find, resourcex });
+ *   const result = commands["individual.born"]("Feature: Sean", "sean");
  */
 
 import type { PrototypeRepository } from "@rolexjs/core";
@@ -20,12 +20,12 @@ import type { ResourceX } from "resourcexjs";
 //  Types
 // ================================================================
 
-export interface OpResult {
+export interface CommandResult {
   state: State;
   process: string;
 }
 
-export interface OpsContext {
+export interface CommandContext {
   rt: Runtime;
   society: Structure;
   past: Structure;
@@ -37,23 +37,22 @@ export interface OpsContext {
   direct?(locator: string, args?: Record<string, unknown>): Promise<unknown>;
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: ops are dynamically dispatched
-export type Ops = Record<string, (...args: any[]) => any>;
+export type Commands = Record<string, (...args: any[]) => any>;
 
 // ================================================================
 //  Factory
 // ================================================================
 
-export function createOps(ctx: OpsContext): Ops {
+export function createCommands(ctx: CommandContext): Commands {
   const { rt, society, past, resolve, resourcex, issuex } = ctx;
 
   // ---- Helpers ----
 
-  async function ok(node: Structure, process: string): Promise<OpResult> {
+  async function ok(node: Structure, process: string): Promise<CommandResult> {
     return { state: await rt.project(node), process };
   }
 
-  async function archive(node: Structure, process: string): Promise<OpResult> {
+  async function archive(node: Structure, process: string): Promise<CommandResult> {
     const archived = await rt.transform(node, C.past);
     return ok(archived, process);
   }
@@ -109,22 +108,22 @@ export function createOps(ctx: OpsContext): Ops {
       content?: string,
       id?: string,
       alias?: readonly string[]
-    ): Promise<OpResult> {
+    ): Promise<CommandResult> {
       validateGherkin(content);
       const node = await rt.create(society, C.individual, content, id, alias);
       await rt.create(node, C.identity, undefined, id ? `${id}-identity` : undefined);
       return ok(node, "born");
     },
 
-    async "individual.retire"(individual: string): Promise<OpResult> {
+    async "individual.retire"(individual: string): Promise<CommandResult> {
       return archive(await resolve(individual), "retire");
     },
 
-    async "individual.die"(individual: string): Promise<OpResult> {
+    async "individual.die"(individual: string): Promise<CommandResult> {
       return archive(await resolve(individual), "die");
     },
 
-    async "individual.rehire"(pastNode: string): Promise<OpResult> {
+    async "individual.rehire"(pastNode: string): Promise<CommandResult> {
       const node = await resolve(pastNode);
       const ind = await rt.transform(node, C.individual);
       return ok(ind, "rehire");
@@ -136,7 +135,7 @@ export function createOps(ctx: OpsContext): Ops {
       individual: string,
       principle: string,
       id?: string
-    ): Promise<OpResult> {
+    ): Promise<CommandResult> {
       validateGherkin(principle);
       const parent = await resolve(individual);
       if (id) await removeExisting(parent, id);
@@ -148,7 +147,7 @@ export function createOps(ctx: OpsContext): Ops {
       individual: string,
       procedure: string,
       id?: string
-    ): Promise<OpResult> {
+    ): Promise<CommandResult> {
       validateGherkin(procedure);
       const parent = await resolve(individual);
       if (id) await removeExisting(parent, id);
@@ -158,7 +157,7 @@ export function createOps(ctx: OpsContext): Ops {
 
     // ---- Role: focus ----
 
-    async "role.focus"(goal: string): Promise<OpResult> {
+    async "role.focus"(goal: string): Promise<CommandResult> {
       return ok(await resolve(goal), "focus");
     },
 
@@ -169,7 +168,7 @@ export function createOps(ctx: OpsContext): Ops {
       goal?: string,
       id?: string,
       alias?: readonly string[]
-    ): Promise<OpResult> {
+    ): Promise<CommandResult> {
       validateGherkin(goal);
       const node = await rt.create(await resolve(individual), C.goal, goal, id, alias);
       return ok(node, "want");
@@ -181,7 +180,7 @@ export function createOps(ctx: OpsContext): Ops {
       id?: string,
       after?: string,
       fallback?: string
-    ): Promise<OpResult> {
+    ): Promise<CommandResult> {
       validateGherkin(plan);
       const node = await rt.create(await resolve(goal), C.plan, plan, id);
       if (after) await rt.link(node, await resolve(after), "after", "before");
@@ -194,13 +193,17 @@ export function createOps(ctx: OpsContext): Ops {
       task?: string,
       id?: string,
       alias?: readonly string[]
-    ): Promise<OpResult> {
+    ): Promise<CommandResult> {
       validateGherkin(task);
       const node = await rt.create(await resolve(plan), C.task, task, id, alias);
       return ok(node, "todo");
     },
 
-    async "role.finish"(task: string, individual: string, encounter?: string): Promise<OpResult> {
+    async "role.finish"(
+      task: string,
+      individual: string,
+      encounter?: string
+    ): Promise<CommandResult> {
       validateGherkin(encounter);
       const taskNode = await resolve(task);
       await rt.tag(taskNode, "done");
@@ -212,7 +215,11 @@ export function createOps(ctx: OpsContext): Ops {
       return ok(taskNode, "finish");
     },
 
-    async "role.complete"(plan: string, individual: string, encounter?: string): Promise<OpResult> {
+    async "role.complete"(
+      plan: string,
+      individual: string,
+      encounter?: string
+    ): Promise<CommandResult> {
       validateGherkin(encounter);
       const planNode = await resolve(plan);
       await rt.tag(planNode, "done");
@@ -221,7 +228,11 @@ export function createOps(ctx: OpsContext): Ops {
       return ok(enc, "complete");
     },
 
-    async "role.abandon"(plan: string, individual: string, encounter?: string): Promise<OpResult> {
+    async "role.abandon"(
+      plan: string,
+      individual: string,
+      encounter?: string
+    ): Promise<CommandResult> {
       validateGherkin(encounter);
       const planNode = await resolve(plan);
       await rt.tag(planNode, "abandoned");
@@ -237,7 +248,7 @@ export function createOps(ctx: OpsContext): Ops {
       individual: string,
       experience?: string,
       id?: string
-    ): Promise<OpResult> {
+    ): Promise<CommandResult> {
       validateGherkin(experience);
       if (encounter) {
         const encNode = await resolve(encounter);
@@ -260,7 +271,7 @@ export function createOps(ctx: OpsContext): Ops {
       individual: string,
       principle?: string,
       id?: string
-    ): Promise<OpResult> {
+    ): Promise<CommandResult> {
       validateGherkin(principle);
       if (experience) {
         const expNode = await resolve(experience);
@@ -283,7 +294,7 @@ export function createOps(ctx: OpsContext): Ops {
       procedure: string,
       id?: string,
       experience?: string
-    ): Promise<OpResult> {
+    ): Promise<CommandResult> {
       validateGherkin(procedure);
       const parent = await resolve(individual);
       if (id) await removeExisting(parent, id);
@@ -294,7 +305,7 @@ export function createOps(ctx: OpsContext): Ops {
 
     // ---- Role: knowledge management ----
 
-    async "role.forget"(nodeId: string): Promise<OpResult> {
+    async "role.forget"(nodeId: string): Promise<CommandResult> {
       const node = await resolve(nodeId);
       await rt.remove(node);
       return { state: { ...node, children: [] }, process: "forget" };
@@ -321,84 +332,96 @@ export function createOps(ctx: OpsContext): Ops {
       id?: string,
       alias?: readonly string[],
       org?: string
-    ): Promise<OpResult> {
+    ): Promise<CommandResult> {
       validateGherkin(content);
       const node = await rt.create(society, C.project, content, id, alias);
       if (org) await rt.link(node, await resolve(org), "ownership", "project");
       return ok(node, "launch");
     },
 
-    async "project.scope"(project: string, scope: string, id?: string): Promise<OpResult> {
+    async "project.scope"(project: string, scope: string, id?: string): Promise<CommandResult> {
       validateGherkin(scope);
       const node = await rt.create(await resolve(project), C.scope, scope, id);
       return ok(node, "scope");
     },
 
-    async "project.milestone"(project: string, milestone: string, id?: string): Promise<OpResult> {
+    async "project.milestone"(
+      project: string,
+      milestone: string,
+      id?: string
+    ): Promise<CommandResult> {
       validateGherkin(milestone);
       const node = await rt.create(await resolve(project), C.milestone, milestone, id);
       return ok(node, "milestone");
     },
 
-    async "project.achieve"(milestone: string): Promise<OpResult> {
+    async "project.achieve"(milestone: string): Promise<CommandResult> {
       const node = await resolve(milestone);
       await rt.tag(node, "done");
       return ok(node, "achieve");
     },
 
-    async "project.enroll"(project: string, individual: string): Promise<OpResult> {
+    async "project.enroll"(project: string, individual: string): Promise<CommandResult> {
       const projNode = await resolve(project);
       await rt.link(projNode, await resolve(individual), "participation", "participate");
       return ok(projNode, "enroll");
     },
 
-    async "project.remove"(project: string, individual: string): Promise<OpResult> {
+    async "project.remove"(project: string, individual: string): Promise<CommandResult> {
       const projNode = await resolve(project);
       await rt.unlink(projNode, await resolve(individual), "participation", "participate");
       return ok(projNode, "remove");
     },
 
-    async "project.deliver"(project: string, deliverable: string, id?: string): Promise<OpResult> {
+    async "project.deliver"(
+      project: string,
+      deliverable: string,
+      id?: string
+    ): Promise<CommandResult> {
       validateGherkin(deliverable);
       const node = await rt.create(await resolve(project), C.deliverable, deliverable, id);
       return ok(node, "deliver");
     },
 
-    async "project.wiki"(project: string, wiki: string, id?: string): Promise<OpResult> {
+    async "project.wiki"(project: string, wiki: string, id?: string): Promise<CommandResult> {
       validateGherkin(wiki);
       const node = await rt.create(await resolve(project), C.wiki, wiki, id);
       return ok(node, "wiki");
     },
 
-    async "project.archive"(project: string): Promise<OpResult> {
+    async "project.archive"(project: string): Promise<CommandResult> {
       return archive(await resolve(project), "archive");
     },
 
     // ---- Org ----
 
-    async "org.found"(content?: string, id?: string, alias?: readonly string[]): Promise<OpResult> {
+    async "org.found"(
+      content?: string,
+      id?: string,
+      alias?: readonly string[]
+    ): Promise<CommandResult> {
       validateGherkin(content);
       const node = await rt.create(society, C.organization, content, id, alias);
       return ok(node, "found");
     },
 
-    async "org.charter"(org: string, charter: string, id?: string): Promise<OpResult> {
+    async "org.charter"(org: string, charter: string, id?: string): Promise<CommandResult> {
       validateGherkin(charter);
       const node = await rt.create(await resolve(org), C.charter, charter, id);
       return ok(node, "charter");
     },
 
-    async "org.dissolve"(org: string): Promise<OpResult> {
+    async "org.dissolve"(org: string): Promise<CommandResult> {
       return archive(await resolve(org), "dissolve");
     },
 
-    async "org.hire"(org: string, individual: string): Promise<OpResult> {
+    async "org.hire"(org: string, individual: string): Promise<CommandResult> {
       const orgNode = await resolve(org);
       await rt.link(orgNode, await resolve(individual), "membership", "belong");
       return ok(orgNode, "hire");
     },
 
-    async "org.fire"(org: string, individual: string): Promise<OpResult> {
+    async "org.fire"(org: string, individual: string): Promise<CommandResult> {
       const orgNode = await resolve(org);
       await rt.unlink(orgNode, await resolve(individual), "membership", "belong");
       return ok(orgNode, "fire");
@@ -410,19 +433,23 @@ export function createOps(ctx: OpsContext): Ops {
       content?: string,
       id?: string,
       alias?: readonly string[]
-    ): Promise<OpResult> {
+    ): Promise<CommandResult> {
       validateGherkin(content);
       const node = await rt.create(society, C.position, content, id, alias);
       return ok(node, "establish");
     },
 
-    async "position.charge"(position: string, duty: string, id?: string): Promise<OpResult> {
+    async "position.charge"(position: string, duty: string, id?: string): Promise<CommandResult> {
       validateGherkin(duty);
       const node = await rt.create(await resolve(position), C.duty, duty, id);
       return ok(node, "charge");
     },
 
-    async "position.require"(position: string, procedure: string, id?: string): Promise<OpResult> {
+    async "position.require"(
+      position: string,
+      procedure: string,
+      id?: string
+    ): Promise<CommandResult> {
       validateGherkin(procedure);
       const parent = await resolve(position);
       if (id) await removeExisting(parent, id);
@@ -430,11 +457,11 @@ export function createOps(ctx: OpsContext): Ops {
       return ok(node, "require");
     },
 
-    async "position.abolish"(position: string): Promise<OpResult> {
+    async "position.abolish"(position: string): Promise<CommandResult> {
       return archive(await resolve(position), "abolish");
     },
 
-    async "position.appoint"(position: string, individual: string): Promise<OpResult> {
+    async "position.appoint"(position: string, individual: string): Promise<CommandResult> {
       const posNode = await resolve(position);
       const indNode = await resolve(individual);
       await rt.link(posNode, indNode, "appointment", "serve");
@@ -450,7 +477,7 @@ export function createOps(ctx: OpsContext): Ops {
       return ok(posNode, "appoint");
     },
 
-    async "position.dismiss"(position: string, individual: string): Promise<OpResult> {
+    async "position.dismiss"(position: string, individual: string): Promise<CommandResult> {
       const posNode = await resolve(position);
       await rt.unlink(posNode, await resolve(individual), "appointment", "serve");
       return ok(posNode, "dismiss");

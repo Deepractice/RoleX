@@ -5,14 +5,20 @@
  *   activate(id) — returns a stateful Role handle
  *   direct(loc, args) — direct the world to execute an instruction
  *
- * All operation implementations live in @rolexjs/prototype (createOps).
- * Rolex just wires Platform → ops and manages Role lifecycle.
+ * All command implementations live in @rolexjs/prototype (createCommands).
+ * Rolex just wires Platform → commands and manages Role lifecycle.
  * Prototypes are automatically applied during initialization.
  */
 
 import type { Platform, PrototypeData, RoleXRepository } from "@rolexjs/core";
 import * as C from "@rolexjs/core";
-import { applyPrototype, createOps, directives, type Ops, toArgs } from "@rolexjs/prototype";
+import {
+  applyPrototype,
+  type Commands,
+  createCommands,
+  directives,
+  toArgs,
+} from "@rolexjs/prototype";
 import type { Initializer, Runtime, Structure } from "@rolexjs/system";
 import { createIssueX, type IssueX } from "issuexjs";
 import type { ResourceX } from "resourcexjs";
@@ -30,7 +36,7 @@ export interface CensusEntry {
 
 export class Rolex {
   private rt: Runtime;
-  private ops!: Ops;
+  private commands!: Commands;
   private resourcex?: ResourceX;
   private issuex?: IssueX;
   private repo: RoleXRepository;
@@ -80,8 +86,8 @@ export class Rolex {
     const existingPast = societyState.children?.find((c) => c.name === "past");
     this.past = existingPast ?? (await this.rt.create(this.society, C.past));
 
-    // Create ops from prototype — all operation implementations
-    this.ops = createOps({
+    // Create commands from prototype — all command implementations
+    this.commands = createCommands({
       rt: this.rt,
       society: this.society,
       past: this.past,
@@ -115,7 +121,7 @@ export class Rolex {
     if (!node) {
       const hasProto = Object.hasOwn(await this.repo.prototype.list(), individual);
       if (hasProto) {
-        await this.ops["individual.born"](undefined, individual);
+        await this.commands["individual.born"](undefined, individual);
         node = (await this.find(individual))!;
       } else {
         throw new Error(`"${individual}" not found.`);
@@ -136,8 +142,8 @@ export class Rolex {
       }
     }
 
-    // Build internal API for Role — ops + ctx persistence
-    const ops = this.ops;
+    // Build internal API for Role — commands + ctx persistence
+    const commands = this.commands;
     const repo = this.repo;
     const saveCtx = async (c: RoleContext) => {
       await repo.saveContext(c.roleId, {
@@ -147,7 +153,7 @@ export class Rolex {
     };
 
     const api: RolexInternal = {
-      ops,
+      commands,
       saveCtx,
       direct: this.direct.bind(this),
       resolveLabels: this.issuex
@@ -180,7 +186,7 @@ export class Rolex {
   async direct<T = unknown>(locator: string, args?: Record<string, unknown>): Promise<T> {
     if (locator.startsWith("!")) {
       const command = locator.slice(1);
-      const fn = this.ops[command];
+      const fn = this.commands[command];
       if (!fn) {
         const hint = directives["identity-ethics"]?.["on-unknown-command"] ?? "";
         throw new Error(

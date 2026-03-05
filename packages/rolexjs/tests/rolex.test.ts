@@ -3,7 +3,7 @@ import { existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { localPlatform } from "@rolexjs/local-platform";
-import type { OpResult } from "@rolexjs/prototype";
+import type { CommandResult } from "@rolexjs/prototype";
 import { createRoleX } from "../src/index.js";
 import { describe as renderDescribe, hint as renderHint, renderState } from "../src/render.js";
 
@@ -18,7 +18,7 @@ async function setup() {
 describe("use dispatch", () => {
   test("!individual.born creates individual", async () => {
     const rolex = await setup();
-    const r = await rolex.direct<OpResult>("!individual.born", {
+    const r = await rolex.direct<CommandResult>("!individual.born", {
       content: "Feature: Sean",
       id: "sean",
     });
@@ -33,7 +33,7 @@ describe("use dispatch", () => {
     const rolex = await setup();
     await rolex.direct("!individual.born", { id: "sean" });
     await rolex.direct("!role.want", { individual: "sean", goal: "Feature: Auth", id: "g1" });
-    const r = await rolex.direct<OpResult>("!role.plan", {
+    const r = await rolex.direct<CommandResult>("!role.plan", {
       goal: "g1",
       plan: "Feature: JWT",
       id: "p1",
@@ -118,7 +118,7 @@ describe("activate", () => {
     const rolex = await setup();
     await rolex.direct("!individual.born", { id: "sean" });
     const role = await rolex.activate("sean");
-    const r = await role.use<OpResult>("!org.found", { content: "Feature: DP", id: "dp" });
+    const r = await role.use<CommandResult>("!org.found", { content: "Feature: DP", id: "dp" });
     expect(r.state.name).toBe("organization");
   });
 });
@@ -130,7 +130,7 @@ describe("activate", () => {
 describe("render", () => {
   test("describe generates text with name", async () => {
     const rolex = await setup();
-    const r = await rolex.direct<OpResult>("!individual.born", { id: "sean" });
+    const r = await rolex.direct<CommandResult>("!individual.born", { id: "sean" });
     const text = renderDescribe("born", "sean", r.state);
     expect(text).toContain("sean");
   });
@@ -142,7 +142,7 @@ describe("render", () => {
 
   test("renderState renders individual with heading", async () => {
     const rolex = await setup();
-    const r = await rolex.direct<OpResult>("!individual.born", {
+    const r = await rolex.direct<CommandResult>("!individual.born", {
       content: "Feature: I am Sean\n  An AI role.",
       id: "sean",
     });
@@ -158,7 +158,7 @@ describe("render", () => {
     await rolex.direct("!role.plan", { goal: "g1", plan: "Feature: JWT plan", id: "p1" });
     await rolex.direct("!role.todo", { plan: "p1", task: "Feature: Login endpoint", id: "t1" });
     // Get goal state via focus (returns projected state)
-    const r = await rolex.direct<OpResult>("!role.focus", { goal: "g1" });
+    const r = await rolex.direct<CommandResult>("!role.focus", { goal: "g1" });
     const md = renderState(r.state);
     expect(md).toContain("# [goal]");
     expect(md).toContain("## [plan]");
@@ -228,7 +228,7 @@ describe("persistent mode", () => {
   test("born → retire round-trip", async () => {
     const rolex = await persistentSetup();
     await rolex.direct("!individual.born", { content: "Feature: Test", id: "test-ind" });
-    const r = await rolex.direct<OpResult>("!individual.retire", { individual: "test-ind" });
+    const r = await rolex.direct<CommandResult>("!individual.retire", { individual: "test-ind" });
     expect(r.state.name).toBe("past");
     expect(r.process).toBe("retire");
   });

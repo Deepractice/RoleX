@@ -7,7 +7,7 @@
  */
 import { beforeEach, describe, expect, it } from "bun:test";
 import { localPlatform } from "@rolexjs/local-platform";
-import type { OpResult } from "@rolexjs/prototype";
+import type { CommandResult } from "@rolexjs/prototype";
 import { createRoleX, type Rolex, render } from "rolexjs";
 import { McpState } from "../src/state.js";
 
@@ -43,7 +43,7 @@ describe("requireRole", () => {
 
 describe("render", () => {
   it("includes status + hint + projection", async () => {
-    const result = await rolex.direct<OpResult>("!individual.born", {
+    const result = await rolex.direct<CommandResult>("!individual.born", {
       content: "Feature: Sean",
       id: "sean",
     });
@@ -62,7 +62,7 @@ describe("render", () => {
   });
 
   it("includes cognitive hint when provided", async () => {
-    const result = await rolex.direct<OpResult>("!individual.born", {
+    const result = await rolex.direct<CommandResult>("!individual.born", {
       content: "Feature: Sean",
       id: "sean",
     });
