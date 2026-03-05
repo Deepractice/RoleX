@@ -12,6 +12,8 @@
 
 // Re-export core (structures + processes)
 export * from "@rolexjs/core";
+// Re-export genesis
+export { genesis } from "@rolexjs/genesis";
 // Context
 export { RoleContext } from "./context.js";
 // Feature (Gherkin type + parse/serialize)
