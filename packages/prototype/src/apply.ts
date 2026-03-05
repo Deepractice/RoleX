@@ -32,7 +32,7 @@ export async function applyPrototype(
   let skipped = 0;
 
   for (const migration of sorted) {
-    if (repo.hasMigration(data.id, migration.id)) {
+    if (await repo.hasMigration(data.id, migration.id)) {
       skipped++;
       continue;
     }
@@ -40,11 +40,11 @@ export async function applyPrototype(
     for (const instr of migration.instructions) {
       await direct(instr.op, instr.args);
     }
-    repo.recordMigration(data.id, migration.id, migration.version, migration.checksum);
+    await repo.recordMigration(data.id, migration.id, migration.version, migration.checksum);
     applied++;
   }
 
-  repo.settle(data.id, data.source);
+  await repo.settle(data.id, data.source);
 
   return {
     prototypeId: data.id,

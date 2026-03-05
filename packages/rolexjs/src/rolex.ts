@@ -116,7 +116,7 @@ export class Rolex {
   async activate(individual: string): Promise<Role> {
     let node = await this.find(individual);
     if (!node) {
-      const hasProto = Object.hasOwn(this.repo.prototype.list(), individual);
+      const hasProto = Object.hasOwn(await this.repo.prototype.list(), individual);
       if (hasProto) {
         await this.ops["individual.born"](undefined, individual);
         node = (await this.find(individual))!;

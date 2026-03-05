@@ -12,29 +12,29 @@ afterEach(() => {
 });
 
 describe("LocalPlatform Prototype registry", () => {
-  test("settle registers id → source", () => {
+  test("settle registers id → source", async () => {
     const { repository } = localPlatform({ dataDir: testDir, resourceDir });
-    repository.prototype.settle("test-role", "/path/to/source");
-    expect(repository.prototype.list()["test-role"]).toBe("/path/to/source");
+    await repository.prototype.settle("test-role", "/path/to/source");
+    expect((await repository.prototype.list())["test-role"]).toBe("/path/to/source");
   });
 
-  test("settle overwrites previous source", () => {
+  test("settle overwrites previous source", async () => {
     const { repository } = localPlatform({ dataDir: testDir, resourceDir });
-    repository.prototype.settle("test", "/v1");
-    repository.prototype.settle("test", "/v2");
-    expect(repository.prototype.list().test).toBe("/v2");
+    await repository.prototype.settle("test", "/v1");
+    await repository.prototype.settle("test", "/v2");
+    expect((await repository.prototype.list()).test).toBe("/v2");
   });
 
-  test("list returns empty object when no prototypes registered", () => {
+  test("list returns empty object when no prototypes registered", async () => {
     const { repository } = localPlatform({ dataDir: testDir, resourceDir });
-    expect(repository.prototype.list()).toEqual({});
+    expect(await repository.prototype.list()).toEqual({});
   });
 
-  test("registry persists across platform instances", () => {
+  test("registry persists across platform instances", async () => {
     const p1 = localPlatform({ dataDir: testDir, resourceDir });
-    p1.repository.prototype.settle("test-role", "/path");
+    await p1.repository.prototype.settle("test-role", "/path");
 
     const p2 = localPlatform({ dataDir: testDir, resourceDir });
-    expect(p2.repository.prototype.list()["test-role"]).toBe("/path");
+    expect((await p2.repository.prototype.list())["test-role"]).toBe("/path");
   });
 });

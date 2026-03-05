@@ -63,16 +63,16 @@ export class SqliteRepository implements RoleXRepository {
 
 function createPrototypeRepository(db: DB): PrototypeRepository {
   return {
-    settle(id: string, source: string) {
+    async settle(id: string, source: string) {
       db.run(sql`INSERT OR REPLACE INTO prototypes (id, source) VALUES (${id}, ${source})`);
     },
 
-    evict(id: string) {
+    async evict(id: string) {
       db.run(sql`DELETE FROM prototypes WHERE id = ${id}`);
       db.run(sql`DELETE FROM prototype_migrations WHERE prototype_id = ${id}`);
     },
 
-    list(): Record<string, string> {
+    async list(): Promise<Record<string, string>> {
       const rows = db.all<{ id: string; source: string }>(sql`SELECT id, source FROM prototypes`);
       const result: Record<string, string> = {};
       for (const row of rows) {
@@ -81,7 +81,12 @@ function createPrototypeRepository(db: DB): PrototypeRepository {
       return result;
     },
 
-    recordMigration(prototypeId: string, migrationId: string, version: number, checksum: string) {
+    async recordMigration(
+      prototypeId: string,
+      migrationId: string,
+      version: number,
+      checksum: string
+    ) {
       const executedAt = new Date().toISOString();
       db.run(
         sql`INSERT OR REPLACE INTO prototype_migrations (prototype_id, migration_id, version, checksum, executed_at)
@@ -89,7 +94,7 @@ function createPrototypeRepository(db: DB): PrototypeRepository {
       );
     },
 
-    getMigrationHistory(prototypeId: string): MigrationRecord[] {
+    async getMigrationHistory(prototypeId: string): Promise<MigrationRecord[]> {
       return db
         .all<{
           prototype_id: string;
@@ -112,7 +117,7 @@ function createPrototypeRepository(db: DB): PrototypeRepository {
         }));
     },
 
-    hasMigration(prototypeId: string, migrationId: string): boolean {
+    async hasMigration(prototypeId: string, migrationId: string): Promise<boolean> {
       const rows = db.all<{ cnt: number }>(
         sql`SELECT COUNT(*) as cnt FROM prototype_migrations
             WHERE prototype_id = ${prototypeId} AND migration_id = ${migrationId}`

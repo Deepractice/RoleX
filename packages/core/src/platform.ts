@@ -47,9 +47,9 @@ export interface MigrationRecord {
 
 /** Prototype registry — tracks which prototypes are settled and their migration history. */
 export interface PrototypeRepository {
-  settle(id: string, source: string): void;
-  evict(id: string): void;
-  list(): Record<string, string>;
+  settle(id: string, source: string): Promise<void>;
+  evict(id: string): Promise<void>;
+  list(): Promise<Record<string, string>>;
 
   /** Record a migration as executed. */
   recordMigration(
@@ -57,13 +57,13 @@ export interface PrototypeRepository {
     migrationId: string,
     version: number,
     checksum: string
-  ): void;
+  ): Promise<void>;
 
   /** Get all executed migrations for a prototype, ordered by execution time. */
-  getMigrationHistory(prototypeId: string): MigrationRecord[];
+  getMigrationHistory(prototypeId: string): Promise<MigrationRecord[]>;
 
   /** Check if a specific migration has been executed. */
-  hasMigration(prototypeId: string, migrationId: string): boolean;
+  hasMigration(prototypeId: string, migrationId: string): Promise<boolean>;
 }
 
 /**
