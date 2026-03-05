@@ -665,50 +665,60 @@ export function createCommands(ctx: CommandContext): Commands {
 
     // ---- Resource (proxy to ResourceX) ----
 
-    "resource.add"(path: string) {
+    "resource.add"(path: string): Promise<Resource> {
       return requireResourceX().add(path);
     },
 
-    "resource.search"(query?: string) {
+    "resource.search"(query?: string): Promise<string[]> {
       return requireResourceX().search(query);
     },
 
-    "resource.has"(locator: string) {
+    "resource.has"(locator: string): Promise<boolean> {
       return requireResourceX().has(locator);
     },
 
-    "resource.info"(locator: string) {
+    "resource.info"(locator: string): Promise<Resource> {
       return requireResourceX().info(locator);
     },
 
-    "resource.remove"(locator: string) {
+    "resource.remove"(locator: string): Promise<void> {
       return requireResourceX().remove(locator);
     },
 
-    "resource.push"(locator: string, options?: { registry?: string }) {
+    "resource.push"(locator: string, options?: { registry?: string }): Promise<RXM> {
       return requireResourceX().push(locator, options);
     },
 
-    "resource.pull"(locator: string, options?: { registry?: string }) {
+    "resource.pull"(locator: string, options?: { registry?: string }): Promise<void> {
       return requireResourceX().pull(locator, options);
     },
 
-    "resource.clearCache"(registry?: string) {
+    "resource.clearCache"(registry?: string): Promise<void> {
       return requireResourceX().clearCache(registry);
     },
 
     // ---- Issue (proxy to IssueX) ----
 
-    async "issue.publish"(title: string, body: string, author: string, assignee?: string) {
+    async "issue.publish"(
+      title: string,
+      body: string,
+      author: string,
+      assignee?: string
+    ): Promise<Issue> {
       const ix = requireIssueX();
       return ix.createIssue({ title, body, author, assignee });
     },
 
-    async "issue.get"(number: number) {
+    async "issue.get"(number: number): Promise<Issue | null> {
       return requireIssueX().getIssueByNumber(number);
     },
 
-    async "issue.list"(status?: string, author?: string, assignee?: string, label?: string) {
+    async "issue.list"(
+      status?: string,
+      author?: string,
+      assignee?: string,
+      label?: string
+    ): Promise<Issue[]> {
       const filter: Record<string, string> = {};
       if (status) filter.status = status;
       if (author) filter.author = author;
@@ -719,7 +729,12 @@ export function createCommands(ctx: CommandContext): Commands {
       );
     },
 
-    async "issue.update"(number: number, title?: string, body?: string, assignee?: string) {
+    async "issue.update"(
+      number: number,
+      title?: string,
+      body?: string,
+      assignee?: string
+    ): Promise<Issue> {
       const ix = requireIssueX();
       const issue = await ix.getIssueByNumber(number);
       if (!issue) throw new Error(`Issue #${number} not found.`);
@@ -730,42 +745,42 @@ export function createCommands(ctx: CommandContext): Commands {
       return ix.updateIssue(issue.id, patch);
     },
 
-    async "issue.close"(number: number) {
+    async "issue.close"(number: number): Promise<Issue> {
       const ix = requireIssueX();
       const issue = await ix.getIssueByNumber(number);
       if (!issue) throw new Error(`Issue #${number} not found.`);
       return ix.closeIssue(issue.id);
     },
 
-    async "issue.reopen"(number: number) {
+    async "issue.reopen"(number: number): Promise<Issue> {
       const ix = requireIssueX();
       const issue = await ix.getIssueByNumber(number);
       if (!issue) throw new Error(`Issue #${number} not found.`);
       return ix.reopenIssue(issue.id);
     },
 
-    async "issue.assign"(number: number, assignee: string) {
+    async "issue.assign"(number: number, assignee: string): Promise<Issue> {
       const ix = requireIssueX();
       const issue = await ix.getIssueByNumber(number);
       if (!issue) throw new Error(`Issue #${number} not found.`);
       return ix.updateIssue(issue.id, { assignee });
     },
 
-    async "issue.comment"(number: number, body: string, author: string) {
+    async "issue.comment"(number: number, body: string, author: string): Promise<Comment> {
       const ix = requireIssueX();
       const issue = await ix.getIssueByNumber(number);
       if (!issue) throw new Error(`Issue #${number} not found.`);
       return ix.createComment(issue.id, body, author);
     },
 
-    async "issue.comments"(number: number) {
+    async "issue.comments"(number: number): Promise<Comment[]> {
       const ix = requireIssueX();
       const issue = await ix.getIssueByNumber(number);
       if (!issue) throw new Error(`Issue #${number} not found.`);
       return ix.listComments(issue.id);
     },
 
-    async "issue.label"(number: number, label: string) {
+    async "issue.label"(number: number, label: string): Promise<Issue | null> {
       const ix = requireIssueX();
       const issue = await ix.getIssueByNumber(number);
       if (!issue) throw new Error(`Issue #${number} not found.`);
@@ -776,7 +791,7 @@ export function createCommands(ctx: CommandContext): Commands {
       return ix.getIssueByNumber(number);
     },
 
-    async "issue.unlabel"(number: number, label: string) {
+    async "issue.unlabel"(number: number, label: string): Promise<Issue | null> {
       const ix = requireIssueX();
       const issue = await ix.getIssueByNumber(number);
       if (!issue) throw new Error(`Issue #${number} not found.`);
