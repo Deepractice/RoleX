@@ -14,6 +14,9 @@
 export * from "@rolexjs/core";
 // Re-export genesis
 export { genesis } from "@rolexjs/genesis";
+// MCP tool schema (from prototype)
+export type { McpToolDef, ParamDef } from "@rolexjs/prototype";
+export { mcpTools } from "@rolexjs/prototype";
 // Context
 export { RoleContext } from "./context.js";
 // Feature (Gherkin type + parse/serialize)
@@ -36,9 +39,8 @@ export { renderProject, renderProjectResult } from "./project-render.js";
 export type { RenderOptions, RenderStateOptions } from "./render.js";
 // Render
 export { describe, detail, directive, hint, render, renderState, world } from "./render.js";
-// Renderer
-export type { Renderer, TextRendererOptions } from "./renderer.js";
-export { JsonRenderer, TextRenderer } from "./renderer.js";
+// Renderers
+export type { Renderer } from "./renderers/index.js";
 // Role
 export { Role } from "./role.js";
 // API
