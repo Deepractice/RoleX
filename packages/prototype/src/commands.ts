@@ -13,8 +13,8 @@ import type { PrototypeRepository } from "@rolexjs/core";
 import * as C from "@rolexjs/core";
 import { parse } from "@rolexjs/parser";
 import type { Runtime, State, Structure } from "@rolexjs/system";
-import type { IssueX } from "issuexjs";
-import type { ResourceX } from "resourcexjs";
+import type { Comment, Issue, IssueX } from "issuexjs";
+import type { Resource, ResourceX, RXM } from "resourcexjs";
 
 // ================================================================
 //  Types
@@ -35,6 +35,96 @@ export interface CommandContext {
   issuex?: IssueX;
   prototype?: PrototypeRepository;
   direct?(locator: string, args?: Record<string, unknown>): Promise<unknown>;
+}
+
+/**
+ * CommandResultMap — typed return type for every command.
+ *
+ * This is the source of truth for what each command returns.
+ * Renderer and consumers use this to know the shape of each result.
+ */
+export interface CommandResultMap {
+  // ---- Individual ----
+  "individual.born": CommandResult;
+  "individual.retire": CommandResult;
+  "individual.die": CommandResult;
+  "individual.rehire": CommandResult;
+  "individual.teach": CommandResult;
+  "individual.train": CommandResult;
+
+  // ---- Role: focus ----
+  "role.focus": CommandResult;
+
+  // ---- Role: execution ----
+  "role.want": CommandResult;
+  "role.plan": CommandResult;
+  "role.todo": CommandResult;
+  "role.finish": CommandResult;
+  "role.complete": CommandResult;
+  "role.abandon": CommandResult;
+
+  // ---- Role: cognition ----
+  "role.reflect": CommandResult;
+  "role.realize": CommandResult;
+  "role.master": CommandResult;
+
+  // ---- Role: knowledge ----
+  "role.forget": CommandResult;
+
+  // ---- Role: skill ----
+  "role.skill": string;
+
+  // ---- Project ----
+  "project.launch": CommandResult;
+  "project.scope": CommandResult;
+  "project.milestone": CommandResult;
+  "project.achieve": CommandResult;
+  "project.enroll": CommandResult;
+  "project.remove": CommandResult;
+  "project.deliver": CommandResult;
+  "project.wiki": CommandResult;
+  "project.archive": CommandResult;
+
+  // ---- Organization ----
+  "org.found": CommandResult;
+  "org.charter": CommandResult;
+  "org.dissolve": CommandResult;
+  "org.hire": CommandResult;
+  "org.fire": CommandResult;
+
+  // ---- Position ----
+  "position.establish": CommandResult;
+  "position.charge": CommandResult;
+  "position.require": CommandResult;
+  "position.abolish": CommandResult;
+  "position.appoint": CommandResult;
+  "position.dismiss": CommandResult;
+
+  // ---- Census ----
+  "census.list": string; // TODO: change to CensusResult when ops returns structured data
+
+  // ---- Issue ----
+  "issue.publish": Issue;
+  "issue.get": Issue | null;
+  "issue.list": Issue[];
+  "issue.update": Issue;
+  "issue.close": Issue;
+  "issue.reopen": Issue;
+  "issue.assign": Issue;
+  "issue.comment": Comment;
+  "issue.comments": Comment[];
+  "issue.label": Issue | null;
+  "issue.unlabel": Issue | null;
+
+  // ---- Resource ----
+  "resource.add": Resource;
+  "resource.search": string[];
+  "resource.has": boolean;
+  "resource.info": Resource;
+  "resource.remove": undefined;
+  "resource.push": RXM;
+  "resource.pull": undefined;
+  "resource.clearCache": undefined;
 }
 
 export type Commands = Record<string, (...args: any[]) => any>;

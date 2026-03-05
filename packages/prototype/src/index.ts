@@ -12,7 +12,7 @@
 export type { ApplyResult } from "./apply.js";
 export { applyPrototype } from "./apply.js";
 // Commands
-export type { CommandContext, CommandResult, Commands } from "./commands.js";
+export type { CommandContext, CommandResult, CommandResultMap, Commands } from "./commands.js";
 export { createCommands } from "./commands.js";
 // Descriptions (auto-generated from .feature files)
 export { processes, world } from "./descriptions/index.js";
