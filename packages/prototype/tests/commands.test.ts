@@ -585,28 +585,34 @@ describe("position", () => {
 // ================================================================
 
 describe("census", () => {
-  test("list shows individuals and orgs", async () => {
+  test("list returns CommandResult with individuals and orgs", async () => {
     const { commands } = await setup();
     await commands["individual.born"](undefined, "sean");
     await commands["org.found"](undefined, "dp");
     const result = await commands["census.list"]();
-    expect(result).toContain("sean");
-    expect(result).toContain("dp");
+    expect(result.process).toBe("list");
+    const ids = result.state.children?.map((c) => c.id) ?? [];
+    expect(ids).toContain("sean");
+    expect(ids).toContain("dp");
   });
 
-  test("list by type filters", async () => {
+  test("list by type filters children", async () => {
     const { commands } = await setup();
     await commands["individual.born"](undefined, "sean");
     await commands["org.found"](undefined, "dp");
     const result = await commands["census.list"]("individual");
-    expect(result).toContain("sean");
-    expect(result).not.toContain("dp");
+    const names = result.state.children?.map((c) => c.name) ?? [];
+    expect(names.every((n) => n === "individual")).toBe(true);
+    const ids = result.state.children?.map((c) => c.id) ?? [];
+    expect(ids).toContain("sean");
+    expect(ids).not.toContain("dp");
   });
 
-  test("list empty society", async () => {
+  test("list empty society returns empty children", async () => {
     const { commands } = await setup();
     const result = await commands["census.list"]();
-    expect(result).toBe("Society is empty.");
+    expect(result.process).toBe("list");
+    expect(result.state.children).toEqual([]);
   });
 
   test("list past entries", async () => {
@@ -614,7 +620,8 @@ describe("census", () => {
     await commands["individual.born"](undefined, "sean");
     await commands["individual.retire"]("sean");
     const result = await commands["census.list"]("past");
-    expect(result).toContain("sean");
+    const ids = result.state.children?.map((c) => c.id) ?? [];
+    expect(ids).toContain("sean");
   });
 });
 

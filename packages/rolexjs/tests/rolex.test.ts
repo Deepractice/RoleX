@@ -49,7 +49,7 @@ describe("use dispatch", () => {
     expect(r.state.name).toBe("plan");
   });
 
-  test("!census.list returns text", async () => {
+  test("!census.list renders Markdown via CensusRenderer", async () => {
     const rolex = await setup();
     await rolex.direct("!individual.born", { id: "sean" });
     await rolex.direct("!org.found", { id: "dp" });

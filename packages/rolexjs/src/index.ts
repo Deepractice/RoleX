@@ -44,5 +44,4 @@ export { createRendererRouter } from "./renderers/index.js";
 // Role
 export { Role } from "./role.js";
 // API
-export type { CensusEntry } from "./rolex.js";
 export { createRoleX, Rolex } from "./rolex.js";

@@ -30,13 +30,6 @@ import { findInState } from "./find.js";
 import { createRendererRouter } from "./renderers/index.js";
 import { Role, type RolexInternal } from "./role.js";
 
-/** Summary entry returned by census.list. */
-export interface CensusEntry {
-  id?: string;
-  name: string;
-  tag?: string;
-}
-
 export class Rolex {
   private rt: Runtime;
   private commands!: Commands;
