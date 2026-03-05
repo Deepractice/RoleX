@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { localPlatform } from "@rolexjs/local-platform";
-import { createRoleX, RoleContext } from "../src/index.js";
+import { createRoleX } from "../src/index.js";
 
 async function setup() {
   return await createRoleX(localPlatform({ dataDir: null }));
@@ -16,38 +16,38 @@ async function setupWithDir() {
   return { rolex, dataDir };
 }
 
-describe("Role (ctx management)", () => {
-  test("activate returns Role with ctx", async () => {
+describe("Role (state management)", () => {
+  test("activate returns Role with id", async () => {
     const rolex = await setup();
     await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
-    expect(role.ctx).toBeInstanceOf(RoleContext);
-    expect(role.ctx.roleId).toBe("sean");
+    expect(role.id).toBe("sean");
   });
 
-  test("want updates ctx.focusedGoalId", async () => {
+  test("want updates focusedGoalId", async () => {
     const rolex = await setup();
     await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
 
     const result = await role.want("Feature: Build auth", "build-auth");
-    expect(role.ctx.focusedGoalId).toBe("build-auth");
-    expect(role.ctx.focusedPlanId).toBeNull();
+    const snap = role.snapshot();
+    expect(snap.focusedGoalId).toBe("build-auth");
+    expect(snap.focusedPlanId).toBeNull();
     expect(result).toContain("I →");
   });
 
-  test("plan updates ctx.focusedPlanId", async () => {
+  test("plan updates focusedPlanId", async () => {
     const rolex = await setup();
     await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
 
     await role.want("Feature: Auth", "auth-goal");
     const result = await role.plan("Feature: JWT strategy", "jwt-plan");
-    expect(role.ctx.focusedPlanId).toBe("jwt-plan");
+    expect(role.snapshot().focusedPlanId).toBe("jwt-plan");
     expect(result).toContain("I →");
   });
 
-  test("finish with encounter registers in ctx", async () => {
+  test("finish with encounter registers in snapshot", async () => {
     const rolex = await setup();
     await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
@@ -60,11 +60,11 @@ describe("Role (ctx management)", () => {
       "login",
       "Feature: Login done\n  Scenario: OK\n    Given login\n    Then success"
     );
-    expect(role.ctx.encounterIds.has("login-finished")).toBe(true);
+    expect(role.snapshot().encounterIds).toContain("login-finished");
     expect(result).toContain("I →");
   });
 
-  test("finish without encounter does not register in ctx", async () => {
+  test("finish without encounter does not register", async () => {
     const rolex = await setup();
     await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
@@ -74,7 +74,7 @@ describe("Role (ctx management)", () => {
     await role.todo("Feature: Login", "login");
 
     await role.finish("login");
-    expect(role.ctx.encounterIds.size).toBe(0);
+    expect(role.snapshot().encounterIds.length).toBe(0);
   });
 
   test("complete registers encounter and clears focusedPlanId", async () => {
@@ -89,12 +89,13 @@ describe("Role (ctx management)", () => {
       "jwt",
       "Feature: JWT done\n  Scenario: OK\n    Given jwt\n    Then done"
     );
-    expect(role.ctx.focusedPlanId).toBeNull();
-    expect(role.ctx.encounterIds.has("jwt-completed")).toBe(true);
+    const snap = role.snapshot();
+    expect(snap.focusedPlanId).toBeNull();
+    expect(snap.encounterIds).toContain("jwt-completed");
     expect(result).toContain("auth");
   });
 
-  test("reflect consumes encounter and adds experience in ctx", async () => {
+  test("reflect consumes encounter and adds experience", async () => {
     const rolex = await setup();
     await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
@@ -104,7 +105,7 @@ describe("Role (ctx management)", () => {
     await role.todo("Feature: Login", "login");
     await role.finish("login", "Feature: Login done\n  Scenario: OK\n    Given x\n    Then y");
 
-    expect(role.ctx.encounterIds.has("login-finished")).toBe(true);
+    expect(role.snapshot().encounterIds).toContain("login-finished");
 
     await role.reflect(
       ["login-finished"],
@@ -112,8 +113,9 @@ describe("Role (ctx management)", () => {
       "token-insight"
     );
 
-    expect(role.ctx.encounterIds.has("login-finished")).toBe(false);
-    expect(role.ctx.experienceIds.has("token-insight")).toBe(true);
+    const snap = role.snapshot();
+    expect(snap.encounterIds).not.toContain("login-finished");
+    expect(snap.experienceIds).toContain("token-insight");
   });
 
   test("reflect without encounter creates experience directly", async () => {
@@ -128,8 +130,9 @@ describe("Role (ctx management)", () => {
     );
 
     expect(result).toContain("[experience]");
-    expect(role.ctx.experienceIds.has("conv-insight")).toBe(true);
-    expect(role.ctx.encounterIds.size).toBe(0);
+    const snap = role.snapshot();
+    expect(snap.experienceIds).toContain("conv-insight");
+    expect(snap.encounterIds.length).toBe(0);
   });
 
   test("realize without experience creates principle directly", async () => {
@@ -144,7 +147,7 @@ describe("Role (ctx management)", () => {
     );
 
     expect(result).toContain("[principle]");
-    expect(role.ctx.experienceIds.size).toBe(0);
+    expect(role.snapshot().experienceIds.length).toBe(0);
   });
 
   test("realize still consumes experience when provided", async () => {
@@ -152,33 +155,19 @@ describe("Role (ctx management)", () => {
     await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
 
-    // Create experience directly
     await role.reflect(
       [],
       "Feature: Insight\n  Scenario: OK\n    Given something learned",
       "my-insight"
     );
-    expect(role.ctx.experienceIds.has("my-insight")).toBe(true);
+    expect(role.snapshot().experienceIds).toContain("my-insight");
 
-    // Realize from that experience
     await role.realize(
       ["my-insight"],
       "Feature: Principle\n  Scenario: OK\n    Given a general truth",
       "my-principle"
     );
-    expect(role.ctx.experienceIds.has("my-insight")).toBe(false);
-  });
-
-  test("cognitiveHint varies by state", () => {
-    const ctx = new RoleContext("sean");
-    expect(ctx.cognitiveHint("activate")).toContain("no goal");
-
-    ctx.focusedGoalId = "auth";
-    expect(ctx.cognitiveHint("activate")).toContain("active goal");
-
-    expect(ctx.cognitiveHint("want")).toContain("plan");
-    expect(ctx.cognitiveHint("plan")).toContain("todo");
-    expect(ctx.cognitiveHint("todo")).toContain("finish");
+    expect(role.snapshot().experienceIds).not.toContain("my-insight");
   });
 });
 
@@ -201,17 +190,15 @@ describe("Role context persistence", () => {
     const { rolex } = await persistent();
     await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
 
-    // Session 1: set focus
     const role1 = await rolex.activate("sean");
     await role1.want("Feature: Auth", "auth");
     await role1.plan("Feature: JWT", "jwt");
-    expect(role1.ctx.focusedGoalId).toBe("auth");
-    expect(role1.ctx.focusedPlanId).toBe("jwt");
+    expect(role1.snapshot().focusedGoalId).toBe("auth");
+    expect(role1.snapshot().focusedPlanId).toBe("jwt");
 
-    // Session 2: re-activate restores from SQLite
     const role2 = await rolex.activate("sean");
-    expect(role2.ctx.focusedGoalId).toBe("auth");
-    expect(role2.ctx.focusedPlanId).toBe("jwt");
+    expect(role2.snapshot().focusedGoalId).toBe("auth");
+    expect(role2.snapshot().focusedPlanId).toBe("jwt");
   });
 
   test("activate without persisted context uses rehydrate default", async () => {
@@ -220,8 +207,8 @@ describe("Role context persistence", () => {
     await rolex.direct("!role.want", { individual: "sean", goal: "Feature: Auth", id: "auth" });
 
     const role = await rolex.activate("sean");
-    expect(role.ctx.focusedGoalId).toBe("auth");
-    expect(role.ctx.focusedPlanId).toBeNull();
+    expect(role.snapshot().focusedGoalId).toBe("auth");
+    expect(role.snapshot().focusedPlanId).toBeNull();
   });
 
   test("focus saves updated context", async () => {
@@ -234,10 +221,9 @@ describe("Role context persistence", () => {
 
     await role.focus("goal-a");
 
-    // Re-activate to verify persistence
     const role2 = await rolex.activate("sean");
-    expect(role2.ctx.focusedGoalId).toBe("goal-a");
-    expect(role2.ctx.focusedPlanId).toBeNull();
+    expect(role2.snapshot().focusedGoalId).toBe("goal-a");
+    expect(role2.snapshot().focusedPlanId).toBeNull();
   });
 
   test("complete clears focusedPlanId and saves", async () => {
@@ -249,10 +235,9 @@ describe("Role context persistence", () => {
     await role.plan("Feature: JWT", "jwt");
     await role.complete("jwt", "Feature: Done\n  Scenario: OK\n    Given done\n    Then ok");
 
-    // Re-activate to verify persistence
     const role2 = await rolex.activate("sean");
-    expect(role2.ctx.focusedGoalId).toBe("auth");
-    expect(role2.ctx.focusedPlanId).toBeNull();
+    expect(role2.snapshot().focusedGoalId).toBe("auth");
+    expect(role2.snapshot().focusedPlanId).toBeNull();
   });
 
   test("different roles have independent contexts", async () => {
@@ -266,9 +251,8 @@ describe("Role context persistence", () => {
     const nuwaRole = await rolex.activate("nuwa");
     await nuwaRole.want("Feature: Nuwa Goal", "nuwa-goal");
 
-    // Re-activate sean — should get sean's context, not nuwa's
     const seanRole2 = await rolex.activate("sean");
-    expect(seanRole2.ctx.focusedGoalId).toBe("sean-goal");
+    expect(seanRole2.snapshot().focusedGoalId).toBe("sean-goal");
   });
 
   test("in-memory mode (dataDir: null) works without persistence", async () => {
@@ -276,6 +260,6 @@ describe("Role context persistence", () => {
     await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
     await role.want("Feature: Auth", "auth");
-    expect(role.ctx.focusedGoalId).toBe("auth");
+    expect(role.snapshot().focusedGoalId).toBe("auth");
   });
 });

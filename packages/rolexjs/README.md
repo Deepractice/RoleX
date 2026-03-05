@@ -1,12 +1,8 @@
 # rolexjs
 
-Stateless API + Render layer for RoleX — the AI Agent Role Management Framework.
+Unified entry point for RoleX — the AI Agent Role Management Framework.
 
-`rolexjs` is the integration layer that sits between core concept definitions and I/O adapters (MCP, CLI). It provides:
-
-- **Rolex** class — stateless API with 24 operations
-- **Render** functions — shared description & hint templates
-- **Feature** types — Gherkin parse/serialize
+`rolexjs` re-exports everything from `@rolexjs/core` and adds the rendering layer. Install this one package to get the full API.
 
 ## Install
 
@@ -17,393 +13,162 @@ bun add rolexjs
 ## Quick Start
 
 ```typescript
-import { Rolex, describe, hint } from "rolexjs";
-import { createGraphRuntime } from "@rolexjs/local-platform";
+import { createRoleX } from "rolexjs";
+import { localPlatform } from "@rolexjs/local-platform";
 
-const rolex = new Rolex({ runtime: createGraphRuntime() });
+// Create RoleX instance
+const rolex = await createRoleX(localPlatform({ dataDir: "./data" }));
 
-// Born an individual
-const result = rolex.born("Feature: I am Sean");
-console.log(describe("born", "Sean", result.state));
-// → Individual "Sean" is born.
-console.log(hint("born"));
-// → Next: hire into an organization, or activate to start working.
+// World-level: create an individual
+await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+
+// Activate — returns a stateful Role
+const role = await rolex.activate("sean");
+
+// Execution cycle
+await role.want("Feature: Build Auth", "build-auth");
+await role.plan("Feature: JWT Strategy", "jwt-plan");
+await role.todo("Feature: Implement Login", "login");
+await role.finish("login", "Feature: Login done\n  Scenario: OK\n    Given login\n    Then success");
+
+// Cognition cycle
+await role.reflect(["login-finished"], "Feature: Token insight\n  Scenario: Learned\n    Given tokens\n    Then rotation matters", "token-insight");
+await role.realize(["token-insight"], "Feature: Always rotate tokens\n  Scenario: Principle\n    Given short-lived tokens\n    Then refresh tokens are essential", "rotate-tokens");
 ```
 
 ## Architecture
 
 ```
-@rolexjs/system         →  primitives (Structure, State, Runtime)
-@rolexjs/core           →  concept definitions (19 structures, 24 processes)
-@rolexjs/parser         →  Gherkin parser (wraps @cucumber/gherkin)
-rolexjs                 →  stateless API + render + Feature types  ← you are here
-@rolexjs/local-platform →  graph-backed Runtime (graphology)
-MCP / CLI               →  I/O adapters (state management, sessions)
+@rolexjs/system         →  graph engine (Structure, State, Runtime)
+@rolexjs/core           →  domain model (Role, RoleXService, Commands, structures, processes)
+@rolexjs/parser         →  Gherkin parser
+@rolexjs/genesis        →  bootstrap data
+@rolexjs/local-platform →  filesystem persistence (SQLite + graphology)
+rolexjs                 →  unified entry + rendering  ← you are here
 ```
 
-## Stateless Design
+## Core Concepts
 
-Rolex is stateless. Every method takes explicit node references and returns a `RolexResult`. There is no name registry, no active role, no session — those are the I/O layer's responsibility.
+### RoleX — World Entry Point
 
 ```typescript
-interface RolexResult {
-  state: State;     // projection of the primary affected node
-  process: string;  // which process was executed (for render)
-}
+const rolex = await createRoleX(platform);
 ```
 
-The caller (MCP/CLI) holds references to nodes and passes them into each call.
+Two methods:
 
-## API Reference
+- **`activate(id)`** — activate an individual, returns a stateful `Role`
+- **`direct(locator, args)`** — execute world-level commands (`!individual.born`, `!org.found`, `!census.list`, etc.)
 
-### Constructor
+### Role — Rich Domain Model
+
+Role is a self-contained operation domain for one individual. It holds state projection, cursors, and cognitive registries internally. All operations validate ownership — one individual's state never leaks to another.
 
 ```typescript
-const rolex = new Rolex({ runtime: Runtime });
+const role = await rolex.activate("sean");
 ```
 
-Creates a new Rolex instance. Bootstraps two root nodes:
+#### Execution
 
-- `rolex.society` — root of the world
-- `rolex.past` — container for archived things
+| Method | Description |
+|--------|-------------|
+| `role.focus(goalId?)` | View or switch focused goal |
+| `role.want(goal, id)` | Declare a goal |
+| `role.plan(plan, id)` | Create a plan for the focused goal |
+| `role.todo(task, id)` | Add a task to the focused plan |
+| `role.finish(taskId, encounter?)` | Complete a task, optionally record encounter |
+| `role.complete(planId?, encounter?)` | Close a plan as done |
+| `role.abandon(planId?, encounter?)` | Drop a plan |
 
-### Lifecycle — Creation
+#### Cognition
 
-#### `born(source?: string): RolexResult`
+| Method | Description |
+|--------|-------------|
+| `role.reflect(encounterIds, experience?, id?)` | Consume encounters → experience |
+| `role.realize(experienceIds, principle?, id?)` | Consume experiences → principle |
+| `role.master(procedure, id?, experienceIds?)` | Create procedure, optionally consuming experiences |
 
-Born an individual into society. Auto-scaffolds `identity` and `knowledge` sub-branches.
+#### Knowledge & Skills
+
+| Method | Description |
+|--------|-------------|
+| `role.forget(nodeId)` | Remove a node under this individual |
+| `role.skill(locator)` | Load full skill content by locator |
+| `role.use(locator, args?)` | Subjective execution — `!ns.method` or ResourceX |
+
+#### State
+
+| Method | Description |
+|--------|-------------|
+| `role.project()` | Render the individual's full state tree |
+| `role.snapshot()` | Serialize cursors + cognitive state (KV-compatible) |
+| `role.restore(snapshot)` | Restore from a snapshot |
+
+### Ownership Isolation
+
+Role validates that every operation targets nodes belonging to its own individual:
 
 ```typescript
-const sean = rolex.born("Feature: I am Sean\n  As a backend architect...");
-// sean.state.type === "individual"
-// sean.state.children → [identity, knowledge]
+const sean = await rolex.activate("sean");
+const nuwa = await rolex.activate("nuwa");
+
+await sean.want("Feature: Auth", "auth");
+await nuwa.focus("auth"); // throws: Goal "auth" does not belong to individual "nuwa"
 ```
 
-#### `found(source?: string): RolexResult`
+### World-Level Commands
 
-Found an organization.
+Commands executed via `rolex.direct()`:
 
 ```typescript
-const org = rolex.found("Feature: Deepractice\n  A software company...");
+// Individuals
+await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+await rolex.direct("!individual.retire", { individual: "sean" });
+
+// Organizations
+await rolex.direct("!org.found", { content: "Feature: Deepractice", id: "dp" });
+await rolex.direct("!org.hire", { organization: "dp", individual: "sean" });
+
+// Positions
+await rolex.direct("!position.establish", { organization: "dp", content: "Feature: CTO", id: "cto" });
+await rolex.direct("!position.appoint", { position: "cto", individual: "sean" });
+
+// Census
+const census = await rolex.direct("!census.list");
 ```
 
-#### `establish(org: Structure, source?: string): RolexResult`
+## Gherkin
 
-Establish a position within an organization.
+All content in RoleX is expressed as Gherkin Feature files.
 
 ```typescript
-const pos = rolex.establish(orgNode, "Feature: Architect\n  Technical leadership...");
-```
-
-#### `charter(org: Structure, source: string): RolexResult`
-
-Define the charter (rules and mission) for an organization.
-
-```typescript
-rolex.charter(orgNode, "Feature: Company Charter\n  ...");
-```
-
-#### `charge(position: Structure, source: string): RolexResult`
-
-Add a duty to a position.
-
-```typescript
-rolex.charge(posNode, "Feature: Code Review\n  Scenario: Review all PRs...");
-```
-
-### Lifecycle — Archival
-
-All archival methods move the node to `past` and remove it from the active tree.
-
-#### `retire(individual: Structure): RolexResult`
-
-Retire an individual (can rehire later).
-
-#### `die(individual: Structure): RolexResult`
-
-An individual dies (permanent).
-
-#### `dissolve(org: Structure): RolexResult`
-
-Dissolve an organization.
-
-#### `abolish(position: Structure): RolexResult`
-
-Abolish a position.
-
-#### `rehire(pastNode: Structure): RolexResult`
-
-Rehire a retired individual from past. Creates a fresh individual with the same information.
-
-```typescript
-const retired = rolex.retire(seanNode);
-// later...
-const back = rolex.rehire(retiredNode);
-```
-
-### Organization — Membership & Appointment
-
-These methods create/remove cross-branch **relations** (links between nodes that are not parent-child).
-
-#### `hire(org: Structure, individual: Structure): RolexResult`
-
-Link an individual to an organization via `membership`.
-
-```typescript
-rolex.hire(orgNode, seanNode);
-```
-
-#### `fire(org: Structure, individual: Structure): RolexResult`
-
-Remove the membership link.
-
-#### `appoint(position: Structure, individual: Structure): RolexResult`
-
-Link an individual to a position via `appointment`.
-
-```typescript
-rolex.appoint(posNode, seanNode);
-```
-
-#### `dismiss(position: Structure, individual: Structure): RolexResult`
-
-Remove the appointment link.
-
-### Role — Activation
-
-#### `activate(individual: Structure): RolexResult`
-
-Pure projection — projects an individual's full state without mutation. Used to "load" a role.
-
-```typescript
-const role = rolex.activate(seanNode);
-// role.state contains the full subtree + relations
-```
-
-### Execution — Goal Pursuit
-
-#### `want(individual: Structure, source?: string): RolexResult`
-
-Declare a goal under an individual.
-
-```typescript
-const goal = rolex.want(seanNode, "Feature: Build Auth System\n  ...");
-```
-
-#### `plan(goal: Structure, source?: string): RolexResult`
-
-Create a plan for a goal.
-
-```typescript
-const p = rolex.plan(goalNode, "Feature: Auth Plan\n  Scenario: Phase 1...");
-```
-
-#### `todo(plan: Structure, source?: string): RolexResult`
-
-Add a task to a plan.
-
-```typescript
-const t = rolex.todo(planNode, "Feature: Implement JWT\n  ...");
-```
-
-#### `finish(task: Structure, individual: Structure, experience?: string): RolexResult`
-
-Finish a task. Removes the task and creates an `encounter` under the individual.
-
-```typescript
-rolex.finish(taskNode, seanNode, "Learned that JWT refresh is essential");
-```
-
-#### `achieve(goal: Structure, individual: Structure, experience?: string): RolexResult`
-
-Achieve a goal. Removes the goal and creates an `encounter`.
-
-#### `abandon(goal: Structure, individual: Structure, experience?: string): RolexResult`
-
-Abandon a goal. Removes the goal and creates an `encounter`.
-
-### Cognition — Learning
-
-The cognition pipeline transforms raw encounters into structured knowledge:
-
-```
-encounter → reflect → experience → realize/master → principle/skill
-```
-
-#### `reflect(encounter: Structure, individual: Structure, source?: string): RolexResult`
-
-Consume an encounter, create an `experience` under the individual.
-
-#### `realize(experience: Structure, knowledge: Structure, source?: string): RolexResult`
-
-Consume an experience, create a `principle` under knowledge.
-
-#### `master(experience: Structure, knowledge: Structure, source?: string): RolexResult`
-
-Consume an experience, create a `skill` under knowledge.
-
-### Query
-
-#### `project(node: Structure): State`
-
-Project any node's full state (subtree + links). Returns `State` directly, not a `RolexResult`.
-
-## Render
-
-Standalone functions shared by MCP and CLI. The I/O layer just presents them.
-
-### `describe(process, name, state): string`
-
-What just happened — past tense description.
-
-```typescript
-describe("born", "Sean", state)    // → 'Individual "Sean" is born.'
-describe("want", "Auth", state)    // → 'Goal "Auth" declared.'
-describe("finish", "JWT", state)   // → 'Task "JWT" finished → encounter recorded.'
-```
-
-### `hint(process): string`
-
-What to do next — suggestion prefixed with "Next: ".
-
-```typescript
-hint("born")     // → 'Next: hire into an organization, or activate to start working.'
-hint("want")     // → 'Next: plan how to achieve it.'
-hint("finish")   // → 'Next: continue with remaining tasks, or achieve the goal.'
-```
-
-## Feature (Gherkin)
-
-Own types decoupled from `@cucumber/messages`. All `source` strings in Rolex are Gherkin Features.
-
-### Types
-
-```typescript
-interface Feature {
-  name: string;
-  description?: string;
-  tags?: string[];
-  scenarios: Scenario[];
-}
-
-interface Scenario {
-  name: string;
-  description?: string;
-  tags?: string[];
-  steps: Step[];
-}
-
-interface Step {
-  keyword: string;   // "Given ", "When ", "Then ", "And "
-  text: string;
-  dataTable?: DataTableRow[];
-}
-
-interface DataTableRow {
-  cells: string[];
-}
-```
-
-### `parse(source: string): Feature`
-
-Parse a Gherkin source string into a Feature.
-
-```typescript
-import { parse } from "rolexjs";
+import { parse, serialize } from "rolexjs";
 
 const feature = parse(`
 Feature: User Authentication
-  As a user I want secure login
-
   Scenario: Login with email
     Given a registered user
     When they submit credentials
     Then they receive a token
 `);
 
-feature.name        // → "User Authentication"
-feature.description // → "As a user I want secure login"
-feature.scenarios   // → [{ name: "Login with email", steps: [...] }]
+const source = serialize(feature);
 ```
 
-### `serialize(feature: Feature): string`
+## Rendering
 
-Serialize a Feature back to Gherkin source.
-
-```typescript
-import { serialize } from "rolexjs";
-
-const source = serialize({
-  name: "My Goal",
-  scenarios: [{
-    name: "Success",
-    steps: [
-      { keyword: "Given ", text: "the system is ready" },
-      { keyword: "Then ", text: "it should work" },
-    ],
-  }],
-});
-// → "Feature: My Goal\n\n  Scenario: Success\n    Given the system is ready\n    Then it should work\n"
-```
-
-## Re-exports
-
-`rolexjs` re-exports everything from `@rolexjs/core`:
+rolexjs provides rendering functions for command results:
 
 ```typescript
-import {
-  // Structure definitions
-  society, individual, organization, past,
-  identity, knowledge, goal, plan, task,
-  encounter, experience, principle, skill,
-  // ... and all process definitions
-} from "rolexjs";
-```
+import { render, describe, hint, renderState } from "rolexjs";
 
-## Full Example
+// 3-layer output: status + hint + projection
+const output = render({ process: "born", name: "Sean", state: result.state });
 
-```typescript
-import { Rolex, describe, hint } from "rolexjs";
-import { createGraphRuntime } from "@rolexjs/local-platform";
-
-const rolex = new Rolex({ runtime: createGraphRuntime() });
-
-// 1. Born an individual
-const { state: seanState } = rolex.born("Feature: I am Sean");
-const seanNode = seanState.ref;  // caller tracks Structure references
-
-// 2. Found org + establish position
-const { state: orgState } = rolex.found("Feature: Deepractice");
-const orgNode = orgState.ref;
-const { state: posState } = rolex.establish(orgNode, "Feature: Architect");
-const posNode = posState.ref;
-
-// 3. Hire + appoint
-rolex.hire(orgNode, seanNode);
-rolex.appoint(posNode, seanNode);
-
-// 4. Activate (pure projection)
-const role = rolex.activate(seanNode);
-console.log(describe("activate", "Sean", role.state));
-// → Role "Sean" activated.
-console.log(hint("activate"));
-// → Next: want a goal, or check the current state.
-
-// 5. Goal → plan → task
-const { state: goalState } = rolex.want(seanNode, "Feature: Build Auth");
-const goalNode = goalState.ref;
-const { state: planState } = rolex.plan(goalNode, "Feature: Auth Plan");
-const planNode = planState.ref;
-const { state: taskState } = rolex.todo(planNode, "Feature: Implement JWT");
-const taskNode = taskState.ref;
-
-// 6. Finish → reflect → realize
-const { state: encState } = rolex.finish(taskNode, seanNode, "JWT refresh is essential");
-const encNode = encState.ref;
-const { state: expState } = rolex.reflect(encNode, seanNode);
-const expNode = expState.ref;
-const knowledgeNode = /* sean's knowledge child */;
-rolex.realize(expNode, knowledgeNode, "Always use refresh token rotation");
+// Individual layers
+describe("born", "Sean", state);  // → 'Individual "Sean" is born.'
+hint("born");                      // → 'Next: hire into an organization...'
+renderState(state);                // → Markdown projection of the state tree
 ```
 
 ## License

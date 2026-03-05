@@ -2,8 +2,8 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import type { CommandResult } from "@rolexjs/core";
 import { localPlatform } from "@rolexjs/local-platform";
-import type { CommandResult } from "@rolexjs/prototype";
 import { createRoleX } from "../src/index.js";
 import { describe as renderDescribe, hint as renderHint, renderState } from "../src/render.js";
 
@@ -74,12 +74,11 @@ describe("use dispatch", () => {
 // ================================================================
 
 describe("activate", () => {
-  test("returns Role with ctx and project renders state", async () => {
+  test("returns Role with id and project renders state", async () => {
     const rolex = await setup();
     await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
-    expect(role.roleId).toBe("sean");
-    expect(role.ctx).toBeDefined();
+    expect(role.id).toBe("sean");
     const output = await role.project();
     expect(output).toContain("[individual]");
   });
@@ -209,15 +208,15 @@ describe("render", () => {
 describe("gherkin validation", () => {
   test("rejects non-Gherkin input", async () => {
     const rolex = await setup();
-    expect(rolex.direct("!individual.born", { content: "not gherkin" })).rejects.toThrow(
-      "Invalid Gherkin"
-    );
+    expect(
+      rolex.direct("!individual.born", { content: "not gherkin", id: "test-bad" })
+    ).rejects.toThrow("Invalid Gherkin");
   });
 
   test("accepts valid Gherkin", async () => {
     const rolex = await setup();
     await expect(
-      rolex.direct("!individual.born", { content: "Feature: Sean" })
+      rolex.direct("!individual.born", { content: "Feature: Sean", id: "test-good" })
     ).resolves.toBeDefined();
   });
 });

@@ -93,7 +93,7 @@ export {
 
 // ===== Processes — Layer 1: Execution =====
 
-export { abandon, complete, finish, planGoal, todo, want } from "./execution.js";
+export { abandon, activate, complete, finish, planGoal, todo, want } from "./execution.js";
 
 // ===== Processes — Layer 2: Cognition =====
 
@@ -129,6 +129,49 @@ export {
   retire,
 } from "./lifecycle.js";
 
-// ===== Role =====
+// ===== Role Model =====
 
-export { activate } from "./role.js";
+export type { RoleDeps, RoleSnapshot } from "./role-model.js";
+export { Role } from "./role-model.js";
+
+// ===== RoleX Service =====
+
+export type { RoleX } from "./rolex-service.js";
+export { RoleXService } from "./rolex-service.js";
+
+// ===== Find =====
+
+export { findInState } from "./find.js";
+
+// ===== Prototype (merged from @rolexjs/prototype) =====
+
+// Apply prototype
+export type { ApplyResult } from "./apply.js";
+export { applyPrototype } from "./apply.js";
+
+// Commands
+export type { CommandContext, CommandResult, CommandResultMap, Commands } from "./commands.js";
+export { createCommands } from "./commands.js";
+
+// Descriptions
+export { processes, world } from "./descriptions/index.js";
+
+// Directives
+export { directives } from "./directives/index.js";
+
+// Dispatch
+export { toArgs } from "./dispatch.js";
+
+// Instruction registry
+export { instructions } from "./instructions.js";
+
+// Renderer framework
+export type { Renderer } from "./renderer.js";
+export { RendererRouter } from "./renderer.js";
+
+// Schema types
+export type { ArgEntry, InstructionDef, ParamDef, ParamType, ToolDef } from "./schema.js";
+
+// Protocol — channel adapter contract
+export type { Protocol } from "./tools.js";
+export { protocol } from "./tools.js";

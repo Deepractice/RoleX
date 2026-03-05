@@ -66,12 +66,12 @@ export function findInState(state: State, target: string): Structure | null {
       if (p < bestPriority) {
         best = node;
         bestPriority = p;
-        if (p === 0) return; // Can't do better
+        if (p === 0) return;
       }
     }
     for (const child of node.children ?? []) {
       walk(child);
-      if (bestPriority === 0) return; // Early exit
+      if (bestPriority === 0) return;
     }
   }
 

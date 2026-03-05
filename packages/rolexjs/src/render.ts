@@ -133,7 +133,7 @@ export function hint(process: string): string {
 //  Detail — longer process descriptions (from .feature files)
 // ================================================================
 
-import { directives, processes, world } from "@rolexjs/prototype";
+import { directives, processes, world } from "@rolexjs/core";
 
 /** Full Gherkin feature content for a process — sourced from .feature files. */
 export function detail(process: string): string {

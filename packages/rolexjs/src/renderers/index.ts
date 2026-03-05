@@ -7,7 +7,7 @@
  * createRendererRouter() wires all renderers into a RendererRouter.
  */
 
-import { RendererRouter } from "@rolexjs/prototype";
+import { RendererRouter } from "@rolexjs/core";
 import { CensusRenderer } from "./census.js";
 import { IndividualRenderer } from "./individual.js";
 import { OrgRenderer } from "./org.js";

@@ -143,52 +143,54 @@ Then("the output should contain {string}", function (this: BddWorld, text: strin
 
 Then("focusedPlanId should be {string}", function (this: BddWorld, planId: string) {
   assert.ok(this.role, "No active role");
-  assert.equal(this.role.ctx.focusedPlanId, planId);
+  assert.equal(this.role.snapshot().focusedPlanId, planId);
 });
 
 Then("focusedPlanId should be null", function (this: BddWorld) {
   assert.ok(this.role, "No active role");
-  assert.equal(this.role.ctx.focusedPlanId, null);
+  assert.equal(this.role.snapshot().focusedPlanId, null);
 });
 
 Then("encounter {string} should be registered", function (this: BddWorld, encounterId: string) {
   assert.ok(this.role, "No active role");
+  const snap = this.role.snapshot();
   assert.ok(
-    this.role.ctx.encounterIds.has(encounterId),
-    `Encounter "${encounterId}" not registered. Have: ${[...this.role.ctx.encounterIds].join(", ")}`
+    snap.encounterIds.includes(encounterId),
+    `Encounter "${encounterId}" not registered. Have: ${snap.encounterIds.join(", ")}`
   );
 });
 
 Then("encounter {string} should be consumed", function (this: BddWorld, encounterId: string) {
   assert.ok(this.role, "No active role");
   assert.ok(
-    !this.role.ctx.encounterIds.has(encounterId),
+    !this.role.snapshot().encounterIds.includes(encounterId),
     `Encounter "${encounterId}" should be consumed but is still registered`
   );
 });
 
 Then("encounter count should be {int}", function (this: BddWorld, count: number) {
   assert.ok(this.role, "No active role");
-  assert.equal(this.role.ctx.encounterIds.size, count);
+  assert.equal(this.role.snapshot().encounterIds.length, count);
 });
 
 Then("experience {string} should be registered", function (this: BddWorld, expId: string) {
   assert.ok(this.role, "No active role");
+  const snap = this.role.snapshot();
   assert.ok(
-    this.role.ctx.experienceIds.has(expId),
-    `Experience "${expId}" not registered. Have: ${[...this.role.ctx.experienceIds].join(", ")}`
+    snap.experienceIds.includes(expId),
+    `Experience "${expId}" not registered. Have: ${snap.experienceIds.join(", ")}`
   );
 });
 
 Then("experience {string} should be consumed", function (this: BddWorld, expId: string) {
   assert.ok(this.role, "No active role");
   assert.ok(
-    !this.role.ctx.experienceIds.has(expId),
+    !this.role.snapshot().experienceIds.includes(expId),
     `Experience "${expId}" should be consumed but is still registered`
   );
 });
 
 Then("experience count should be {int}", function (this: BddWorld, count: number) {
   assert.ok(this.role, "No active role");
-  assert.equal(this.role.ctx.experienceIds.size, count);
+  assert.equal(this.role.snapshot().experienceIds.length, count);
 });

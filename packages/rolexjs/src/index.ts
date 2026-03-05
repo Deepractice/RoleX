@@ -1,47 +1,20 @@
 /**
- * rolexjs — RoleX API + Render layer.
+ * rolexjs — RoleX unified entry point.
  *
  * Usage:
- *   import { Rolex, Role, describe, hint } from "rolexjs";
+ *   import { createRoleX, Role } from "rolexjs";
  *
  *   const rolex = await createRoleX(platform);
- *   await rolex.genesis();
  *   const role = await rolex.activate("sean");
  *   await role.want("Feature: Ship v1", "ship-v1");
  */
 
-// Re-export core (structures + processes)
+// Re-export core (structures, processes, Role, types)
 export * from "@rolexjs/core";
-// Re-export genesis
-export { genesis } from "@rolexjs/genesis";
-// MCP tool schema + renderer framework (from prototype)
-export type { ParamDef, Renderer, ToolDef } from "@rolexjs/prototype";
-export { RendererRouter, tools, worldInstructions } from "@rolexjs/prototype";
-// Context
-export { RoleContext } from "./context.js";
-// Feature (Gherkin type + parse/serialize)
-export type { DataTableRow, Feature, Scenario, Step } from "./feature.js";
-export { parse, serialize } from "./feature.js";
-// Find
-export { findInState } from "./find.js";
-// Issue Render
-export type { IssueAction, LabelResolver } from "./issue-render.js";
-export {
-  renderComment,
-  renderCommentList,
-  renderIssue,
-  renderIssueList,
-  renderIssueResult,
-} from "./issue-render.js";
 // Project Render
 export type { ProjectAction } from "./project-render.js";
-export { renderProject, renderProjectResult } from "./project-render.js";
-export type { RenderOptions, RenderStateOptions } from "./render.js";
+export { renderProjectResult } from "./project-render.js";
 // Render
-export { describe, detail, directive, hint, render, renderState, world } from "./render.js";
-// Renderers
-export { createRendererRouter } from "./renderers/index.js";
-// Role
-export { Role } from "./role.js";
+export { detail } from "./render.js";
 // API
-export { createRoleX, Rolex } from "./rolex.js";
+export { createRoleX, RoleX } from "./rolex.js";

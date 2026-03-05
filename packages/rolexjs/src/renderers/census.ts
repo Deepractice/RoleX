@@ -5,7 +5,7 @@
  * orgs → projects + members (with positions) → unaffiliated individuals.
  */
 
-import type { CommandResult } from "@rolexjs/prototype";
+import type { CommandResult } from "@rolexjs/core";
 import type { State } from "@rolexjs/system";
 import type { Renderer } from "./renderer.js";
 

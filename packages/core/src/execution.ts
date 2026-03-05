@@ -12,6 +12,13 @@
 import { create, process, transform } from "@rolexjs/system";
 import { encounter, goal, individual, plan, task } from "./structures.js";
 
+// Role activation — load cognition into context
+export const activate = process(
+  "activate",
+  "Activate a role — load cognition into context",
+  individual
+);
+
 export const want = process("want", "Declare a goal", individual, create(goal));
 export const planGoal = process("plan", "Create a plan for a goal", goal, create(plan));
 export const todo = process("todo", "Create a task in a plan", plan, create(task));

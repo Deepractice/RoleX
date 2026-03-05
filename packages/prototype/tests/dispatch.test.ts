@@ -12,8 +12,10 @@ describe("toArgs", () => {
     ]);
   });
 
-  test("individual.born — missing optional args produce undefined", () => {
-    expect(toArgs("individual.born", {})).toEqual([undefined, undefined, undefined]);
+  test("individual.born — missing required id throws", () => {
+    expect(() => toArgs("individual.born", {})).toThrow(
+      'Missing required argument "id" for individual.born.'
+    );
   });
 
   test("individual.teach — individual, content, id", () => {
@@ -116,11 +118,9 @@ describe("toArgs", () => {
   });
 
   test("optional params can be omitted", () => {
-    expect(toArgs("position.require", { position: "arch", content: "Feature: X" })).toEqual([
-      "arch",
-      "Feature: X",
-      undefined,
-    ]);
+    expect(
+      toArgs("position.require", { position: "arch", content: "Feature: X", id: "req-1" })
+    ).toEqual(["arch", "Feature: X", "req-1"]);
   });
 
   // ---- Error handling ----

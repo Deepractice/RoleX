@@ -204,7 +204,7 @@ export function createCommands(ctx: CommandContext): Commands {
     ): Promise<CommandResult> {
       validateGherkin(content);
       const node = await rt.create(society, C.individual, content, id, alias);
-      await rt.create(node, C.identity, undefined, id ? `${id}-identity` : undefined);
+      await rt.create(node, C.identity, undefined, `${id}-identity`);
       return ok(node, "born");
     },
 

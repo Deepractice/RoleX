@@ -16,7 +16,7 @@ import { After, AfterAll, setWorldConstructor, World } from "@deepracticex/bdd";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { localPlatform } from "@rolexjs/local-platform";
-import type { Role, Rolex } from "rolexjs";
+import type { Role, RoleX } from "rolexjs";
 import { createRoleX } from "rolexjs";
 
 // ========== MCP client management ==========
@@ -77,7 +77,7 @@ export class BddWorld extends World {
 
   // --- Rolex layer ---
   dataDir?: string;
-  rolex?: Rolex;
+  rolex?: RoleX;
   role?: Role;
   directResult?: string;
   directRaw?: any;
@@ -106,11 +106,11 @@ export class BddWorld extends World {
     this.rolex = await createRoleX(localPlatform({ dataDir: this.dataDir, resourceDir: null }));
   }
 
-  /** Write persisted context directly via Rolex repository (simulate a previous session). */
+  /** Write persisted context directly via repository (simulate a previous session). */
   async writeContext(roleId: string, data: Record<string, unknown>): Promise<void> {
     if (!this.rolex) throw new Error("Call initRolex() first");
-    // Use the internal repository to persist context data to SQLite
-    await (this.rolex as any).repo.saveContext(roleId, data);
+    // Access internal service → repo to persist context data
+    await (this.rolex as any).service.repo.saveContext(roleId, data);
   }
 
   /** Re-create Rolex instance (simulate new session with same dataDir). */

@@ -52,9 +52,9 @@ describe("alignment with rolex.ts toArgs switch", () => {
     expect(toArgs("org.found", a)).toEqual([a.content, a.id, a.alias]);
   });
 
-  test("org.charter → [org, content]", () => {
-    const a = { org: "rolex", content: "Feature: Charter" };
-    expect(toArgs("org.charter", a)).toEqual([a.org, a.content]);
+  test("org.charter → [org, content, id]", () => {
+    const a = { org: "rolex", content: "Feature: Charter", id: "charter-1" };
+    expect(toArgs("org.charter", a)).toEqual([a.org, a.content, a.id]);
   });
 
   test("org.dissolve → [org]", () => {

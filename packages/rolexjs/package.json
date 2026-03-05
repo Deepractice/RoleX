@@ -40,7 +40,6 @@
   "dependencies": {
     "@rolexjs/core": "workspace:*",
     "@rolexjs/genesis": "workspace:*",
-    "@rolexjs/prototype": "workspace:*",
     "@rolexjs/system": "workspace:*",
     "@rolexjs/parser": "workspace:*",
     "issuexjs": "^0.2.0",

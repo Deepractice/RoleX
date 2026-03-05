@@ -5,7 +5,7 @@
  * Uses specialized project layout (members, milestones, deliverables, wiki sections).
  */
 
-import type { CommandResult } from "@rolexjs/prototype";
+import type { CommandResult } from "@rolexjs/core";
 import { type ProjectAction, renderProjectResult } from "../project-render.js";
 import type { Renderer } from "./renderer.js";
 

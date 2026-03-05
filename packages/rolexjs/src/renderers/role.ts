@@ -5,7 +5,7 @@
  * reflect, realize, master, forget, skill.
  */
 
-import type { CommandResult } from "@rolexjs/prototype";
+import type { CommandResult } from "@rolexjs/core";
 import { describe, hint, renderState } from "../render.js";
 import type { Renderer } from "./renderer.js";
 

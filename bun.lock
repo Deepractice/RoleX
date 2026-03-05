@@ -61,7 +61,10 @@
       "dependencies": {
         "@issuexjs/core": "^0.2.0",
         "@resourcexjs/core": "^2.14.0",
+        "@rolexjs/parser": "workspace:*",
         "@rolexjs/system": "workspace:*",
+        "issuexjs": "^0.2.0",
+        "resourcexjs": "^2.14.0",
       },
     },
     "packages/genesis": {
@@ -111,7 +114,6 @@
         "@rolexjs/core": "workspace:*",
         "@rolexjs/genesis": "workspace:*",
         "@rolexjs/parser": "workspace:*",
-        "@rolexjs/prototype": "workspace:*",
         "@rolexjs/system": "workspace:*",
         "issuexjs": "^0.2.0",
         "resourcexjs": "^2.14.0",

@@ -32,15 +32,18 @@
   ],
   "scripts": {
     "build": "tsup",
-    "test": "echo 'no tests yet'",
+    "test": "bun test",
     "lint": "biome lint .",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
   "dependencies": {
     "@issuexjs/core": "^0.2.0",
+    "@rolexjs/parser": "workspace:*",
     "@rolexjs/system": "workspace:*",
-    "@resourcexjs/core": "^2.14.0"
+    "@resourcexjs/core": "^2.14.0",
+    "issuexjs": "^0.2.0",
+    "resourcexjs": "^2.14.0"
   },
   "devDependencies": {},
   "publishConfig": {

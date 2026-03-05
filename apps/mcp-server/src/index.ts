@@ -16,11 +16,10 @@ import {
   detail,
   type ParamDef,
   type ProjectAction,
+  protocol,
   renderProjectResult,
   type State,
   type ToolDef,
-  tools,
-  worldInstructions,
 } from "rolexjs";
 
 import { z } from "zod";
@@ -185,11 +184,11 @@ const executors: Record<string, ToolExecutor> = {
 const server = new FastMCP({
   name: "rolex",
   version: "0.12.0",
-  instructions: worldInstructions,
+  instructions: protocol.instructions,
 });
 
 // Register all tools from unified schema
-for (const toolDef of tools) {
+for (const toolDef of protocol.tools) {
   const executor = executors[toolDef.name];
   if (!executor) {
     throw new Error(`No executor for tool "${toolDef.name}"`);

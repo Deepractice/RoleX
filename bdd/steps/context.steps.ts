@@ -75,8 +75,8 @@ When("I activate {string}", async function (this: BddWorld, name: string) {
 Then("focusedGoalId should be {string}", function (this: BddWorld, goalId: string) {
   assert.ok(this.role, "Expected a role but activation failed");
   assert.equal(
-    this.role.ctx.focusedGoalId,
+    this.role.snapshot().focusedGoalId,
     goalId,
-    `Expected focusedGoalId to be "${goalId}" but got "${this.role.ctx.focusedGoalId}"`
+    `Expected focusedGoalId to be "${goalId}" but got "${this.role.snapshot().focusedGoalId}"`
   );
 });
