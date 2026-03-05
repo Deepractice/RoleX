@@ -46,9 +46,16 @@ export class Role {
     return this.fmt("role.activate", result);
   }
 
-  /** Render a CommandResult via the injected Renderer. */
+  /** Render a CommandResult via the injected Renderer, with cognitive hint. */
   private fmt(command: string, result: CommandResult): string {
-    return this.api.renderer.render(command, result);
+    const rendered = this.api.renderer.render(command, result);
+    const process = command.includes(".") ? command.slice(command.indexOf(".") + 1) : command;
+    const ch = this.ctx.cognitiveHint(process);
+    if (!ch) return rendered;
+    // Insert "I → ..." after the hint line (line 2), before the empty line
+    const lines = rendered.split("\n");
+    lines.splice(2, 0, `I → ${ch}`);
+    return lines.join("\n");
   }
 
   private async save(): Promise<void> {

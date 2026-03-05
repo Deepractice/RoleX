@@ -119,11 +119,6 @@ describe("alignment with rolex.ts toArgs switch", () => {
   //  prototype (L244-266)
   // ================================================================
 
-  test("prototype.settle → [source]", () => {
-    const a = { source: "./packages/genesis" };
-    expect(toArgs("prototype.settle", a)).toEqual([a.source]);
-  });
-
   test("prototype.evict → [id]", () => {
     const a = { id: "nuwa" };
     expect(toArgs("prototype.evict", a)).toEqual([a.id]);

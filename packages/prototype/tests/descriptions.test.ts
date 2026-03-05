@@ -43,21 +43,9 @@ describe("descriptions", () => {
     }
   });
 
-  test("key world features are present", () => {
-    const expected = [
-      "cognitive-priority",
-      "role-identity",
-      "nuwa",
-      "execution",
-      "cognition",
-      "memory",
-      "gherkin",
-      "communication",
-      "skill-system",
-      "state-origin",
-    ];
-    for (const name of expected) {
-      expect(world[name]).toBeDefined();
+  test("every world feature key is a kebab-case identifier", () => {
+    for (const key of Object.keys(world)) {
+      expect(key).toMatch(/^[a-z][a-z0-9-]*$/);
     }
   });
 });

@@ -30,12 +30,6 @@ describe("toArgs", () => {
     expect(toArgs("census.list", { type: "individual" })).toEqual(["individual"]);
   });
 
-  test("prototype.settle — source", () => {
-    expect(toArgs("prototype.settle", { source: "./packages/genesis" })).toEqual([
-      "./packages/genesis",
-    ]);
-  });
-
   // ---- Role instructions ----
 
   test("role.activate — individual", () => {

@@ -100,18 +100,18 @@ describe("individual", () => {
     const { commands, find } = await setup();
     await commands["individual.born"]("Feature: Sean", "sean");
     const r = await commands["individual.retire"]("sean");
-    expect(r.state.name).toBe("past");
+    expect(r.state.name).toBe("individual");
     expect(r.process).toBe("retire");
     const found = await find("sean");
     expect(found).not.toBeNull();
-    expect(found!.name).toBe("past");
+    expect(found!.name).toBe("individual");
   });
 
   test("die archives individual", async () => {
     const { commands } = await setup();
     await commands["individual.born"](undefined, "alice");
     const r = await commands["individual.die"]("alice");
-    expect(r.state.name).toBe("past");
+    expect(r.state.name).toBe("individual");
     expect(r.process).toBe("die");
   });
 
@@ -457,7 +457,7 @@ describe("org", () => {
     await commands["org.found"](undefined, "dp");
     const r = await commands["org.dissolve"]("dp");
     expect(r.process).toBe("dissolve");
-    expect((await find("dp"))!.name).toBe("past");
+    expect((await find("dp"))!.name).toBe("organization");
   });
 
   test("hire links individual to org", async () => {
@@ -518,7 +518,7 @@ describe("position", () => {
     await commands["position.establish"](undefined, "architect");
     const r = await commands["position.abolish"]("architect");
     expect(r.process).toBe("abolish");
-    expect((await find("architect"))!.name).toBe("past");
+    expect((await find("architect"))!.name).toBe("position");
   });
 
   test("appoint links individual to position", async () => {

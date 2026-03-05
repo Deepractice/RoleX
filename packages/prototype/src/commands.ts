@@ -13,6 +13,7 @@ import type { PrototypeRepository } from "@rolexjs/core";
 import * as C from "@rolexjs/core";
 import { parse } from "@rolexjs/parser";
 import type { Runtime, State, Structure } from "@rolexjs/system";
+import { structure } from "@rolexjs/system";
 import type { Comment, Issue, IssueX } from "issuexjs";
 import type { Resource, ResourceX, RXM } from "resourcexjs";
 
@@ -143,7 +144,9 @@ export function createCommands(ctx: CommandContext): Commands {
   }
 
   async function archive(node: Structure, process: string): Promise<CommandResult> {
-    const archived = await rt.transform(node, C.past);
+    // Move the node into the past container, keeping its original name
+    const target = structure(node.name, node.description ?? "", C.past);
+    const archived = await rt.transform(node, target);
     return ok(archived, process);
   }
 
