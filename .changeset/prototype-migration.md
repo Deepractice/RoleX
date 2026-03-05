@@ -1,7 +1,7 @@
 ---
 "@rolexjs/core": minor
 "@rolexjs/prototype": minor
-"@rolexjs/genesis": major
+"@rolexjs/genesis": minor
 "@rolexjs/local-platform": minor
 "@rolexjs/mcp-server": minor
 "rolexjs": minor
