@@ -36,6 +36,9 @@ export { renderProject, renderProjectResult } from "./project-render.js";
 export type { RenderOptions, RenderStateOptions } from "./render.js";
 // Render
 export { describe, detail, directive, hint, render, renderState, world } from "./render.js";
+// Renderer
+export type { Renderer, TextRendererOptions } from "./renderer.js";
+export { JsonRenderer, TextRenderer } from "./renderer.js";
 // Role
 export { Role } from "./role.js";
 // API
