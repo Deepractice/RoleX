@@ -21,7 +21,6 @@ const rolex = await createRoleX(
     prototypes: [genesis],
   })
 );
-await rolex.genesis();
 const state = new McpState();
 
 // ========== Server ==========

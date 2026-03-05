@@ -2,12 +2,12 @@
  * Rolex — thin API shell.
  *
  * Public API:
- *   genesis()    — create the world on first run
  *   activate(id) — returns a stateful Role handle
  *   direct(loc, args) — direct the world to execute an instruction
  *
  * All operation implementations live in @rolexjs/prototype (createOps).
  * Rolex just wires Platform → ops and manages Role lifecycle.
+ * Prototypes are automatically applied during initialization.
  */
 
 import type { Platform, PrototypeData, RoleXRepository } from "@rolexjs/core";
@@ -96,12 +96,9 @@ export class Rolex {
       prototype: this.repo.prototype,
       direct: (locator: string, args?: Record<string, unknown>) => this.direct(locator, args),
     });
-  }
 
-  /** Genesis — create the world on first run. Applies built-in prototypes. */
-  async genesis(): Promise<void> {
+    // Apply prototypes — idempotent, only runs unapplied migrations
     await this.initializer?.bootstrap();
-
     for (const proto of this.prototypes) {
       await applyPrototype(proto, this.repo.prototype, (op, args) => this.direct(op, args));
     }
