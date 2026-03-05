@@ -109,6 +109,7 @@
       "version": "1.3.0",
       "dependencies": {
         "@rolexjs/core": "workspace:*",
+        "@rolexjs/genesis": "workspace:*",
         "@rolexjs/parser": "workspace:*",
         "@rolexjs/prototype": "workspace:*",
         "@rolexjs/system": "workspace:*",
