@@ -9,7 +9,7 @@
  *   prototype_migrations — Flyway-style migration history
  */
 
-import { index, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 /**
  * nodes — every node in the society graph.
@@ -94,6 +94,7 @@ export const prototypeMigrations = sqliteTable(
   {
     prototypeId: text("prototype_id").notNull(),
     migrationId: text("migration_id").notNull(),
+    version: integer("version").notNull(),
     checksum: text("checksum").notNull(),
     executedAt: text("executed_at").notNull(),
   },

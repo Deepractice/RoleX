@@ -8,6 +8,13 @@
       "when": 1772631387631,
       "tag": "0000_spooky_amazoness",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1772634146909,
+      "tag": "0001_slimy_joystick",
+      "breakpoints": true
     }
   ]
 }

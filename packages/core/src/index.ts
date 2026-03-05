@@ -41,9 +41,11 @@ export {
 // Platform
 export type {
   ContextData,
+  Migration,
   MigrationRecord,
   Platform,
-  PrototypeRegistry,
+  PrototypeData,
+  PrototypeRepository,
   RoleXRepository,
 } from "./platform.js";
 

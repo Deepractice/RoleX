@@ -5,6 +5,7 @@
  * MCP only translates protocol calls to API calls.
  */
 
+import { genesis } from "@rolexjs/genesis";
 import { localPlatform } from "@rolexjs/local-platform";
 import { FastMCP } from "fastmcp";
 import { createRoleX, detail, type ProjectAction, renderProjectResult, type State } from "rolexjs";
@@ -17,7 +18,7 @@ import { McpState } from "./state.js";
 
 const rolex = await createRoleX(
   localPlatform({
-    bootstrap: ["npm:@rolexjs/genesis"],
+    prototypes: [genesis],
   })
 );
 await rolex.genesis();

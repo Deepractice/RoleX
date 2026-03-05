@@ -11,7 +11,7 @@ import { migrate } from "@deepracticex/drizzle";
 import type {
   ContextData,
   MigrationRecord,
-  PrototypeRegistry,
+  PrototypeRepository,
   RoleXRepository,
 } from "@rolexjs/core";
 import type { Runtime } from "@rolexjs/system";
@@ -24,7 +24,7 @@ type DB = CommonXDatabase;
 
 export class SqliteRepository implements RoleXRepository {
   readonly runtime: Runtime;
-  readonly prototype: PrototypeRegistry;
+  readonly prototype: PrototypeRepository;
 
   constructor(private db: DB) {
     // Run Drizzle migrations — handles schema creation and evolution
@@ -33,7 +33,7 @@ export class SqliteRepository implements RoleXRepository {
     });
 
     this.runtime = createSqliteRuntime(db);
-    this.prototype = createPrototypeRegistry(db);
+    this.prototype = createPrototypeRepository(db);
   }
 
   async saveContext(roleId: string, data: ContextData): Promise<void> {
@@ -61,7 +61,7 @@ export class SqliteRepository implements RoleXRepository {
 
 // ===== Prototype Registry (SQLite-backed) =====
 
-function createPrototypeRegistry(db: DB): PrototypeRegistry {
+function createPrototypeRepository(db: DB): PrototypeRepository {
   return {
     settle(id: string, source: string) {
       db.run(sql`INSERT OR REPLACE INTO prototypes (id, source) VALUES (${id}, ${source})`);
@@ -81,11 +81,11 @@ function createPrototypeRegistry(db: DB): PrototypeRegistry {
       return result;
     },
 
-    recordMigration(prototypeId: string, migrationId: string, checksum: string) {
+    recordMigration(prototypeId: string, migrationId: string, version: number, checksum: string) {
       const executedAt = new Date().toISOString();
       db.run(
-        sql`INSERT OR REPLACE INTO prototype_migrations (prototype_id, migration_id, checksum, executed_at)
-            VALUES (${prototypeId}, ${migrationId}, ${checksum}, ${executedAt})`
+        sql`INSERT OR REPLACE INTO prototype_migrations (prototype_id, migration_id, version, checksum, executed_at)
+            VALUES (${prototypeId}, ${migrationId}, ${version}, ${checksum}, ${executedAt})`
       );
     },
 
@@ -94,17 +94,19 @@ function createPrototypeRegistry(db: DB): PrototypeRegistry {
         .all<{
           prototype_id: string;
           migration_id: string;
+          version: number;
           checksum: string;
           executed_at: string;
         }>(
-          sql`SELECT prototype_id, migration_id, checksum, executed_at
+          sql`SELECT prototype_id, migration_id, version, checksum, executed_at
             FROM prototype_migrations
             WHERE prototype_id = ${prototypeId}
-            ORDER BY executed_at`
+            ORDER BY version`
         )
         .map((row) => ({
           prototypeId: row.prototype_id,
           migrationId: row.migration_id,
+          version: row.version,
           checksum: row.checksum,
           executedAt: row.executed_at,
         }));

@@ -10,9 +10,9 @@
  * Rolex just wires Platform → ops and manages Role lifecycle.
  */
 
-import type { Platform, RoleXRepository } from "@rolexjs/core";
+import type { Platform, PrototypeData, RoleXRepository } from "@rolexjs/core";
 import * as C from "@rolexjs/core";
-import { createOps, directives, type Ops, toArgs } from "@rolexjs/prototype";
+import { applyPrototype, createOps, directives, type Ops, toArgs } from "@rolexjs/prototype";
 import type { Initializer, Runtime, Structure } from "@rolexjs/system";
 import { createIssueX, type IssueX } from "issuexjs";
 import type { ResourceX } from "resourcexjs";
@@ -36,7 +36,7 @@ export class Rolex {
   private repo: RoleXRepository;
   private readonly initializer?: Initializer;
 
-  private readonly bootstrap: readonly string[];
+  private readonly prototypes: readonly PrototypeData[];
   private society!: Structure;
   private past!: Structure;
 
@@ -44,7 +44,7 @@ export class Rolex {
     this.repo = platform.repository;
     this.rt = this.repo.runtime;
     this.initializer = platform.initializer;
-    this.bootstrap = platform.bootstrap ?? [];
+    this.prototypes = platform.prototypes ?? [];
 
     // Create ResourceX from injected provider
     if (platform.resourcexProvider) {
@@ -98,12 +98,12 @@ export class Rolex {
     });
   }
 
-  /** Genesis — create the world on first run. Settles built-in prototypes. */
+  /** Genesis — create the world on first run. Applies built-in prototypes. */
   async genesis(): Promise<void> {
     await this.initializer?.bootstrap();
-    // Settle bootstrap prototypes
-    for (const source of this.bootstrap) {
-      await this.direct("!prototype.settle", { source });
+
+    for (const proto of this.prototypes) {
+      await applyPrototype(proto, this.repo.prototype, (op, args) => this.direct(op, args));
     }
   }
 

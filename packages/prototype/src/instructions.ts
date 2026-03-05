@@ -610,19 +610,6 @@ const censusList = def(
 //  Prototype — registry + creation
 // ================================================================
 
-const prototypeSettle = def(
-  "prototype",
-  "settle",
-  {
-    source: {
-      type: "string",
-      required: true,
-      description: "ResourceX source — local path or locator",
-    },
-  },
-  ["source"]
-);
-
 const prototypeEvict = def(
   "prototype",
   "evict",
@@ -885,7 +872,6 @@ export const instructions: Record<string, InstructionDef> = {
   "census.list": censusList,
 
   // prototype
-  "prototype.settle": prototypeSettle,
   "prototype.evict": prototypeEvict,
 
   // resource

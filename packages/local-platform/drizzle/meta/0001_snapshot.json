@@ -1,0 +1,282 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "66a1f576-4d19-430a-a848-ed8256da44ae",
+  "prevId": "86f29a5e-3324-4b28-8b2a-b022b6d19fde",
+  "tables": {
+    "contexts": {
+      "name": "contexts",
+      "columns": {
+        "role_id": {
+          "name": "role_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "focused_goal_id": {
+          "name": "focused_goal_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "focused_plan_id": {
+          "name": "focused_plan_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "links": {
+      "name": "links",
+      "columns": {
+        "from_ref": {
+          "name": "from_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "to_ref": {
+          "name": "to_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "relation": {
+          "name": "relation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_links_from": {
+          "name": "idx_links_from",
+          "columns": ["from_ref"],
+          "isUnique": false
+        },
+        "idx_links_to": {
+          "name": "idx_links_to",
+          "columns": ["to_ref"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "links_from_ref_nodes_ref_fk": {
+          "name": "links_from_ref_nodes_ref_fk",
+          "tableFrom": "links",
+          "tableTo": "nodes",
+          "columnsFrom": ["from_ref"],
+          "columnsTo": ["ref"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "links_to_ref_nodes_ref_fk": {
+          "name": "links_to_ref_nodes_ref_fk",
+          "tableFrom": "links",
+          "tableTo": "nodes",
+          "columnsFrom": ["to_ref"],
+          "columnsTo": ["ref"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "links_from_ref_to_ref_relation_pk": {
+          "columns": ["from_ref", "to_ref", "relation"],
+          "name": "links_from_ref_to_ref_relation_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "nodes": {
+      "name": "nodes",
+      "columns": {
+        "ref": {
+          "name": "ref",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "alias": {
+          "name": "alias",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "parent_ref": {
+          "name": "parent_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "information": {
+          "name": "information",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tag": {
+          "name": "tag",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_nodes_id": {
+          "name": "idx_nodes_id",
+          "columns": ["id"],
+          "isUnique": false
+        },
+        "idx_nodes_name": {
+          "name": "idx_nodes_name",
+          "columns": ["name"],
+          "isUnique": false
+        },
+        "idx_nodes_parent_ref": {
+          "name": "idx_nodes_parent_ref",
+          "columns": ["parent_ref"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "nodes_parent_ref_nodes_ref_fk": {
+          "name": "nodes_parent_ref_nodes_ref_fk",
+          "tableFrom": "nodes",
+          "tableTo": "nodes",
+          "columnsFrom": ["parent_ref"],
+          "columnsTo": ["ref"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "prototype_migrations": {
+      "name": "prototype_migrations",
+      "columns": {
+        "prototype_id": {
+          "name": "prototype_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "migration_id": {
+          "name": "migration_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "checksum": {
+          "name": "checksum",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "executed_at": {
+          "name": "executed_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "prototype_migrations_prototype_id_migration_id_pk": {
+          "columns": ["prototype_id", "migration_id"],
+          "name": "prototype_migrations_prototype_id_migration_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "prototypes": {
+      "name": "prototypes",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}

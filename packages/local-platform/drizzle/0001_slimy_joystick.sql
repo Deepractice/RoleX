@@ -1,0 +1,1 @@
+ALTER TABLE `prototype_migrations` ADD `version` integer NOT NULL DEFAULT 0;

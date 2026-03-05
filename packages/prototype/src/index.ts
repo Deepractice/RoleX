@@ -8,6 +8,9 @@
  *   - Process and world descriptions (from .feature files)
  */
 
+// Apply prototype (internal API — not exposed as MCP instruction)
+export type { ApplyResult } from "./apply.js";
+export { applyPrototype } from "./apply.js";
 // Descriptions (auto-generated from .feature files)
 export { processes, world } from "./descriptions/index.js";
 // Directives (auto-generated from .feature files)
@@ -16,7 +19,6 @@ export { directives } from "./directives/index.js";
 export { toArgs } from "./dispatch.js";
 // Instruction registry
 export { instructions } from "./instructions.js";
-
 // Operations
 export type { OpResult, Ops, OpsContext } from "./ops.js";
 export { createOps } from "./ops.js";

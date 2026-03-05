@@ -9,6 +9,7 @@
  *   const result = ops["individual.born"]("Feature: Sean", "sean");
  */
 
+import type { PrototypeRepository } from "@rolexjs/core";
 import * as C from "@rolexjs/core";
 import { parse } from "@rolexjs/parser";
 import type { Runtime, State, Structure } from "@rolexjs/system";
@@ -32,11 +33,7 @@ export interface OpsContext {
   find(id: string): (Structure | null) | Promise<Structure | null>;
   resourcex?: ResourceX;
   issuex?: IssueX;
-  prototype?: {
-    settle(id: string, source: string): void;
-    evict(id: string): void;
-    list(): Record<string, string>;
-  };
+  prototype?: PrototypeRepository;
   direct?(locator: string, args?: Record<string, unknown>): Promise<unknown>;
 }
 
@@ -547,30 +544,6 @@ export function createOps(ctx: OpsContext): Ops {
       }
 
       return lines.join("\n");
-    },
-
-    // ---- Prototype ----
-
-    async "prototype.settle"(source: string): Promise<string> {
-      const rx = requireResourceX();
-      if (!ctx.prototype) throw new Error("Prototype registry is not available.");
-      if (!ctx.direct) throw new Error("Direct dispatch is not available.");
-
-      // Ingest the prototype resource — type resolver resolves @filename references
-      const result = await rx.ingest<{
-        id: string;
-        instructions: Array<{ op: string; args: Record<string, unknown> }>;
-      }>(source);
-
-      // Execute each instruction
-      for (const instr of result.instructions) {
-        await ctx.direct(instr.op, instr.args);
-      }
-
-      // Register in prototype registry
-      ctx.prototype.settle(result.id, source);
-
-      return `Prototype "${result.id}" settled (${result.instructions.length} instructions).`;
     },
 
     // ---- Resource (proxy to ResourceX) ----

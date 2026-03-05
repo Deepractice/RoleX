@@ -21,22 +21,43 @@ export interface ContextData {
   focusedPlanId: string | null;
 }
 
+/** A single migration within a prototype. */
+export interface Migration {
+  version: number;
+  id: string;
+  checksum: string;
+  instructions: Array<{ op: string; args: Record<string, unknown> }>;
+}
+
+/** The unified prototype data structure. */
+export interface PrototypeData {
+  id: string;
+  source: string;
+  migrations: Migration[];
+}
+
 /** Migration history entry — records a single executed migration. */
 export interface MigrationRecord {
   prototypeId: string;
   migrationId: string;
+  version: number;
   checksum: string;
   executedAt: string;
 }
 
 /** Prototype registry — tracks which prototypes are settled and their migration history. */
-export interface PrototypeRegistry {
+export interface PrototypeRepository {
   settle(id: string, source: string): void;
   evict(id: string): void;
   list(): Record<string, string>;
 
   /** Record a migration as executed. */
-  recordMigration(prototypeId: string, migrationId: string, checksum: string): void;
+  recordMigration(
+    prototypeId: string,
+    migrationId: string,
+    version: number,
+    checksum: string
+  ): void;
 
   /** Get all executed migrations for a prototype, ordered by execution time. */
   getMigrationHistory(prototypeId: string): MigrationRecord[];
@@ -56,7 +77,7 @@ export interface RoleXRepository {
   readonly runtime: Runtime;
 
   /** Prototype registry — tracks which prototypes are settled. */
-  readonly prototype: PrototypeRegistry;
+  readonly prototype: PrototypeRepository;
 
   /** Save role context to persistent storage. */
   saveContext(roleId: string, data: ContextData): Promise<void>;
@@ -81,6 +102,6 @@ export interface Platform {
   /** Initializer — bootstrap the world on first run. */
   readonly initializer?: Initializer;
 
-  /** Prototype sources to settle on genesis (local paths or ResourceX locators). */
-  readonly bootstrap?: readonly string[];
+  /** Prototype data to apply on genesis. */
+  readonly prototypes?: readonly PrototypeData[];
 }
