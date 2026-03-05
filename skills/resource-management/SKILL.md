@@ -72,7 +72,8 @@ Feature: Resource Operations
     And parameters are:
       """
       command: "!resource.add"
-path: "/absolute/path/to/resource"
+      args:
+        path: "/absolute/path/to/resource"
       """
 
   Scenario: push — publish a resource to a remote registry
@@ -83,7 +84,8 @@ path: "/absolute/path/to/resource"
     And parameters are:
       """
       command: "!resource.push"
-locator: "name:tag"
+      args:
+        locator: "name:tag"
         registry: "https://..."   # optional
       """
 
@@ -95,7 +97,8 @@ locator: "name:tag"
     And parameters are:
       """
       command: "!resource.pull"
-locator: "name:tag"
+      args:
+        locator: "name:tag"
       """
 
   Scenario: search — find resources in local CAS
@@ -105,7 +108,8 @@ locator: "name:tag"
     And parameters are:
       """
       command: "!resource.search"
-query: "keyword"
+      args:
+        query: "keyword"
       """
 
   Scenario: has — check if a resource exists locally
@@ -115,7 +119,8 @@ query: "keyword"
     And parameters are:
       """
       command: "!resource.has"
-locator: "name:tag"
+      args:
+        locator: "name:tag"
       """
 
   Scenario: remove — delete a resource from local CAS
@@ -125,15 +130,16 @@ locator: "name:tag"
     And parameters are:
       """
       command: "!resource.remove"
-locator: "name:tag"
+      args:
+        locator: "name:tag"
       """
 
   Scenario: Typical workflow — add then push
     Given you want to publish a resource to a registry
     Then the sequence is:
       """
-      1. command: "!resource.add", path: "./my-resource"
-      2. command: "!resource.push", locator: "my-resource"
+      1. command: "!resource.add", args: { path: "./my-resource" }
+      2. command: "!resource.push", args: { locator: "my-resource" }
       """
     And add imports to local CAS, push uploads to registry
     And tag defaults to latest when omitted
@@ -148,8 +154,8 @@ Feature: Resource Loading via use
     Then the resource is resolved through ResourceX and its content returned
     And parameters are:
       """
-      locator: "hello-prompt"                 # by registry locator (tag defaults to latest)
-      locator: "./path/to/resource"           # by local path
+      command: "hello-prompt"                 # by registry locator (tag defaults to latest)
+      command: "./path/to/resource"           # by local path
       """
 
   Scenario: skill — load full skill content by locator
@@ -220,9 +226,8 @@ Feature: Common Workflows
     When you want to make it available via registry
     Then the sequence is:
       """
-      1. command: "!resource.add"
-         path: "/path/to/roles/nuwa"
-      2. command: "!resource.push", locator: "nuwa"
+      1. command: "!resource.add", args: { path: "/path/to/roles/nuwa" }
+      2. command: "!resource.push", args: { locator: "nuwa" }
       """
     And the prototype is now pullable by anyone with registry access
 
@@ -231,8 +236,8 @@ Feature: Common Workflows
     When you re-add and push with the same tag
     Then the registry updates the tag to point to the new digest
       """
-      1. command: "!resource.add", path: "/path/to/roles/nuwa"
-      2. command: "!resource.push", locator: "nuwa"
+      1. command: "!resource.add", args: { path: "/path/to/roles/nuwa" }
+      2. command: "!resource.push", args: { locator: "nuwa" }
       """
     And consumers pulling the same tag get the updated content
 

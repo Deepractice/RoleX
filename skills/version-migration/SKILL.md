@@ -100,10 +100,10 @@ Feature: Migration Process
     When migrating each role from the manifest
     Then for each role:
       """
-      1. Read persona.identity.feature → use as born content
-      2. command: "!individual.born"
-         id: "<role-name>"
-         content: "<persona feature content>"
+      command: "!individual.born"
+      args:
+        id: "<role-name>"
+        content: "<persona feature content>"
       """
     And the role-name from the directory becomes the individual id
 
@@ -115,9 +115,10 @@ Feature: Migration Process
       1. Extract topic from filename: "role-creation.knowledge.identity.feature" → "role-creation"
       2. Read the file content (Gherkin Feature)
       3. command: "!individual.teach"
-         individual: "<role-name>"
-         content: "<knowledge feature content>"
-         id: "<topic>"
+         args:
+           individual: "<role-name>"
+           content: "<knowledge feature content>"
+           id: "<topic>"
       """
     And each knowledge file becomes one principle
 
@@ -127,12 +128,14 @@ Feature: Migration Process
     Then for each organization:
       """
       1. command: "!org.found"
-         id: "<org-id>"
-         content: "<org feature content>"
+         args:
+           id: "<org-id>"
+           content: "<org feature content>"
       2. If charter exists:
          command: "!org.charter"
-         org: "<org-id>"
-         content: "<charter content>"
+         args:
+           org: "<org-id>"
+           content: "<charter content>"
       """
 
   Scenario: Step 5 — Migrate assignments (membership + appointments)
@@ -141,12 +144,14 @@ Feature: Migration Process
     Then for each assignment:
       """
       1. command: "!org.hire"
-         org: "<org-id>"
-         individual: "<role-name>"
+         args:
+           org: "<org-id>"
+           individual: "<role-name>"
       2. If position exists:
          command: "!position.appoint"
-         position: "<position-id>"
-         individual: "<role-name>"
+         args:
+           position: "<position-id>"
+           individual: "<role-name>"
       """
 
   Scenario: Step 6 — Migrate goals (optional)
@@ -180,7 +185,7 @@ Feature: Entity Mapping Reference
     Then the mapping is:
       """
       Old: roles/<name>/identity/persona.identity.feature
-      New: command: "!individual.born", id: "<name>", content: "<persona>"
+      New: command: "!individual.born", args: { id: "<name>", content: "<persona>" }
       """
 
   Scenario: Knowledge mapping
@@ -188,7 +193,7 @@ Feature: Entity Mapping Reference
     Then the mapping is:
       """
       Old: roles/<name>/identity/<topic>.knowledge.identity.feature
-      New: command: "!individual.teach", individual: "<name>", content: "<knowledge>", id: "<topic>"
+      New: command: "!individual.teach", args: { individual: "<name>", content: "<knowledge>", id: "<topic>" }
       """
 
   Scenario: Organization mapping
@@ -196,8 +201,8 @@ Feature: Entity Mapping Reference
     Then the mapping is:
       """
       Old: rolex.json → organizations.<id>
-      New: command: "!org.found", id: "<id>", content: "<org content>"
-           command: "!org.charter", org: "<id>", content: "<charter>"
+      New: command: "!org.found", args: { id: "<id>", content: "<org content>" }
+           command: "!org.charter", args: { org: "<id>", content: "<charter>" }
       """
 
   Scenario: Assignment mapping
@@ -205,8 +210,8 @@ Feature: Entity Mapping Reference
     Then the mapping is:
       """
       Old: rolex.json → assignments.<role>.<org>
-      New: command: "!org.hire", org: "<org>", individual: "<role>"
-           command: "!position.appoint", position: "<pos>", individual: "<role>"
+      New: command: "!org.hire", args: { org: "<org>", individual: "<role>" }
+           command: "!position.appoint", args: { position: "<pos>", individual: "<role>" }
       """
 
 Feature: Edge Cases and Troubleshooting

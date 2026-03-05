@@ -48,16 +48,16 @@ Feature: Instruction Set — prototype.json
     Given prototypes can use any runtime operation
     Then common operations are:
       """
-      !individual.born    — Create an individual      (id, alias?, content?)
-      !individual.train   — Train a procedure          (individual, id, content)
-      !individual.teach   — Teach a principle           (individual, id, content)
-      !org.found          — Found an organization       (id, alias?, content?)
-      !org.charter        — Set organization charter    (org, id, content)
-      !org.hire           — Hire individual into org    (org, individual)
-      !position.establish — Establish a position        (id, content?)
-      !position.charge    — Add a duty to position      (position, id, content)
-      !position.require   — Add a skill requirement     (position, id, content)
-      !position.appoint   — Appoint individual to pos   (position, individual)
+      !individual.born    — Create an individual      args: { id, alias?, content? }
+      !individual.train   — Train a procedure          args: { individual, id, content }
+      !individual.teach   — Teach a principle           args: { individual, id, content }
+      !org.found          — Found an organization       args: { id, alias?, content? }
+      !org.charter        — Set organization charter    args: { org, id, content }
+      !org.hire           — Hire individual into org    args: { org, individual }
+      !position.establish — Establish a position        args: { id, content? }
+      !position.charge    — Add a duty to position      args: { position, id, content }
+      !position.require   — Add a skill requirement     args: { position, id, content }
+      !position.appoint   — Appoint individual to pos   args: { position, individual }
       """
 
   Scenario: Instruction ordering matters
@@ -135,7 +135,8 @@ Feature: Example — Individual Prototype
     When you run:
       """
       command: "!prototype.settle"
-      source: "./prototypes/dev"
+      args:
+        source: "./prototypes/dev"
       """
     Then the dev individual is born and trained with the code-review procedure
 

@@ -15,9 +15,10 @@ Feature: Individual Lifecycle
     And parameters are:
       """
       command: "!individual.born"
-      content: "Feature: ..."   # Gherkin persona (optional)
-      id: "sean"                # kebab-case identifier
-      alias: ["小明", "xm"]    # aliases (optional)
+      args:
+        content: "Feature: ..."   # Gherkin persona (optional)
+        id: "sean"                # kebab-case identifier
+        alias: ["小明", "xm"]    # aliases (optional)
       """
 
   Scenario: born — persona writing guidelines
@@ -35,7 +36,8 @@ Feature: Individual Lifecycle
     And parameters are:
       """
       command: "!individual.retire"
-      individual: "sean"
+      args:
+        individual: "sean"
       """
 
   Scenario: die — permanently remove an individual
@@ -46,7 +48,8 @@ Feature: Individual Lifecycle
     And parameters are:
       """
       command: "!individual.die"
-      individual: "sean"
+      args:
+        individual: "sean"
       """
 
   Scenario: retire vs die — when to use which
@@ -64,7 +67,8 @@ Feature: Individual Lifecycle
     And parameters are:
       """
       command: "!individual.rehire"
-      individual: "sean"
+      args:
+        individual: "sean"
       """
 
 Feature: Knowledge Injection
@@ -80,9 +84,10 @@ Feature: Knowledge Injection
     And parameters are:
       """
       command: "!individual.teach"
-      individual: "sean"
-      content: "Feature: Always validate input\n  ..."
-      id: "always-validate-input"
+      args:
+        individual: "sean"
+        content: "Feature: Always validate input\n  ..."
+        id: "always-validate-input"
       """
 
   Scenario: train — inject a procedure (skill reference)
@@ -94,9 +99,10 @@ Feature: Knowledge Injection
     And parameters are:
       """
       command: "!individual.train"
-      individual: "sean"
-      content: "Feature: Skill Creator\n  https://github.com/Deepractice/DeepracticeX/tree/main/skills/skill-creator\n\n  Scenario: When to use\n    Given I need to create a skill\n    Then load this skill"
-      id: "skill-creator"
+      args:
+        individual: "sean"
+        content: "Feature: Skill Creator\n  https://github.com/Deepractice/DeepracticeX/tree/main/skills/skill-creator\n\n  Scenario: When to use\n    Given I need to create a skill\n    Then load this skill"
+        id: "skill-creator"
       """
 
   Scenario: teach vs realize — when to use which
@@ -136,9 +142,9 @@ Feature: Common Workflows
     When setting up a new role from scratch
     Then follow this sequence:
       """
-      1. command: "!individual.born", id: "sean", content: "Feature: ..."
-      2. command: "!individual.teach", individual: "sean", content: "...", id: "..."   # repeat
-      3. command: "!individual.train", individual: "sean", content: "...", id: "..."   # repeat
+      1. command: "!individual.born", args: { id: "sean", content: "Feature: ..." }
+      2. command: "!individual.teach", args: { individual: "sean", content: "...", id: "..." }   # repeat
+      3. command: "!individual.train", args: { individual: "sean", content: "...", id: "..." }   # repeat
       4. activate with roleId: "sean"   # verify the individual's state
       """
 

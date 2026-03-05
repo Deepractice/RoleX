@@ -32,7 +32,8 @@ Feature: Issue Lifecycle Commands
     And parameters are:
       """
       command: "!issue.publish"
-title: "Issue title"
+      args:
+        title: "Issue title"
         body: "Issue description"
         author: "individual-id"
         assignee: "other-id"   # optional
@@ -45,7 +46,8 @@ title: "Issue title"
     And parameters are:
       """
       command: "!issue.get"
-number: 1
+      args:
+        number: 1
       """
 
   Scenario: List issues with filters
@@ -56,7 +58,8 @@ number: 1
     And parameters are:
       """
       command: "!issue.list"
-status: "open"        # optional
+      args:
+        status: "open"        # optional
         author: "id"          # optional
         assignee: "id"        # optional
         label: "bug"          # optional
@@ -69,7 +72,8 @@ status: "open"        # optional
     And parameters are:
       """
       command: "!issue.update"
-number: 1
+      args:
+        number: 1
         title: "New title"    # optional
         body: "New body"      # optional
         assignee: "id"        # optional
@@ -82,7 +86,8 @@ number: 1
     And parameters are:
       """
       command: "!issue.close"
-number: 1
+      args:
+        number: 1
       """
 
   Scenario: Reopen an issue
@@ -92,7 +97,8 @@ number: 1
     And parameters are:
       """
       command: "!issue.reopen"
-number: 1
+      args:
+        number: 1
       """
 
   Scenario: Assign an issue
@@ -102,7 +108,8 @@ number: 1
     And parameters are:
       """
       command: "!issue.assign"
-number: 1
+      args:
+        number: 1
         assignee: "individual-id"
       """
 
@@ -116,7 +123,8 @@ Feature: Comment Commands
     And parameters are:
       """
       command: "!issue.comment"
-number: 1
+      args:
+        number: 1
         body: "Comment text"
         author: "individual-id"
       """
@@ -128,7 +136,8 @@ number: 1
     And parameters are:
       """
       command: "!issue.comments"
-number: 1
+      args:
+        number: 1
       """
 
 Feature: Label Commands
@@ -142,7 +151,8 @@ Feature: Label Commands
     And parameters are:
       """
       command: "!issue.label"
-number: 1
+      args:
+        number: 1
         label: "bug"
       """
 
@@ -153,7 +163,8 @@ number: 1
     And parameters are:
       """
       command: "!issue.unlabel"
-number: 1
+      args:
+        number: 1
         label: "bug"
       """
 

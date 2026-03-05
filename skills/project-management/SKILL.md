@@ -15,8 +15,9 @@ Feature: Project Lifecycle
     And parameters are:
       """
       command: "!project.launch"
-      content: "Feature: My Project\n  A project to build something great"
-      id: "my-project"
+      args:
+        content: "Feature: My Project\n  A project to build something great"
+        id: "my-project"
       """
 
   Scenario: scope — define project boundary
@@ -26,9 +27,10 @@ Feature: Project Lifecycle
     And parameters are:
       """
       command: "!project.scope"
-      project: "my-project"
-      content: "Feature: MVP Scope\n  Scenario: Core features\n    Given we focus on essentials\n    Then build auth, dashboard, and API"
-      id: "mvp-scope"
+      args:
+        project: "my-project"
+        content: "Feature: MVP Scope\n  Scenario: Core features\n    Given we focus on essentials\n    Then build auth, dashboard, and API"
+        id: "mvp-scope"
       """
 
   Scenario: archive — close a project
@@ -39,7 +41,8 @@ Feature: Project Lifecycle
     And parameters are:
       """
       command: "!project.archive"
-      project: "my-project"
+      args:
+        project: "my-project"
       """
 
 Feature: Milestones
@@ -53,9 +56,10 @@ Feature: Milestones
     And parameters are:
       """
       command: "!project.milestone"
-      project: "my-project"
-      content: "Feature: Alpha Release\n  Scenario: Criteria\n    Given core features are implemented\n    Then deploy to staging"
-      id: "alpha-release"
+      args:
+        project: "my-project"
+        content: "Feature: Alpha Release\n  Scenario: Criteria\n    Given core features are implemented\n    Then deploy to staging"
+        id: "alpha-release"
       """
 
   Scenario: achieve — mark a milestone as done
@@ -65,7 +69,8 @@ Feature: Milestones
     And parameters are:
       """
       command: "!project.achieve"
-      milestone: "alpha-release"
+      args:
+        milestone: "alpha-release"
       """
 
 Feature: Participation
@@ -79,8 +84,9 @@ Feature: Participation
     And parameters are:
       """
       command: "!project.enroll"
-      project: "my-project"
-      individual: "sean"
+      args:
+        project: "my-project"
+        individual: "sean"
       """
 
   Scenario: remove — remove a participant
@@ -90,8 +96,9 @@ Feature: Participation
     And parameters are:
       """
       command: "!project.remove"
-      project: "my-project"
-      individual: "sean"
+      args:
+        project: "my-project"
+        individual: "sean"
       """
 
 Feature: Deliverables and Wiki
@@ -104,9 +111,10 @@ Feature: Deliverables and Wiki
     And parameters are:
       """
       command: "!project.deliver"
-      project: "my-project"
-      content: "Feature: API v1\n  Scenario: What was delivered\n    Given the REST API is complete\n    Then all endpoints are documented and tested"
-      id: "api-v1"
+      args:
+        project: "my-project"
+        content: "Feature: API v1\n  Scenario: What was delivered\n    Given the REST API is complete\n    Then all endpoints are documented and tested"
+        id: "api-v1"
       """
 
   Scenario: wiki — capture project knowledge
@@ -116,9 +124,10 @@ Feature: Deliverables and Wiki
     And parameters are:
       """
       command: "!project.wiki"
-      project: "my-project"
-      content: "Feature: Architecture Decisions\n  Scenario: Why we chose X\n    Given option A and option B existed\n    Then we chose A because of performance"
-      id: "architecture-decisions"
+      args:
+        project: "my-project"
+        content: "Feature: Architecture Decisions\n  Scenario: Why we chose X\n    Given option A and option B existed\n    Then we chose A because of performance"
+        id: "architecture-decisions"
       """
 
 Feature: Common Workflows
@@ -127,18 +136,18 @@ Feature: Common Workflows
     Given you need a complete project with scope and milestones
     Then follow this sequence:
       """
-      1. command: "!project.launch", id: "my-project", content: "Feature: ..."
-      2. command: "!project.scope", project: "my-project", content: "Feature: ...", id: "scope"
-      3. command: "!project.milestone", project: "my-project", content: "Feature: ...", id: "m1"
-      4. command: "!project.enroll", project: "my-project", individual: "sean"
+      1. command: "!project.launch", args: { id: "my-project", content: "Feature: ..." }
+      2. command: "!project.scope", args: { project: "my-project", content: "Feature: ...", id: "scope" }
+      3. command: "!project.milestone", args: { project: "my-project", content: "Feature: ...", id: "m1" }
+      4. command: "!project.enroll", args: { project: "my-project", individual: "sean" }
       """
 
   Scenario: Complete a project
     Given a project is done
     Then the sequence is:
       """
-      1. command: "!project.achieve", milestone: "final-milestone"
-      2. command: "!project.deliver", project: "my-project", content: "Feature: ...", id: "final"
-      3. command: "!project.wiki", project: "my-project", content: "Feature: ...", id: "lessons"
-      4. command: "!project.archive", project: "my-project"
+      1. command: "!project.achieve", args: { milestone: "final-milestone" }
+      2. command: "!project.deliver", args: { project: "my-project", content: "Feature: ...", id: "final" }
+      3. command: "!project.wiki", args: { project: "my-project", content: "Feature: ...", id: "lessons" }
+      4. command: "!project.archive", args: { project: "my-project" }
       """
