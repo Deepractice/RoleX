@@ -4,7 +4,7 @@
  * Pure pass-through: all rendering happens in rolexjs.
  * MCP only translates protocol calls to API calls.
  *
- * Tool schemas are defined once in @rolexjs/prototype (tools)
+ * Tool schemas are defined once in @rolexjs/core (tools)
  * and converted to Zod here for FastMCP registration.
  */
 

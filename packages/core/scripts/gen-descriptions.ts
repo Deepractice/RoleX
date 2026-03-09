@@ -82,21 +82,23 @@ if (structure.world) {
   lines.push(``);
 }
 
-// System exports
-for (const [dir, { system, entries }] of Object.entries(structure)) {
+// Collect all process entries (non-world) into a flat Record
+const allProcessEntries: [string, string][] = [];
+for (const [dir, { entries }] of Object.entries(structure)) {
   if (dir === "world") continue;
-
-  lines.push(`export const ${dir} = {`);
-  if (system) {
-    lines.push(`  system: ${system},`);
-  }
   for (const [name, content] of entries) {
-    const key = name.includes("-") ? `"${name}"` : name;
-    lines.push(`  ${key}: ${content},`);
+    allProcessEntries.push([name, content]);
   }
-  lines.push(`} as const;`);
-  lines.push(``);
 }
+allProcessEntries.sort((a, b) => a[0].localeCompare(b[0]));
+
+lines.push(`export const processes: Record<string, string> = {`);
+for (const [name, content] of allProcessEntries) {
+  const key = name.includes("-") ? `"${name}"` : name;
+  lines.push(`  ${key}: ${content},`);
+}
+lines.push(`} as const;`);
+lines.push(``);
 
 writeFileSync(join(descDir, "index.ts"), lines.join("\n"));
 console.log(`Generated descriptions/index.ts (${featureCount} features inlined)`);
