@@ -1,5 +1,55 @@
 # @rolexjs/core
 
+## 1.4.0
+
+### Minor Changes
+
+- fe28a2b: Replace raw DDL with Drizzle ORM migrations for schema management. Add prototype_migrations table for Flyway-style migration history tracking. PrototypeRegistry now supports recordMigration, getMigrationHistory, and hasMigration methods.
+- a6e717f: feat: add issue management as world instruction
+
+  Issue management is now a built-in world instruction available to all roles,
+  not just roles with the issue-management skill. This reflects that IssueX is
+  a core collaboration primitive — enabling both self-collaboration across
+  context breaks and inter-individual asynchronous coordination.
+
+- b968e76: feat: add product management system
+
+  New entity type for managing products with four concept layers:
+  vision, strategy, specification (BDD contracts), and release.
+
+  Commands: create, strategy, spec, release, channel, own, disown, deprecate.
+
+- ffada31: Implement Flyway-style prototype migration system. Prototypes now support incremental versioned migrations — only unapplied migrations execute on restart.
+
+  - Add `PrototypeData`, `Migration` types and `applyPrototype()` function
+  - Rename `PrototypeRegistry` to `PrototypeRepository`
+  - Add `version` column to `prototype_migrations` table
+  - Remove `prototype.settle` MCP instruction (now internal-only)
+  - Convert genesis from ResourceX resource to TS module with inline migrations
+  - Replace `Platform.bootstrap` (string[]) with `Platform.prototypes` (PrototypeData[])
+
+- 5cde1b1: Role rich domain model — merge prototype into core, Protocol export
+
+  - Role is now a rich domain model in @rolexjs/core with ownership isolation, KV-serializable snapshot/restore, and all domain methods (want, plan, todo, finish, reflect, realize, master, etc.)
+  - RoleXService orchestrates Role lifecycle, caching, and persistence in core
+  - rolexjs becomes a thin rendering shell delegating to core's RoleXService
+  - Protocol interface bundles tools + instructions as a single export for channel adapters
+  - Removed scattered exports (render, genesis, createRendererRouter) from rolexjs public API
+  - Deleted old Role class and RoleContext from rolexjs (replaced by core's Role)
+  - Moved findInState utility to core
+
+### Patch Changes
+
+- ccef531: Make PrototypeRepository interface fully async. All methods now return Promises, enabling native async storage backends like Cloudflare D1.
+- d5d6301: fix: align skill docs and tool descriptions with args parameter format
+
+  - Fix use-protocol world instruction: changed "flat top-level parameters" to "args object"
+  - Update use/direct tool descriptions with args usage examples
+  - Update args parameter description to clarify object format
+  - Update all 9 SKILL.md files to use nested args format in examples
+  - @rolexjs/parser@1.4.0
+  - @rolexjs/system@1.4.0
+
 ## 1.3.0
 
 ### Minor Changes

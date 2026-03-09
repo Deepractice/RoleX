@@ -1,5 +1,74 @@
 # @rolexjs/prototype
 
+## 1.4.0
+
+### Minor Changes
+
+- 6be2390: refactor: census.list returns structured CommandResult instead of string
+
+  - census.list now returns CommandResult with structured State tree
+  - CensusRenderer handles org-tree Markdown rendering (moved from commands.ts)
+  - Remove CensusEntry type (no longer needed)
+
+- a6e717f: feat: add issue management as world instruction
+
+  Issue management is now a built-in world instruction available to all roles,
+  not just roles with the issue-management skill. This reflects that IssueX is
+  a core collaboration primitive — enabling both self-collaboration across
+  context breaks and inter-individual asynchronous coordination.
+
+- ffada31: Implement Flyway-style prototype migration system. Prototypes now support incremental versioned migrations — only unapplied migrations execute on restart.
+
+  - Add `PrototypeData`, `Migration` types and `applyPrototype()` function
+  - Rename `PrototypeRegistry` to `PrototypeRepository`
+  - Add `version` column to `prototype_migrations` table
+  - Remove `prototype.settle` MCP instruction (now internal-only)
+  - Convert genesis from ResourceX resource to TS module with inline migrations
+  - Replace `Platform.bootstrap` (string[]) with `Platform.prototypes` (PrototypeData[])
+
+- 8988ee9: feat: add renderer router — direct() renders Markdown by default
+
+  - RendererRouter dispatches rendering by command prefix to business-domain renderers
+  - 6 renderers: RoleRenderer, IndividualRenderer, OrgRenderer, PositionRenderer, ProjectRenderer, CensusRenderer
+  - direct() returns rendered Markdown string; pass { raw: true } for structured data
+  - census.list returns structured CommandResult; rendering moved to CensusRenderer
+  - Remove CensusEntry type
+  - MCP server requires zero changes — rendering happens in rolexjs layer
+
+- 42f6d76: feat: unified tool schema in prototype — single source of truth for all tool definitions
+
+  - Add `ToolDef` type and `tools` array in `@rolexjs/prototype` defining all 15 tool schemas
+  - Add `worldInstructions` pre-assembled from world features
+  - MCP server consumes unified schema instead of hand-written Zod definitions
+  - Remove `instructions.ts` from mcp-server (now comes from prototype)
+  - Re-export `ToolDef`, `tools`, `worldInstructions` from `rolexjs`
+
+### Patch Changes
+
+- ccef531: Make PrototypeRepository interface fully async. All methods now return Promises, enabling native async storage backends like Cloudflare D1.
+- b4f08af: feat: replace additionalProperties with explicit args param for use/direct tools
+
+  use and direct tools now accept an explicit `args` parameter (type: record) instead of
+  relying on additionalProperties. This enforces progressive disclosure — AI sees the args
+  field exists but must load the skill first to learn what to pass.
+
+- 248cf65: feat: flatten use/direct MCP tool args
+
+  Replace nested `args` object with flat top-level parameters for `use` and `direct` MCP tools.
+  This eliminates the string/object serialization ambiguity when AI calls these tools.
+  Updated all SKILL.md documentation to reflect the new flat parameter format.
+
+- Updated dependencies [ccef531]
+- Updated dependencies [fe28a2b]
+- Updated dependencies [d5d6301]
+- Updated dependencies [a6e717f]
+- Updated dependencies [b968e76]
+- Updated dependencies [ffada31]
+- Updated dependencies [5cde1b1]
+  - @rolexjs/core@1.4.0
+  - @rolexjs/parser@1.4.0
+  - @rolexjs/system@1.4.0
+
 ## 1.3.0
 
 ### Minor Changes

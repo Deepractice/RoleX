@@ -1,5 +1,88 @@
 # rolexjs
 
+## 1.4.0
+
+### Minor Changes
+
+- c173792: Auto-apply prototypes during createRoleX initialization. Callers no longer need to explicitly call rolex.genesis().
+- 6be2390: refactor: census.list returns structured CommandResult instead of string
+
+  - census.list now returns CommandResult with structured State tree
+  - CensusRenderer handles org-tree Markdown rendering (moved from commands.ts)
+  - Remove CensusEntry type (no longer needed)
+
+- b968e76: feat: add product management system
+
+  New entity type for managing products with four concept layers:
+  vision, strategy, specification (BDD contracts), and release.
+
+  Commands: create, strategy, spec, release, channel, own, disown, deprecate.
+
+- ffada31: Implement Flyway-style prototype migration system. Prototypes now support incremental versioned migrations — only unapplied migrations execute on restart.
+
+  - Add `PrototypeData`, `Migration` types and `applyPrototype()` function
+  - Rename `PrototypeRegistry` to `PrototypeRepository`
+  - Add `version` column to `prototype_migrations` table
+  - Remove `prototype.settle` MCP instruction (now internal-only)
+  - Convert genesis from ResourceX resource to TS module with inline migrations
+  - Replace `Platform.bootstrap` (string[]) with `Platform.prototypes` (PrototypeData[])
+
+- 8988ee9: feat: add renderer router — direct() renders Markdown by default
+
+  - RendererRouter dispatches rendering by command prefix to business-domain renderers
+  - 6 renderers: RoleRenderer, IndividualRenderer, OrgRenderer, PositionRenderer, ProjectRenderer, CensusRenderer
+  - direct() returns rendered Markdown string; pass { raw: true } for structured data
+  - census.list returns structured CommandResult; rendering moved to CensusRenderer
+  - Remove CensusEntry type
+  - MCP server requires zero changes — rendering happens in rolexjs layer
+
+- 5cde1b1: Role rich domain model — merge prototype into core, Protocol export
+
+  - Role is now a rich domain model in @rolexjs/core with ownership isolation, KV-serializable snapshot/restore, and all domain methods (want, plan, todo, finish, reflect, realize, master, etc.)
+  - RoleXService orchestrates Role lifecycle, caching, and persistence in core
+  - rolexjs becomes a thin rendering shell delegating to core's RoleXService
+  - Protocol interface bundles tools + instructions as a single export for channel adapters
+  - Removed scattered exports (render, genesis, createRendererRouter) from rolexjs public API
+  - Deleted old Role class and RoleContext from rolexjs (replaced by core's Role)
+  - Moved findInState utility to core
+
+- 42f6d76: feat: unified tool schema in prototype — single source of truth for all tool definitions
+
+  - Add `ToolDef` type and `tools` array in `@rolexjs/prototype` defining all 15 tool schemas
+  - Add `worldInstructions` pre-assembled from world features
+  - MCP server consumes unified schema instead of hand-written Zod definitions
+  - Remove `instructions.ts` from mcp-server (now comes from prototype)
+  - Re-export `ToolDef`, `tools`, `worldInstructions` from `rolexjs`
+
+### Patch Changes
+
+- ccef531: Make PrototypeRepository interface fully async. All methods now return Promises, enabling native async storage backends like Cloudflare D1.
+- b4f08af: feat: replace additionalProperties with explicit args param for use/direct tools
+
+  use and direct tools now accept an explicit `args` parameter (type: record) instead of
+  relying on additionalProperties. This enforces progressive disclosure — AI sees the args
+  field exists but must load the skill first to learn what to pass.
+
+- 248cf65: feat: flatten use/direct MCP tool args
+
+  Replace nested `args` object with flat top-level parameters for `use` and `direct` MCP tools.
+  This eliminates the string/object serialization ambiguity when AI calls these tools.
+  Updated all SKILL.md documentation to reflect the new flat parameter format.
+
+- bf38ba4: Re-export genesis from rolexjs so consumers only need a single dependency.
+- Updated dependencies [ccef531]
+- Updated dependencies [fe28a2b]
+- Updated dependencies [d5d6301]
+- Updated dependencies [a6e717f]
+- Updated dependencies [b968e76]
+- Updated dependencies [6f19241]
+- Updated dependencies [ffada31]
+- Updated dependencies [5cde1b1]
+  - @rolexjs/core@1.4.0
+  - @rolexjs/genesis@1.4.0
+  - @rolexjs/parser@1.4.0
+  - @rolexjs/system@1.4.0
+
 ## 1.3.0
 
 ### Patch Changes
