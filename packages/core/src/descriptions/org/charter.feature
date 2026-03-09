@@ -8,6 +8,12 @@ Feature: charter — define organizational charter
     When charter is called on the organization
     Then the charter is stored as the organization's information
 
+  Scenario: Parameters
+    Given the command is org.charter
+    Then org is required — the organization's id
+    And content is required — Gherkin Feature source for the charter
+    And id is required — charter id
+
   Scenario: Writing the charter Gherkin
     Given the charter defines an organization's mission and governance
     Then the Feature title names the charter or the organization it governs

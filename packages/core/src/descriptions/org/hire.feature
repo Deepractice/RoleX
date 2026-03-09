@@ -7,3 +7,8 @@ Feature: hire — hire into an organization
     When hire is called with the organization and individual
     Then the individual becomes a member of the organization
     And the individual can be appointed to positions within the organization
+
+  Scenario: Parameters
+    Given the command is org.hire
+    Then org is required — the organization's id
+    And individual is required — the individual's id

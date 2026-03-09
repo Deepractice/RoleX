@@ -86,6 +86,8 @@ export interface CommandResultMap {
   "project.wiki": CommandResult;
   "project.archive": CommandResult;
   "project.produce": CommandResult;
+  "project.maintain": CommandResult;
+  "project.unmaintain": CommandResult;
 
   // ---- Product ----
   "product.strategy": CommandResult;
@@ -103,6 +105,8 @@ export interface CommandResultMap {
   "society.dissolve": CommandResult;
   "org.hire": CommandResult;
   "org.fire": CommandResult;
+  "org.admin": CommandResult;
+  "org.unadmin": CommandResult;
 
   // ---- Position ----
   "position.establish": CommandResult;
@@ -516,6 +520,18 @@ export function createCommands(ctx: CommandContext): Commands {
       return ok(node, "produce");
     },
 
+    async "project.maintain"(project: string, individual: string): Promise<CommandResult> {
+      const projNode = await resolve(project);
+      await rt.link(projNode, await resolve(individual), "maintain", "maintained-by");
+      return ok(projNode, "maintain");
+    },
+
+    async "project.unmaintain"(project: string, individual: string): Promise<CommandResult> {
+      const projNode = await resolve(project);
+      await rt.unlink(projNode, await resolve(individual), "maintain", "maintained-by");
+      return ok(projNode, "unmaintain");
+    },
+
     // ---- Product ----
 
     async "product.strategy"(
@@ -596,6 +612,18 @@ export function createCommands(ctx: CommandContext): Commands {
       const orgNode = await resolve(org);
       await rt.unlink(orgNode, await resolve(individual), "membership", "belong");
       return ok(orgNode, "fire");
+    },
+
+    async "org.admin"(org: string, individual: string): Promise<CommandResult> {
+      const orgNode = await resolve(org);
+      await rt.link(orgNode, await resolve(individual), "admin", "administer");
+      return ok(orgNode, "admin");
+    },
+
+    async "org.unadmin"(org: string, individual: string): Promise<CommandResult> {
+      const orgNode = await resolve(org);
+      await rt.unlink(orgNode, await resolve(individual), "admin", "administer");
+      return ok(orgNode, "unadmin");
     },
 
     // ---- Position ----

@@ -373,6 +373,26 @@ const orgFire = def(
   ["org", "individual"]
 );
 
+const orgAdmin = def(
+  "org",
+  "admin",
+  {
+    org: { type: "string", required: true, description: "Organization id" },
+    individual: { type: "string", required: true, description: "Individual id" },
+  },
+  ["org", "individual"]
+);
+
+const orgUnadmin = def(
+  "org",
+  "unadmin",
+  {
+    org: { type: "string", required: true, description: "Organization id" },
+    individual: { type: "string", required: true, description: "Individual id" },
+  },
+  ["org", "individual"]
+);
+
 // ================================================================
 //  Position — position management
 // ================================================================
@@ -603,6 +623,26 @@ const projectProduce = def(
     alias: { type: "string[]", required: false, description: "Alternative names" },
   },
   ["project", "content", "id", "alias"]
+);
+
+const projectMaintain = def(
+  "project",
+  "maintain",
+  {
+    project: { type: "string", required: true, description: "Project id" },
+    individual: { type: "string", required: true, description: "Individual id" },
+  },
+  ["project", "individual"]
+);
+
+const projectUnmaintain = def(
+  "project",
+  "unmaintain",
+  {
+    project: { type: "string", required: true, description: "Project id" },
+    individual: { type: "string", required: true, description: "Individual id" },
+  },
+  ["project", "individual"]
 );
 
 // ================================================================
@@ -991,6 +1031,8 @@ export const instructions: Record<string, InstructionDef> = {
   "org.charter": orgCharter,
   "org.hire": orgHire,
   "org.fire": orgFire,
+  "org.admin": orgAdmin,
+  "org.unadmin": orgUnadmin,
 
   // position
   "position.establish": positionEstablish,
@@ -1011,6 +1053,8 @@ export const instructions: Record<string, InstructionDef> = {
   "project.wiki": projectWiki,
   "project.archive": projectArchive,
   "project.produce": projectProduce,
+  "project.maintain": projectMaintain,
+  "project.unmaintain": projectUnmaintain,
 
   // product
   "product.strategy": productStrategy,

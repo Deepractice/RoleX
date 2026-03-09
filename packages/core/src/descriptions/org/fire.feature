@@ -7,3 +7,8 @@ Feature: fire — remove from an organization
     When fire is called with the organization and individual
     Then the individual is dismissed from all positions
     And the individual is removed from the organization
+
+  Scenario: Parameters
+    Given the command is org.fire
+    Then org is required — the organization's id
+    And individual is required — the individual's id

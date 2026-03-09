@@ -66,7 +66,14 @@ function projectNode(db: DB, ref: string): State {
 }
 
 /** Reverse relations — targets are rendered as compact references (no subtree). */
-const compactRelations = new Set(["crowned", "belong", "appointment"]);
+const compactRelations = new Set([
+  "crowned",
+  "belong",
+  "appointment",
+  "administer",
+  "maintained-by",
+  "own",
+]);
 
 /** Project a linked node with full subtree (no further link-following to prevent cycles). */
 function projectLinked(db: DB, ref: string): State {

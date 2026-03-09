@@ -21,6 +21,9 @@ import { createCommands } from "./commands.js";
 import { directives } from "./directives/index.js";
 import { toArgs } from "./dispatch.js";
 import { findInState } from "./find.js";
+import { orgAdminPermissions } from "./permissions/org-admin.js";
+import { productOwnerPermissions } from "./permissions/product-owner.js";
+import { projectMaintainerPermissions } from "./permissions/project-maintainer.js";
 import { PermissionRegistry } from "./permissions/registry.js";
 import { sovereignPermissions } from "./permissions/sovereign.js";
 import type { Platform, PrototypeData, RoleXRepository } from "./platform.js";
@@ -64,7 +67,11 @@ export class RoleXService implements RoleX {
   private readonly roles = new Map<string, Role>();
 
   /** Permission registry — maps relation names to permissions. */
-  private readonly permissions = new PermissionRegistry().register("crowned", sovereignPermissions);
+  private readonly permissions = new PermissionRegistry()
+    .register("crowned", sovereignPermissions)
+    .register("administer", orgAdminPermissions)
+    .register("maintained-by", projectMaintainerPermissions)
+    .register("own", productOwnerPermissions);
 
   private constructor(platform: Platform, renderer: Renderer) {
     this.repo = platform.repository;

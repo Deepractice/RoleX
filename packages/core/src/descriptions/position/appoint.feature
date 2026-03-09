@@ -8,3 +8,8 @@ Feature: appoint — assign to a position
     When appoint is called with the position and individual
     Then the individual holds the position
     And the individual inherits the position's duties
+
+  Scenario: Parameters
+    Given the command is position.appoint
+    Then position is required — the position's id
+    And individual is required — the individual's id

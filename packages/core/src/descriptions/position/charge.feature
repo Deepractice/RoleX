@@ -9,6 +9,12 @@ Feature: charge — assign duty to a position
     Then the duty is stored as the position's information
     And individuals appointed to this position inherit the duty
 
+  Scenario: Parameters
+    Given the command is position.charge
+    Then position is required — the position's id
+    And content is required — Gherkin Feature source for the duty
+    And id is required — duty id (keywords joined by hyphens)
+
   Scenario: Duty ID convention
     Given the id is keywords from the duty content joined by hyphens
     Then "Design systems" becomes id "design-systems"
