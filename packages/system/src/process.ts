@@ -73,6 +73,16 @@ export interface Process {
   readonly ops: readonly GraphOp[];
 }
 
+// ===== Permission =====
+
+/** Permission — an operation description attached to a link. */
+export interface Permission {
+  /** The command name (e.g., "!individual.born"). */
+  readonly command: string;
+  /** The operation description — parameters, usage, examples. */
+  readonly content: string;
+}
+
 // ===== State =====
 
 /**
@@ -85,7 +95,11 @@ export interface State extends Structure {
   readonly children?: readonly State[];
 
   /** Cross-branch links from this node. */
-  readonly links?: readonly { readonly relation: string; readonly target: State }[];
+  readonly links?: readonly {
+    readonly relation: string;
+    readonly target: State;
+    readonly permissions?: readonly Permission[];
+  }[];
 
   /** Origin of this node in a merged projection: prototype (read-only) or instance (mutable). */
   readonly origin?: "prototype" | "instance";

@@ -6,7 +6,7 @@
  */
 
 import type { CommandResult } from "@rolexjs/core";
-import { describe, hint, renderState } from "../render.js";
+import { collectPermissions, describe, hint, renderPermissions, renderState } from "../render.js";
 import type { Renderer } from "./renderer.js";
 
 export class RoleRenderer implements Renderer {
@@ -19,6 +19,15 @@ export class RoleRenderer implements Renderer {
     lines.push(hint(process));
     lines.push("");
     lines.push(renderState(result.state));
+
+    // Activate: append permissions collected from links
+    if (process === "activate") {
+      const permissions = collectPermissions(result.state);
+      if (permissions.length > 0) {
+        lines.push("");
+        lines.push(renderPermissions(permissions));
+      }
+    }
 
     return lines.join("\n");
   }

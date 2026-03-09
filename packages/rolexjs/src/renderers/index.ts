@@ -16,6 +16,7 @@ import { PositionRenderer } from "./position.js";
 import { ProductRenderer } from "./product.js";
 import { ProjectRenderer } from "./project.js";
 import { RoleRenderer } from "./role.js";
+import { SocietyRenderer } from "./society.js";
 
 export { CensusRenderer } from "./census.js";
 export { IndividualRenderer } from "./individual.js";
@@ -26,6 +27,7 @@ export { ProductRenderer } from "./product.js";
 export { ProjectRenderer } from "./project.js";
 export type { Renderer } from "./renderer.js";
 export { RoleRenderer } from "./role.js";
+export { SocietyRenderer } from "./society.js";
 
 /** Create a RendererRouter with all business renderers registered. */
 export function createRendererRouter(): RendererRouter {
@@ -36,6 +38,7 @@ export function createRendererRouter(): RendererRouter {
     .register("position", new PositionRenderer())
     .register("product", new ProductRenderer())
     .register("project", new ProjectRenderer())
+    .register("society", new SocietyRenderer())
     .register("census", new CensusRenderer())
     .register("inspect", new InspectRenderer());
 }

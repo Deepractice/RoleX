@@ -12,7 +12,7 @@
  * State = Process(Structure, Information?)
  */
 
-import type { State } from "./process.js";
+import type { Permission, State } from "./process.js";
 import type { Structure } from "./structure.js";
 
 // ===== Runtime interface =====
@@ -34,7 +34,13 @@ export interface Runtime {
   transform(source: Structure, target: Structure, information?: string): Promise<Structure>;
 
   /** Establish a bidirectional cross-branch relation between two nodes. */
-  link(from: Structure, to: Structure, relation: string, reverse: string): Promise<void>;
+  link(
+    from: Structure,
+    to: Structure,
+    relation: string,
+    reverse: string,
+    permissions?: readonly Permission[]
+  ): Promise<void>;
 
   /** Remove a bidirectional cross-branch relation between two nodes. */
   unlink(from: Structure, to: Structure, relation: string, reverse: string): Promise<void>;
@@ -60,6 +66,7 @@ interface TreeNode {
 interface LinkEntry {
   toId: string;
   relation: string;
+  permissions?: readonly Permission[];
 }
 
 export const createRuntime = (): Runtime => {
@@ -115,6 +122,7 @@ export const createRuntime = (): Runtime => {
             links: nodeLinks.map((l) => ({
               relation: l.relation,
               target: projectLinked(l.toId),
+              ...(l.permissions && l.permissions.length > 0 ? { permissions: l.permissions } : {}),
             })),
           }
         : {}),
@@ -216,21 +224,29 @@ export const createRuntime = (): Runtime => {
       return sourceTreeNode.node;
     },
 
-    async link(from, to, relationName, reverseName) {
+    async link(from, to, relationName, reverseName, permissions) {
       if (!from.ref) throw new Error("Source node has no ref");
       if (!to.ref) throw new Error("Target node has no ref");
 
-      // Forward: from → to
+      // Forward: from → to (with permissions)
       const fromLinks = links.get(from.ref) ?? [];
       if (!fromLinks.some((l) => l.toId === to.ref && l.relation === relationName)) {
-        fromLinks.push({ toId: to.ref, relation: relationName });
+        fromLinks.push({
+          toId: to.ref,
+          relation: relationName,
+          ...(permissions && permissions.length > 0 ? { permissions } : {}),
+        });
         links.set(from.ref, fromLinks);
       }
 
-      // Reverse: to → from
+      // Reverse: to → from (reverse link carries same permissions)
       const toLinks = links.get(to.ref) ?? [];
       if (!toLinks.some((l) => l.toId === from.ref && l.relation === reverseName)) {
-        toLinks.push({ toId: from.ref, relation: reverseName });
+        toLinks.push({
+          toId: from.ref,
+          relation: reverseName,
+          ...(permissions && permissions.length > 0 ? { permissions } : {}),
+        });
         links.set(to.ref, toLinks);
       }
     },

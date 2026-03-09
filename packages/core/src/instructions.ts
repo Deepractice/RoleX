@@ -711,6 +711,28 @@ const productDeprecate = def(
 );
 
 // ================================================================
+//  Society — sovereign operations (internal, not exposed as tools)
+// ================================================================
+
+const societyCrown = def(
+  "society",
+  "crown",
+  {
+    individual: { type: "string", required: true, description: "Individual id to crown" },
+  },
+  ["individual"]
+);
+
+const societyUncrown = def(
+  "society",
+  "uncrown",
+  {
+    individual: { type: "string", required: true, description: "Individual id to uncrown" },
+  },
+  ["individual"]
+);
+
+// ================================================================
 //  Census — society-level queries
 // ================================================================
 
@@ -998,6 +1020,10 @@ export const instructions: Record<string, InstructionDef> = {
   "product.own": productOwn,
   "product.disown": productDisown,
   "product.deprecate": productDeprecate,
+
+  // society (internal — dispatch only, not exposed as MCP tools)
+  "society.crown": societyCrown,
+  "society.uncrown": societyUncrown,
 
   // census
   "census.list": censusList,

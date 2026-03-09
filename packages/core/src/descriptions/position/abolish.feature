@@ -1,9 +1,13 @@
 Feature: abolish — abolish a position
-  Abolish a position.
-  All duties and appointments associated with the position are removed.
+  Move a position to the past archive.
+  The position and its subtree (duties, requirements) are archived, not deleted.
 
   Scenario: Abolish a position
-    Given a position exists
+    Given a position exists in society
     When abolish is called on the position
-    Then all duties and appointments are removed
-    And the position no longer exists
+    Then the position is moved to the past archive
+    And the position's subtree (duties, requirements) is preserved in past
+
+  Scenario: Parameters
+    Given the command is position.abolish
+    Then position is required — the position's id

@@ -5,14 +5,15 @@ Feature: train — external skill injection
 
   Scenario: Train a procedure
     Given an individual exists
-    When train is called with individual id, procedure Gherkin, and a procedure id
+    When train is called with the individual and procedure content
     Then a procedure is created directly under the individual
     And if a procedure with the same id already exists, it is replaced
 
-  Scenario: Procedure ID convention
-    Given the id is keywords from the procedure content joined by hyphens
-    Then "Skill Creator" becomes id "skill-creator"
-    And "Role Management" becomes id "role-management"
+  Scenario: Parameters
+    Given the command is individual.train
+    Then individual is required — the individual's id
+    And content is required — Gherkin Feature describing the procedure
+    And id is optional — kebab-case identifier for upsert (e.g. "skill-creator")
 
   Scenario: When to use train vs master
     Given both create procedures and both can work without consuming experience

@@ -7,7 +7,7 @@
  *
  * render() composes the 3 layers. MCP and CLI are pure pass-through.
  */
-import type { State } from "@rolexjs/system";
+import type { Permission, State } from "@rolexjs/system";
 
 // ================================================================
 //  Description — what happened
@@ -52,6 +52,10 @@ const descriptions: Record<string, (name: string, state: State) => string> = {
   own: (n) => `Owner assigned to "${n}".`,
   disown: (n) => `Owner removed from "${n}".`,
   deprecate: (n) => `Product "${n}" deprecated.`,
+
+  // Society
+  crown: (n) => `"${n}" crowned — sovereign permissions granted.`,
+  uncrown: (n) => `"${n}" uncrowned — sovereign permissions revoked.`,
 
   // Top-level perception
   inspect: (n) => `Inspecting "${n}".`,
@@ -125,6 +129,10 @@ const hints: Record<string, string> = {
   own: "the individual is now the product owner.",
   disown: "the individual is no longer the product owner.",
   deprecate: "the product is deprecated.",
+
+  // Society
+  crown: "the individual now has sovereign permissions over society.",
+  uncrown: "the individual no longer has sovereign permissions.",
 
   // Top-level perception
   inspect: "use inspect on child nodes for deeper detail, or activate to work as a role.",
@@ -255,6 +263,53 @@ export function renderState(state: State, depth = 1, options?: RenderStateOption
     }
   }
 
+  return lines.join("\n");
+}
+
+// ================================================================
+//  Permissions — collect and render from link tree
+// ================================================================
+
+/** Recursively collect all permissions from a state tree's links. */
+export function collectPermissions(state: State): Permission[] {
+  const seen = new Set<string>();
+  const result: Permission[] = [];
+
+  const walk = (s: State) => {
+    if (s.links) {
+      for (const link of s.links) {
+        if (link.permissions) {
+          for (const p of link.permissions) {
+            if (!seen.has(p.command)) {
+              seen.add(p.command);
+              result.push(p);
+            }
+          }
+        }
+        // Don't recurse into link targets — they are compact references
+      }
+    }
+    if (s.children) {
+      for (const child of s.children) {
+        walk(child);
+      }
+    }
+  };
+
+  walk(state);
+  return result;
+}
+
+/** Render permissions as a markdown section. */
+export function renderPermissions(permissions: readonly Permission[]): string {
+  if (permissions.length === 0) return "";
+
+  const lines: string[] = [];
+  lines.push("# Permissions\n");
+  for (const p of permissions) {
+    lines.push(p.content);
+    lines.push("");
+  }
   return lines.join("\n");
 }
 

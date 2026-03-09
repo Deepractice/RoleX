@@ -15,6 +15,7 @@ import { structure } from "@rolexjs/system";
 import type { Comment, Issue, IssueX } from "issuexjs";
 import type { Resource, ResourceX, RXM } from "resourcexjs";
 import * as C from "./index.js";
+import { sovereignPermissions } from "./permissions/index.js";
 import type { PrototypeRepository } from "./platform.js";
 
 // ================================================================
@@ -110,6 +111,10 @@ export interface CommandResultMap {
   "position.abolish": CommandResult;
   "position.appoint": CommandResult;
   "position.dismiss": CommandResult;
+
+  // ---- Society ----
+  "society.crown": CommandResult;
+  "society.uncrown": CommandResult;
 
   // ---- Census ----
   "census.list": CommandResult;
@@ -645,6 +650,20 @@ export function createCommands(ctx: CommandContext): Commands {
       const posNode = await resolve(position);
       await rt.unlink(posNode, await resolve(individual), "appointment", "serve");
       return ok(posNode, "dismiss");
+    },
+
+    // ---- Society ----
+
+    async "society.crown"(individual: string): Promise<CommandResult> {
+      const indNode = await resolve(individual);
+      await rt.link(society, indNode, "crown", "crowned", sovereignPermissions);
+      return ok(indNode, "crown");
+    },
+
+    async "society.uncrown"(individual: string): Promise<CommandResult> {
+      const indNode = await resolve(individual);
+      await rt.unlink(society, indNode, "crown", "crowned");
+      return ok(indNode, "uncrown");
     },
 
     // ---- Census ----

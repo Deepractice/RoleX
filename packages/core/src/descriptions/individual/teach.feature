@@ -5,15 +5,16 @@ Feature: teach — inject external principle
 
   Scenario: Teach a principle
     Given an individual exists
-    When teach is called with individual id, principle Gherkin, and a principle id
+    When teach is called with the individual and principle content
     Then a principle is created directly under the individual
     And no experience or encounter is consumed
     And if a principle with the same id already exists, it is replaced
 
-  Scenario: Principle ID convention
-    Given the id is keywords from the principle content joined by hyphens
-    Then "Always validate expiry" becomes id "always-validate-expiry"
-    And "Structure first design" becomes id "structure-first-design"
+  Scenario: Parameters
+    Given the command is individual.teach
+    Then individual is required — the individual's id
+    And content is required — Gherkin Feature describing the principle
+    And id is optional — kebab-case identifier for upsert (e.g. "always-validate-input")
 
   Scenario: When to use teach vs realize
     Given realize distills internal experience into a principle

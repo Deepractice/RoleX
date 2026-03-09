@@ -28,6 +28,7 @@ export type {
   Create,
   GraphOp,
   Link,
+  Permission,
   Process,
   Remove,
   State,
