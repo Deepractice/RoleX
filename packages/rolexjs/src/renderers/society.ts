@@ -1,7 +1,7 @@
 /**
  * SocietyRenderer — Markdown rendering for society.* commands.
  *
- * Covers: crown, uncrown.
+ * Covers: born, retire, die, rehire, teach, train, found, dissolve, crown, uncrown.
  */
 
 import type { CommandResult } from "@rolexjs/core";

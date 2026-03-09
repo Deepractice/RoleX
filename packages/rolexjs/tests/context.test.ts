@@ -19,14 +19,14 @@ async function setupWithDir() {
 describe("Role (state management)", () => {
   test("activate returns Role with id", async () => {
     const rolex = await setup();
-    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
     expect(role.id).toBe("sean");
   });
 
   test("want updates focusedGoalId", async () => {
     const rolex = await setup();
-    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
 
     const result = await role.want("Feature: Build auth", "build-auth");
@@ -38,7 +38,7 @@ describe("Role (state management)", () => {
 
   test("plan updates focusedPlanId", async () => {
     const rolex = await setup();
-    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
 
     await role.want("Feature: Auth", "auth-goal");
@@ -49,7 +49,7 @@ describe("Role (state management)", () => {
 
   test("finish with encounter registers in snapshot", async () => {
     const rolex = await setup();
-    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
 
     await role.want("Feature: Auth", "auth");
@@ -66,7 +66,7 @@ describe("Role (state management)", () => {
 
   test("finish without encounter does not register", async () => {
     const rolex = await setup();
-    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
 
     await role.want("Feature: Auth", "auth");
@@ -79,7 +79,7 @@ describe("Role (state management)", () => {
 
   test("complete registers encounter and clears focusedPlanId", async () => {
     const rolex = await setup();
-    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
 
     await role.want("Feature: Auth", "auth");
@@ -97,7 +97,7 @@ describe("Role (state management)", () => {
 
   test("reflect consumes encounter and adds experience", async () => {
     const rolex = await setup();
-    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
 
     await role.want("Feature: Auth", "auth");
@@ -120,7 +120,7 @@ describe("Role (state management)", () => {
 
   test("reflect without encounter creates experience directly", async () => {
     const rolex = await setup();
-    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
 
     const result = await role.reflect(
@@ -137,7 +137,7 @@ describe("Role (state management)", () => {
 
   test("realize without experience creates principle directly", async () => {
     const rolex = await setup();
-    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
 
     const result = await role.realize(
@@ -152,7 +152,7 @@ describe("Role (state management)", () => {
 
   test("realize still consumes experience when provided", async () => {
     const rolex = await setup();
-    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
 
     await role.reflect(
@@ -188,7 +188,7 @@ describe("Role context persistence", () => {
 
   test("activate restores persisted focusedGoalId and focusedPlanId", async () => {
     const { rolex } = await persistent();
-    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
 
     const role1 = await rolex.activate("sean");
     await role1.want("Feature: Auth", "auth");
@@ -203,7 +203,7 @@ describe("Role context persistence", () => {
 
   test("activate without persisted context uses rehydrate default", async () => {
     const { rolex } = await persistent();
-    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
     await rolex.direct("!role.want", { individual: "sean", goal: "Feature: Auth", id: "auth" });
 
     const role = await rolex.activate("sean");
@@ -213,7 +213,7 @@ describe("Role context persistence", () => {
 
   test("focus saves updated context", async () => {
     const { rolex } = await persistent();
-    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
 
     const role = await rolex.activate("sean");
     await role.want("Feature: Goal A", "goal-a");
@@ -228,7 +228,7 @@ describe("Role context persistence", () => {
 
   test("complete clears focusedPlanId and saves", async () => {
     const { rolex } = await persistent();
-    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
 
     const role = await rolex.activate("sean");
     await role.want("Feature: Auth", "auth");
@@ -242,8 +242,8 @@ describe("Role context persistence", () => {
 
   test("different roles have independent contexts", async () => {
     const { rolex } = await persistent();
-    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
-    await rolex.direct("!individual.born", { content: "Feature: Nuwa", id: "nuwa" });
+    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
+    await rolex.direct("!society.born", { content: "Feature: Nuwa", id: "nuwa" });
 
     const seanRole = await rolex.activate("sean");
     await seanRole.want("Feature: Sean Goal", "sean-goal");
@@ -257,7 +257,7 @@ describe("Role context persistence", () => {
 
   test("in-memory mode (dataDir: null) works without persistence", async () => {
     const rolex = await setup();
-    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
     await role.want("Feature: Auth", "auth");
     expect(role.snapshot().focusedGoalId).toBe("auth");

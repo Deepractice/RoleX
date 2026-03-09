@@ -12,12 +12,12 @@ Feature: Command system — how operations are executed in RoleX
 
   Scenario: Commands — invoked via use or direct
     Given commands follow the !namespace.method pattern
-    And namespaces include individual, org, position, project, society, role, resource, prototype
+    And namespaces include society, org, position, project, role, resource, prototype
     When the AI needs to execute a command
     Then call the use MCP tool (if a role is active) or direct MCP tool (if no role)
     And pass the command as the first argument with ! prefix
     And pass parameters as named args
-    And example: use("!individual.born", { id: "sean", content: "Feature: Sean..." })
+    And example: use("!society.born", { id: "sean", content: "Feature: Sean..." })
     And example: use("!org.hire", { org: "deepractice", individual: "sean" })
 
   Scenario: Where commands come from — three sources
@@ -31,16 +31,16 @@ Feature: Command system — how operations are executed in RoleX
     Given each permission includes a command name and a description
     And the description's Parameters scenario documents the exact argument names
     When the AI needs to execute a permitted operation
-    Then read the command name (e.g. individual.born) from the permission
+    Then read the command name (e.g. society.born) from the permission
     And read the argument names from the Parameters scenario (e.g. id, content, alias)
-    And call use("!individual.born", { id: "...", content: "..." })
+    And call use("!society.born", { id: "...", content: "..." })
 
   Scenario: Common command namespaces
-    Given individual commands manage people
-    Then !individual.born creates, !individual.retire archives, !individual.rehire restores
-    And !individual.teach injects a principle, !individual.train injects a procedure
-    Given org commands manage organizations
-    Then !org.found creates, !org.dissolve archives
+    Given society commands manage people and organizations
+    Then !society.born creates, !society.retire archives, !society.rehire restores
+    And !society.teach injects a principle, !society.train injects a procedure
+    And !society.found creates an organization, !society.dissolve archives an organization
+    Given org commands manage organization membership and governance
     And !org.hire adds a member, !org.fire removes a member, !org.charter defines governance
     Given position commands manage positions
     Then !position.establish creates, !position.abolish archives

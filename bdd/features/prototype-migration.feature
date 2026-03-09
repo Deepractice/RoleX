@@ -11,7 +11,7 @@ Feature: Prototype migration
   Scenario: Settle a prototype with V1 migration
     Given a prototype "test-proto" with migrations:
       | file              | ops                                                          |
-      | V1__initial.json  | [{"op":"!org.found","args":{"id":"test-org","content":"Feature: Test Org"}}] |
+      | V1__initial.json  | [{"op":"!society.found","args":{"id":"test-org","content":"Feature: Test Org"}}] |
     When I settle prototype "test-proto"
     Then organization "test-org" should exist
     And migration "V1__initial" of "test-proto" should be recorded
@@ -21,7 +21,7 @@ Feature: Prototype migration
   Scenario: Re-settle only executes new migrations
     Given a prototype "test-proto" with migrations:
       | file              | ops                                                          |
-      | V1__initial.json  | [{"op":"!org.found","args":{"id":"test-org","content":"Feature: Test Org"}}] |
+      | V1__initial.json  | [{"op":"!society.found","args":{"id":"test-org","content":"Feature: Test Org"}}] |
       | V2__add_pos.json  | [{"op":"!position.establish","args":{"id":"test-pos","content":"Feature: Test Pos"}}] |
     And prototype "test-proto" has been settled at V1
     When I settle prototype "test-proto"
@@ -33,7 +33,7 @@ Feature: Prototype migration
   Scenario: Settle skips when all migrations are applied
     Given a prototype "test-proto" with migrations:
       | file              | ops                                                          |
-      | V1__initial.json  | [{"op":"!org.found","args":{"id":"test-org","content":"Feature: Test Org"}}] |
+      | V1__initial.json  | [{"op":"!society.found","args":{"id":"test-org","content":"Feature: Test Org"}}] |
     And prototype "test-proto" has been settled at V1
     When I settle prototype "test-proto"
     Then the settle result should contain "up to date"
@@ -44,7 +44,7 @@ Feature: Prototype migration
     Given a prototype "test-proto" with migrations:
       | file              | ops                                                          |
       | V2__second.json   | [{"op":"!position.establish","args":{"id":"pos-2","content":"Feature: Pos 2"}}] |
-      | V1__first.json    | [{"op":"!org.found","args":{"id":"org-1","content":"Feature: Org 1"}}] |
+      | V1__first.json    | [{"op":"!society.found","args":{"id":"org-1","content":"Feature: Org 1"}}] |
     When I settle prototype "test-proto"
     Then organization "org-1" should exist
     And migration "V1__first" of "test-proto" should be recorded

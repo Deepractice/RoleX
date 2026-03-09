@@ -16,11 +16,11 @@ function def(
 }
 
 // ================================================================
-//  Individual — lifecycle + external injection
+//  Society — individual lifecycle + org lifecycle
 // ================================================================
 
-const individualBorn = def(
-  "individual",
+const societyBorn = def(
+  "society",
   "born",
   {
     content: {
@@ -34,8 +34,8 @@ const individualBorn = def(
   ["content", "id", "alias"]
 );
 
-const individualRetire = def(
-  "individual",
+const societyRetire = def(
+  "society",
   "retire",
   {
     individual: { type: "string", required: true, description: "Individual id" },
@@ -43,8 +43,8 @@ const individualRetire = def(
   ["individual"]
 );
 
-const individualDie = def(
-  "individual",
+const societyDie = def(
+  "society",
   "die",
   {
     individual: { type: "string", required: true, description: "Individual id" },
@@ -52,8 +52,8 @@ const individualDie = def(
   ["individual"]
 );
 
-const individualRehire = def(
-  "individual",
+const societyRehire = def(
+  "society",
   "rehire",
   {
     individual: { type: "string", required: true, description: "Individual id (from past)" },
@@ -61,8 +61,8 @@ const individualRehire = def(
   ["individual"]
 );
 
-const individualTeach = def(
-  "individual",
+const societyTeach = def(
+  "society",
   "teach",
   {
     individual: { type: "string", required: true, description: "Individual id" },
@@ -80,8 +80,8 @@ const individualTeach = def(
   ["individual", "content", "id"]
 );
 
-const individualTrain = def(
-  "individual",
+const societyTrain = def(
+  "society",
   "train",
   {
     individual: { type: "string", required: true, description: "Individual id" },
@@ -314,8 +314,8 @@ const roleSkill = def(
 //  Org — organization management
 // ================================================================
 
-const orgFound = def(
-  "org",
+const societyFound = def(
+  "society",
   "found",
   {
     content: {
@@ -344,8 +344,8 @@ const orgCharter = def(
   ["org", "content", "id"]
 );
 
-const orgDissolve = def(
-  "org",
+const societyDissolve = def(
+  "society",
   "dissolve",
   {
     org: { type: "string", required: true, description: "Organization id" },
@@ -962,13 +962,15 @@ const issueUnlabel = def(
 // ================================================================
 
 export const instructions: Record<string, InstructionDef> = {
-  // individual
-  "individual.born": individualBorn,
-  "individual.retire": individualRetire,
-  "individual.die": individualDie,
-  "individual.rehire": individualRehire,
-  "individual.teach": individualTeach,
-  "individual.train": individualTrain,
+  // society — individual lifecycle + org lifecycle
+  "society.born": societyBorn,
+  "society.retire": societyRetire,
+  "society.die": societyDie,
+  "society.rehire": societyRehire,
+  "society.teach": societyTeach,
+  "society.train": societyTrain,
+  "society.found": societyFound,
+  "society.dissolve": societyDissolve,
 
   // role
   "role.activate": roleActivate,
@@ -986,9 +988,7 @@ export const instructions: Record<string, InstructionDef> = {
   "role.skill": roleSkill,
 
   // org
-  "org.found": orgFound,
   "org.charter": orgCharter,
-  "org.dissolve": orgDissolve,
   "org.hire": orgHire,
   "org.fire": orgFire,
 
@@ -1021,7 +1021,7 @@ export const instructions: Record<string, InstructionDef> = {
   "product.disown": productDisown,
   "product.deprecate": productDeprecate,
 
-  // society (internal — dispatch only, not exposed as MCP tools)
+  // society — internal
   "society.crown": societyCrown,
   "society.uncrown": societyUncrown,
 

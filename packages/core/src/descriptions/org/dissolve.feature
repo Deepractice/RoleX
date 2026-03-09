@@ -9,5 +9,5 @@ Feature: dissolve — dissolve an organization
     And the organization's subtree (charter, positions) is preserved in past
 
   Scenario: Parameters
-    Given the command is org.dissolve
+    Given the command is society.dissolve
     Then org is required — the organization's id

@@ -26,7 +26,7 @@ Feature: RoleX as world entry point
   # ===== direct =====
 
   Scenario: Direct executes world-level commands
-    When I direct "!individual.born" with:
+    When I direct "!society.born" with:
       | id      | alice          |
       | content | Feature: Alice |
     Then individual "alice" should exist

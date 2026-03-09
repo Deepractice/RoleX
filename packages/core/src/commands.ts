@@ -6,7 +6,7 @@
  *
  * Usage:
  *   const commands = createCommands({ rt, society, past, resolve, find, resourcex });
- *   const result = commands["individual.born"]("Feature: Sean", "sean");
+ *   const result = commands["society.born"]("Feature: Sean", "sean");
  */
 
 import { parse } from "@rolexjs/parser";
@@ -45,13 +45,13 @@ export interface CommandContext {
  * Renderer and consumers use this to know the shape of each result.
  */
 export interface CommandResultMap {
-  // ---- Individual ----
-  "individual.born": CommandResult;
-  "individual.retire": CommandResult;
-  "individual.die": CommandResult;
-  "individual.rehire": CommandResult;
-  "individual.teach": CommandResult;
-  "individual.train": CommandResult;
+  // ---- Society: individual lifecycle ----
+  "society.born": CommandResult;
+  "society.retire": CommandResult;
+  "society.die": CommandResult;
+  "society.rehire": CommandResult;
+  "society.teach": CommandResult;
+  "society.train": CommandResult;
 
   // ---- Role: focus ----
   "role.focus": CommandResult;
@@ -96,10 +96,11 @@ export interface CommandResultMap {
   "product.disown": CommandResult;
   "product.deprecate": CommandResult;
 
+  // ---- Society: organization lifecycle ----
+  "society.found": CommandResult;
   // ---- Organization ----
-  "org.found": CommandResult;
   "org.charter": CommandResult;
-  "org.dissolve": CommandResult;
+  "society.dissolve": CommandResult;
   "org.hire": CommandResult;
   "org.fire": CommandResult;
 
@@ -209,9 +210,9 @@ export function createCommands(ctx: CommandContext): Commands {
   // ================================================================
 
   return {
-    // ---- Individual: lifecycle ----
+    // ---- Society: individual lifecycle ----
 
-    async "individual.born"(
+    async "society.born"(
       content?: string,
       id?: string,
       alias?: readonly string[]
@@ -222,23 +223,23 @@ export function createCommands(ctx: CommandContext): Commands {
       return ok(node, "born");
     },
 
-    async "individual.retire"(individual: string): Promise<CommandResult> {
+    async "society.retire"(individual: string): Promise<CommandResult> {
       return archive(await resolve(individual), "retire");
     },
 
-    async "individual.die"(individual: string): Promise<CommandResult> {
+    async "society.die"(individual: string): Promise<CommandResult> {
       return archive(await resolve(individual), "die");
     },
 
-    async "individual.rehire"(pastNode: string): Promise<CommandResult> {
+    async "society.rehire"(pastNode: string): Promise<CommandResult> {
       const node = await resolve(pastNode);
       const ind = await rt.transform(node, C.individual);
       return ok(ind, "rehire");
     },
 
-    // ---- Individual: external injection ----
+    // ---- Society: external injection ----
 
-    async "individual.teach"(
+    async "society.teach"(
       individual: string,
       principle: string,
       id?: string
@@ -250,7 +251,7 @@ export function createCommands(ctx: CommandContext): Commands {
       return ok(node, "teach");
     },
 
-    async "individual.train"(
+    async "society.train"(
       individual: string,
       procedure: string,
       id?: string
@@ -561,9 +562,9 @@ export function createCommands(ctx: CommandContext): Commands {
       return archive(await resolve(product), "deprecate");
     },
 
-    // ---- Org ----
+    // ---- Society: organization lifecycle ----
 
-    async "org.found"(
+    async "society.found"(
       content?: string,
       id?: string,
       alias?: readonly string[]
@@ -573,14 +574,16 @@ export function createCommands(ctx: CommandContext): Commands {
       return ok(node, "found");
     },
 
+    async "society.dissolve"(org: string): Promise<CommandResult> {
+      return archive(await resolve(org), "dissolve");
+    },
+
+    // ---- Org ----
+
     async "org.charter"(org: string, charter: string, id?: string): Promise<CommandResult> {
       validateGherkin(charter);
       const node = await rt.create(await resolve(org), C.charter, charter, id);
       return ok(node, "charter");
-    },
-
-    async "org.dissolve"(org: string): Promise<CommandResult> {
-      return archive(await resolve(org), "dissolve");
     },
 
     async "org.hire"(org: string, individual: string): Promise<CommandResult> {

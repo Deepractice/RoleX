@@ -13,7 +13,7 @@ import type { BddWorld } from "../support/world";
 Given(
   "individual {string} exists with goal {string}",
   async function (this: BddWorld, id: string, goalId: string) {
-    await this.rolex!.direct("!individual.born", { content: `Feature: ${id}`, id });
+    await this.rolex!.direct("!society.born", { content: `Feature: ${id}`, id });
     // Create goal through activate + want
     const role = await this.rolex!.activate(id);
     await role.want(`Feature: ${goalId}`, goalId);

@@ -6,7 +6,7 @@ export const V2__add_issue_management: Migration = {
   checksum: "",
   instructions: [
     {
-      op: "!individual.train",
+      op: "!society.train",
       args: {
         individual: "nuwa",
         id: "issue-management",

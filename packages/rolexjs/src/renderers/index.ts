@@ -9,7 +9,6 @@
 
 import { RendererRouter } from "@rolexjs/core";
 import { CensusRenderer } from "./census.js";
-import { IndividualRenderer } from "./individual.js";
 import { InspectRenderer } from "./inspect.js";
 import { OrgRenderer } from "./org.js";
 import { PositionRenderer } from "./position.js";
@@ -19,6 +18,7 @@ import { RoleRenderer } from "./role.js";
 import { SocietyRenderer } from "./society.js";
 
 export { CensusRenderer } from "./census.js";
+/** @deprecated Use SocietyRenderer — individual.* commands moved to society.* */
 export { IndividualRenderer } from "./individual.js";
 export { InspectRenderer } from "./inspect.js";
 export { OrgRenderer } from "./org.js";
@@ -33,7 +33,6 @@ export { SocietyRenderer } from "./society.js";
 export function createRendererRouter(): RendererRouter {
   return new RendererRouter()
     .register("role", new RoleRenderer())
-    .register("individual", new IndividualRenderer())
     .register("org", new OrgRenderer())
     .register("position", new PositionRenderer())
     .register("product", new ProductRenderer())

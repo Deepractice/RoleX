@@ -7,7 +7,7 @@ Feature: Use tool — the universal execution entry point
     Given the command starts with !
     Then it is parsed as !namespace.method
     And dispatched to the corresponding RoleX API with named args
-    And example: use("!individual.born", { id: "sean", content: "..." })
+    And example: use("!society.born", { id: "sean", content: "..." })
 
   Scenario: Permissions — execute directly
     Given your permissions list the operations you are authorized to perform

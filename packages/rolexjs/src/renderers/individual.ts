@@ -1,7 +1,10 @@
 /**
  * IndividualRenderer — Markdown rendering for individual.* commands.
  *
- * Covers: born, retire, die, rehire, teach, train.
+ * @deprecated All individual.* commands have moved to society.* namespace.
+ * Kept for backward compatibility. Use SocietyRenderer instead.
+ *
+ * Previously covered: born, retire, die, rehire, teach, train.
  */
 
 import type { CommandResult } from "@rolexjs/core";

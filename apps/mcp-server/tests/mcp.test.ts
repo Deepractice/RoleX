@@ -30,7 +30,7 @@ describe("requireRole", () => {
   });
 
   it("returns role after activation", async () => {
-    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
     state.role = role;
     expect(state.requireRole()).toBe(role);
@@ -45,7 +45,7 @@ describe("requireRole", () => {
 describe("render", () => {
   it("includes status + hint + projection", async () => {
     const result = await rolex.direct<CommandResult>(
-      "!individual.born",
+      "!society.born",
       {
         content: "Feature: Sean",
         id: "sean",
@@ -68,7 +68,7 @@ describe("render", () => {
 
   it("includes cognitive hint when provided", async () => {
     const result = await rolex.direct<CommandResult>(
-      "!individual.born",
+      "!society.born",
       {
         content: "Feature: Sean",
         id: "sean",
@@ -86,7 +86,7 @@ describe("render", () => {
   });
 
   it("Role methods return rendered 3-layer output", async () => {
-    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
 
     const output = await role.want("Feature: Test", "test-goal");
@@ -105,7 +105,7 @@ describe("render", () => {
 
 describe("full execution flow", () => {
   it("completes want → plan → todo → finish → reflect → realize through Role API", async () => {
-    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
     state.role = role;
 
@@ -158,7 +158,7 @@ describe("full execution flow", () => {
 
 describe("focus", () => {
   it("switches focused goal via Role", async () => {
-    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
     state.role = role;
 
@@ -180,7 +180,7 @@ describe("focus", () => {
 
 describe("selective cognition", () => {
   it("tracks multiple encounters, reflect consumes selectively", async () => {
-    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
     state.role = role;
 

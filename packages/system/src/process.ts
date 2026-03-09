@@ -77,7 +77,7 @@ export interface Process {
 
 /** Permission — an operation description attached to a link. */
 export interface Permission {
-  /** The command name (e.g., "!individual.born"). */
+  /** The command name (e.g., "!society.born"). */
   readonly command: string;
   /** The operation description — parameters, usage, examples. */
   readonly content: string;

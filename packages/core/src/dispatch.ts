@@ -11,7 +11,7 @@ import type { ArgEntry } from "./schema.js";
 /**
  * Map named arguments to positional arguments for a given operation.
  *
- * @param op - Operation key in "namespace.method" format (e.g. "individual.born")
+ * @param op - Operation key in "namespace.method" format (e.g. "society.born")
  * @param args - Named arguments from the caller
  * @returns Positional argument array matching the method signature
  */

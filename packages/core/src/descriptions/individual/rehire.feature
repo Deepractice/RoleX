@@ -9,5 +9,5 @@ Feature: rehire — restore a retired individual
     And all previous data and knowledge are intact
 
   Scenario: Parameters
-    Given the command is individual.rehire
+    Given the command is society.rehire
     Then individual is required — the archived individual's id

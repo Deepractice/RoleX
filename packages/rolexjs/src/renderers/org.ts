@@ -1,7 +1,8 @@
 /**
  * OrgRenderer — Markdown rendering for org.* commands.
  *
- * Covers: found, charter, dissolve, hire, fire.
+ * Covers: charter, hire, fire.
+ * (found and dissolve moved to society.* namespace)
  */
 
 import type { CommandResult } from "@rolexjs/core";

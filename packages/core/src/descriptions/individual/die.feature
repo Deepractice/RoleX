@@ -10,7 +10,7 @@ Feature: die — permanently archive an individual
     And data is preserved but restoration is not intended
 
   Scenario: Parameters
-    Given the command is individual.die
+    Given the command is society.die
     Then individual is required — the individual's id
 
   Scenario: retire vs die

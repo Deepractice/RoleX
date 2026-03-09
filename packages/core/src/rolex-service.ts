@@ -170,7 +170,7 @@ export class RoleXService implements RoleX {
     if (!node) {
       const hasProto = Object.hasOwn(await this.repo.prototype.list(), individual);
       if (hasProto) {
-        await this.commands["individual.born"](undefined, individual);
+        await this.commands["society.born"](undefined, individual);
         node = (await this.find(individual))!;
       } else {
         throw new Error(`"${individual}" not found.`);

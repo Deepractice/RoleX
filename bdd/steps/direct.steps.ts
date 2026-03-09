@@ -9,15 +9,15 @@ import type { BddWorld } from "../support/world";
 // ===== Setup helpers =====
 
 Given("individual {string} exists", async function (this: BddWorld, id: string) {
-  await this.rolex!.direct("!individual.born", { content: `Feature: ${id}`, id });
+  await this.rolex!.direct("!society.born", { content: `Feature: ${id}`, id });
 });
 
 Given("individual {string} is retired", async function (this: BddWorld, id: string) {
-  await this.rolex!.direct("!individual.retire", { individual: id });
+  await this.rolex!.direct("!society.retire", { individual: id });
 });
 
 Given("organization {string} exists", async function (this: BddWorld, id: string) {
-  await this.rolex!.direct("!org.found", { content: `Feature: ${id}`, id });
+  await this.rolex!.direct("!society.found", { content: `Feature: ${id}`, id });
 });
 
 Given("position {string} exists", async function (this: BddWorld, id: string) {

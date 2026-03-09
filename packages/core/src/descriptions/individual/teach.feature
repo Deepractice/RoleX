@@ -11,7 +11,7 @@ Feature: teach — inject external principle
     And if a principle with the same id already exists, it is replaced
 
   Scenario: Parameters
-    Given the command is individual.teach
+    Given the command is society.teach
     Then individual is required — the individual's id
     And content is required — Gherkin Feature describing the principle
     And id is optional — kebab-case identifier for upsert (e.g. "always-validate-input")

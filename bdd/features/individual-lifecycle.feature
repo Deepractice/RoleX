@@ -8,7 +8,7 @@ Feature: Individual lifecycle
   # ===== born =====
 
   Scenario: Born creates an individual
-    When I direct "!individual.born" with:
+    When I direct "!society.born" with:
       | content | Feature: Sean |
       | id      | sean          |
     Then the result process should be "born"
@@ -20,7 +20,7 @@ Feature: Individual lifecycle
 
   Scenario: Retire archives an individual
     Given individual "sean" exists
-    When I direct "!individual.retire" with:
+    When I direct "!society.retire" with:
       | individual | sean |
     Then the result process should be "retire"
     And the result state name should be "individual"
@@ -29,7 +29,7 @@ Feature: Individual lifecycle
 
   Scenario: Die permanently removes an individual
     Given individual "sean" exists
-    When I direct "!individual.die" with:
+    When I direct "!society.die" with:
       | individual | sean |
     Then the result process should be "die"
     And the result state name should be "individual"
@@ -39,7 +39,7 @@ Feature: Individual lifecycle
   Scenario: Rehire brings back a retired individual
     Given individual "sean" exists
     And individual "sean" is retired
-    When I direct "!individual.rehire" with:
+    When I direct "!society.rehire" with:
       | individual | sean |
     Then the result process should be "rehire"
     And the result state name should be "individual"
@@ -48,7 +48,7 @@ Feature: Individual lifecycle
 
   Scenario: Teach injects a principle
     Given individual "sean" exists
-    When I direct "!individual.teach" with:
+    When I direct "!society.teach" with:
       | individual | sean                       |
       | content    | Feature: Always test first |
       | id         | test-first                 |
@@ -60,7 +60,7 @@ Feature: Individual lifecycle
 
   Scenario: Train injects a procedure
     Given individual "sean" exists
-    When I direct "!individual.train" with:
+    When I direct "!society.train" with:
       | individual | sean                       |
       | content    | Feature: Code review skill |
       | id         | code-review                |

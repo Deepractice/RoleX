@@ -8,7 +8,7 @@ Feature: Organization lifecycle
   # ===== found =====
 
   Scenario: Found creates an organization
-    When I direct "!org.found" with:
+    When I direct "!society.found" with:
       | content | Feature: Deepractice |
       | id      | deepractice          |
     Then the result process should be "found"
@@ -52,7 +52,7 @@ Feature: Organization lifecycle
 
   Scenario: Dissolve archives an organization
     Given organization "deepractice" exists
-    When I direct "!org.dissolve" with:
+    When I direct "!society.dissolve" with:
       | org | deepractice |
     Then the result process should be "dissolve"
     And the result state name should be "organization"

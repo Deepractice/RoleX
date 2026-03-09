@@ -11,5 +11,5 @@ Feature: retire — archive an individual
     And the individual can be restored via rehire
 
   Scenario: Parameters
-    Given the command is individual.retire
+    Given the command is society.retire
     Then individual is required — the individual's id

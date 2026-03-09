@@ -6,7 +6,7 @@ export const V1__initial: Migration = {
   checksum: "",
   instructions: [
     {
-      op: "!org.found",
+      op: "!society.found",
       args: {
         id: "rolex",
         alias: ["RoleX"],
@@ -50,7 +50,7 @@ export const V1__initial: Migration = {
       },
     },
     {
-      op: "!individual.born",
+      op: "!society.born",
       args: {
         id: "nuwa",
         alias: ["女娲", "nvwa"],
@@ -74,7 +74,7 @@ export const V1__initial: Migration = {
       },
     },
     {
-      op: "!individual.train",
+      op: "!society.train",
       args: {
         individual: "nuwa",
         id: "prototype-management",
@@ -89,7 +89,7 @@ export const V1__initial: Migration = {
       },
     },
     {
-      op: "!individual.train",
+      op: "!society.train",
       args: {
         individual: "nuwa",
         id: "resource-management",
@@ -104,7 +104,7 @@ export const V1__initial: Migration = {
       },
     },
     {
-      op: "!individual.train",
+      op: "!society.train",
       args: {
         individual: "nuwa",
         id: "skill-creator",
@@ -119,7 +119,7 @@ export const V1__initial: Migration = {
       },
     },
     {
-      op: "!individual.train",
+      op: "!society.train",
       args: {
         individual: "nuwa",
         id: "version-migration",
@@ -134,7 +134,7 @@ export const V1__initial: Migration = {
       },
     },
     {
-      op: "!individual.train",
+      op: "!society.train",
       args: {
         individual: "nuwa",
         id: "project-management",

@@ -12,7 +12,7 @@ Feature: born — create a new individual
     And the individual can be activated to start working
 
   Scenario: Parameters
-    Given the command is individual.born
+    Given the command is society.born
     Then content is optional — Gherkin Feature describing the persona
     And id is optional — kebab-case identifier (e.g. "sean")
     And alias is optional — alternative names (e.g. ["小明", "xm"])

@@ -16,10 +16,10 @@ async function setup() {
 // ================================================================
 
 describe("use dispatch", () => {
-  test("!individual.born creates individual", async () => {
+  test("!society.born creates individual", async () => {
     const rolex = await setup();
     const r = await rolex.direct<CommandResult>(
-      "!individual.born",
+      "!society.born",
       {
         content: "Feature: Sean",
         id: "sean",
@@ -35,7 +35,7 @@ describe("use dispatch", () => {
 
   test("chained operations via use", async () => {
     const rolex = await setup();
-    await rolex.direct("!individual.born", { id: "sean" });
+    await rolex.direct("!society.born", { id: "sean" });
     await rolex.direct("!role.want", { individual: "sean", goal: "Feature: Auth", id: "g1" });
     const r = await rolex.direct<CommandResult>(
       "!role.plan",
@@ -51,8 +51,8 @@ describe("use dispatch", () => {
 
   test("!census.list renders Markdown via CensusRenderer", async () => {
     const rolex = await setup();
-    await rolex.direct("!individual.born", { id: "sean" });
-    await rolex.direct("!org.found", { id: "dp" });
+    await rolex.direct("!society.born", { id: "sean" });
+    await rolex.direct("!society.found", { id: "dp" });
     const result = await rolex.direct<string>("!census.list");
     expect(result).toContain("sean");
     expect(result).toContain("dp");
@@ -76,7 +76,7 @@ describe("use dispatch", () => {
 describe("activate", () => {
   test("returns Role with id and project renders state", async () => {
     const rolex = await setup();
-    await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
+    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
     const role = await rolex.activate("sean");
     expect(role.id).toBe("sean");
     const output = await role.project();
@@ -90,7 +90,7 @@ describe("activate", () => {
 
   test("Role.want/plan/todo/finish work through Role API", async () => {
     const rolex = await setup();
-    await rolex.direct("!individual.born", { id: "sean" });
+    await rolex.direct("!society.born", { id: "sean" });
     const role = await rolex.activate("sean");
 
     const wantR = await role.want("Feature: Auth", "auth");
@@ -112,7 +112,7 @@ describe("activate", () => {
 
   test("focus rejects non-goal ids", async () => {
     const rolex = await setup();
-    await rolex.direct("!individual.born", { id: "sean" });
+    await rolex.direct("!society.born", { id: "sean" });
     const role = await rolex.activate("sean");
     await role.want("Feature: Auth", "auth");
     await role.plan("Feature: JWT", "jwt");
@@ -123,9 +123,9 @@ describe("activate", () => {
 
   test("Role.use delegates to Rolex.direct", async () => {
     const rolex = await setup();
-    await rolex.direct("!individual.born", { id: "sean" });
+    await rolex.direct("!society.born", { id: "sean" });
     const role = await rolex.activate("sean");
-    const r = await role.use<string>("!org.found", { content: "Feature: DP", id: "dp" });
+    const r = await role.use<string>("!society.found", { content: "Feature: DP", id: "dp" });
     expect(r).toContain("dp");
   });
 });
@@ -137,7 +137,7 @@ describe("activate", () => {
 describe("render", () => {
   test("describe generates text with name", async () => {
     const rolex = await setup();
-    const r = await rolex.direct<CommandResult>("!individual.born", { id: "sean" }, { raw: true });
+    const r = await rolex.direct<CommandResult>("!society.born", { id: "sean" }, { raw: true });
     const text = renderDescribe("born", "sean", r.state);
     expect(text).toContain("sean");
   });
@@ -150,7 +150,7 @@ describe("render", () => {
   test("renderState renders individual with heading", async () => {
     const rolex = await setup();
     const r = await rolex.direct<CommandResult>(
-      "!individual.born",
+      "!society.born",
       {
         content: "Feature: I am Sean\n  An AI role.",
         id: "sean",
@@ -164,7 +164,7 @@ describe("render", () => {
 
   test("renderState renders nested structure", async () => {
     const rolex = await setup();
-    await rolex.direct("!individual.born", { id: "sean" });
+    await rolex.direct("!society.born", { id: "sean" });
     await rolex.direct("!role.want", { individual: "sean", goal: "Feature: Build auth", id: "g1" });
     await rolex.direct("!role.plan", { goal: "g1", plan: "Feature: JWT plan", id: "p1" });
     await rolex.direct("!role.todo", { plan: "p1", task: "Feature: Login endpoint", id: "t1" });
@@ -209,14 +209,14 @@ describe("gherkin validation", () => {
   test("rejects non-Gherkin input", async () => {
     const rolex = await setup();
     expect(
-      rolex.direct("!individual.born", { content: "not gherkin", id: "test-bad" })
+      rolex.direct("!society.born", { content: "not gherkin", id: "test-bad" })
     ).rejects.toThrow("Invalid Gherkin");
   });
 
   test("accepts valid Gherkin", async () => {
     const rolex = await setup();
     await expect(
-      rolex.direct("!individual.born", { content: "Feature: Sean", id: "test-good" })
+      rolex.direct("!society.born", { content: "Feature: Sean", id: "test-good" })
     ).resolves.toBeDefined();
   });
 });
@@ -238,9 +238,9 @@ describe("persistent mode", () => {
 
   test("born → retire round-trip", async () => {
     const rolex = await persistentSetup();
-    await rolex.direct("!individual.born", { content: "Feature: Test", id: "test-ind" });
+    await rolex.direct("!society.born", { content: "Feature: Test", id: "test-ind" });
     const r = await rolex.direct<CommandResult>(
-      "!individual.retire",
+      "!society.retire",
       { individual: "test-ind" },
       { raw: true }
     );
@@ -250,13 +250,13 @@ describe("persistent mode", () => {
 
   test("archived entity survives cross-instance reload", async () => {
     const rolex1 = await persistentSetup();
-    await rolex1.direct("!individual.born", { content: "Feature: Test", id: "test-ind" });
-    await rolex1.direct("!individual.retire", { individual: "test-ind" });
+    await rolex1.direct("!society.born", { content: "Feature: Test", id: "test-ind" });
+    await rolex1.direct("!society.retire", { individual: "test-ind" });
 
     const rolex2 = await persistentSetup();
     // rehire should find the archived entity
     const r = await rolex2.direct<CommandResult>(
-      "!individual.rehire",
+      "!society.rehire",
       { individual: "test-ind" },
       { raw: true }
     );

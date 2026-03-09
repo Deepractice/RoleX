@@ -11,7 +11,7 @@ Feature: found — create a new organization
     And individuals can be hired into it
 
   Scenario: Parameters
-    Given the command is org.found
+    Given the command is society.found
     Then content is optional — Gherkin Feature describing the organization
     And id is optional — kebab-case identifier (e.g. "deepractice")
     And alias is optional — alternative names

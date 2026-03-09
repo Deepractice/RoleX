@@ -10,7 +10,7 @@ Feature: train — external skill injection
     And if a procedure with the same id already exists, it is replaced
 
   Scenario: Parameters
-    Given the command is individual.train
+    Given the command is society.train
     Then individual is required — the individual's id
     And content is required — Gherkin Feature describing the procedure
     And id is optional — kebab-case identifier for upsert (e.g. "skill-creator")
