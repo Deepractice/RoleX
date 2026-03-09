@@ -172,6 +172,10 @@ const executors: Record<string, ToolExecutor> = {
     );
     if (result == null) return `${command} done.`;
     if (typeof result === "string") return result;
+    if ((command as string) === "!project.produce") {
+      const opResult = result as { state: State };
+      return renderProductResult("produce" as ProductAction, opResult.state);
+    }
     if ((command as string).startsWith("!project.")) {
       const action = (command as string).slice("!project.".length) as ProjectAction;
       const opResult = result as { state: State };

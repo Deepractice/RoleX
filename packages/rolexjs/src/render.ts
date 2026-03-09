@@ -42,9 +42,9 @@ const descriptions: Record<string, (name: string, state: State) => string> = {
   deliver: (n) => `Deliverable "${n}" added.`,
   wiki: (n) => `Wiki entry "${n}" added.`,
   archive: (n) => `Project "${n}" archived.`,
+  produce: (n) => `Product "${n}" produced.`,
 
   // Product
-  create: (n) => `Product "${n}" created.`,
   strategy: (n) => `Strategy defined for "${n}".`,
   spec: (n) => `Spec "${n}" added.`,
   release: (n) => `Release "${n}" published.`,
@@ -112,9 +112,9 @@ const hints: Record<string, string> = {
   deliver: "deliverable recorded.",
   wiki: "knowledge entry recorded.",
   archive: "the project is archived.",
+  produce: "define strategy, add specs, or assign an owner.",
 
   // Product
-  create: "define strategy, add specs, or assign an owner.",
   strategy: "add behavior specs (BDD contracts) for the product.",
   spec: "add more specs, or publish a release.",
   release: "add distribution channels, or continue adding specs.",

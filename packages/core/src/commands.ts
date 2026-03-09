@@ -85,9 +85,9 @@ export interface CommandResultMap {
   "project.deliver": CommandResult;
   "project.wiki": CommandResult;
   "project.archive": CommandResult;
+  "project.produce": CommandResult;
 
   // ---- Product ----
-  "product.create": CommandResult;
   "product.strategy": CommandResult;
   "product.spec": CommandResult;
   "product.release": CommandResult;
@@ -496,17 +496,22 @@ export function createCommands(ctx: CommandContext): Commands {
       return archive(await resolve(project), "archive");
     },
 
-    // ---- Product ----
-
-    async "product.create"(
+    async "project.produce"(
+      project: string,
       content?: string,
       id?: string,
       alias?: readonly string[]
     ): Promise<CommandResult> {
       validateGherkin(content);
+      const projNode = await resolve(project);
       const node = await rt.create(society, C.product, content, id, alias);
-      return ok(node, "create");
+      // Bidirectional link: project → product (production), product → project (origin)
+      await rt.link(projNode, node, "production", "produce");
+      await rt.link(node, projNode, "origin", "produced-by");
+      return ok(node, "produce");
     },
+
+    // ---- Product ----
 
     async "product.strategy"(
       product: string,

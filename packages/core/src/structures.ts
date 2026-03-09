@@ -28,12 +28,14 @@
  * │ ├── project             "A process container"           │
  * │ │   │  ∿ participation → individual                     │
  * │ │   │  ∿ ownership → organization                       │
+ * │ │   │  ∿ production → product                           │
  * │ │   ├── scope           "Project boundary"              │
  * │ │   ├── milestone       "Key checkpoint"                │
  * │ │   ├── deliverable     "Project output"                │
  * │ │   └── wiki            "Project knowledge base"        │
  * │ ├── product             "A product with contracts"      │
  * │ │   │  ∿ ownership → individual                         │
+ * │ │   │  ∿ origin → project                               │
  * │ │   ├── strategy        "Product strategy"              │
  * │ │   ├── spec            "Product behavior contract"     │
  * │ │   ├── release         "Product version release"       │
@@ -113,6 +115,7 @@ export const requirement = structure("requirement", "Required skill for this pos
 export const project = structure("project", "A process container for organized work", society, [
   relation("participation", "Who participates in this project", individual),
   relation("ownership", "Which organization owns this project", organization),
+  // production → product is a forward declaration; product is defined below
 ]);
 export const scope = structure(
   "scope",
@@ -135,7 +138,10 @@ export const product = structure(
   "product",
   "A product with vision, contracts, and releases",
   society,
-  [relation("ownership", "Who owns this product", individual)]
+  [
+    relation("ownership", "Who owns this product", individual),
+    relation("origin", "Which project produced this product", project),
+  ]
 );
 export const strategy = structure("strategy", "Product strategy — how to win", product);
 export const spec = structure("spec", "Product behavior contract — BDD specification", product);

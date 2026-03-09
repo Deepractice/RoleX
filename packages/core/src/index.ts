@@ -118,6 +118,7 @@ export {
   deliverProject,
   enroll,
   milestoneProject,
+  produceProject,
   removeParticipant,
   scopeProject,
   wikiProject,
@@ -146,7 +147,6 @@ export {
   establish,
   found,
   launch,
-  publish,
   rehire,
   retire,
 } from "./lifecycle.js";

@@ -30,7 +30,6 @@ export const born = process(
 export const found = process("found", "Found an organization", society, create(organization));
 export const establish = process("establish", "Establish a position", society, create(position));
 export const launch = process("launch", "Launch a project", society, create(project));
-export const publish = process("publish", "Publish a product", society, create(product));
 
 // Retirement & death
 export const retire = process(

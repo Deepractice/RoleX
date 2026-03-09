@@ -589,24 +589,25 @@ const projectArchive = def(
   ["project"]
 );
 
-// ================================================================
-//  Product — product management
-// ================================================================
-
-const productCreate = def(
-  "product",
-  "create",
+const projectProduce = def(
+  "project",
+  "produce",
   {
+    project: { type: "string", required: true, description: "Project id" },
     content: {
       type: "gherkin",
       required: false,
       description: "Gherkin Feature source for the product (vision)",
     },
-    id: { type: "string", required: true, description: "User-facing identifier (kebab-case)" },
+    id: { type: "string", required: true, description: "Product id (kebab-case)" },
     alias: { type: "string[]", required: false, description: "Alternative names" },
   },
-  ["content", "id", "alias"]
+  ["project", "content", "id", "alias"]
 );
+
+// ================================================================
+//  Product — product management (created via project.produce)
+// ================================================================
 
 const productStrategy = def(
   "product",
@@ -987,9 +988,9 @@ export const instructions: Record<string, InstructionDef> = {
   "project.deliver": projectDeliver,
   "project.wiki": projectWiki,
   "project.archive": projectArchive,
+  "project.produce": projectProduce,
 
   // product
-  "product.create": productCreate,
   "product.strategy": productStrategy,
   "product.spec": productSpec,
   "product.release": productRelease,

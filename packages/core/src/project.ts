@@ -8,7 +8,7 @@
  * wiki               — add knowledge entry
  */
 import { create, link, process, unlink } from "@rolexjs/system";
-import { deliverable, milestone, project, scope, wiki } from "./structures.js";
+import { deliverable, milestone, product, project, scope, wiki } from "./structures.js";
 
 // Participation
 export const enroll = process(
@@ -44,3 +44,11 @@ export const deliverProject = process(
   create(deliverable)
 );
 export const wikiProject = process("wiki", "Add a wiki entry to a project", project, create(wiki));
+
+// Production — project produces product
+export const produceProject = process(
+  "produce",
+  "Produce a product from this project",
+  project,
+  create(product)
+);

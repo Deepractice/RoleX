@@ -13,7 +13,7 @@ import { describe, hint } from "./render.js";
 // ================================================================
 
 export type ProductAction =
-  | "create"
+  | "produce"
   | "strategy"
   | "spec"
   | "release"

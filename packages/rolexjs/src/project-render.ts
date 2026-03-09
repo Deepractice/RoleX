@@ -21,7 +21,8 @@ export type ProjectAction =
   | "remove"
   | "deliver"
   | "wiki"
-  | "archive";
+  | "archive"
+  | "produce";
 
 // ================================================================
 //  Project Overview
