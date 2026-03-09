@@ -53,6 +53,9 @@ const descriptions: Record<string, (name: string, state: State) => string> = {
   disown: (n) => `Owner removed from "${n}".`,
   deprecate: (n) => `Product "${n}" deprecated.`,
 
+  // Top-level perception
+  inspect: (n) => `Inspecting "${n}".`,
+
   // Role
   activate: (n) => `Role "${n}" activated.`,
   focus: (n) => `Focused on goal "${n}".`,
@@ -122,6 +125,9 @@ const hints: Record<string, string> = {
   own: "the individual is now the product owner.",
   disown: "the individual is no longer the product owner.",
   deprecate: "the product is deprecated.",
+
+  // Top-level perception
+  inspect: "use inspect on child nodes for deeper detail, or activate to work as a role.",
 
   // Role
   activate: "want a goal, or check the current state.",

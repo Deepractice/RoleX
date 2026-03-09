@@ -10,6 +10,7 @@
 import { RendererRouter } from "@rolexjs/core";
 import { CensusRenderer } from "./census.js";
 import { IndividualRenderer } from "./individual.js";
+import { InspectRenderer } from "./inspect.js";
 import { OrgRenderer } from "./org.js";
 import { PositionRenderer } from "./position.js";
 import { ProductRenderer } from "./product.js";
@@ -18,6 +19,7 @@ import { RoleRenderer } from "./role.js";
 
 export { CensusRenderer } from "./census.js";
 export { IndividualRenderer } from "./individual.js";
+export { InspectRenderer } from "./inspect.js";
 export { OrgRenderer } from "./org.js";
 export { PositionRenderer } from "./position.js";
 export { ProductRenderer } from "./product.js";
@@ -34,5 +36,6 @@ export function createRendererRouter(): RendererRouter {
     .register("position", new PositionRenderer())
     .register("product", new ProductRenderer())
     .register("project", new ProjectRenderer())
-    .register("census", new CensusRenderer());
+    .register("census", new CensusRenderer())
+    .register("inspect", new InspectRenderer());
 }

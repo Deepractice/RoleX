@@ -25,11 +25,27 @@ export interface Protocol {
 const worldInstructions: string = Object.values(world).join("\n\n");
 
 const tools: ToolDef[] = [
-  // --- Role ---
+  // --- Top-level perception ---
   {
     name: "activate",
     params: {
       roleId: { type: "string", required: true, description: "Role name to activate" },
+    },
+  },
+  {
+    name: "inspect",
+    params: {
+      id: { type: "string", required: true, description: "Node id to inspect (any node type)" },
+    },
+  },
+  {
+    name: "survey",
+    params: {
+      type: {
+        type: "string",
+        required: false,
+        description: "Filter by type: individual, organization, position, past. Omit for all.",
+      },
     },
   },
   {

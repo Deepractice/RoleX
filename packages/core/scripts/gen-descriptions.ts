@@ -75,7 +75,8 @@ if (structure.world) {
   lines.push(``);
   lines.push(`export const world: Record<WorldTopic, string> = {`);
   for (const [name, content] of topics) {
-    lines.push(`  ${name}: ${content},`);
+    const key = name.includes("-") ? `"${name}"` : name;
+    lines.push(`  ${key}: ${content},`);
   }
   lines.push(`};`);
   lines.push(``);
@@ -90,7 +91,8 @@ for (const [dir, { system, entries }] of Object.entries(structure)) {
     lines.push(`  system: ${system},`);
   }
   for (const [name, content] of entries) {
-    lines.push(`  ${name}: ${content},`);
+    const key = name.includes("-") ? `"${name}"` : name;
+    lines.push(`  ${key}: ${content},`);
   }
   lines.push(`} as const;`);
   lines.push(``);

@@ -11,7 +11,7 @@
  *   - Dispatch direct commands
  */
 
-import type { Initializer, Runtime, Structure } from "@rolexjs/system";
+import type { Initializer, Runtime, State, Structure } from "@rolexjs/system";
 import { createIssueX, type IssueX } from "issuexjs";
 import type { ResourceX } from "resourcexjs";
 import { createResourceX, setProvider } from "resourcexjs";
@@ -32,6 +32,8 @@ import * as C from "./structures.js";
 
 export interface RoleX {
   activate(individual: string): Promise<Role>;
+  inspect(id: string): Promise<string>;
+  survey(type?: string): Promise<string>;
   direct<T = unknown>(
     locator: string,
     args?: Record<string, unknown>,
@@ -195,6 +197,32 @@ export class RoleXService implements RoleX {
   }
 
   // ================================================================
+  //  inspect — project any node's subtree
+  // ================================================================
+
+  async inspect(id: string): Promise<string> {
+    const state = await this.projectById(id);
+    const result: CommandResult = { state, process: "inspect" };
+    return this.renderer.render("inspect", result);
+  }
+
+  // ================================================================
+  //  survey — world-level overview
+  // ================================================================
+
+  async survey(type?: string): Promise<string> {
+    const target = type === "past" ? this.past : this.society;
+    const state = await this.rt.project(target);
+    const children = state.children ?? [];
+    const filtered =
+      type === "past"
+        ? children
+        : children.filter((c) => (type ? c.name === type : c.name !== "past"));
+    const result: CommandResult = { state: { ...state, children: filtered }, process: "list" };
+    return this.renderer.render("census.list", result);
+  }
+
+  // ================================================================
   //  direct — world-level command dispatch
   // ================================================================
 
@@ -230,9 +258,17 @@ export class RoleXService implements RoleX {
   //  Internal helpers
   // ================================================================
 
+  /** Find a node by id across the entire society tree. */
   private async find(id: string): Promise<Structure | null> {
     const state = await this.rt.project(this.society);
     return findInState(state, id);
+  }
+
+  /** Find and project a node's full subtree by id. */
+  private async projectById(id: string): Promise<State> {
+    const node = await this.find(id);
+    if (!node) throw new Error(`"${id}" not found.`);
+    return this.rt.project(node);
   }
 }
 
