@@ -103,12 +103,20 @@ export const createRuntime = (): Runtime => {
   };
 
   /** Project a node with full subtree but without following links (prevents cycles). */
+  /** Reverse relations — targets are rendered as compact references (no subtree). */
+  const compactRelations = new Set(["crowned", "belong", "appointment"]);
+
   const projectLinked = (ref: string): State => {
     const treeNode = nodes.get(ref)!;
     return {
       ...treeNode.node,
       children: treeNode.children.map(projectLinked),
     };
+  };
+
+  const projectCompact = (ref: string): State => {
+    const treeNode = nodes.get(ref)!;
+    return { ...treeNode.node };
   };
 
   const projectNode = (ref: string): State => {
@@ -121,7 +129,9 @@ export const createRuntime = (): Runtime => {
         ? {
             links: nodeLinks.map((l) => ({
               relation: l.relation,
-              target: projectLinked(l.toId),
+              target: compactRelations.has(l.relation)
+                ? projectCompact(l.toId)
+                : projectLinked(l.toId),
               ...(l.permissions && l.permissions.length > 0 ? { permissions: l.permissions } : {}),
             })),
           }

@@ -76,6 +76,14 @@ function toZodSchema(def: ToolDef): z.ZodTypeAny {
 type ToolExecutor = (params: Record<string, unknown>) => Promise<string>;
 
 const executors: Record<string, ToolExecutor> = {
+  async inspect({ id }) {
+    return await rolex.inspect(id as string);
+  },
+
+  async survey({ type }) {
+    return await rolex.survey(type as string | undefined);
+  },
+
   async activate({ roleId }) {
     try {
       const role = await rolex.activate(roleId as string);

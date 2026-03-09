@@ -15,7 +15,6 @@ import { structure } from "@rolexjs/system";
 import type { Comment, Issue, IssueX } from "issuexjs";
 import type { Resource, ResourceX, RXM } from "resourcexjs";
 import * as C from "./index.js";
-import { sovereignPermissions } from "./permissions/index.js";
 import type { PrototypeRepository } from "./platform.js";
 
 // ================================================================
@@ -634,15 +633,6 @@ export function createCommands(ctx: CommandContext): Commands {
       const posNode = await resolve(position);
       const indNode = await resolve(individual);
       await rt.link(posNode, indNode, "appointment", "serve");
-
-      // Auto-train: copy position requirements as individual procedures
-      const posState = await rt.project(posNode);
-      for (const child of posState.children ?? []) {
-        if (child.name !== "requirement" || !child.information) continue;
-        // rt.create is idempotent for same parent + same id
-        await rt.create(indNode, C.procedure, child.information, child.id);
-      }
-
       return ok(posNode, "appoint");
     },
 
@@ -656,7 +646,7 @@ export function createCommands(ctx: CommandContext): Commands {
 
     async "society.crown"(individual: string): Promise<CommandResult> {
       const indNode = await resolve(individual);
-      await rt.link(society, indNode, "crown", "crowned", sovereignPermissions);
+      await rt.link(society, indNode, "crown", "crowned");
       return ok(indNode, "crown");
     },
 

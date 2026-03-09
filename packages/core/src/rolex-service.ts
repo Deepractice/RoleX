@@ -21,6 +21,8 @@ import { createCommands } from "./commands.js";
 import { directives } from "./directives/index.js";
 import { toArgs } from "./dispatch.js";
 import { findInState } from "./find.js";
+import { PermissionRegistry } from "./permissions/registry.js";
+import { sovereignPermissions } from "./permissions/sovereign.js";
 import type { Platform, PrototypeData, RoleXRepository } from "./platform.js";
 import type { Renderer } from "./renderer.js";
 import { Role, type RoleSnapshot } from "./role-model.js";
@@ -61,6 +63,9 @@ export class RoleXService implements RoleX {
   /** Cached Role instances — one per individual. */
   private readonly roles = new Map<string, Role>();
 
+  /** Permission registry — maps relation names to permissions. */
+  private readonly permissions = new PermissionRegistry().register("crowned", sovereignPermissions);
+
   private constructor(platform: Platform, renderer: Renderer) {
     this.repo = platform.repository;
     this.rt = this.repo.runtime;
@@ -89,6 +94,10 @@ export class RoleXService implements RoleX {
   }
 
   private async init(): Promise<void> {
+    // Wrap rt.project to auto-enrich links with permissions
+    const originalProject = this.rt.project.bind(this.rt);
+    this.rt.project = async (node) => this.permissions.enrich(await originalProject(node));
+
     const roots = await this.rt.roots();
     this.society =
       roots.find((r) => r.name === "society") ?? (await this.rt.create(null, C.society));

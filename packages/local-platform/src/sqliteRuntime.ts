@@ -56,14 +56,19 @@ function projectNode(db: DB, ref: string): State {
       ? {
           links: nodeLinks.map((l) => ({
             relation: l.relation,
-            target: projectLinked(db, l.toRef),
+            target: compactRelations.has(l.relation)
+              ? projectCompact(db, l.toRef)
+              : projectLinked(db, l.toRef),
           })),
         }
       : {}),
   };
 }
 
-/** Project a node with full subtree but without following links (prevents cycles). */
+/** Reverse relations — targets are rendered as compact references (no subtree). */
+const compactRelations = new Set(["crowned", "belong", "appointment"]);
+
+/** Project a linked node with full subtree (no further link-following to prevent cycles). */
 function projectLinked(db: DB, ref: string): State {
   const row = db.select().from(nodes).where(eq(nodes.ref, ref)).get();
   if (!row) throw new Error(`Node not found: ${ref}`);
@@ -72,6 +77,13 @@ function projectLinked(db: DB, ref: string): State {
     ...toStructure(row),
     children: children.map((c) => projectLinked(db, c.ref)),
   };
+}
+
+/** Compact reference — just the node itself, no children. */
+function projectCompact(db: DB, ref: string): State {
+  const row = db.select().from(nodes).where(eq(nodes.ref, ref)).get();
+  if (!row) throw new Error(`Node not found: ${ref}`);
+  return toStructure(row);
 }
 
 // ===== Subtree removal =====
