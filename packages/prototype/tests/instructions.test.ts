@@ -14,7 +14,7 @@ describe("instructions registry", () => {
       methods.push(def.method);
       byNamespace.set(def.namespace, methods);
     }
-    for (const [ns, methods] of byNamespace) {
+    for (const [_ns, methods] of byNamespace) {
       expect(methods.length).toBeGreaterThan(0);
     }
   });
@@ -41,7 +41,7 @@ describe("instructions registry", () => {
       methods.push(def.method);
       byNamespace.set(def.namespace, methods);
     }
-    for (const [ns, methods] of byNamespace) {
+    for (const [_ns, methods] of byNamespace) {
       expect(new Set(methods).size).toBe(methods.length);
     }
   });
