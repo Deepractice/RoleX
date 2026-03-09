@@ -35,6 +35,14 @@ export class RoleX implements IRoleX {
     return this.service.activate(individual);
   }
 
+  async inspect(id: string): Promise<string> {
+    return this.service.inspect(id);
+  }
+
+  async survey(type?: string): Promise<string> {
+    return this.service.survey(type);
+  }
+
   async direct<T = unknown>(
     locator: string,
     args?: Record<string, unknown>,
