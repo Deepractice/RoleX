@@ -16,7 +16,7 @@ export class InspectRenderer implements Renderer {
     lines.push(describe(result.process, name, result.state));
     lines.push(hint(result.process));
     lines.push("");
-    lines.push(renderState(result.state));
+    lines.push(renderState(result.state, 1, { compactLinks: true }));
 
     return lines.join("\n");
   }

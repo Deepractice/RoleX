@@ -197,6 +197,8 @@ export function directive(topic: string, scenario: string): string {
 export interface RenderStateOptions {
   /** When returns true, render only the heading — skip body, links, and children. */
   fold?: (node: State) => boolean;
+  /** When true, all links render as compact references (name + id only, no subtree). */
+  compactLinks?: boolean;
 }
 
 export function renderState(state: State, depth = 1, options?: RenderStateOptions): string {
@@ -222,11 +224,14 @@ export function renderState(state: State, depth = 1, options?: RenderStateOption
     lines.push(state.information);
   }
 
-  // Links — plan references are compact, organizational links are expanded
+  // Links — compact shows reference only, expanded shows full subtree
   if (state.links && state.links.length > 0) {
     const compactRelations = new Set(["after", "before", "fallback", "fallback-for"]);
-    const compact = state.links.filter((l) => compactRelations.has(l.relation));
-    const expanded = state.links.filter((l) => !compactRelations.has(l.relation));
+    const allCompact = options?.compactLinks;
+    const compact = allCompact
+      ? state.links
+      : state.links.filter((l) => compactRelations.has(l.relation));
+    const expanded = allCompact ? [] : state.links.filter((l) => !compactRelations.has(l.relation));
     for (const link of compact) {
       const targetId = link.target.id ? ` (${link.target.id})` : "";
       const targetTag = link.target.tag ? ` #${link.target.tag}` : "";
