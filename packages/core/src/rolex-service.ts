@@ -27,6 +27,7 @@ import { projectMaintainerPermissions } from "./permissions/project-maintainer.j
 import { PermissionRegistry } from "./permissions/registry.js";
 import { sovereignPermissions } from "./permissions/sovereign.js";
 import type { Platform, PrototypeData, RoleXRepository } from "./platform.js";
+import { compactState } from "./projection.js";
 import type { Renderer } from "./renderer.js";
 import { Role, type RoleSnapshot } from "./role-model.js";
 import * as C from "./structures.js";
@@ -101,9 +102,10 @@ export class RoleXService implements RoleX {
   }
 
   private async init(): Promise<void> {
-    // Wrap rt.project to auto-enrich links with permissions
+    // Wrap rt.project: raw → compact relations → enrich permissions
     const originalProject = this.rt.project.bind(this.rt);
-    this.rt.project = async (node) => this.permissions.enrich(await originalProject(node));
+    this.rt.project = async (node) =>
+      this.permissions.enrich(compactState(await originalProject(node)));
 
     const roots = await this.rt.roots();
     this.society =

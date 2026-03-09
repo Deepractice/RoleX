@@ -41,40 +41,6 @@ function toStructure(row: typeof nodes.$inferSelect): Structure {
 
 // ===== Projection =====
 
-function projectNode(db: DB, ref: string): State {
-  const row = db.select().from(nodes).where(eq(nodes.ref, ref)).get();
-  if (!row) throw new Error(`Node not found: ${ref}`);
-
-  const children = db.select().from(nodes).where(eq(nodes.parentRef, ref)).all();
-
-  const nodeLinks = db.select().from(links).where(eq(links.fromRef, ref)).all();
-
-  return {
-    ...toStructure(row),
-    children: children.map((c) => projectNode(db, c.ref)),
-    ...(nodeLinks.length > 0
-      ? {
-          links: nodeLinks.map((l) => ({
-            relation: l.relation,
-            target: compactRelations.has(l.relation)
-              ? projectCompact(db, l.toRef)
-              : projectLinked(db, l.toRef),
-          })),
-        }
-      : {}),
-  };
-}
-
-/** Reverse relations — targets are rendered as compact references (no subtree). */
-const compactRelations = new Set([
-  "crowned",
-  "belong",
-  "appointment",
-  "administer",
-  "maintained-by",
-  "own",
-]);
-
 /** Project a linked node with full subtree (no further link-following to prevent cycles). */
 function projectLinked(db: DB, ref: string): State {
   const row = db.select().from(nodes).where(eq(nodes.ref, ref)).get();
@@ -86,11 +52,26 @@ function projectLinked(db: DB, ref: string): State {
   };
 }
 
-/** Compact reference — just the node itself, no children. */
-function projectCompact(db: DB, ref: string): State {
+/** Project a node with full subtree and links (top-level only). */
+function projectNode(db: DB, ref: string): State {
   const row = db.select().from(nodes).where(eq(nodes.ref, ref)).get();
   if (!row) throw new Error(`Node not found: ${ref}`);
-  return toStructure(row);
+
+  const children = db.select().from(nodes).where(eq(nodes.parentRef, ref)).all();
+  const nodeLinks = db.select().from(links).where(eq(links.fromRef, ref)).all();
+
+  return {
+    ...toStructure(row),
+    children: children.map((c) => projectNode(db, c.ref)),
+    ...(nodeLinks.length > 0
+      ? {
+          links: nodeLinks.map((l) => ({
+            relation: l.relation,
+            target: projectLinked(db, l.toRef),
+          })),
+        }
+      : {}),
+  };
 }
 
 // ===== Subtree removal =====

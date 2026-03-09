@@ -12,7 +12,7 @@
  * State = Process(Structure, Information?)
  */
 
-import type { Permission, State } from "./process.js";
+import type { State } from "./process.js";
 import type { Structure } from "./structure.js";
 
 // ===== Runtime interface =====
@@ -34,13 +34,7 @@ export interface Runtime {
   transform(source: Structure, target: Structure, information?: string): Promise<Structure>;
 
   /** Establish a bidirectional cross-branch relation between two nodes. */
-  link(
-    from: Structure,
-    to: Structure,
-    relation: string,
-    reverse: string,
-    permissions?: readonly Permission[]
-  ): Promise<void>;
+  link(from: Structure, to: Structure, relation: string, reverse: string): Promise<void>;
 
   /** Remove a bidirectional cross-branch relation between two nodes. */
   unlink(from: Structure, to: Structure, relation: string, reverse: string): Promise<void>;
@@ -66,7 +60,6 @@ interface TreeNode {
 interface LinkEntry {
   toId: string;
   relation: string;
-  permissions?: readonly Permission[];
 }
 
 export const createRuntime = (): Runtime => {
@@ -102,17 +95,7 @@ export const createRuntime = (): Runtime => {
     nodes.delete(ref);
   };
 
-  /** Project a node with full subtree but without following links (prevents cycles). */
-  /** Reverse relations — targets are rendered as compact references (no subtree). */
-  const compactRelations = new Set([
-    "crowned",
-    "belong",
-    "appointment",
-    "administer",
-    "maintained-by",
-    "own",
-  ]);
-
+  /** Project a linked node with full subtree (no further link-following to prevent cycles). */
   const projectLinked = (ref: string): State => {
     const treeNode = nodes.get(ref)!;
     return {
@@ -121,11 +104,7 @@ export const createRuntime = (): Runtime => {
     };
   };
 
-  const projectCompact = (ref: string): State => {
-    const treeNode = nodes.get(ref)!;
-    return { ...treeNode.node };
-  };
-
+  /** Project a node with full subtree and links (top-level only). */
   const projectNode = (ref: string): State => {
     const treeNode = nodes.get(ref)!;
     const nodeLinks = links.get(ref);
@@ -136,10 +115,7 @@ export const createRuntime = (): Runtime => {
         ? {
             links: nodeLinks.map((l) => ({
               relation: l.relation,
-              target: compactRelations.has(l.relation)
-                ? projectCompact(l.toId)
-                : projectLinked(l.toId),
-              ...(l.permissions && l.permissions.length > 0 ? { permissions: l.permissions } : {}),
+              target: projectLinked(l.toId),
             })),
           }
         : {}),
@@ -241,29 +217,21 @@ export const createRuntime = (): Runtime => {
       return sourceTreeNode.node;
     },
 
-    async link(from, to, relationName, reverseName, permissions) {
+    async link(from, to, relationName, reverseName) {
       if (!from.ref) throw new Error("Source node has no ref");
       if (!to.ref) throw new Error("Target node has no ref");
 
-      // Forward: from → to (with permissions)
+      // Forward: from → to
       const fromLinks = links.get(from.ref) ?? [];
       if (!fromLinks.some((l) => l.toId === to.ref && l.relation === relationName)) {
-        fromLinks.push({
-          toId: to.ref,
-          relation: relationName,
-          ...(permissions && permissions.length > 0 ? { permissions } : {}),
-        });
+        fromLinks.push({ toId: to.ref, relation: relationName });
         links.set(from.ref, fromLinks);
       }
 
-      // Reverse: to → from (reverse link carries same permissions)
+      // Reverse: to → from
       const toLinks = links.get(to.ref) ?? [];
       if (!toLinks.some((l) => l.toId === from.ref && l.relation === reverseName)) {
-        toLinks.push({
-          toId: from.ref,
-          relation: reverseName,
-          ...(permissions && permissions.length > 0 ? { permissions } : {}),
-        });
+        toLinks.push({ toId: from.ref, relation: reverseName });
         links.set(to.ref, toLinks);
       }
     },
