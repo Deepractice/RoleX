@@ -377,6 +377,58 @@ export function createOps(ctx: OpsContext): Ops {
       return archive(await resolve(project), "archive");
     },
 
+    // ---- Product ----
+
+    async "product.create"(
+      content?: string,
+      id?: string,
+      alias?: readonly string[]
+    ): Promise<OpResult> {
+      validateGherkin(content);
+      const node = await rt.create(society, C.product, content, id, alias);
+      return ok(node, "create");
+    },
+
+    async "product.strategy"(product: string, strategy: string, id?: string): Promise<OpResult> {
+      validateGherkin(strategy);
+      const node = await rt.create(await resolve(product), C.strategy, strategy, id);
+      return ok(node, "strategy");
+    },
+
+    async "product.spec"(product: string, spec: string, id?: string): Promise<OpResult> {
+      validateGherkin(spec);
+      const node = await rt.create(await resolve(product), C.spec, spec, id);
+      return ok(node, "spec");
+    },
+
+    async "product.release"(product: string, release: string, id?: string): Promise<OpResult> {
+      validateGherkin(release);
+      const node = await rt.create(await resolve(product), C.release, release, id);
+      return ok(node, "release");
+    },
+
+    async "product.channel"(product: string, channel: string, id?: string): Promise<OpResult> {
+      validateGherkin(channel);
+      const node = await rt.create(await resolve(product), C.channel, channel, id);
+      return ok(node, "channel");
+    },
+
+    async "product.own"(product: string, individual: string): Promise<OpResult> {
+      const prodNode = await resolve(product);
+      await rt.link(prodNode, await resolve(individual), "ownership", "own");
+      return ok(prodNode, "own");
+    },
+
+    async "product.disown"(product: string, individual: string): Promise<OpResult> {
+      const prodNode = await resolve(product);
+      await rt.unlink(prodNode, await resolve(individual), "ownership", "own");
+      return ok(prodNode, "disown");
+    },
+
+    async "product.deprecate"(product: string): Promise<OpResult> {
+      return archive(await resolve(product), "deprecate");
+    },
+
     // ---- Org ----
 
     async "org.found"(content?: string, id?: string, alias?: readonly string[]): Promise<OpResult> {
