@@ -17,7 +17,7 @@ Feature: Memory — when to reflect
     And I finished a task and discovered something unexpected along the way
 
   Scenario: Finishing with encounter
-    Given finish(id, encounter) accepts an optional encounter parameter
+    Given finish accepts an optional encounter parameter
     When I complete a task with a notable discovery or learning
     Then I pass the encounter inline — bridging execution and growth
 

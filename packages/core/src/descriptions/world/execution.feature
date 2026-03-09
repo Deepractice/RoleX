@@ -5,25 +5,25 @@ Feature: Execution — the doing cycle
   Scenario: Declare a goal
     Given I know who I am via activate
     When I want something — a desired outcome
-    Then I declare it with want(id, goal)
+    Then I declare it with want
     And focus automatically switches to this new goal
 
   Scenario: Plan and create tasks
     Given I have a focused goal
-    Then I call plan(id, plan) to break it into logical phases
-    And I call todo(id, task) to create concrete, actionable tasks
+    Then I call plan to break it into logical phases
+    And I call todo to create concrete, actionable tasks
 
   Scenario: Execute and finish
     Given I have tasks to work on
     When I complete a task
-    Then I call finish(id) to mark it done
+    Then I call finish to mark it done
     And an encounter is created — a raw record of what happened
     And I optionally capture what happened via the encounter parameter
 
   Scenario: Complete or abandon a plan
     Given tasks are done or the plan's strategy is no longer viable
-    When the plan is fulfilled I call complete()
-    Or when the plan should be dropped I call abandon()
+    When the plan is fulfilled I call complete
+    Or when the plan should be dropped I call abandon
     Then an encounter is created for the cognition cycle
 
   Scenario: Goals are long-term directions
@@ -35,5 +35,5 @@ Feature: Execution — the doing cycle
   Scenario: Multiple goals
     Given I may have several active goals
     When I need to switch between them
-    Then I call focus(id) to change the currently focused goal
+    Then I call focus to change the currently focused goal
     And subsequent plan and todo operations target the focused goal

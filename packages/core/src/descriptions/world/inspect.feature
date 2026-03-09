@@ -5,7 +5,7 @@ Feature: Inspect — examine any node's full state
 
   Scenario: Inspect any node
     Given I need to understand a product, project, organization, or any node
-    When I call inspect(id)
+    When I call inspect on a node
     Then the full state tree is projected from that node downward
     And output includes heading, Gherkin content, children, and links
 
