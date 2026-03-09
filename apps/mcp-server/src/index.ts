@@ -7,7 +7,15 @@
 
 import { localPlatform } from "@rolexjs/local-platform";
 import { FastMCP } from "fastmcp";
-import { createRoleX, detail, type ProjectAction, renderProjectResult, type State } from "rolexjs";
+import {
+  createRoleX,
+  detail,
+  type ProductAction,
+  type ProjectAction,
+  renderProductResult,
+  renderProjectResult,
+  type State,
+} from "rolexjs";
 
 import { z } from "zod";
 import { instructions } from "./instructions.js";
@@ -262,6 +270,12 @@ server.addTool({
       const action = locator.slice("!project.".length) as ProjectAction;
       const opResult = result as { state: State };
       return renderProjectResult(action, opResult.state);
+    }
+    // Render product results as readable text
+    if (locator.startsWith("!product.")) {
+      const action = locator.slice("!product.".length) as ProductAction;
+      const opResult = result as { state: State };
+      return renderProductResult(action, opResult.state);
     }
     return JSON.stringify(result, null, 2);
   },

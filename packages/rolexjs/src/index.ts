@@ -28,6 +28,9 @@ export {
   renderIssueList,
   renderIssueResult,
 } from "./issue-render.js";
+// Product Render
+export type { ProductAction } from "./product-render.js";
+export { renderProduct, renderProductResult } from "./product-render.js";
 // Project Render
 export type { ProjectAction } from "./project-render.js";
 export { renderProject, renderProjectResult } from "./project-render.js";

@@ -15,6 +15,7 @@
 import type { OpResult, Ops } from "@rolexjs/prototype";
 import type { RoleContext } from "./context.js";
 import { type IssueAction, type LabelResolver, renderIssueResult } from "./issue-render.js";
+import { type ProductAction, renderProductResult } from "./product-render.js";
 import { type ProjectAction, renderProjectResult } from "./project-render.js";
 import { render } from "./render.js";
 
@@ -234,6 +235,12 @@ export class Role {
       const action = locator.slice("!project.".length) as ProjectAction;
       const opResult = result as { state: import("@rolexjs/system").State };
       return renderProjectResult(action, opResult.state) as T;
+    }
+    // Render product results as readable text
+    if (locator.startsWith("!product.")) {
+      const action = locator.slice("!product.".length) as ProductAction;
+      const opResult = result as { state: import("@rolexjs/system").State };
+      return renderProductResult(action, opResult.state) as T;
     }
     return result;
   }

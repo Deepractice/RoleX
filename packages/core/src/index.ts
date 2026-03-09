@@ -3,8 +3,8 @@
  *
  * Domain-specific structures and processes built on @rolexjs/system.
  *
- * Structures — the concept tree (23 concepts, 3 relations)
- * Processes  — how the world changes (32 processes, 5 layers)
+ * Structures — the concept tree (28 concepts, 4 relations)
+ * Processes  — how the world changes (40 processes, 6 layers)
  *
  *   Layer 1: Execution   — want, plan, todo, finish, complete, abandon
  *   Layer 2: Cognition   — reflect, realize, master
@@ -45,6 +45,8 @@ export type { ContextData, Platform, PrototypeRegistry, RoleXRepository } from "
 
 export {
   background,
+  // Product
+  channel,
   // Organization
   charter,
   // Project
@@ -69,14 +71,22 @@ export {
   position,
   principle,
   procedure,
+  // Product
+  product,
   // Project
   project,
+  // Product
+  release,
   // Organization — Position
   requirement,
   // Project
   scope,
   // Level 0
   society,
+  // Product
+  spec,
+  // Product
+  strategy,
   task,
   tone,
   // Project
@@ -106,17 +116,30 @@ export {
   wikiProject,
 } from "./project.js";
 
+// ===== Processes — Layer 3c: Product =====
+
+export {
+  channelProduct,
+  disownProduct,
+  ownProduct,
+  releaseProduct,
+  specProduct,
+  strategyProduct,
+} from "./product.js";
+
 // ===== Processes — Layer 4: Lifecycle =====
 
 export {
   abolish,
   archive,
   born,
+  deprecate,
   die,
   dissolve,
   establish,
   found,
   launch,
+  publish,
   rehire,
   retire,
 } from "./lifecycle.js";

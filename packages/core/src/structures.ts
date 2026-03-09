@@ -32,6 +32,12 @@
  * │ │   ├── milestone       "Key checkpoint"                │
  * │ │   ├── deliverable     "Project output"                │
  * │ │   └── wiki            "Project knowledge base"        │
+ * │ ├── product             "A product with contracts"      │
+ * │ │   │  ∿ ownership → individual                         │
+ * │ │   ├── strategy        "Product strategy"              │
+ * │ │   ├── spec            "Product behavior contract"     │
+ * │ │   ├── release         "Product version release"       │
+ * │ │   └── channel         "Product distribution channel"  │
  * │ └── past                "Things no longer active"        │
  * └─────────────────────────────────────────────────────────┘
  */
@@ -120,3 +126,18 @@ export const milestone = structure(
 );
 export const deliverable = structure("deliverable", "Project output and delivery", project);
 export const wiki = structure("wiki", "Project-level knowledge base entry", project);
+
+// ================================================================
+//  Product — product management entity
+// ================================================================
+
+export const product = structure(
+  "product",
+  "A product with vision, contracts, and releases",
+  society,
+  [relation("ownership", "Who owns this product", individual)]
+);
+export const strategy = structure("strategy", "Product strategy — how to win", product);
+export const spec = structure("spec", "Product behavior contract — BDD specification", product);
+export const release = structure("release", "Product version release", product);
+export const channel = structure("channel", "Product distribution channel", product);
