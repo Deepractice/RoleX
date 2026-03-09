@@ -12,6 +12,7 @@ import { CensusRenderer } from "./census.js";
 import { IndividualRenderer } from "./individual.js";
 import { OrgRenderer } from "./org.js";
 import { PositionRenderer } from "./position.js";
+import { ProductRenderer } from "./product.js";
 import { ProjectRenderer } from "./project.js";
 import { RoleRenderer } from "./role.js";
 
@@ -19,6 +20,7 @@ export { CensusRenderer } from "./census.js";
 export { IndividualRenderer } from "./individual.js";
 export { OrgRenderer } from "./org.js";
 export { PositionRenderer } from "./position.js";
+export { ProductRenderer } from "./product.js";
 export { ProjectRenderer } from "./project.js";
 export type { Renderer } from "./renderer.js";
 export { RoleRenderer } from "./role.js";
@@ -30,6 +32,7 @@ export function createRendererRouter(): RendererRouter {
     .register("individual", new IndividualRenderer())
     .register("org", new OrgRenderer())
     .register("position", new PositionRenderer())
+    .register("product", new ProductRenderer())
     .register("project", new ProjectRenderer())
     .register("census", new CensusRenderer());
 }

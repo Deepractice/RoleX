@@ -86,6 +86,16 @@ export interface CommandResultMap {
   "project.wiki": CommandResult;
   "project.archive": CommandResult;
 
+  // ---- Product ----
+  "product.create": CommandResult;
+  "product.strategy": CommandResult;
+  "product.spec": CommandResult;
+  "product.release": CommandResult;
+  "product.channel": CommandResult;
+  "product.own": CommandResult;
+  "product.disown": CommandResult;
+  "product.deprecate": CommandResult;
+
   // ---- Organization ----
   "org.found": CommandResult;
   "org.charter": CommandResult;
@@ -484,6 +494,62 @@ export function createCommands(ctx: CommandContext): Commands {
 
     async "project.archive"(project: string): Promise<CommandResult> {
       return archive(await resolve(project), "archive");
+    },
+
+    // ---- Product ----
+
+    async "product.create"(
+      content?: string,
+      id?: string,
+      alias?: readonly string[]
+    ): Promise<CommandResult> {
+      validateGherkin(content);
+      const node = await rt.create(society, C.product, content, id, alias);
+      return ok(node, "create");
+    },
+
+    async "product.strategy"(
+      product: string,
+      strategy: string,
+      id?: string
+    ): Promise<CommandResult> {
+      validateGherkin(strategy);
+      const node = await rt.create(await resolve(product), C.strategy, strategy, id);
+      return ok(node, "strategy");
+    },
+
+    async "product.spec"(product: string, spec: string, id?: string): Promise<CommandResult> {
+      validateGherkin(spec);
+      const node = await rt.create(await resolve(product), C.spec, spec, id);
+      return ok(node, "spec");
+    },
+
+    async "product.release"(product: string, release: string, id?: string): Promise<CommandResult> {
+      validateGherkin(release);
+      const node = await rt.create(await resolve(product), C.release, release, id);
+      return ok(node, "release");
+    },
+
+    async "product.channel"(product: string, channel: string, id?: string): Promise<CommandResult> {
+      validateGherkin(channel);
+      const node = await rt.create(await resolve(product), C.channel, channel, id);
+      return ok(node, "channel");
+    },
+
+    async "product.own"(product: string, individual: string): Promise<CommandResult> {
+      const prodNode = await resolve(product);
+      await rt.link(prodNode, await resolve(individual), "ownership", "own");
+      return ok(prodNode, "own");
+    },
+
+    async "product.disown"(product: string, individual: string): Promise<CommandResult> {
+      const prodNode = await resolve(product);
+      await rt.unlink(prodNode, await resolve(individual), "ownership", "own");
+      return ok(prodNode, "disown");
+    },
+
+    async "product.deprecate"(product: string): Promise<CommandResult> {
+      return archive(await resolve(product), "deprecate");
     },
 
     // ---- Org ----

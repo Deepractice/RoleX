@@ -15,8 +15,10 @@ import {
   createRoleX,
   detail,
   type ParamDef,
+  type ProductAction,
   type ProjectAction,
   protocol,
+  renderProductResult,
   renderProjectResult,
   type State,
   type ToolDef,
@@ -174,6 +176,11 @@ const executors: Record<string, ToolExecutor> = {
       const action = (command as string).slice("!project.".length) as ProjectAction;
       const opResult = result as { state: State };
       return renderProjectResult(action, opResult.state);
+    }
+    if ((command as string).startsWith("!product.")) {
+      const action = (command as string).slice("!product.".length) as ProductAction;
+      const opResult = result as { state: State };
+      return renderProductResult(action, opResult.state);
     }
     return JSON.stringify(result, null, 2);
   },

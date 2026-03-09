@@ -53,6 +53,8 @@ export type {
 
 export {
   background,
+  // Product
+  channel,
   // Organization
   charter,
   // Project
@@ -77,14 +79,21 @@ export {
   position,
   principle,
   procedure,
+  // Product
+  product,
   // Project
   project,
+  // Product
+  release,
   // Organization — Position
   requirement,
   // Project
   scope,
   // Level 0
   society,
+  // Product
+  spec,
+  strategy,
   task,
   tone,
   // Project
@@ -114,17 +123,30 @@ export {
   wikiProject,
 } from "./project.js";
 
+// ===== Processes — Layer 3c: Product =====
+
+export {
+  channelProduct,
+  disownProduct,
+  ownProduct,
+  releaseProduct,
+  specProduct,
+  strategyProduct,
+} from "./product.js";
+
 // ===== Processes — Layer 4: Lifecycle =====
 
 export {
   abolish,
   archive,
   born,
+  deprecate,
   die,
   dissolve,
   establish,
   found,
   launch,
+  publish,
   rehire,
   retire,
 } from "./lifecycle.js";

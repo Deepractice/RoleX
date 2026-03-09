@@ -43,6 +43,16 @@ const descriptions: Record<string, (name: string, state: State) => string> = {
   wiki: (n) => `Wiki entry "${n}" added.`,
   archive: (n) => `Project "${n}" archived.`,
 
+  // Product
+  create: (n) => `Product "${n}" created.`,
+  strategy: (n) => `Strategy defined for "${n}".`,
+  spec: (n) => `Spec "${n}" added.`,
+  release: (n) => `Release "${n}" published.`,
+  channel: (n) => `Channel "${n}" added.`,
+  own: (n) => `Owner assigned to "${n}".`,
+  disown: (n) => `Owner removed from "${n}".`,
+  deprecate: (n) => `Product "${n}" deprecated.`,
+
   // Role
   activate: (n) => `Role "${n}" activated.`,
   focus: (n) => `Focused on goal "${n}".`,
@@ -102,6 +112,16 @@ const hints: Record<string, string> = {
   deliver: "deliverable recorded.",
   wiki: "knowledge entry recorded.",
   archive: "the project is archived.",
+
+  // Product
+  create: "define strategy, add specs, or assign an owner.",
+  strategy: "add behavior specs (BDD contracts) for the product.",
+  spec: "add more specs, or publish a release.",
+  release: "add distribution channels, or continue adding specs.",
+  channel: "distribution channel recorded.",
+  own: "the individual is now the product owner.",
+  disown: "the individual is no longer the product owner.",
+  deprecate: "the product is deprecated.",
 
   // Role
   activate: "want a goal, or check the current state.",
@@ -258,6 +278,11 @@ const CONCEPT_ORDER: readonly string[] = [
   "milestone",
   "deliverable",
   "wiki",
+  // Product
+  "strategy",
+  "spec",
+  "release",
+  "channel",
 ];
 
 /** Summarize plan/task completion for a goal heading. */

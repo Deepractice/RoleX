@@ -590,6 +590,126 @@ const projectArchive = def(
 );
 
 // ================================================================
+//  Product — product management
+// ================================================================
+
+const productCreate = def(
+  "product",
+  "create",
+  {
+    content: {
+      type: "gherkin",
+      required: false,
+      description: "Gherkin Feature source for the product (vision)",
+    },
+    id: { type: "string", required: true, description: "User-facing identifier (kebab-case)" },
+    alias: { type: "string[]", required: false, description: "Alternative names" },
+  },
+  ["content", "id", "alias"]
+);
+
+const productStrategy = def(
+  "product",
+  "strategy",
+  {
+    product: { type: "string", required: true, description: "Product id" },
+    content: {
+      type: "gherkin",
+      required: true,
+      description: "Gherkin Feature source for the strategy",
+    },
+    id: { type: "string", required: true, description: "Strategy id" },
+  },
+  ["product", "content", "id"]
+);
+
+const productSpec = def(
+  "product",
+  "spec",
+  {
+    product: { type: "string", required: true, description: "Product id" },
+    content: {
+      type: "gherkin",
+      required: true,
+      description: "Gherkin Feature source for the behavior contract (BDD specification)",
+    },
+    id: {
+      type: "string",
+      required: true,
+      description: "Spec id (keywords joined by hyphens)",
+    },
+  },
+  ["product", "content", "id"]
+);
+
+const productRelease = def(
+  "product",
+  "release",
+  {
+    product: { type: "string", required: true, description: "Product id" },
+    content: {
+      type: "gherkin",
+      required: true,
+      description: "Gherkin Feature source for the release",
+    },
+    id: {
+      type: "string",
+      required: true,
+      description: "Release id (e.g. v1.0.0)",
+    },
+  },
+  ["product", "content", "id"]
+);
+
+const productChannel = def(
+  "product",
+  "channel",
+  {
+    product: { type: "string", required: true, description: "Product id" },
+    content: {
+      type: "gherkin",
+      required: true,
+      description: "Gherkin Feature source for the distribution channel",
+    },
+    id: {
+      type: "string",
+      required: true,
+      description: "Channel id (e.g. npm, cloud-platform)",
+    },
+  },
+  ["product", "content", "id"]
+);
+
+const productOwn = def(
+  "product",
+  "own",
+  {
+    product: { type: "string", required: true, description: "Product id" },
+    individual: { type: "string", required: true, description: "Individual id (owner)" },
+  },
+  ["product", "individual"]
+);
+
+const productDisown = def(
+  "product",
+  "disown",
+  {
+    product: { type: "string", required: true, description: "Product id" },
+    individual: { type: "string", required: true, description: "Individual id (owner to remove)" },
+  },
+  ["product", "individual"]
+);
+
+const productDeprecate = def(
+  "product",
+  "deprecate",
+  {
+    product: { type: "string", required: true, description: "Product id" },
+  },
+  ["product"]
+);
+
+// ================================================================
 //  Census — society-level queries
 // ================================================================
 
@@ -600,7 +720,7 @@ const censusList = def(
     type: {
       type: "string",
       required: false,
-      description: "Filter by type (individual, organization, position, project, past)",
+      description: "Filter by type (individual, organization, position, project, product, past)",
     },
   },
   ["type"]
@@ -867,6 +987,16 @@ export const instructions: Record<string, InstructionDef> = {
   "project.deliver": projectDeliver,
   "project.wiki": projectWiki,
   "project.archive": projectArchive,
+
+  // product
+  "product.create": productCreate,
+  "product.strategy": productStrategy,
+  "product.spec": productSpec,
+  "product.release": productRelease,
+  "product.channel": productChannel,
+  "product.own": productOwn,
+  "product.disown": productDisown,
+  "product.deprecate": productDeprecate,
 
   // census
   "census.list": censusList,
