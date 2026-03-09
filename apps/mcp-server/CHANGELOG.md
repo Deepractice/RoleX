@@ -1,5 +1,75 @@
 # @rolexjs/mcp-server
 
+## 1.4.0
+
+### Minor Changes
+
+- b968e76: feat: add product management system
+
+  New entity type for managing products with four concept layers:
+  vision, strategy, specification (BDD contracts), and release.
+
+  Commands: create, strategy, spec, release, channel, own, disown, deprecate.
+
+- ffada31: Implement Flyway-style prototype migration system. Prototypes now support incremental versioned migrations — only unapplied migrations execute on restart.
+
+  - Add `PrototypeData`, `Migration` types and `applyPrototype()` function
+  - Rename `PrototypeRegistry` to `PrototypeRepository`
+  - Add `version` column to `prototype_migrations` table
+  - Remove `prototype.settle` MCP instruction (now internal-only)
+  - Convert genesis from ResourceX resource to TS module with inline migrations
+  - Replace `Platform.bootstrap` (string[]) with `Platform.prototypes` (PrototypeData[])
+
+- 42f6d76: feat: unified tool schema in prototype — single source of truth for all tool definitions
+
+  - Add `ToolDef` type and `tools` array in `@rolexjs/prototype` defining all 15 tool schemas
+  - Add `worldInstructions` pre-assembled from world features
+  - MCP server consumes unified schema instead of hand-written Zod definitions
+  - Remove `instructions.ts` from mcp-server (now comes from prototype)
+  - Re-export `ToolDef`, `tools`, `worldInstructions` from `rolexjs`
+
+### Patch Changes
+
+- c173792: Auto-apply prototypes during createRoleX initialization. Callers no longer need to explicitly call rolex.genesis().
+- b4f08af: feat: replace additionalProperties with explicit args param for use/direct tools
+
+  use and direct tools now accept an explicit `args` parameter (type: record) instead of
+  relying on additionalProperties. This enforces progressive disclosure — AI sees the args
+  field exists but must load the skill first to learn what to pass.
+
+- 248cf65: feat: flatten use/direct MCP tool args
+
+  Replace nested `args` object with flat top-level parameters for `use` and `direct` MCP tools.
+  This eliminates the string/object serialization ambiguity when AI calls these tools.
+  Updated all SKILL.md documentation to reflect the new flat parameter format.
+
+- 5cde1b1: Role rich domain model — merge prototype into core, Protocol export
+
+  - Role is now a rich domain model in @rolexjs/core with ownership isolation, KV-serializable snapshot/restore, and all domain methods (want, plan, todo, finish, reflect, realize, master, etc.)
+  - RoleXService orchestrates Role lifecycle, caching, and persistence in core
+  - rolexjs becomes a thin rendering shell delegating to core's RoleXService
+  - Protocol interface bundles tools + instructions as a single export for channel adapters
+  - Removed scattered exports (render, genesis, createRendererRouter) from rolexjs public API
+  - Deleted old Role class and RoleContext from rolexjs (replaced by core's Role)
+  - Moved findInState utility to core
+
+- Updated dependencies [ccef531]
+- Updated dependencies [c173792]
+- Updated dependencies [6be2390]
+- Updated dependencies [fe28a2b]
+- Updated dependencies [b4f08af]
+- Updated dependencies [248cf65]
+- Updated dependencies [b968e76]
+- Updated dependencies [6f19241]
+- Updated dependencies [ffada31]
+- Updated dependencies [bf38ba4]
+- Updated dependencies [8988ee9]
+- Updated dependencies [5cde1b1]
+- Updated dependencies [42f6d76]
+  - @rolexjs/local-platform@1.4.0
+  - rolexjs@1.4.0
+  - @rolexjs/genesis@1.4.0
+
 ## 1.3.0
 
 ### Patch Changes

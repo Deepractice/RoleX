@@ -1,5 +1,32 @@
 # @rolexjs/local-platform
 
+## 1.4.0
+
+### Minor Changes
+
+- fe28a2b: Replace raw DDL with Drizzle ORM migrations for schema management. Add prototype_migrations table for Flyway-style migration history tracking. PrototypeRegistry now supports recordMigration, getMigrationHistory, and hasMigration methods.
+- ffada31: Implement Flyway-style prototype migration system. Prototypes now support incremental versioned migrations — only unapplied migrations execute on restart.
+
+  - Add `PrototypeData`, `Migration` types and `applyPrototype()` function
+  - Rename `PrototypeRegistry` to `PrototypeRepository`
+  - Add `version` column to `prototype_migrations` table
+  - Remove `prototype.settle` MCP instruction (now internal-only)
+  - Convert genesis from ResourceX resource to TS module with inline migrations
+  - Replace `Platform.bootstrap` (string[]) with `Platform.prototypes` (PrototypeData[])
+
+### Patch Changes
+
+- ccef531: Make PrototypeRepository interface fully async. All methods now return Promises, enabling native async storage backends like Cloudflare D1.
+- Updated dependencies [ccef531]
+- Updated dependencies [fe28a2b]
+- Updated dependencies [d5d6301]
+- Updated dependencies [a6e717f]
+- Updated dependencies [b968e76]
+- Updated dependencies [ffada31]
+- Updated dependencies [5cde1b1]
+  - @rolexjs/core@1.4.0
+  - @rolexjs/system@1.4.0
+
 ## 1.3.0
 
 ### Patch Changes
