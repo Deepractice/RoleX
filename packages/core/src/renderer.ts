@@ -6,7 +6,7 @@
  * Concrete renderers are registered by the upper layer (rolexjs).
  */
 
-import type { CommandResult } from "./commands.js";
+import type { CommandResult } from "./commands/index.js";
 
 /** Renders a command result into a string (typically Markdown). */
 export interface Renderer {

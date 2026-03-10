@@ -5,7 +5,7 @@
  * lookup against the instruction registry.
  */
 
-import { instructions } from "./instructions.js";
+import { instructions } from "./instructions/index.js";
 import type { ArgEntry } from "./schema.js";
 
 /**

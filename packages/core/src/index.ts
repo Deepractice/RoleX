@@ -172,8 +172,13 @@ export type { ApplyResult } from "./apply.js";
 export { applyPrototype } from "./apply.js";
 
 // Commands
-export type { CommandContext, CommandResult, CommandResultMap, Commands } from "./commands.js";
-export { createCommands } from "./commands.js";
+export type {
+  CommandContext,
+  CommandResult,
+  CommandResultMap,
+  Commands,
+} from "./commands/index.js";
+export { createCommands } from "./commands/index.js";
 
 // Descriptions
 export { processes, world } from "./descriptions/index.js";
@@ -185,7 +190,7 @@ export { directives } from "./directives/index.js";
 export { toArgs } from "./dispatch.js";
 
 // Instruction registry
-export { instructions } from "./instructions.js";
+export { instructions } from "./instructions/index.js";
 
 // Renderer framework
 export type { Renderer } from "./renderer.js";

@@ -15,7 +15,7 @@
  */
 
 import type { State } from "@rolexjs/system";
-import type { CommandResult, Commands } from "./commands.js";
+import type { CommandResult, Commands } from "./commands/index.js";
 import type { Renderer } from "./renderer.js";
 
 // ================================================================
