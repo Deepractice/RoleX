@@ -12,7 +12,7 @@ Feature: launch — create a new project
     And products can be produced from the project
 
   Scenario: Parameters
-    Given the command is project.launch
+    Given the command is org.launch
     Then content is optional — Gherkin Feature describing the project
     And id is optional — kebab-case identifier (e.g. "rolex")
     And alias is optional — alternative names

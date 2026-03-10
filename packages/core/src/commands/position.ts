@@ -10,20 +10,10 @@ export function positionCommands(
   ctx: CommandContext,
   helpers: Helpers
 ): Record<string, (...args: any[]) => any> {
-  const { rt, society, resolve } = ctx;
-  const { ok, archive, validateGherkin, removeExisting } = helpers;
+  const { rt, resolve } = ctx;
+  const { ok, validateGherkin, removeExisting } = helpers;
 
   return {
-    async "position.establish"(
-      content?: string,
-      id?: string,
-      alias?: readonly string[]
-    ): Promise<CommandResult> {
-      validateGherkin(content);
-      const node = await rt.create(society, C.position, content, id, alias);
-      return ok(node, "establish");
-    },
-
     async "position.charge"(position: string, duty: string, id?: string): Promise<CommandResult> {
       validateGherkin(duty);
       const node = await rt.create(await resolve(position), C.duty, duty, id);
@@ -40,10 +30,6 @@ export function positionCommands(
       if (id) await removeExisting(parent, id);
       const node = await rt.create(parent, C.requirement, procedure, id);
       return ok(node, "require");
-    },
-
-    async "position.abolish"(position: string): Promise<CommandResult> {
-      return archive(await resolve(position), "abolish");
     },
 
     async "position.appoint"(position: string, individual: string): Promise<CommandResult> {

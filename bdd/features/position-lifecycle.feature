@@ -9,7 +9,7 @@ Feature: Position lifecycle
   # ===== establish =====
 
   Scenario: Establish creates a position
-    When I direct "!position.establish" with:
+    When I direct "!org.establish" with:
       | content | Feature: CTO |
       | id      | acme/cto     |
     Then the result process should be "establish"
@@ -65,7 +65,7 @@ Feature: Position lifecycle
 
   Scenario: Abolish archives a position
     Given position "acme/cto" exists
-    When I direct "!position.abolish" with:
+    When I direct "!org.abolish" with:
       | position | acme/cto |
     Then the result process should be "abolish"
     And the result state name should be "position"

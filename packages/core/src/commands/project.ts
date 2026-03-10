@@ -11,21 +11,9 @@ export function projectCommands(
   helpers: Helpers
 ): Record<string, (...args: any[]) => any> {
   const { rt, society, resolve } = ctx;
-  const { ok, archive, validateGherkin } = helpers;
+  const { ok, validateGherkin } = helpers;
 
   return {
-    async "project.launch"(
-      content?: string,
-      id?: string,
-      alias?: readonly string[],
-      org?: string
-    ): Promise<CommandResult> {
-      validateGherkin(content);
-      const node = await rt.create(society, C.project, content, id, alias);
-      if (org) await rt.link(node, await resolve(org), "ownership", "project");
-      return ok(node, "launch");
-    },
-
     async "project.scope"(project: string, scope: string, id?: string): Promise<CommandResult> {
       validateGherkin(scope);
       const node = await rt.create(await resolve(project), C.scope, scope, id);
@@ -76,15 +64,12 @@ export function projectCommands(
       return ok(node, "wiki");
     },
 
-    async "project.archive"(project: string): Promise<CommandResult> {
-      return archive(await resolve(project), "archive");
-    },
-
     async "project.produce"(
       project: string,
       content?: string,
       id?: string,
-      alias?: readonly string[]
+      alias?: readonly string[],
+      owner?: string
     ): Promise<CommandResult> {
       validateGherkin(content);
       const projNode = await resolve(project);
@@ -92,6 +77,7 @@ export function projectCommands(
       // Bidirectional link: project → product (production), product → project (origin)
       await rt.link(projNode, node, "production", "produce");
       await rt.link(node, projNode, "origin", "produced-by");
+      if (owner) await rt.link(node, await resolve(owner), "ownership", "own");
       return ok(node, "produce");
     },
 

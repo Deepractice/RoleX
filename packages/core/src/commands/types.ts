@@ -68,7 +68,6 @@ export interface CommandResultMap {
   "role.skill": string;
 
   // ---- Project ----
-  "project.launch": CommandResult;
   "project.scope": CommandResult;
   "project.milestone": CommandResult;
   "project.achieve": CommandResult;
@@ -76,7 +75,6 @@ export interface CommandResultMap {
   "project.remove": CommandResult;
   "project.deliver": CommandResult;
   "project.wiki": CommandResult;
-  "project.archive": CommandResult;
   "project.produce": CommandResult;
   "project.maintain": CommandResult;
   "project.unmaintain": CommandResult;
@@ -99,12 +97,14 @@ export interface CommandResultMap {
   "org.fire": CommandResult;
   "org.admin": CommandResult;
   "org.unadmin": CommandResult;
+  "org.launch": CommandResult;
+  "org.archive": CommandResult;
+  "org.establish": CommandResult;
+  "org.abolish": CommandResult;
 
   // ---- Position ----
-  "position.establish": CommandResult;
   "position.charge": CommandResult;
   "position.require": CommandResult;
-  "position.abolish": CommandResult;
   "position.appoint": CommandResult;
   "position.dismiss": CommandResult;
 

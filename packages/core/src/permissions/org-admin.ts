@@ -18,16 +18,20 @@ export const orgAdminPermissions: readonly Permission[] = [
   p("org.charter", "charter"),
   p("org.hire", "hire"),
   p("org.fire", "fire"),
+  p("org.admin", "admin"),
+  p("org.unadmin", "unadmin"),
 
   // Position lifecycle (org creates positions)
-  p("position.establish", "establish"),
-  p("position.abolish", "abolish"),
+  p("org.establish", "establish"),
+  p("org.abolish", "abolish"),
   p("position.charge", "charge"),
   p("position.require", "require"),
   p("position.appoint", "appoint"),
   p("position.dismiss", "dismiss"),
 
   // Project lifecycle (org creates projects)
-  p("project.launch", "launch"),
-  p("project.archive", "archive"),
+  p("org.launch", "launch"),
+  p("org.archive", "archive"),
+  p("project.maintain", "maintain"),
+  p("project.unmaintain", "unmaintain"),
 ];

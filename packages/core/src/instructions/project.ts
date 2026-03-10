@@ -1,25 +1,5 @@
 import { def } from "./def.js";
 
-export const projectLaunch = def(
-  "project",
-  "launch",
-  {
-    content: {
-      type: "gherkin",
-      required: false,
-      description: "Gherkin Feature source for the project",
-    },
-    id: { type: "string", required: true, description: "User-facing identifier (kebab-case)" },
-    alias: { type: "string[]", required: false, description: "Alternative names" },
-    org: {
-      type: "string",
-      required: false,
-      description: "Organization id that owns this project",
-    },
-  },
-  ["content", "id", "alias", "org"]
-);
-
 export const projectScope = def(
   "project",
   "scope",
@@ -121,15 +101,6 @@ export const projectWiki = def(
   ["project", "content", "id"]
 );
 
-export const projectArchive = def(
-  "project",
-  "archive",
-  {
-    project: { type: "string", required: true, description: "Project id" },
-  },
-  ["project"]
-);
-
 export const projectProduce = def(
   "project",
   "produce",
@@ -142,8 +113,13 @@ export const projectProduce = def(
     },
     id: { type: "string", required: true, description: "Product id (kebab-case)" },
     alias: { type: "string[]", required: false, description: "Alternative names" },
+    owner: {
+      type: "string",
+      required: false,
+      description: "Individual id of the first product owner",
+    },
   },
-  ["project", "content", "id", "alias"]
+  ["project", "content", "id", "alias", "owner"]
 );
 
 export const projectMaintain = def(

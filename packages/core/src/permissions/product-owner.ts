@@ -19,4 +19,6 @@ export const productOwnerPermissions: readonly Permission[] = [
   p("product.release", "release"),
   p("product.channel", "channel"),
   p("product.deprecate", "deprecate"),
+  p("product.own", "own"),
+  p("product.disown", "disown"),
 ];

@@ -91,8 +91,13 @@ export const societyFound = def(
     },
     id: { type: "string", required: true, description: "User-facing identifier (kebab-case)" },
     alias: { type: "string[]", required: false, description: "Alternative names" },
+    admin: {
+      type: "string",
+      required: false,
+      description: "Individual id of the first admin",
+    },
   },
-  ["content", "id", "alias"]
+  ["content", "id", "alias", "admin"]
 );
 
 export const societyDissolve = def(

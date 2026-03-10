@@ -20,16 +20,19 @@ import {
   issueUpdate,
 } from "./issue.js";
 
-import { orgAdmin, orgCharter, orgFire, orgHire, orgUnadmin } from "./org.js";
-
 import {
-  positionAbolish,
-  positionAppoint,
-  positionCharge,
-  positionDismiss,
-  positionEstablish,
-  positionRequire,
-} from "./position.js";
+  orgAbolish,
+  orgAdmin,
+  orgArchive,
+  orgCharter,
+  orgEstablish,
+  orgFire,
+  orgHire,
+  orgLaunch,
+  orgUnadmin,
+} from "./org.js";
+
+import { positionAppoint, positionCharge, positionDismiss, positionRequire } from "./position.js";
 import {
   productChannel,
   productDeprecate,
@@ -41,10 +44,8 @@ import {
 } from "./product.js";
 import {
   projectAchieve,
-  projectArchive,
   projectDeliver,
   projectEnroll,
-  projectLaunch,
   projectMaintain,
   projectMilestone,
   projectProduce,
@@ -158,17 +159,18 @@ export const instructions: Record<string, InstructionDef> = {
   "org.fire": orgFire,
   "org.admin": orgAdmin,
   "org.unadmin": orgUnadmin,
+  "org.launch": orgLaunch,
+  "org.archive": orgArchive,
+  "org.establish": orgEstablish,
+  "org.abolish": orgAbolish,
 
   // position
-  "position.establish": positionEstablish,
   "position.charge": positionCharge,
   "position.require": positionRequire,
-  "position.abolish": positionAbolish,
   "position.appoint": positionAppoint,
   "position.dismiss": positionDismiss,
 
   // project
-  "project.launch": projectLaunch,
   "project.scope": projectScope,
   "project.milestone": projectMilestone,
   "project.achieve": projectAchieve,
@@ -176,7 +178,6 @@ export const instructions: Record<string, InstructionDef> = {
   "project.remove": projectRemove,
   "project.deliver": projectDeliver,
   "project.wiki": projectWiki,
-  "project.archive": projectArchive,
   "project.produce": projectProduce,
   "project.maintain": projectMaintain,
   "project.unmaintain": projectUnmaintain,

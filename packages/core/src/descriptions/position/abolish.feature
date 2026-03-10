@@ -9,5 +9,5 @@ Feature: abolish — abolish a position
     And the position's subtree (duties, requirements) is preserved in past
 
   Scenario: Parameters
-    Given the command is position.abolish
+    Given the command is org.abolish
     Then position is required — the position's id

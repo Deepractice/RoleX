@@ -21,7 +21,7 @@ Given("organization {string} exists", async function (this: BddWorld, id: string
 });
 
 Given("position {string} exists", async function (this: BddWorld, id: string) {
-  await this.rolex!.direct("!position.establish", { content: `Feature: ${id}`, id });
+  await this.rolex!.direct("!org.establish", { content: `Feature: ${id}`, id });
 });
 
 Given(
@@ -39,7 +39,7 @@ Given(
 );
 
 Given("project {string} exists", async function (this: BddWorld, id: string) {
-  await this.rolex!.direct("!project.launch", { content: `Feature: ${id}`, id });
+  await this.rolex!.direct("!org.launch", { content: `Feature: ${id}`, id });
 });
 
 Given(

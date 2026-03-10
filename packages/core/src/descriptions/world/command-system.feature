@@ -43,7 +43,7 @@ Feature: Command system — how operations are executed in RoleX
     Given org commands manage organization membership and governance
     And !org.hire adds a member, !org.fire removes a member, !org.charter defines governance
     Given position commands manage positions
-    Then !position.establish creates, !position.abolish archives
+    Then !org.establish creates, !org.abolish archives
     And !position.appoint assigns, !position.dismiss removes, !position.charge adds duty
     Given project commands manage projects
-    Then !project.launch creates, !project.archive archives
+    Then !org.launch creates, !org.archive archives

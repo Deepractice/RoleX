@@ -8,7 +8,7 @@ Feature: Project lifecycle
   # ===== launch =====
 
   Scenario: Launch creates a project
-    When I direct "!project.launch" with:
+    When I direct "!org.launch" with:
       | content | Feature: RoleX v2 |
       | id      | rolex-v2          |
     Then the result process should be "launch"
@@ -17,7 +17,7 @@ Feature: Project lifecycle
 
   Scenario: Launch creates a project owned by an organization
     Given organization "deepractice" exists
-    When I direct "!project.launch" with:
+    When I direct "!org.launch" with:
       | content | Feature: RoleX v2 |
       | id      | rolex-v2-org      |
       | org     | deepractice       |
@@ -99,7 +99,7 @@ Feature: Project lifecycle
 
   Scenario: Archive moves project to past
     Given project "rolex-v2" exists
-    When I direct "!project.archive" with:
+    When I direct "!org.archive" with:
       | project | rolex-v2 |
     Then the result process should be "archive"
     And the result state name should be "project"

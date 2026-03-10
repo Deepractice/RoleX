@@ -22,7 +22,7 @@ Feature: Prototype migration
     Given a prototype "test-proto" with migrations:
       | file              | ops                                                          |
       | V1__initial.json  | [{"op":"!society.found","args":{"id":"test-org","content":"Feature: Test Org"}}] |
-      | V2__add_pos.json  | [{"op":"!position.establish","args":{"id":"test-pos","content":"Feature: Test Pos"}}] |
+      | V2__add_pos.json  | [{"op":"!org.establish","args":{"id":"test-pos","content":"Feature: Test Pos"}}] |
     And prototype "test-proto" has been settled at V1
     When I settle prototype "test-proto"
     Then migration "V2__add_pos" of "test-proto" should be recorded
@@ -43,7 +43,7 @@ Feature: Prototype migration
   Scenario: Migrations execute in version order
     Given a prototype "test-proto" with migrations:
       | file              | ops                                                          |
-      | V2__second.json   | [{"op":"!position.establish","args":{"id":"pos-2","content":"Feature: Pos 2"}}] |
+      | V2__second.json   | [{"op":"!org.establish","args":{"id":"pos-2","content":"Feature: Pos 2"}}] |
       | V1__first.json    | [{"op":"!society.found","args":{"id":"org-1","content":"Feature: Org 1"}}] |
     When I settle prototype "test-proto"
     Then organization "org-1" should exist

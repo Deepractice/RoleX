@@ -1,20 +1,5 @@
 import { def } from "./def.js";
 
-export const positionEstablish = def(
-  "position",
-  "establish",
-  {
-    content: {
-      type: "gherkin",
-      required: false,
-      description: "Gherkin Feature source for the position",
-    },
-    id: { type: "string", required: true, description: "User-facing identifier (kebab-case)" },
-    alias: { type: "string[]", required: false, description: "Alternative names" },
-  },
-  ["content", "id", "alias"]
-);
-
 export const positionCharge = def(
   "position",
   "charge",
@@ -47,15 +32,6 @@ export const positionRequire = def(
     },
   },
   ["position", "content", "id"]
-);
-
-export const positionAbolish = def(
-  "position",
-  "abolish",
-  {
-    position: { type: "string", required: true, description: "Position id" },
-  },
-  ["position"]
 );
 
 export const positionAppoint = def(

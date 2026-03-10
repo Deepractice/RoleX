@@ -72,10 +72,12 @@ export function societyCommands(
     async "society.found"(
       content?: string,
       id?: string,
-      alias?: readonly string[]
+      alias?: readonly string[],
+      admin?: string
     ): Promise<CommandResult> {
       validateGherkin(content);
       const node = await rt.create(society, C.organization, content, id, alias);
+      if (admin) await rt.link(node, await resolve(admin), "admin", "administer");
       return ok(node, "found");
     },
 
@@ -127,6 +129,42 @@ export function societyCommands(
       const orgNode = await resolve(org);
       await rt.unlink(orgNode, await resolve(individual), "admin", "administer");
       return ok(orgNode, "unadmin");
+    },
+
+    // ---- Org: project lifecycle ----
+
+    async "org.launch"(
+      content?: string,
+      id?: string,
+      alias?: readonly string[],
+      org?: string,
+      maintainer?: string
+    ): Promise<CommandResult> {
+      validateGherkin(content);
+      const node = await rt.create(society, C.project, content, id, alias);
+      if (org) await rt.link(node, await resolve(org), "ownership", "project");
+      if (maintainer) await rt.link(node, await resolve(maintainer), "maintain", "maintained-by");
+      return ok(node, "launch");
+    },
+
+    async "org.archive"(project: string): Promise<CommandResult> {
+      return archive(await resolve(project), "archive");
+    },
+
+    // ---- Org: position lifecycle ----
+
+    async "org.establish"(
+      content?: string,
+      id?: string,
+      alias?: readonly string[]
+    ): Promise<CommandResult> {
+      validateGherkin(content);
+      const node = await rt.create(society, C.position, content, id, alias);
+      return ok(node, "establish");
+    },
+
+    async "org.abolish"(position: string): Promise<CommandResult> {
+      return archive(await resolve(position), "abolish");
     },
   };
 }

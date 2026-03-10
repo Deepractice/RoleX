@@ -9,5 +9,5 @@ Feature: archive — archive a project
     And the project's subtree is preserved in past
 
   Scenario: Parameters
-    Given the command is project.archive
+    Given the command is org.archive
     Then project is required — the project's id

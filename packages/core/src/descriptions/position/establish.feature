@@ -12,7 +12,7 @@ Feature: establish — create a position
     And individuals can be appointed to it
 
   Scenario: Parameters
-    Given the command is position.establish
+    Given the command is org.establish
     Then content is optional — Gherkin Feature describing the position
     And id is optional — kebab-case identifier (e.g. "cto")
     And alias is optional — alternative names

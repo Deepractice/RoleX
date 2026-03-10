@@ -22,4 +22,6 @@ export const projectMaintainerPermissions: readonly Permission[] = [
   p("project.deliver", "deliver"),
   p("project.wiki", "wiki"),
   p("project.produce", "produce"),
+  p("product.own", "own"),
+  p("product.disown", "disown"),
 ];
