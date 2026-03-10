@@ -246,7 +246,7 @@ const tools: ToolDef[] = [
         type: "record",
         required: false,
         description:
-          'Named arguments object for the command. All parameters (id, content, org, individual, etc.) go inside this object. Example: { id: "sean", content: "Feature: ..." }. Load the relevant skill first to learn what args to pass.',
+          "Named arguments object for the command. Pass all parameters as key-value pairs in this object (e.g. id, content, org, individual). Must be a JSON object, not a string. Load the relevant skill first to learn what args to pass.",
       },
     },
   },
@@ -262,7 +262,7 @@ const tools: ToolDef[] = [
         type: "record",
         required: false,
         description:
-          'Named arguments object for the command. All parameters (id, content, org, individual, etc.) go inside this object. Example: { type: "individual" }. Load the relevant skill first to learn what args to pass.',
+          "Named arguments object for the command. Pass all parameters as key-value pairs in this object (e.g. id, content, type). Must be a JSON object, not a string. Load the relevant skill first to learn what args to pass.",
       },
     },
   },

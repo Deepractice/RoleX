@@ -73,6 +73,23 @@ function toZodSchema(def: ToolDef): z.ZodTypeAny {
 
 // ========== Tool execution ==========
 
+/** Defensive args parsing — some AI models serialize args as a JSON string instead of an object. */
+function parseArgs(args: unknown): Record<string, unknown> | undefined {
+  if (args == null) return undefined;
+  if (typeof args === "object") return args as Record<string, unknown>;
+  if (typeof args === "string") {
+    try {
+      const parsed = JSON.parse(args);
+      if (typeof parsed === "object" && parsed !== null) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      // not valid JSON, ignore
+    }
+  }
+  return undefined;
+}
+
 type ToolExecutor = (params: Record<string, unknown>) => Promise<string>;
 
 const executors: Record<string, ToolExecutor> = {
@@ -163,7 +180,7 @@ const executors: Record<string, ToolExecutor> = {
   },
 
   async use({ command, args }) {
-    const a = args as Record<string, unknown> | undefined;
+    const a = parseArgs(args);
     const result = await state
       .requireRole()
       .use(command as string, a && Object.keys(a).length > 0 ? a : undefined);
@@ -173,7 +190,7 @@ const executors: Record<string, ToolExecutor> = {
   },
 
   async direct({ command, args }) {
-    const a = args as Record<string, unknown> | undefined;
+    const a = parseArgs(args);
     const result = await rolex.direct(
       command as string,
       a && Object.keys(a).length > 0 ? a : undefined
