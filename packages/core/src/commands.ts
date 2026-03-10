@@ -16,6 +16,7 @@ import type { Comment, Issue, IssueX } from "issuexjs";
 import type { Resource, ResourceX, RXM } from "resourcexjs";
 import * as C from "./index.js";
 import type { PrototypeRepository } from "./platform.js";
+import type { Projection } from "./projection.js";
 
 // ================================================================
 //  Types
@@ -32,6 +33,7 @@ export interface CommandContext {
   past: Structure;
   resolve(id: string): Structure | Promise<Structure>;
   find(id: string): (Structure | null) | Promise<Structure | null>;
+  project: Projection;
   resourcex?: ResourceX;
   issuex?: IssueX;
   prototype?: PrototypeRepository;
@@ -154,12 +156,12 @@ export type Commands = Record<string, (...args: any[]) => any>;
 // ================================================================
 
 export function createCommands(ctx: CommandContext): Commands {
-  const { rt, society, past, resolve, resourcex, issuex } = ctx;
+  const { rt, society, past, resolve, project, resourcex, issuex } = ctx;
 
   // ---- Helpers ----
 
   async function ok(node: Structure, process: string): Promise<CommandResult> {
-    return { state: await rt.project(node), process };
+    return { state: await project(node), process };
   }
 
   async function archive(node: Structure, process: string): Promise<CommandResult> {
@@ -691,7 +693,7 @@ export function createCommands(ctx: CommandContext): Commands {
 
     async "census.list"(type?: string): Promise<CommandResult> {
       const target = type === "past" ? past : society;
-      const state = await rt.project(target);
+      const state = await project(target);
       const children = state.children ?? [];
       const filtered =
         type === "past"

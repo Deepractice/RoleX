@@ -11,7 +11,7 @@
  *   - Dispatch direct commands
  */
 
-import type { Initializer, Runtime, State, Structure } from "@rolexjs/system";
+import type { Initializer, Runtime, Structure } from "@rolexjs/system";
 import { createIssueX, type IssueX } from "issuexjs";
 import type { ResourceX } from "resourcexjs";
 import { createResourceX, setProvider } from "resourcexjs";
@@ -27,7 +27,7 @@ import { projectMaintainerPermissions } from "./permissions/project-maintainer.j
 import { PermissionRegistry } from "./permissions/registry.js";
 import { sovereignPermissions } from "./permissions/sovereign.js";
 import type { Platform, PrototypeData, RoleXRepository } from "./platform.js";
-import { compactState } from "./projection.js";
+import { createProjection, type Projection } from "./projection.js";
 import type { Renderer } from "./renderer.js";
 import { Role, type RoleSnapshot } from "./role-model.js";
 import * as C from "./structures.js";
@@ -54,6 +54,7 @@ export interface RoleX {
 export class RoleXService implements RoleX {
   private rt: Runtime;
   private commands!: Commands;
+  private project!: Projection;
   private resourcex?: ResourceX;
   private issuex?: IssueX;
   private repo: RoleXRepository;
@@ -102,16 +103,14 @@ export class RoleXService implements RoleX {
   }
 
   private async init(): Promise<void> {
-    // Wrap rt.project: raw → compact relations → enrich permissions
-    const originalProject = this.rt.project.bind(this.rt);
-    this.rt.project = async (node) =>
-      this.permissions.enrich(compactState(await originalProject(node)));
+    // Create the unified projection pipeline: raw → compact(depth) → enrich
+    this.project = createProjection(this.rt, this.permissions);
 
     const roots = await this.rt.roots();
     this.society =
       roots.find((r) => r.name === "society") ?? (await this.rt.create(null, C.society));
 
-    const societyState = await this.rt.project(this.society);
+    const societyState = await this.project(this.society);
     const existingPast = societyState.children?.find((c) => c.name === "past");
     this.past = existingPast ?? (await this.rt.create(this.society, C.past));
 
@@ -125,6 +124,7 @@ export class RoleXService implements RoleX {
         return node;
       },
       find: (id: string) => this.find(id),
+      project: this.project,
       resourcex: this.resourcex,
       issuex: this.issuex,
       prototype: this.repo.prototype,
@@ -150,7 +150,7 @@ export class RoleXService implements RoleX {
     if (cached) {
       // Re-hydrate from latest state
       const node = await this.findOrAutoBorn(individual);
-      const state = await this.rt.project(node);
+      const state = await this.project(node);
       cached.hydrate(state);
       // Restore persisted snapshot
       await this.restoreSnapshot(cached);
@@ -158,7 +158,7 @@ export class RoleXService implements RoleX {
     }
 
     const node = await this.findOrAutoBorn(individual);
-    const state = await this.rt.project(node);
+    const state = await this.project(node);
 
     const role = new Role(individual, {
       commands: this.commands,
@@ -219,7 +219,9 @@ export class RoleXService implements RoleX {
   // ================================================================
 
   async inspect(id: string): Promise<string> {
-    const state = await this.projectById(id);
+    const node = await this.find(id);
+    if (!node) throw new Error(`"${id}" not found.`);
+    const state = await this.project(node);
     const result: CommandResult = { state, process: "inspect" };
     return this.renderer.render("inspect", result);
   }
@@ -230,7 +232,7 @@ export class RoleXService implements RoleX {
 
   async survey(type?: string): Promise<string> {
     const target = type === "past" ? this.past : this.society;
-    const state = await this.rt.project(target);
+    const state = await this.project(target);
     const children = state.children ?? [];
     const filtered =
       type === "past"
@@ -276,17 +278,10 @@ export class RoleXService implements RoleX {
   //  Internal helpers
   // ================================================================
 
-  /** Find a node by id across the entire society tree. */
+  /** Find a node by id across the entire society tree (raw, no pipeline). */
   private async find(id: string): Promise<Structure | null> {
-    const state = await this.rt.project(this.society);
-    return findInState(state, id);
-  }
-
-  /** Find and project a node's full subtree by id. */
-  private async projectById(id: string): Promise<State> {
-    const node = await this.find(id);
-    if (!node) throw new Error(`"${id}" not found.`);
-    return this.rt.project(node);
+    const raw = await this.rt.project(this.society);
+    return findInState(raw, id);
   }
 }
 

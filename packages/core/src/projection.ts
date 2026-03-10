@@ -1,14 +1,54 @@
 /**
- * Projection — post-processing for projected state trees.
+ * Projection — the single projection pipeline for RoleX.
  *
- * Runtime.project() returns raw trees with fully expanded links.
- * This module applies business-level transformations:
- *   - compactRelations: trim reverse-relation link targets to node-only (no subtree)
+ * Pipeline: raw project → compact(depth) → enrich permissions.
  *
- * Lives in core, not in platform, so all runtimes get consistent behavior.
+ * All projections go through this pipeline. No special cases.
+ * Control behavior via ProjectionContext.
+ *
+ * Rules:
+ *   - Root (depth 0): full
+ *   - Level 1 children: full (with content)
+ *   - Level 2+ grandchildren: compact (name/id/tag only, no subtree)
+ *   - Reverse links: compact immediately
+ *   - Forward links: keep children but strip nested links
  */
 
-import type { State } from "@rolexjs/system";
+import type { Runtime, State, Structure } from "@rolexjs/system";
+import type { PermissionRegistry } from "./permissions/registry.js";
+
+// ================================================================
+//  ProjectionContext — controls projection behavior
+// ================================================================
+
+export interface ProjectionContext {
+  /** Children expansion depth. Default 1: one level fully expanded, then compact. */
+  depth?: number;
+}
+
+const DEFAULT_DEPTH = 1;
+
+// ================================================================
+//  Projection — the unified entry point
+// ================================================================
+
+export interface Projection {
+  /** Project a node through the full pipeline: raw → compact → enrich. */
+  (node: Structure, ctx?: ProjectionContext): Promise<State>;
+}
+
+/** Create the projection pipeline wired to a runtime and permission registry. */
+export function createProjection(rt: Runtime, permissions: PermissionRegistry): Projection {
+  return async (node: Structure, ctx?: ProjectionContext): Promise<State> => {
+    const raw = await rt.project(node);
+    const compacted = compactState(raw, ctx?.depth ?? DEFAULT_DEPTH);
+    return permissions.enrich(compacted);
+  };
+}
+
+// ================================================================
+//  Compact — internal implementation
+// ================================================================
 
 /**
  * Reverse relations — link targets are rendered as compact references (no subtree).
@@ -31,9 +71,13 @@ function compact(state: State): State {
   return node;
 }
 
-/** Recursively apply compactRelations to a projected state tree. */
-export function compactState(state: State): State {
-  const children = state.children?.map((c) => compactState(c));
+/** Apply depth control + link compacting. */
+function compactState(state: State, depth: number): State {
+  const children =
+    depth > 0
+      ? state.children?.map((c) => compactState(c, depth - 1))
+      : state.children?.map((c) => compact(c));
+
   const compactedLinks = state.links?.map((l) =>
     compactRelations.has(l.relation)
       ? { ...l, target: compact(l.target) }
