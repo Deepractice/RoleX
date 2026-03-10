@@ -156,7 +156,7 @@ export const V1__initial: Migration = {
       },
     },
     {
-      op: "!position.establish",
+      op: "!org.establish",
       args: {
         id: "individual-manager",
         content: `Feature: Individual Manager
@@ -211,7 +211,7 @@ export const V1__initial: Migration = {
       },
     },
     {
-      op: "!position.establish",
+      op: "!org.establish",
       args: {
         id: "organization-manager",
         content: `Feature: Organization Manager
@@ -267,7 +267,7 @@ export const V1__initial: Migration = {
       },
     },
     {
-      op: "!position.establish",
+      op: "!org.establish",
       args: {
         id: "position-manager",
         content: `Feature: Position Manager
@@ -324,7 +324,7 @@ export const V1__initial: Migration = {
       },
     },
     {
-      op: "!position.establish",
+      op: "!org.establish",
       args: {
         id: "project-manager",
         content: `Feature: Project Manager

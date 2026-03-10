@@ -45,25 +45,25 @@ export const V3__crown_and_cleanup: Migration = {
 
     // Abolish old manager positions — replaced by permission system
     {
-      op: "!position.abolish",
+      op: "!org.abolish",
       args: {
         position: "individual-manager",
       },
     },
     {
-      op: "!position.abolish",
+      op: "!org.abolish",
       args: {
         position: "organization-manager",
       },
     },
     {
-      op: "!position.abolish",
+      op: "!org.abolish",
       args: {
         position: "position-manager",
       },
     },
     {
-      op: "!position.abolish",
+      op: "!org.abolish",
       args: {
         position: "project-manager",
       },
