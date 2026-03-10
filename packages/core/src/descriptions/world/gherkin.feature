@@ -1,6 +1,7 @@
-Feature: Gherkin — the universal language
-  Everything in RoleX is expressed as Gherkin Feature files.
-  Gherkin is not just for testing — it is the language of identity, goals, and knowledge.
+Feature: Gherkin — the language of role state
+  RoleX uses Gherkin for role state: goals, plans, tasks, experience, and knowledge.
+  Gherkin is not just for testing — it is the language of identity and growth.
+  But not everything is Gherkin — issues are for human collaboration and use plain language.
 
   Scenario: Feature and Scenario convention
     Given RoleX uses Gherkin to represent goals, plans, tasks, experience, and knowledge

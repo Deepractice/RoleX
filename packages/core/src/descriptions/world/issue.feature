@@ -39,6 +39,14 @@ Feature: Issue — persistent structured collaboration beyond a single context
     And issues may be resolved by tasks, or tasks may surface new issues
     But issues are independent — they belong to the society, not to any single individual's goal tree
 
+  Scenario: Writing style — plain language, not Gherkin
+    Given issues are read by humans — other team members, users, and collaborators
+    When writing issue titles, bodies, and comments
+    Then use plain natural language — clear, concise, and readable
+    And do NOT use Gherkin format (Feature/Scenario/Given/When/Then)
+    And Gherkin is for role state (goals, plans, tasks, knowledge), not for issues
+    And use markdown formatting where helpful — headings, lists, code blocks
+
   Scenario: Publish a new issue
     Given I need to raise a topic for attention
     When I call use("!issue.publish", { title, body, author, assignee? })
