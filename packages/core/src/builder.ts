@@ -3,32 +3,30 @@
  *
  * Usage:
  *   const rx = createBuilder({ platform, renderer });
- *   const role = await rx.role.activate({ individual: "sean" });
+ *   const role = await rx.individual.activate({ individual: "sean" });
  *   await rx.society.born({ id: "alice", content: "Feature: Alice" });
  */
 
 import type {
   Caller,
+  IndividualNamespace,
   IssueNamespace,
   OrgNamespace,
   PositionNamespace,
   ProductNamespace,
   ProjectNamespace,
   ResourceNamespace,
-  RoleNamespace,
   SocietyNamespace,
-  SurveyNamespace,
 } from "./namespaces.js";
 import {
+  createIndividualNamespace,
   createIssueNamespace,
   createOrgNamespace,
   createPositionNamespace,
   createProductNamespace,
   createProjectNamespace,
   createResourceNamespace,
-  createRoleNamespace,
   createSocietyNamespace,
-  createSurveyNamespace,
 } from "./namespaces.js";
 import type { Platform, PrototypeData } from "./platform.js";
 import type { Renderer } from "./renderer.js";
@@ -47,8 +45,8 @@ export interface RoleXInternal {
 export interface RoleXBuilder {
   /** Society-level operations — born, retire, crown, teach, train, found, dissolve. */
   readonly society: SocietyNamespace;
-  /** Role management — activate, inspect. */
-  readonly role: RoleNamespace;
+  /** Individual operations — activate. */
+  readonly individual: IndividualNamespace;
   /** Organization operations — charter, hire, fire, admin, launch, establish. */
   readonly org: OrgNamespace;
   /** Position operations — charge, require, appoint, dismiss. */
@@ -57,12 +55,15 @@ export interface RoleXBuilder {
   readonly project: ProjectNamespace;
   /** Product operations — strategy, spec, release, channel, own. */
   readonly product: ProductNamespace;
-  /** Survey — world-level queries. */
-  readonly survey: SurveyNamespace;
   /** Issue tracking integration. */
   readonly issue: IssueNamespace;
   /** Resource management integration. */
   readonly resource: ResourceNamespace;
+
+  /** Inspect any node's full state — world-level observation. */
+  inspect(params: { id: string }): Promise<string>;
+  /** Survey the world — list individuals, organizations, positions. */
+  survey(params?: { type?: string }): Promise<string>;
 
   /** Tool schemas + world instructions — the unified contract for any channel adapter. */
   readonly protocol: Protocol;
@@ -139,12 +140,11 @@ export function createBuilder(config: BuilderConfig): RoleXBuilder {
 
   // Create namespace instances (synchronous — they're just wrappers)
   const _society = createSocietyNamespace(call);
-  const _role = createRoleNamespace(call);
+  const _individual = createIndividualNamespace(call);
   const _org = createOrgNamespace(call);
   const _position = createPositionNamespace(call);
   const _project = createProjectNamespace(call);
   const _product = createProductNamespace(call);
-  const _survey = createSurveyNamespace(call);
   const _issue = createIssueNamespace(call);
   const _resource = createResourceNamespace(call);
 
@@ -152,8 +152,8 @@ export function createBuilder(config: BuilderConfig): RoleXBuilder {
     get society() {
       return _society;
     },
-    get role() {
-      return _role;
+    get individual() {
+      return _individual;
     },
     get org() {
       return _org;
@@ -167,14 +167,19 @@ export function createBuilder(config: BuilderConfig): RoleXBuilder {
     get product() {
       return _product;
     },
-    get survey() {
-      return _survey;
-    },
     get issue() {
       return _issue;
     },
     get resource() {
       return _resource;
+    },
+
+    async inspect({ id }: { id: string }) {
+      return call("inspect", { id });
+    },
+
+    async survey(params?: { type?: string }) {
+      return call("survey", params);
     },
 
     protocol: defaultProtocol,

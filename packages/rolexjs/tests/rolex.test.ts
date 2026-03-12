@@ -51,14 +51,13 @@ describe("use dispatch", () => {
     expect(r.state.name).toBe("plan");
   });
 
-  test("survey.list returns world state with children", async () => {
+  test("survey returns rendered world state", async () => {
     const rolex = setup();
     await rolex.society.born({ id: "sean" });
     await rolex.society.found({ id: "dp" });
-    const result = await rolex.survey.list();
-    const ids = result.state.children?.map((c: any) => c.id) ?? [];
-    expect(ids).toContain("sean");
-    expect(ids).toContain("dp");
+    const result = await rolex.survey();
+    expect(result).toContain("sean");
+    expect(result).toContain("dp");
   });
 
   test("throws on unknown command", async () => {
@@ -92,7 +91,7 @@ describe("activate", () => {
   test("returns Role with id and project renders state", async () => {
     const rolex = setup();
     await rolex.society.born({ content: "Feature: Sean", id: "sean" });
-    const role = await rolex.role.activate({ individual: "sean" });
+    const role = await rolex.individual.activate({ individual: "sean" });
     expect(role.id).toBe("sean");
     const output = await role.project();
     expect(output).toContain("[individual]");
@@ -100,13 +99,15 @@ describe("activate", () => {
 
   test("throws on non-existent individual", async () => {
     const rolex = setup();
-    expect(rolex.role.activate({ individual: "nobody" })).rejects.toThrow('"nobody" not found');
+    expect(rolex.individual.activate({ individual: "nobody" })).rejects.toThrow(
+      '"nobody" not found'
+    );
   });
 
   test("Role.want/plan/todo/finish work through Role API", async () => {
     const rolex = setup();
     await rolex.society.born({ id: "sean" });
-    const role = await rolex.role.activate({ individual: "sean" });
+    const role = await rolex.individual.activate({ individual: "sean" });
 
     const wantR = await role.want("Feature: Auth", "auth");
     expect(wantR).toContain('Goal "auth" declared.');
@@ -128,7 +129,7 @@ describe("activate", () => {
   test("focus rejects non-goal ids", async () => {
     const rolex = setup();
     await rolex.society.born({ id: "sean" });
-    const role = await rolex.role.activate({ individual: "sean" });
+    const role = await rolex.individual.activate({ individual: "sean" });
     await role.want("Feature: Auth", "auth");
     await role.plan("Feature: JWT", "jwt");
     await expect(role.focus("jwt")).rejects.toThrow(
@@ -139,7 +140,7 @@ describe("activate", () => {
   test("Role.use delegates to Rolex.direct", async () => {
     const rolex = setup();
     await rolex.society.born({ id: "sean" });
-    const role = await rolex.role.activate({ individual: "sean" });
+    const role = await rolex.individual.activate({ individual: "sean" });
     const r = await role.use<string>("!society.found", { content: "Feature: DP", id: "dp" });
     expect(r).toContain("dp");
   });

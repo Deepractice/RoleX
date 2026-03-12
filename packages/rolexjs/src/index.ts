@@ -5,7 +5,7 @@
  *   import { createRoleX } from "rolexjs";
  *
  *   const rx = createRoleX({ platform });
- *   const role = await rx.role.activate({ individual: "sean" });
+ *   const role = await rx.individual.activate({ individual: "sean" });
  *   await role.want("Feature: Ship v1", "ship-v1");
  */
 

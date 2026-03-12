@@ -66,7 +66,7 @@ Given("no persisted context exists", async function (this: BddWorld) {
 When("I activate {string}", async function (this: BddWorld, name: string) {
   try {
     this.error = undefined;
-    this.role = await this.rolex!.role.activate({ individual: name });
+    this.role = await this.rolex!.individual.activate({ individual: name });
   } catch (e) {
     this.error = e as Error;
     this.role = undefined;

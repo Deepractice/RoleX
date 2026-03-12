@@ -139,13 +139,25 @@ Then("it should fail", function (this: BddWorld) {
 // ===== Entity existence assertions =====
 
 Then("individual {string} should exist", async function (this: BddWorld, id: string) {
-  const result = await this.rolex!.survey.list({ type: "individual" });
+  const response = await this.rolex!.rpc({
+    jsonrpc: "2.0",
+    method: "survey.list",
+    params: { type: "individual" },
+    id: null,
+  });
+  const result = response.result as any;
   const ids = (result.state.children ?? []).map((c: any) => c.id);
   assert.ok(ids.includes(id), `Individual "${id}" not found in survey: ${JSON.stringify(ids)}`);
 });
 
 Then("organization {string} should exist", async function (this: BddWorld, id: string) {
-  const result = await this.rolex!.survey.list({ type: "organization" });
+  const response = await this.rolex!.rpc({
+    jsonrpc: "2.0",
+    method: "survey.list",
+    params: { type: "organization" },
+    id: null,
+  });
+  const result = response.result as any;
   const ids = (result.state.children ?? []).map((c: any) => c.id);
   assert.ok(ids.includes(id), `Organization "${id}" not found in survey: ${JSON.stringify(ids)}`);
 });

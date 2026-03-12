@@ -173,8 +173,8 @@ import { localPlatform } from "@rolexjs/local-platform";
 // Create — synchronous, initialization is lazy
 const rx = createRoleX({ platform: localPlatform() });
 
-// Activate a role
-const role = await rx.role.activate({ individual: "nuwa" });
+// Activate an individual
+const role = await rx.individual.activate({ individual: "nuwa" });
 
 // Typed namespace API — 9 namespaces
 await rx.society.born({ id: "alice", content: "Feature: Alice\n  A frontend engineer." });
@@ -204,19 +204,20 @@ const { tools, instructions } = rx.protocol;
 
 `createRoleX()` returns a `RoleXBuilder` — a synchronous builder with lazy initialization. The first async call triggers init (genesis prototype, world bootstrap).
 
-**9 typed namespaces:**
+**7 typed namespaces + 2 world-level methods:**
 
-| Namespace | Purpose |
-|-----------|---------|
+| API | Purpose |
+|-----|---------|
+| `rx.individual` | Activate an individual — returns a stateful Role |
 | `rx.society` | Individuals & organizations — born, retire, teach, train, found, dissolve |
 | `rx.org` | Membership & governance — charter, hire, fire, establish, abolish |
 | `rx.position` | Roles & duties — charge, require, appoint, dismiss |
 | `rx.project` | Project management — scope, milestone, deliver, wiki |
 | `rx.product` | Product lifecycle — strategy, spec, release, channel |
-| `rx.survey` | World queries — list all entities |
 | `rx.issue` | Issue tracking — publish, comment, assign, label |
 | `rx.resource` | Resource management — add, push, pull, search |
-| `rx.role` | Role operations — activate, inspect, survey |
+| `rx.inspect()` | Examine any node's full state |
+| `rx.survey()` | List individuals, organizations, positions |
 
 **Universal dispatch:**
 

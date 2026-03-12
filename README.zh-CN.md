@@ -173,8 +173,8 @@ import { localPlatform } from "@rolexjs/local-platform";
 // 创建 — 同步返回，初始化延迟到首次调用
 const rx = createRoleX({ platform: localPlatform() });
 
-// 激活角色
-const role = await rx.role.activate({ individual: "nuwa" });
+// 激活个体
+const role = await rx.individual.activate({ individual: "nuwa" });
 
 // 类型化命名空间 API — 9 个命名空间
 await rx.society.born({ id: "alice", content: "Feature: Alice\n  一名前端工程师。" });
@@ -204,19 +204,20 @@ const { tools, instructions } = rx.protocol;
 
 `createRoleX()` 返回 `RoleXBuilder` — 同步构建器，延迟初始化。首次异步调用触发初始化（genesis 原型、世界引导）。
 
-**9 个类型化命名空间：**
+**7 个类型化命名空间 + 2 个世界级方法：**
 
-| 命名空间 | 用途 |
-|---------|------|
+| API | 用途 |
+|-----|------|
+| `rx.individual` | 激活个体 — 返回有状态的 Role |
 | `rx.society` | 个体与组织 — born, retire, teach, train, found, dissolve |
 | `rx.org` | 成员与治理 — charter, hire, fire, establish, abolish |
 | `rx.position` | 职位与职责 — charge, require, appoint, dismiss |
 | `rx.project` | 项目管理 — scope, milestone, deliver, wiki |
 | `rx.product` | 产品生命周期 — strategy, spec, release, channel |
-| `rx.survey` | 世界查询 — 列出所有实体 |
 | `rx.issue` | 议题追踪 — publish, comment, assign, label |
 | `rx.resource` | 资源管理 — add, push, pull, search |
-| `rx.role` | 角色操作 — activate, inspect, survey |
+| `rx.inspect()` | 查看任意节点的完整状态 |
+| `rx.survey()` | 列出个体、组织、职位 |
 
 **统一调度：**
 

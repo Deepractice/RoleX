@@ -56,18 +56,16 @@ export function createSocietyNamespace(call: Caller): SocietyNamespace {
 }
 
 // ================================================================
-//  Role
+//  Individual
 // ================================================================
 
-export interface RoleNamespace {
+export interface IndividualNamespace {
   activate(params: { individual: string }): Promise<Role>;
-  inspect(params: { id: string }): Promise<string>;
 }
 
-export function createRoleNamespace(call: Caller): RoleNamespace {
+export function createIndividualNamespace(call: Caller): IndividualNamespace {
   return {
     activate: (p) => call("role.activate", p),
-    inspect: (p) => call("inspect", p),
   };
 }
 
@@ -188,20 +186,6 @@ export function createProductNamespace(call: Caller): ProductNamespace {
     own: (p) => call("product.own", p),
     disown: (p) => call("product.disown", p),
     deprecate: (p) => call("product.deprecate", p),
-  };
-}
-
-// ================================================================
-//  Survey
-// ================================================================
-
-export interface SurveyNamespace {
-  list(params?: { type?: string }): Promise<CommandResult>;
-}
-
-export function createSurveyNamespace(call: Caller): SurveyNamespace {
-  return {
-    list: (p) => call("survey.list", p),
   };
 }
 

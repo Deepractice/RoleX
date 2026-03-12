@@ -89,27 +89,20 @@ type ToolExecutor = (params: Record<string, unknown>) => Promise<string>;
 
 const executors: Record<string, ToolExecutor> = {
   async inspect({ id }) {
-    return await rolex.role.inspect({ id: id as string });
+    return await rolex.inspect({ id: id as string });
   },
 
   async survey({ type }) {
-    const response = await rolex.rpc({
-      jsonrpc: "2.0",
-      method: "survey",
-      params: type ? { type: type as string } : {},
-      id: null,
-    });
-    if (response.error) throw new Error(response.error.message);
-    return response.result as string;
+    return await rolex.survey(type ? { type: type as string } : undefined);
   },
 
   async activate({ roleId }) {
     try {
-      const role = await rolex.role.activate({ individual: roleId as string });
+      const role = await rolex.individual.activate({ individual: roleId as string });
       state.role = role;
       return await role.project();
     } catch {
-      const all = await rolex.survey.list();
+      const all = await rolex.survey();
       throw new Error(
         `"${roleId}" not found. Available:\n\n${JSON.stringify(all)}\n\nTry again with the correct id or alias.`
       );
