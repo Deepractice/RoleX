@@ -62,14 +62,12 @@ export function createSocietyNamespace(call: Caller): SocietyNamespace {
 export interface RoleNamespace {
   activate(params: { individual: string }): Promise<Role>;
   inspect(params: { id: string }): Promise<string>;
-  survey(params?: { type?: string }): Promise<string>;
 }
 
 export function createRoleNamespace(call: Caller): RoleNamespace {
   return {
     activate: (p) => call("role.activate", p),
     inspect: (p) => call("inspect", p),
-    survey: (p) => call("survey", p),
   };
 }
 
@@ -194,16 +192,16 @@ export function createProductNamespace(call: Caller): ProductNamespace {
 }
 
 // ================================================================
-//  Census
+//  Survey
 // ================================================================
 
-export interface CensusNamespace {
+export interface SurveyNamespace {
   list(params?: { type?: string }): Promise<CommandResult>;
 }
 
-export function createCensusNamespace(call: Caller): CensusNamespace {
+export function createSurveyNamespace(call: Caller): SurveyNamespace {
   return {
-    list: (p) => call("census.list", p),
+    list: (p) => call("survey.list", p),
   };
 }
 

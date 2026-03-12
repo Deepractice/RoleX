@@ -33,6 +33,6 @@ Feature: RoleX as world entry point
 
   Scenario: Direct does not require an active Role
     Given individual "sean" exists
-    When I direct "!census.list" with:
+    When I direct "!survey.list" with:
       | type | individual |
     Then the direct result should contain "sean"

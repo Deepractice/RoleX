@@ -9,7 +9,6 @@
 
 import type {
   Caller,
-  CensusNamespace,
   IssueNamespace,
   OrgNamespace,
   PositionNamespace,
@@ -18,9 +17,9 @@ import type {
   ResourceNamespace,
   RoleNamespace,
   SocietyNamespace,
+  SurveyNamespace,
 } from "./namespaces.js";
 import {
-  createCensusNamespace,
   createIssueNamespace,
   createOrgNamespace,
   createPositionNamespace,
@@ -29,6 +28,7 @@ import {
   createResourceNamespace,
   createRoleNamespace,
   createSocietyNamespace,
+  createSurveyNamespace,
 } from "./namespaces.js";
 import type { Platform, PrototypeData } from "./platform.js";
 import type { Renderer } from "./renderer.js";
@@ -47,7 +47,7 @@ export interface RoleXInternal {
 export interface RoleXBuilder {
   /** Society-level operations — born, retire, crown, teach, train, found, dissolve. */
   readonly society: SocietyNamespace;
-  /** Role management — activate, inspect, survey. */
+  /** Role management — activate, inspect. */
   readonly role: RoleNamespace;
   /** Organization operations — charter, hire, fire, admin, launch, establish. */
   readonly org: OrgNamespace;
@@ -57,8 +57,8 @@ export interface RoleXBuilder {
   readonly project: ProjectNamespace;
   /** Product operations — strategy, spec, release, channel, own. */
   readonly product: ProductNamespace;
-  /** Census — world-level queries. */
-  readonly census: CensusNamespace;
+  /** Survey — world-level queries. */
+  readonly survey: SurveyNamespace;
   /** Issue tracking integration. */
   readonly issue: IssueNamespace;
   /** Resource management integration. */
@@ -144,7 +144,7 @@ export function createBuilder(config: BuilderConfig): RoleXBuilder {
   const _position = createPositionNamespace(call);
   const _project = createProjectNamespace(call);
   const _product = createProductNamespace(call);
-  const _census = createCensusNamespace(call);
+  const _survey = createSurveyNamespace(call);
   const _issue = createIssueNamespace(call);
   const _resource = createResourceNamespace(call);
 
@@ -167,8 +167,8 @@ export function createBuilder(config: BuilderConfig): RoleXBuilder {
     get product() {
       return _product;
     },
-    get census() {
-      return _census;
+    get survey() {
+      return _survey;
     },
     get issue() {
       return _issue;

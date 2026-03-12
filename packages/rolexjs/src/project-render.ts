@@ -48,7 +48,10 @@ export function renderProject(state: State): string {
     lines.push("");
     lines.push("## Members");
     for (const m of members) {
-      const alias = m.target.alias?.length ? ` (${m.target.alias.join(", ")})` : "";
+      const alias =
+        Array.isArray(m.target.alias) && m.target.alias.length
+          ? ` (${m.target.alias.join(", ")})`
+          : "";
       lines.push(`- ${m.target.id ?? "(no id)"}${alias}`);
     }
   }

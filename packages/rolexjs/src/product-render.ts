@@ -46,7 +46,10 @@ export function renderProduct(state: State): string {
     lines.push("");
     lines.push("## Owner");
     for (const o of owners) {
-      const alias = o.target.alias?.length ? ` (${o.target.alias.join(", ")})` : "";
+      const alias =
+        Array.isArray(o.target.alias) && o.target.alias.length
+          ? ` (${o.target.alias.join(", ")})`
+          : "";
       lines.push(`- ${o.target.id ?? "(no id)"}${alias}`);
     }
   }

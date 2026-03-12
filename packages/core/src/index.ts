@@ -170,7 +170,6 @@ export { RpcHandler } from "./rpc.js";
 
 export type {
   Caller,
-  CensusNamespace,
   IssueNamespace,
   OrgNamespace,
   PositionNamespace,
@@ -179,6 +178,7 @@ export type {
   ResourceNamespace,
   RoleNamespace,
   SocietyNamespace,
+  SurveyNamespace,
 } from "./namespaces.js";
 
 // ===== Builder =====

@@ -252,7 +252,7 @@ export class RoleXService implements RoleX {
         ? children
         : children.filter((c) => (type ? c.name === type : c.name !== "past"));
     const result: CommandResult = { state: { ...state, children: filtered }, process: "list" };
-    return this.renderer.render("census.list", result);
+    return this.renderer.render("survey.list", result);
   }
 
   // ================================================================

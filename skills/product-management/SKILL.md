@@ -127,6 +127,6 @@ Feature: Common Workflows
 
   Scenario: View product state
     Given you want to see a product's current state
-    Then use census.list to find products
+    Then use survey.list to find products
     And the product node contains children: strategy, spec, release, channel
     And the product links show: ownership (to individual), origin (to project)

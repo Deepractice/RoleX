@@ -58,7 +58,7 @@ const rolex = await createRoleX(platform);
 Two methods:
 
 - **`activate(id)`** — activate an individual, returns a stateful `Role`
-- **`direct(locator, args)`** — execute world-level commands (`!individual.born`, `!org.found`, `!census.list`, etc.)
+- **`direct(locator, args)`** — execute world-level commands (`!individual.born`, `!org.found`, `!survey.list`, etc.)
 
 ### Role — Rich Domain Model
 
@@ -133,8 +133,8 @@ await rolex.direct("!org.hire", { organization: "dp", individual: "sean" });
 await rolex.direct("!position.establish", { organization: "dp", content: "Feature: CTO", id: "cto" });
 await rolex.direct("!position.appoint", { position: "cto", individual: "sean" });
 
-// Census
-const census = await rolex.direct("!census.list");
+// Survey
+const survey = await rolex.direct("!survey.list");
 ```
 
 ## Gherkin

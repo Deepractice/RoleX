@@ -1,5 +1,5 @@
 /**
- * CensusRenderer — Markdown rendering for census.* commands.
+ * SurveyRenderer — Markdown rendering for survey.* commands.
  *
  * Renders the organization-centric tree view:
  * orgs → projects + members (with positions) → unaffiliated individuals.
@@ -9,7 +9,7 @@ import type { CommandResult } from "@rolexjs/core";
 import type { State } from "@rolexjs/system";
 import type { Renderer } from "./renderer.js";
 
-export class CensusRenderer implements Renderer {
+export class SurveyRenderer implements Renderer {
   render(_command: string, result: CommandResult): string {
     const children = result.state.children ?? [];
 
@@ -30,7 +30,8 @@ export class CensusRenderer implements Renderer {
     const lines: string[] = [];
     for (const item of items) {
       const tag = item.tag ? ` #${item.tag}` : "";
-      const alias = item.alias?.length ? ` (${item.alias.join(", ")})` : "";
+      const alias =
+        Array.isArray(item.alias) && item.alias.length ? ` (${item.alias.join(", ")})` : "";
       lines.push(`${item.id ?? "(no id)"}${alias}${tag}`);
     }
     return lines.join("\n");
@@ -56,14 +57,18 @@ export class CensusRenderer implements Renderer {
     const lines: string[] = [];
 
     for (const org of orgs) {
-      const alias = org.alias?.length ? ` (${org.alias.join(", ")})` : "";
+      const alias =
+        Array.isArray(org.alias) && org.alias.length ? ` (${org.alias.join(", ")})` : "";
       const tag = org.tag ? ` #${org.tag}` : "";
       lines.push(`${org.id}${alias}${tag}`);
 
       // Projects owned by this org
       const projects = org.links?.filter((l) => l.relation === "project") ?? [];
       for (const p of projects) {
-        const pAlias = p.target.alias?.length ? ` (${p.target.alias.join(", ")})` : "";
+        const pAlias =
+          Array.isArray(p.target.alias) && p.target.alias.length
+            ? ` (${p.target.alias.join(", ")})`
+            : "";
         const pTag = p.target.tag ? ` #${p.target.tag}` : "";
         lines.push(`  📦 ${p.target.id ?? "(no id)"}${pAlias}${pTag}`);
       }
@@ -75,7 +80,10 @@ export class CensusRenderer implements Renderer {
       }
       for (const m of members) {
         affiliatedIndividuals.add(m.target.id ?? "");
-        const mAlias = m.target.alias?.length ? ` (${m.target.alias.join(", ")})` : "";
+        const mAlias =
+          Array.isArray(m.target.alias) && m.target.alias.length
+            ? ` (${m.target.alias.join(", ")})`
+            : "";
         const mTag = m.target.tag ? ` #${m.target.tag}` : "";
         const posLabels = individualPositions.get(m.target.id ?? "");
         const posStr = posLabels?.length ? ` — ${posLabels.join(", ")}` : "";
@@ -89,7 +97,8 @@ export class CensusRenderer implements Renderer {
     if (unaffiliated.length > 0) {
       lines.push("─── unaffiliated ───");
       for (const ind of unaffiliated) {
-        const alias = ind.alias?.length ? ` (${ind.alias.join(", ")})` : "";
+        const alias =
+          Array.isArray(ind.alias) && ind.alias.length ? ` (${ind.alias.join(", ")})` : "";
         const tag = ind.tag ? ` #${ind.tag}` : "";
         const posLabels = individualPositions.get(ind.id ?? "");
         const posStr = posLabels?.length ? ` — ${posLabels.join(", ")}` : "";

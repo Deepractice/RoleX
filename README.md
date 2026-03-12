@@ -213,7 +213,7 @@ const { tools, instructions } = rx.protocol;
 | `rx.position` | Roles & duties — charge, require, appoint, dismiss |
 | `rx.project` | Project management — scope, milestone, deliver, wiki |
 | `rx.product` | Product lifecycle — strategy, spec, release, channel |
-| `rx.census` | World queries — list all entities |
+| `rx.survey` | World queries — list all entities |
 | `rx.issue` | Issue tracking — publish, comment, assign, label |
 | `rx.resource` | Resource management — add, push, pull, search |
 | `rx.role` | Role operations — activate, inspect, survey |

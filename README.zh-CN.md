@@ -213,7 +213,7 @@ const { tools, instructions } = rx.protocol;
 | `rx.position` | 职位与职责 — charge, require, appoint, dismiss |
 | `rx.project` | 项目管理 — scope, milestone, deliver, wiki |
 | `rx.product` | 产品生命周期 — strategy, spec, release, channel |
-| `rx.census` | 世界查询 — 列出所有实体 |
+| `rx.survey` | 世界查询 — 列出所有实体 |
 | `rx.issue` | 议题追踪 — publish, comment, assign, label |
 | `rx.resource` | 资源管理 — add, push, pull, search |
 | `rx.role` | 角色操作 — activate, inspect, survey |

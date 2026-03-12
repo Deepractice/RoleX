@@ -112,8 +112,8 @@ export interface CommandResultMap {
   "society.crown": CommandResult;
   "society.uncrown": CommandResult;
 
-  // ---- Census ----
-  "census.list": CommandResult;
+  // ---- Survey ----
+  "survey.list": CommandResult;
 
   // ---- Issue ----
   "issue.publish": Issue;

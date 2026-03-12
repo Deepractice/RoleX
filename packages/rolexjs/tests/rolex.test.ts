@@ -51,11 +51,11 @@ describe("use dispatch", () => {
     expect(r.state.name).toBe("plan");
   });
 
-  test("census.list returns world state with children", async () => {
+  test("survey.list returns world state with children", async () => {
     const rolex = setup();
     await rolex.society.born({ id: "sean" });
     await rolex.society.found({ id: "dp" });
-    const result = await rolex.census.list();
+    const result = await rolex.survey.list();
     const ids = result.state.children?.map((c: any) => c.id) ?? [];
     expect(ids).toContain("sean");
     expect(ids).toContain("dp");

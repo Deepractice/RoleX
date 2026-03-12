@@ -94,11 +94,11 @@ import {
 } from "./society.js";
 
 // ================================================================
-//  Census — society-level queries
+//  Survey — society-level queries
 // ================================================================
 
-const censusList = def(
-  "census",
+const surveyList = def(
+  "survey",
   "list",
   {
     type: {
@@ -195,8 +195,8 @@ export const instructions: Record<string, InstructionDef> = {
   "society.crown": societyCrown,
   "society.uncrown": societyUncrown,
 
-  // census
-  "census.list": censusList,
+  // survey
+  "survey.list": surveyList,
 
   // prototype
   "prototype.evict": prototypeEvict,

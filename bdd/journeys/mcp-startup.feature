@@ -33,5 +33,5 @@ Feature: MCP Server Startup
   Scenario: Direct world query through MCP
     Given the MCP server is running
     When I call tool "direct" with:
-      | command | !census.list |
+      | command | !survey.list |
     Then the tool result should contain "nuwa"

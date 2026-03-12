@@ -13,7 +13,7 @@ function mockCommands() {
       state: { id: id ?? "test", name: "individual" },
       process: "born",
     }),
-    "census.list": async (type?: string) => ({
+    "survey.list": async (type?: string) => ({
       state: { name: "society", children: [] },
       process: "list",
     }),
@@ -95,12 +95,12 @@ describe("RpcHandler", () => {
   test("preserves request id in response", async () => {
     const handler = new RpcHandler({ commands: mockCommands() });
 
-    const r1 = await handler.handle(req("census.list", { type: "individual" }, 42));
+    const r1 = await handler.handle(req("survey.list", { type: "individual" }, 42));
     expect(r1.id).toBe(42);
 
     const r2 = await handler.handle({
       jsonrpc: "2.0",
-      method: "census.list",
+      method: "survey.list",
       params: {},
       id: null,
     });
@@ -109,7 +109,7 @@ describe("RpcHandler", () => {
 
   test("defaults params to empty object", async () => {
     const handler = new RpcHandler({ commands: mockCommands() });
-    const response = await handler.handle({ jsonrpc: "2.0", method: "census.list", id: 1 });
+    const response = await handler.handle({ jsonrpc: "2.0", method: "survey.list", id: 1 });
     expect(response.result).toBeDefined();
     expect(response.error).toBeUndefined();
   });

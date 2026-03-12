@@ -93,7 +93,14 @@ const executors: Record<string, ToolExecutor> = {
   },
 
   async survey({ type }) {
-    return await rolex.role.survey({ type: type as string | undefined });
+    const response = await rolex.rpc({
+      jsonrpc: "2.0",
+      method: "survey",
+      params: type ? { type: type as string } : {},
+      id: null,
+    });
+    if (response.error) throw new Error(response.error.message);
+    return response.result as string;
   },
 
   async activate({ roleId }) {
@@ -102,9 +109,9 @@ const executors: Record<string, ToolExecutor> = {
       state.role = role;
       return await role.project();
     } catch {
-      const census = await rolex.census.list();
+      const all = await rolex.survey.list();
       throw new Error(
-        `"${roleId}" not found. Available:\n\n${JSON.stringify(census)}\n\nTry again with the correct id or alias.`
+        `"${roleId}" not found. Available:\n\n${JSON.stringify(all)}\n\nTry again with the correct id or alias.`
       );
     }
   },

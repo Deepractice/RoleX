@@ -1,11 +1,11 @@
 /**
- * Commands — census.* commands.
+ * Commands — survey.* commands.
  */
 
 import type { Helpers } from "./helpers.js";
 import type { CommandContext, CommandResult } from "./types.js";
 
-export function censusCommands(
+export function surveyCommands(
   ctx: CommandContext,
   _helpers: Helpers
 ): Record<string, (...args: any[]) => any> {
@@ -14,7 +14,7 @@ export function censusCommands(
   const societyNode = ctx.society;
 
   return {
-    async "census.list"(type?: string): Promise<CommandResult> {
+    async "survey.list"(type?: string): Promise<CommandResult> {
       const target = type === "past" ? past : societyNode;
       const state = await project(target);
       const children = state.children ?? [];
