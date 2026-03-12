@@ -1,13 +1,13 @@
 # rolexjs
 
-Unified entry point for RoleX — the AI Agent Role Management Framework.
+Unified entry point for RoleX — the Social Framework for AI Agents.
 
-`rolexjs` re-exports everything from `@rolexjs/core` and adds the rendering layer. Install this one package to get the full API.
+`rolexjs` re-exports everything from `@rolexjs/core` and adds the rendering layer + genesis bootstrap. Install this one package to get the full API.
 
 ## Install
 
 ```bash
-bun add rolexjs
+bun add rolexjs @rolexjs/local-platform
 ```
 
 ## Quick Start
@@ -16,14 +16,11 @@ bun add rolexjs
 import { createRoleX } from "rolexjs";
 import { localPlatform } from "@rolexjs/local-platform";
 
-// Create RoleX instance
-const rolex = await createRoleX(localPlatform({ dataDir: "./data" }));
+// Create — synchronous, initialization is lazy
+const rx = createRoleX({ platform: localPlatform() });
 
-// World-level: create an individual
-await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
-
-// Activate — returns a stateful Role
-const role = await rolex.activate("sean");
+// Activate an individual — returns a stateful Role
+const role = await rx.individual.activate({ individual: "sean" });
 
 // Execution cycle
 await role.want("Feature: Build Auth", "build-auth");
@@ -36,39 +33,73 @@ await role.reflect(["login-finished"], "Feature: Token insight\n  Scenario: Lear
 await role.realize(["token-insight"], "Feature: Always rotate tokens\n  Scenario: Principle\n    Given short-lived tokens\n    Then refresh tokens are essential", "rotate-tokens");
 ```
 
-## Architecture
+## Builder API
 
-```
-@rolexjs/system         →  graph engine (Structure, State, Runtime)
-@rolexjs/core           →  domain model (Role, RoleXService, Commands, structures, processes)
-@rolexjs/parser         →  Gherkin parser
-@rolexjs/genesis        →  bootstrap data
-@rolexjs/local-platform →  filesystem persistence (SQLite + graphology)
-rolexjs                 →  unified entry + rendering  ← you are here
-```
+`createRoleX()` returns a `RoleXBuilder` — a synchronous builder with lazy initialization. The first async call triggers init (genesis prototype, world bootstrap).
 
-## Core Concepts
-
-### RoleX — World Entry Point
+### Namespaces
 
 ```typescript
-const rolex = await createRoleX(platform);
+// Individual
+const role = await rx.individual.activate({ individual: "sean" });
+
+// Society — individuals & organizations
+await rx.society.born({ id: "alice", content: "Feature: Alice" });
+await rx.society.found({ id: "dp", content: "Feature: Deepractice" });
+
+// Organization — membership & governance
+await rx.org.hire({ org: "dp", individual: "alice" });
+await rx.org.establish({ id: "cto", content: "Feature: CTO" });
+
+// Position — roles & duties
+await rx.position.appoint({ position: "cto", individual: "alice" });
+await rx.position.charge({ position: "cto", content: "Feature: Lead engineering", id: "lead-eng" });
+
+// Project — project management
+await rx.org.launch({ id: "rolex", content: "Feature: RoleX" });
+
+// Product — product lifecycle
+// Issue — issue tracking
+// Resource — resource management
 ```
 
-Two methods:
+### World-Level Observation
 
-- **`activate(id)`** — activate an individual, returns a stateful `Role`
-- **`direct(locator, args)`** — execute world-level commands (`!individual.born`, `!org.found`, `!survey.list`, etc.)
+```typescript
+// Inspect any node's full state
+const state = await rx.inspect({ id: "sean" });
 
-### Role — Rich Domain Model
+// Survey the world — list entities
+const overview = await rx.survey({ type: "individual" });
+```
+
+### Universal Dispatch
+
+```typescript
+// JSON-RPC 2.0 — same format works locally or over the wire
+const response = await rx.rpc({
+  jsonrpc: "2.0",
+  method: "org.hire",
+  params: { org: "acme", individual: "alice" },
+  id: 1,
+});
+```
+
+### Protocol — Self-Describing Schema
+
+```typescript
+// Build any channel adapter (MCP, REST, CLI, A2A) from rx.protocol
+const { tools, instructions } = rx.protocol;
+for (const tool of tools) {
+  register(tool.name, tool.description, tool.params);
+}
+```
+
+## Role API
 
 Role is a self-contained operation domain for one individual. It holds state projection, cursors, and cognitive registries internally. All operations validate ownership — one individual's state never leaks to another.
 
-```typescript
-const role = await rolex.activate("sean");
-```
-
-#### Execution
+### Execution
 
 | Method | Description |
 |--------|-------------|
@@ -80,15 +111,15 @@ const role = await rolex.activate("sean");
 | `role.complete(planId?, encounter?)` | Close a plan as done |
 | `role.abandon(planId?, encounter?)` | Drop a plan |
 
-#### Cognition
+### Cognition
 
 | Method | Description |
 |--------|-------------|
-| `role.reflect(encounterIds, experience?, id?)` | Consume encounters → experience |
-| `role.realize(experienceIds, principle?, id?)` | Consume experiences → principle |
+| `role.reflect(encounterIds, experience?, id?)` | Consume encounters into experience |
+| `role.realize(experienceIds, principle?, id?)` | Consume experiences into principle |
 | `role.master(procedure, id?, experienceIds?)` | Create procedure, optionally consuming experiences |
 
-#### Knowledge & Skills
+### Knowledge & Skills
 
 | Method | Description |
 |--------|-------------|
@@ -96,79 +127,33 @@ const role = await rolex.activate("sean");
 | `role.skill(locator)` | Load full skill content by locator |
 | `role.use(locator, args?)` | Subjective execution — `!ns.method` or ResourceX |
 
-#### State
+### State
 
 | Method | Description |
 |--------|-------------|
 | `role.project()` | Render the individual's full state tree |
-| `role.snapshot()` | Serialize cursors + cognitive state (KV-compatible) |
+| `role.snapshot()` | Serialize cursors + cognitive state |
 | `role.restore(snapshot)` | Restore from a snapshot |
 
 ### Ownership Isolation
 
-Role validates that every operation targets nodes belonging to its own individual:
-
 ```typescript
-const sean = await rolex.activate("sean");
-const nuwa = await rolex.activate("nuwa");
+const sean = await rx.individual.activate({ individual: "sean" });
+const nuwa = await rx.individual.activate({ individual: "nuwa" });
 
 await sean.want("Feature: Auth", "auth");
 await nuwa.focus("auth"); // throws: Goal "auth" does not belong to individual "nuwa"
 ```
 
-### World-Level Commands
+## Architecture
 
-Commands executed via `rolex.direct()`:
-
-```typescript
-// Individuals
-await rolex.direct("!individual.born", { content: "Feature: Sean", id: "sean" });
-await rolex.direct("!individual.retire", { individual: "sean" });
-
-// Organizations
-await rolex.direct("!org.found", { content: "Feature: Deepractice", id: "dp" });
-await rolex.direct("!org.hire", { organization: "dp", individual: "sean" });
-
-// Positions
-await rolex.direct("!position.establish", { organization: "dp", content: "Feature: CTO", id: "cto" });
-await rolex.direct("!position.appoint", { position: "cto", individual: "sean" });
-
-// Survey
-const survey = await rolex.direct("!survey.list");
 ```
-
-## Gherkin
-
-All content in RoleX is expressed as Gherkin Feature files.
-
-```typescript
-import { parse, serialize } from "rolexjs";
-
-const feature = parse(`
-Feature: User Authentication
-  Scenario: Login with email
-    Given a registered user
-    When they submit credentials
-    Then they receive a token
-`);
-
-const source = serialize(feature);
-```
-
-## Rendering
-
-rolexjs provides rendering functions for command results:
-
-```typescript
-import { render, describe, hint, renderState } from "rolexjs";
-
-// 3-layer output: status + hint + projection
-const output = render({ process: "born", name: "Sean", state: result.state });
-
-// Individual layers
-describe("born", "Sean", state);  // → 'Individual "Sean" is born.'
-hint("born");                      // → 'Next: hire into an organization...'
-renderState(state);                // → Markdown projection of the state tree
+@rolexjs/system         →  graph engine (Structure, State, Runtime)
+@rolexjs/core           →  domain model (Role, RoleXService, Commands, structures, processes)
+@rolexjs/parser         →  Gherkin parser
+@rolexjs/genesis        →  bootstrap data
+@rolexjs/local-platform →  filesystem persistence (SQLite + graphology)
+rolexjs                 →  unified entry + rendering + genesis  ← you are here
 ```
 
 ## License

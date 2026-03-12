@@ -176,7 +176,7 @@ const rx = createRoleX({ platform: localPlatform() });
 // 激活个体
 const role = await rx.individual.activate({ individual: "nuwa" });
 
-// 类型化命名空间 API — 9 个命名空间
+// 类型化命名空间 API
 await rx.society.born({ id: "alice", content: "Feature: Alice\n  一名前端工程师。" });
 await rx.org.hire({ org: "deepractice", individual: "alice" });
 await rx.position.appoint({ position: "frontend-lead", individual: "alice" });

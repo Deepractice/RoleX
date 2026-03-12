@@ -176,7 +176,7 @@ const rx = createRoleX({ platform: localPlatform() });
 // Activate an individual
 const role = await rx.individual.activate({ individual: "nuwa" });
 
-// Typed namespace API — 9 namespaces
+// Typed namespace API
 await rx.society.born({ id: "alice", content: "Feature: Alice\n  A frontend engineer." });
 await rx.org.hire({ org: "deepractice", individual: "alice" });
 await rx.position.appoint({ position: "frontend-lead", individual: "alice" });
