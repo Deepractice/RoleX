@@ -13,9 +13,9 @@ import type { BddWorld } from "../support/world";
 Given(
   "individual {string} exists with goal {string}",
   async function (this: BddWorld, id: string, goalId: string) {
-    await this.rolex!.direct("!society.born", { content: `Feature: ${id}`, id });
+    await this.rolex!.society.born({ content: `Feature: ${id}`, id });
     // Create goal through activate + want
-    const role = await this.rolex!.activate(id);
+    const role = await this.rolex!.role.activate({ individual: id });
     await role.want(`Feature: ${goalId}`, goalId);
   }
 );
@@ -62,7 +62,7 @@ Then(
   "{string} should be under individual {string}",
   async function (this: BddWorld, nodeId: string, individualId: string) {
     // Use rendered project output to check node presence
-    const role = await this.rolex!.activate(individualId);
+    const role = await this.rolex!.role.activate({ individual: individualId });
     const output = await role.project();
     assert.ok(
       output.includes(`(${nodeId})`),
@@ -74,7 +74,7 @@ Then(
 Then(
   "{string} should not be under individual {string}",
   async function (this: BddWorld, nodeId: string, individualId: string) {
-    const role = await this.rolex!.activate(individualId);
+    const role = await this.rolex!.role.activate({ individual: individualId });
     const output = await role.project();
     assert.ok(
       !output.includes(`(${nodeId})`),
@@ -95,7 +95,7 @@ When("I restore role {string} from KV", async function (this: BddWorld, id: stri
   await this.newSession();
   try {
     this.error = undefined;
-    this.role = await this.rolex!.activate(id);
+    this.role = await this.rolex!.role.activate({ individual: id });
   } catch (e) {
     this.error = e as Error;
   }
@@ -107,7 +107,7 @@ let firstRole: Role | undefined;
 
 When("I activate role {string} again", async function (this: BddWorld, id: string) {
   firstRole = this.role;
-  this.role = await this.rolex!.activate(id);
+  this.role = await this.rolex!.role.activate({ individual: id });
 });
 
 Then("both activations should return the same Role instance", function (this: BddWorld) {
@@ -127,7 +127,7 @@ Then("I should receive a Role with id {string}", function (this: BddWorld, id: s
 When("I try to activate role {string}", async function (this: BddWorld, id: string) {
   try {
     this.error = undefined;
-    this.role = await this.rolex!.activate(id);
+    this.role = await this.rolex!.role.activate({ individual: id });
   } catch (e) {
     this.error = e as Error;
     this.role = undefined;
@@ -147,7 +147,7 @@ Then("it should fail with {string}", function (this: BddWorld, message: string) 
 Then(
   "role {string} should contain node {string}",
   async function (this: BddWorld, roleId: string, nodeId: string) {
-    const role = await this.rolex!.activate(roleId);
+    const role = await this.rolex!.role.activate({ individual: roleId });
     const output = await role.project();
     assert.ok(output.includes(`(${nodeId})`), `Node "${nodeId}" not found in role "${roleId}"`);
   }

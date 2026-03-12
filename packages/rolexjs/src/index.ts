@@ -2,10 +2,10 @@
  * rolexjs — RoleX unified entry point.
  *
  * Usage:
- *   import { createRoleX, Role } from "rolexjs";
+ *   import { createRoleX } from "rolexjs";
  *
- *   const rolex = await createRoleX(platform);
- *   const role = await rolex.activate("sean");
+ *   const rx = createRoleX({ platform });
+ *   const role = await rx.role.activate({ individual: "sean" });
  *   await role.want("Feature: Ship v1", "ship-v1");
  */
 
@@ -17,7 +17,6 @@ export { renderProduct, renderProductResult } from "./product-render.js";
 // Project Render
 export type { ProjectAction } from "./project-render.js";
 export { renderProjectResult } from "./project-render.js";
-// Render
-export { detail } from "./render.js";
 // API
-export { createRoleX, RoleX } from "./rolex.js";
+export type { RoleXConfig } from "./rolex.js";
+export { createRoleX } from "./rolex.js";

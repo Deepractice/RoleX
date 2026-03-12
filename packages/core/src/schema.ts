@@ -38,6 +38,8 @@ export interface InstructionDef {
 export interface ToolDef {
   /** Tool name (e.g. "activate", "use"). */
   name: string;
+  /** Full Gherkin description of the tool's behavior. */
+  description: string;
   /** Parameter definitions — keyed by param name. */
   params: Record<string, ParamDef>;
 }

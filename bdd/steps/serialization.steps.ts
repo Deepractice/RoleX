@@ -27,7 +27,7 @@ When(
     assert.ok(this.roleSnapshot, "No snapshot captured");
     // Simulate restore: new session + activate (which restores from persisted context)
     await this.newSession();
-    this.role = await this.rolex!.activate(this.roleSnapshot.id);
+    this.role = await this.rolex!.role.activate({ individual: this.roleSnapshot.id });
   }
 );
 

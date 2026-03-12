@@ -14,7 +14,7 @@ import type { BddWorld } from "../support/world";
 // ===== Activate =====
 
 Given("I activate role {string}", async function (this: BddWorld, id: string) {
-  this.role = await this.rolex!.activate(id);
+  this.role = await this.rolex!.role.activate({ individual: id });
 });
 
 // ===== Execution =====

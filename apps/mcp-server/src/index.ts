@@ -8,16 +8,13 @@
  * and converted to Zod here for FastMCP registration.
  */
 
-import { genesis } from "@rolexjs/genesis";
 import { localPlatform } from "@rolexjs/local-platform";
 import { FastMCP } from "fastmcp";
 import {
   createRoleX,
-  detail,
   type ParamDef,
   type ProductAction,
   type ProjectAction,
-  protocol,
   renderProductResult,
   renderProjectResult,
   type State,
@@ -29,11 +26,9 @@ import { McpState } from "./state.js";
 
 // ========== Setup ==========
 
-const rolex = await createRoleX(
-  localPlatform({
-    prototypes: [genesis],
-  })
-);
+const rolex = createRoleX({
+  platform: localPlatform(),
+});
 const state = new McpState();
 
 // ========== Zod conversion ==========
@@ -94,22 +89,22 @@ type ToolExecutor = (params: Record<string, unknown>) => Promise<string>;
 
 const executors: Record<string, ToolExecutor> = {
   async inspect({ id }) {
-    return await rolex.inspect(id as string);
+    return await rolex.role.inspect({ id: id as string });
   },
 
   async survey({ type }) {
-    return await rolex.survey(type as string | undefined);
+    return await rolex.role.survey({ type: type as string | undefined });
   },
 
   async activate({ roleId }) {
     try {
-      const role = await rolex.activate(roleId as string);
+      const role = await rolex.role.activate({ individual: roleId as string });
       state.role = role;
       return await role.project();
     } catch {
-      const census = await rolex.direct<string>("!census.list");
+      const census = await rolex.census.list();
       throw new Error(
-        `"${roleId}" not found. Available:\n\n${census}\n\nTry again with the correct id or alias.`
+        `"${roleId}" not found. Available:\n\n${JSON.stringify(census)}\n\nTry again with the correct id or alias.`
       );
     }
   },
@@ -191,23 +186,31 @@ const executors: Record<string, ToolExecutor> = {
 
   async direct({ command, args }) {
     const a = parseArgs(args);
-    const result = await rolex.direct(
-      command as string,
-      a && Object.keys(a).length > 0 ? a : undefined
-    );
+    // Strip "!" prefix for JSON-RPC method name
+    const method = (command as string).startsWith("!")
+      ? (command as string).slice(1)
+      : (command as string);
+    const response = await rolex.rpc({
+      jsonrpc: "2.0",
+      method,
+      params: a && Object.keys(a).length > 0 ? a : undefined,
+      id: null,
+    });
+    if (response.error) throw new Error(response.error.message);
+    const result = response.result;
     if (result == null) return `${command} done.`;
     if (typeof result === "string") return result;
-    if ((command as string) === "!project.produce") {
+    if (method === "project.produce") {
       const opResult = result as { state: State };
       return renderProductResult("produce" as ProductAction, opResult.state);
     }
-    if ((command as string).startsWith("!project.")) {
-      const action = (command as string).slice("!project.".length) as ProjectAction;
+    if (method.startsWith("project.")) {
+      const action = method.slice("project.".length) as ProjectAction;
       const opResult = result as { state: State };
       return renderProjectResult(action, opResult.state);
     }
-    if ((command as string).startsWith("!product.")) {
-      const action = (command as string).slice("!product.".length) as ProductAction;
+    if (method.startsWith("product.")) {
+      const action = method.slice("product.".length) as ProductAction;
       const opResult = result as { state: State };
       return renderProductResult(action, opResult.state);
     }
@@ -216,6 +219,8 @@ const executors: Record<string, ToolExecutor> = {
 };
 
 // ========== Server ==========
+
+const { protocol } = rolex;
 
 const server = new FastMCP({
   name: "rolex",
@@ -232,7 +237,7 @@ for (const toolDef of protocol.tools) {
 
   server.addTool({
     name: toolDef.name,
-    description: detail(toolDef.name),
+    description: toolDef.description,
     parameters: toZodSchema(toolDef),
     execute: async (params) => {
       return await executor(params as Record<string, unknown>);

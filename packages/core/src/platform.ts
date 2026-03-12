@@ -101,7 +101,4 @@ export interface Platform {
 
   /** Initializer — bootstrap the world on first run. */
   readonly initializer?: Initializer;
-
-  /** Prototype data to apply on genesis. */
-  readonly prototypes?: readonly PrototypeData[];
 }

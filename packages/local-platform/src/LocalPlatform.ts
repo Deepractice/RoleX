@@ -14,7 +14,7 @@ import { drizzle } from "@deepracticex/drizzle";
 import { openDatabase } from "@deepracticex/sqlite";
 import { NodeProvider as IssueXNodeProvider } from "@issuexjs/node";
 import { NodeProvider } from "@resourcexjs/node-provider";
-import type { Platform, PrototypeData } from "@rolexjs/core";
+import type { Platform } from "@rolexjs/core";
 import type { Initializer } from "@rolexjs/system";
 import { SqliteRepository } from "./SqliteRepository.js";
 
@@ -25,8 +25,6 @@ export interface LocalPlatformConfig {
   dataDir?: string | null;
   /** Directory for ResourceX storage. Defaults to ~/.deepractice/resourcex. Set to null to disable. */
   resourceDir?: string | null;
-  /** Prototype data to apply on genesis. */
-  prototypes?: PrototypeData[];
 }
 
 // ===== Factory =====
@@ -89,6 +87,5 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
     resourcexProvider,
     issuexProvider,
     initializer,
-    prototypes: config.prototypes,
   };
 }

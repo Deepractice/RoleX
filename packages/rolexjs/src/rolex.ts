@@ -1,58 +1,28 @@
 /**
- * RoleX — thin entry point.
+ * RoleX — builder entry point.
  *
- * Public API:
- *   activate(id) — returns a stateful Role handle
- *   direct(loc, args) — direct the world to execute an instruction
+ * Usage:
+ *   import { createRoleX } from "rolexjs";
  *
- * Delegates to RoleXService (core) for all runtime logic.
- * rolexjs adds the concrete renderer and issue rendering transform.
+ *   const rx = createRoleX({ platform });
+ *   const role = await rx.role.activate({ individual: "sean" });
+ *   await rx.society.born({ id: "alice", content: "Feature: Alice" });
  */
 
-import {
-  type RoleX as IRoleX,
-  type Platform,
-  type Renderer,
-  type Role,
-  RoleXService,
-} from "@rolexjs/core";
+import { createBuilder, type Platform, type Renderer, type RoleXBuilder } from "@rolexjs/core";
+import { genesis } from "@rolexjs/genesis";
 import { createRendererRouter } from "./renderers/index.js";
 
-export class RoleX implements IRoleX {
-  private service: RoleXService;
-
-  private constructor(service: RoleXService) {
-    this.service = service;
-  }
-
-  static async create(platform: Platform, renderer?: Renderer): Promise<RoleX> {
-    const r = renderer ?? createRendererRouter();
-    const service = await RoleXService.create(platform, r);
-    return new RoleX(service);
-  }
-
-  async activate(individual: string): Promise<Role> {
-    return this.service.activate(individual);
-  }
-
-  async inspect(id: string): Promise<string> {
-    return this.service.inspect(id);
-  }
-
-  async survey(type?: string): Promise<string> {
-    return this.service.survey(type);
-  }
-
-  async direct<T = unknown>(
-    locator: string,
-    args?: Record<string, unknown>,
-    options?: { raw?: boolean }
-  ): Promise<T> {
-    return this.service.direct<T>(locator, args, options);
-  }
+export interface RoleXConfig {
+  platform: Platform;
+  renderer?: Renderer;
 }
 
-/** Create a RoleX instance from a Platform. */
-export async function createRoleX(platform: Platform, renderer?: Renderer): Promise<RoleX> {
-  return RoleX.create(platform, renderer);
+/** Create a RoleX builder. Synchronous — initialization is lazy. Genesis is built-in. */
+export function createRoleX(config: RoleXConfig): RoleXBuilder {
+  return createBuilder({
+    platform: config.platform,
+    renderer: config.renderer ?? createRendererRouter(),
+    prototypes: [genesis],
+  });
 }

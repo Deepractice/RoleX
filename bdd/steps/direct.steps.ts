@@ -1,5 +1,5 @@
 /**
- * Direct steps — call rolex.direct() for system-level operations.
+ * Direct steps — call rolex builder API for system-level operations.
  */
 
 import { strict as assert } from "node:assert";
@@ -9,43 +9,43 @@ import type { BddWorld } from "../support/world";
 // ===== Setup helpers =====
 
 Given("individual {string} exists", async function (this: BddWorld, id: string) {
-  await this.rolex!.direct("!society.born", { content: `Feature: ${id}`, id });
+  await this.rolex!.society.born({ content: `Feature: ${id}`, id });
 });
 
 Given("individual {string} is retired", async function (this: BddWorld, id: string) {
-  await this.rolex!.direct("!society.retire", { individual: id });
+  await this.rolex!.society.retire({ individual: id });
 });
 
 Given("organization {string} exists", async function (this: BddWorld, id: string) {
-  await this.rolex!.direct("!society.found", { content: `Feature: ${id}`, id });
+  await this.rolex!.society.found({ content: `Feature: ${id}`, id });
 });
 
 Given("position {string} exists", async function (this: BddWorld, id: string) {
-  await this.rolex!.direct("!org.establish", { content: `Feature: ${id}`, id });
+  await this.rolex!.org.establish({ content: `Feature: ${id}`, id });
 });
 
 Given(
   "{string} is hired into {string}",
   async function (this: BddWorld, individual: string, org: string) {
-    await this.rolex!.direct("!org.hire", { org, individual });
+    await this.rolex!.org.hire({ org, individual });
   }
 );
 
 Given(
   "{string} is appointed to {string}",
   async function (this: BddWorld, individual: string, position: string) {
-    await this.rolex!.direct("!position.appoint", { position, individual });
+    await this.rolex!.position.appoint({ position, individual });
   }
 );
 
 Given("project {string} exists", async function (this: BddWorld, id: string) {
-  await this.rolex!.direct("!org.launch", { content: `Feature: ${id}`, id });
+  await this.rolex!.org.launch({ content: `Feature: ${id}`, id });
 });
 
 Given(
   "milestone {string} exists in project {string}",
   async function (this: BddWorld, milestone: string, project: string) {
-    await this.rolex!.direct("!project.milestone", {
+    await this.rolex!.project.milestone({
       project,
       content: `Feature: ${milestone}`,
       id: milestone,
@@ -56,7 +56,7 @@ Given(
 Given(
   "{string} is enrolled in {string}",
   async function (this: BddWorld, individual: string, project: string) {
-    await this.rolex!.direct("!project.enroll", { project, individual });
+    await this.rolex!.project.enroll({ project, individual });
   }
 );
 
@@ -66,7 +66,12 @@ When("I direct {string} with:", async function (this: BddWorld, command: string,
   try {
     this.error = undefined;
     const args = table.rowsHash();
-    const raw = await this.rolex!.direct(command, args, { raw: true });
+    const method = command.startsWith("!") ? command.slice(1) : command;
+    const response = await this.rolex!.rpc({ jsonrpc: "2.0", method, params: args, id: null });
+    if (response.error) {
+      throw new Error(response.error.message);
+    }
+    const raw = response.result;
     // Store both raw result and serialized form
     this.directRaw = raw as any;
     this.directResult = typeof raw === "string" ? raw : JSON.stringify(raw, null, 2);
@@ -134,11 +139,13 @@ Then("it should fail", function (this: BddWorld) {
 // ===== Entity existence assertions =====
 
 Then("individual {string} should exist", async function (this: BddWorld, id: string) {
-  const census = await this.rolex!.direct<string>("!census.list", { type: "individual" });
-  assert.ok(census.includes(id), `Individual "${id}" not found in census: ${census}`);
+  const result = await this.rolex!.census.list({ type: "individual" });
+  const ids = (result.state.children ?? []).map((c: any) => c.id);
+  assert.ok(ids.includes(id), `Individual "${id}" not found in census: ${JSON.stringify(ids)}`);
 });
 
 Then("organization {string} should exist", async function (this: BddWorld, id: string) {
-  const census = await this.rolex!.direct<string>("!census.list", { type: "organization" });
-  assert.ok(census.includes(id), `Organization "${id}" not found in census: ${census}`);
+  const result = await this.rolex!.census.list({ type: "organization" });
+  const ids = (result.state.children ?? []).map((c: any) => c.id);
+  assert.ok(ids.includes(id), `Organization "${id}" not found in census: ${JSON.stringify(ids)}`);
 });

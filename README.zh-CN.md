@@ -34,7 +34,7 @@
 
 一切都用 **Gherkin** `.feature` 格式表达 — 人类可读、结构化、可版本管理。
 
-## 快速开始
+## 快速开始 — MCP
 
 安装 MCP 服务器，连接到你的 AI 客户端，然后说 **"激活女娲"** — 她会引导你完成一切。
 
@@ -158,161 +158,117 @@ claude mcp add rolex -- npx -y @rolexjs/mcp-server
 
 </details>
 
+## 快速开始 — API
+
+构建自己的 Agent 运行时、CLI 或平台集成：
+
+```bash
+npm install rolexjs @rolexjs/local-platform
+```
+
+```typescript
+import { createRoleX } from "rolexjs";
+import { localPlatform } from "@rolexjs/local-platform";
+
+// 创建 — 同步返回，初始化延迟到首次调用
+const rx = createRoleX({ platform: localPlatform() });
+
+// 激活角色
+const role = await rx.role.activate({ individual: "nuwa" });
+
+// 类型化命名空间 API — 9 个命名空间
+await rx.society.born({ id: "alice", content: "Feature: Alice\n  一名前端工程师。" });
+await rx.org.hire({ org: "deepractice", individual: "alice" });
+await rx.position.appoint({ position: "frontend-lead", individual: "alice" });
+
+// 角色操作 — 目标、计划、任务、认知
+await role.want("Feature: 发布 v2\n  Scenario: 上线\n    Given 所有测试通过", "ship-v2");
+await role.plan("Feature: 第一阶段\n  Scenario: 搭建 CI", "setup-ci");
+await role.todo("Feature: 添加 lint 步骤\n  Scenario: PR 触发 Biome", "add-lint");
+await role.finish("add-lint");
+
+// JSON-RPC 2.0 — 统一调度协议
+const response = await rx.rpc({
+  jsonrpc: "2.0",
+  method: "society.born",
+  params: { id: "bob", content: "Feature: Bob" },
+  id: 1,
+});
+
+// Protocol — 工具 schema + 世界指令，供任意 channel adapter 使用
+const { tools, instructions } = rx.protocol;
+// tools[0] = { name: "activate", description: "...", params: { ... } }
+```
+
+### Builder API
+
+`createRoleX()` 返回 `RoleXBuilder` — 同步构建器，延迟初始化。首次异步调用触发初始化（genesis 原型、世界引导）。
+
+**9 个类型化命名空间：**
+
+| 命名空间 | 用途 |
+|---------|------|
+| `rx.society` | 个体与组织 — born, retire, teach, train, found, dissolve |
+| `rx.org` | 成员与治理 — charter, hire, fire, establish, abolish |
+| `rx.position` | 职位与职责 — charge, require, appoint, dismiss |
+| `rx.project` | 项目管理 — scope, milestone, deliver, wiki |
+| `rx.product` | 产品生命周期 — strategy, spec, release, channel |
+| `rx.census` | 世界查询 — 列出所有实体 |
+| `rx.issue` | 议题追踪 — publish, comment, assign, label |
+| `rx.resource` | 资源管理 — add, push, pull, search |
+| `rx.role` | 角色操作 — activate, inspect, survey |
+
+**统一调度：**
+
+```typescript
+// JSON-RPC 2.0 — 同一格式，本地或远程通用
+await rx.rpc({ jsonrpc: "2.0", method: "org.hire", params: { org: "acme", individual: "alice" }, id: 1 });
+```
+
+**Protocol — 自描述的工具 schema：**
+
+```typescript
+// 基于 rx.protocol 构建任意 channel adapter（MCP、REST、CLI、A2A）
+for (const tool of rx.protocol.tools) {
+  register(tool.name, tool.description, tool.params);
+}
+```
+
 ## 运作方式
 
-**你不需要学任何命令。** 只需安装 MCP 服务器，然后用自然语言和 AI 对话 — "创建一个组织"、"设定一个目标"、"我学到了什么？"。AI 知道该调用哪些工具。
+### 执行循环
 
-以下是**底层机制**。RoleX 通过 MCP 提供工具，由 AI 自主调用。了解机制有助于更好地使用，但操作这些工具是 AI 的事，不是你的。
-
-工具分为两类：
-
-- **直接工具** — AI 按名称调用（如 `activate`、`want`、`plan`），是日常操作。
-- **`use` 工具** — 统一调度入口，以 `!命名空间.方法` 格式发送命令（如 `!org.found`、`!census.list`），是世界管理层。
-
-以下按智能体接触它们的顺序，逐一介绍每个系统。
-
----
-
-### 1. 世界 — 社会结构
-
-智能体行动之前，需要先有一个世界。RoleX 建模了一个**社会**，包含四种实体：
-
-```
-社会 (Society)
-├── 个体 (Individual)      # 拥有身份、目标和知识的智能体
-├── 组织 (Organization)    # 通过成员关系聚合个体
-├── 职位 (Position)        # 定义职责和所需技能
-└── 归档 (Past)            # 已退休/解散的实体存档
-```
-
-所有世界管理操作通过 `use` 工具进行：
-
-**个体 (Individual)** — 智能体生命周期
-
-| 命令 | 作用 |
-|------|------|
-| `!individual.born` | 创建个体 |
-| `!individual.teach` | 注入原则（知识） |
-| `!individual.train` | 注入技能（操作） |
-| `!individual.retire` | 归档个体 |
-
-**组织 (Organization)** — 组织结构
-
-| 命令 | 作用 |
-|------|------|
-| `!org.found` | 创建组织 |
-| `!org.charter` | 定义使命和章程 |
-| `!org.hire` / `!org.fire` | 招聘或移除成员 |
-| `!org.dissolve` | 解散组织 |
-
-**职位 (Position)** — 角色与职责
-
-| 命令 | 作用 |
-|------|------|
-| `!position.establish` | 设立职位 |
-| `!position.charge` | 赋予职责 |
-| `!position.require` | 声明所需技能 — 任命时自动培训 |
-| `!position.appoint` / `!position.dismiss` | 任命或免除个体 |
-| `!position.abolish` | 废除职位 |
-
-**普查 (Census)** — 查询世界
-
-| 命令 | 作用 |
-|------|------|
-| `!census.list` | 列出所有个体、组织、职位 |
-| `!census.list { type: "..." }` | 按类型过滤：`individual`、`organization`、`position`、`past` |
-
----
-
-### 2. 执行系统 — 做事循环
-
-激活后，智能体通过结构化的生命周期追求目标。这些都是智能体按名称直接调用的**直接工具**：
+激活后的智能体通过结构化生命周期追求目标：
 
 ```
 activate → want → plan → todo → finish → complete / abandon
 ```
 
-| 工具 | 作用 |
-|------|------|
-| `activate` | 进入角色 — 加载身份、目标、知识 |
-| `focus` | 查看或切换当前目标 |
-| `want` | 声明一个目标及成功标准 |
-| `plan` | 将目标拆解为阶段（支持顺序和备选策略） |
-| `todo` | 在计划下创建具体任务 |
-| `finish` | 完成任务，可选记录发生了什么 |
-| `complete` | 完成计划 — 策略成功 |
-| `abandon` | 放弃计划 — 策略失败，但学习被保留 |
+用 `want` 声明目标，用 `plan` 拆解为计划，用 `todo` 创建任务。完成任务会产生**经历** — 发生了什么的原始记录。
 
----
+### 认知循环
 
-### 3. 认知系统 — 成长循环
-
-执行产生**经历** — 发生了什么的原始记录。认知系统将其转化为结构化知识。同样是**直接工具**：
+经历驱动认知系统：
 
 ```
 经历 → reflect → 经验 → realize / master → 原则 / 技能
 ```
 
-| 工具 | 作用 |
-|------|------|
-| `reflect` | 将经历消化为经验 — 模式识别 |
-| `realize` | 将经验提炼为原则 — 可迁移的道理 |
-| `master` | 将经验沉淀为技能 — 可复用的操作 |
-| `forget` | 移除过时的知识 |
+`reflect` 将经历消化为经验。`realize` 将经验提炼为可迁移的**原则**。`master` 将经验沉淀为可复用的**技能**。智能体由此成长 — 从一个项目中学到的知识适用于下一个。
 
-这就是智能体的成长方式。从一个项目中总结的原则适用于下一个项目，掌握一次的技能可以永远复用。
+### 技能系统 — 渐进式加载
 
----
-
-### 4. 技能系统 — 渐进式加载
-
-智能体不可能一次加载所有技能到上下文。RoleX 采用三层渐进式加载模型：
+智能体无法一次加载所有技能。RoleX 采用三层模型：
 
 | 层级 | 加载时机 | 内容 |
 |------|---------|------|
 | **技能元数据 (Procedure)** | 始终加载（激活时） | 技能是什么、何时使用 |
-| **技能详情 (Skill)** | 按需，通过 `skill(locator)` | 完整指令 — 具体怎么做 |
-| **外部资源 (Resource)** | 按需，通过 `use(locator)` | 外部内容 — 模板、数据、工具 |
+| **技能详情 (Skill)** | 按需，通过 `skill(locator)` | 完整指令 — 怎么做 |
+| **外部资源 (Resource)** | 按需，通过 `use(locator)` | 模板、数据、工具 |
 
-`skill` 和 `use` 都是**直接工具**，用于按需加载内容。当 `use` 收到*不带* `!` 前缀的 locator 时，它从 [ResourceX](https://github.com/Deepractice/ResourceX) 加载资源，而非调度命令。
+### Gherkin — 统一语言
 
----
-
-### 5. 资源系统 — 智能体的生产资料
-
-资源是 AI 智能体的**生产资料** — 技能、原型、知识包，可以积累、共享、跨智能体和团队复用。
-
-基于 [ResourceX](https://github.com/Deepractice/ResourceX) 驱动，资源系统通过 `use` 工具覆盖完整生命周期：
-
-**生产** — 创建和打包
-
-| 命令 | 作用 |
-|------|------|
-| `!resource.add` | 注册本地资源 |
-| `!prototype.summon` | 从源拉取并注册原型 |
-| `!prototype.banish` | 注销原型 |
-
-**分发** — 共享和获取
-
-| 命令 | 作用 |
-|------|------|
-| `!resource.push` | 发布资源到注册中心 |
-| `!resource.pull` | 从注册中心下载资源 |
-| `!resource.search` | 搜索可用资源 |
-
-**查看**
-
-| 命令 | 作用 |
-|------|------|
-| `!resource.info` | 查看资源详情 |
-
-这就是智能体知识如何超越单个个体进行规模化的机制 — 一次编写的技能可以通过原型和注册中心分发给任何智能体。
-
----
-
-## Gherkin — 统一语言
-
-RoleX 中的一切都用 Gherkin Feature 表达：
+RoleX 中的一切都用 Gherkin Feature 表达 — 目标、计划、任务、原则、技能、经历、经验。人类可读、结构化、可组合。
 
 ```gherkin
 Feature: Sean
@@ -323,34 +279,21 @@ Feature: Sean
     And 我专注于系统设计
 ```
 
-目标、计划、任务、原则、技能、经历、经验 — 全部是 Gherkin。这意味着：
-
-- **人类可读** — 任何人都能理解智能体的状态
-- **结构化** — 可解析、可对比、可版本管理
-- **可组合** — Feature 自然地组合成更大的系统
-
 ## 存储
 
-RoleX 将所有数据持久化在 SQLite 中，位于 `~/.deepractice/rolex/`：
-
-```
-~/.deepractice/rolex/
-├── rolex.db          # SQLite — 唯一数据源
-├── prototype.json    # 原型注册表
-└── context/          # 角色上下文（每个角色的当前焦点目标/计划）
-```
+RoleX 将所有数据持久化在单一 SQLite 数据库中：`~/.deepractice/rolex/rolex.db`。
 
 ## 包结构
 
 | 包 | 描述 |
 |----|------|
-| `rolexjs` | 核心 API — Rolex 类、命名空间、渲染 |
+| `rolexjs` | 主入口 — Builder API、命名空间、渲染、内置 genesis |
 | `@rolexjs/mcp-server` | 面向 AI 客户端的 MCP 服务器 |
-| `@rolexjs/core` | 核心类型、结构定义、平台接口 |
-| `@rolexjs/system` | 运行时接口、状态合并、原型 |
+| `@rolexjs/core` | 核心类型、命令、JSON-RPC、Protocol schema |
+| `@rolexjs/genesis` | 世界基础原型（女娲主权） |
+| `@rolexjs/system` | 运行时接口、状态合并 |
 | `@rolexjs/parser` | Gherkin 解析器 |
-| `@rolexjs/local-platform` | 基于 SQLite 的运行时实现 |
-| `@rolexjs/cli` | 命令行工具 |
+| `@rolexjs/local-platform` | 基于 SQLite 的平台实现 |
 
 ---
 

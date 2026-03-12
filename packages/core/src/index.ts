@@ -161,6 +161,31 @@ export { Role } from "./role-model.js";
 export type { RoleX } from "./rolex-service.js";
 export { RoleXService } from "./rolex-service.js";
 
+// ===== JSON-RPC 2.0 =====
+
+export type { JsonRpcError, JsonRpcRequest, JsonRpcResponse } from "./rpc.js";
+export { RpcHandler } from "./rpc.js";
+
+// ===== Namespaces =====
+
+export type {
+  Caller,
+  CensusNamespace,
+  IssueNamespace,
+  OrgNamespace,
+  PositionNamespace,
+  ProductNamespace,
+  ProjectNamespace,
+  ResourceNamespace,
+  RoleNamespace,
+  SocietyNamespace,
+} from "./namespaces.js";
+
+// ===== Builder =====
+
+export type { BuilderConfig, RoleXBuilder, RoleXInternal } from "./builder.js";
+export { createBuilder } from "./builder.js";
+
 // ===== Find =====
 
 export { findInState } from "./find.js";

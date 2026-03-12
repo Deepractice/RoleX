@@ -1,5 +1,5 @@
 /**
- * Prototype migration steps — test migration settle flow via Rolex direct API.
+ * Prototype migration steps — test migration settle flow via Rolex RPC API.
  */
 
 import { strict as assert } from "node:assert";
@@ -42,13 +42,21 @@ Given(
 
     for (const m of upToVersion) {
       for (const op of m.ops as Array<{ op: string; args: Record<string, unknown> }>) {
-        await this.rolex!.direct(op.op, op.args);
+        const method = op.op.startsWith("!") ? op.op.slice(1) : op.op;
+        await this.rolex!.rpc({
+          jsonrpc: "2.0",
+          method,
+          params: op.args,
+          id: null,
+        });
       }
       // Record migration as executed
       const migrationId = m.file.replace(/\.json$/, "");
-      await this.rolex!.direct("!prototype.record-migration", {
-        prototypeId: protoId,
-        migrationId,
+      await this.rolex!.rpc({
+        jsonrpc: "2.0",
+        method: "prototype.record-migration",
+        params: { prototypeId: protoId, migrationId },
+        id: null,
       });
     }
   }
@@ -62,10 +70,13 @@ When("I settle prototype {string}", async function (this: BddWorld, protoId: str
     const migrations = this.protoMigrations?.[protoId];
     assert.ok(migrations, `No migrations defined for "${protoId}"`);
 
-    this.settleResult = await this.rolex!.direct<string>("!prototype.settle-migrations", {
-      prototypeId: protoId,
-      migrations: JSON.stringify(migrations),
+    const response = await this.rolex!.rpc({
+      jsonrpc: "2.0",
+      method: "prototype.settle-migrations",
+      params: { prototypeId: protoId, migrations: JSON.stringify(migrations) },
+      id: null,
     });
+    this.settleResult = response.result as string;
   } catch (e) {
     this.error = e as Error;
   }
@@ -76,12 +87,15 @@ When("I settle prototype {string}", async function (this: BddWorld, protoId: str
 Then(
   "migration {string} of {string} should be recorded",
   async function (this: BddWorld, migrationId: string, protoId: string) {
-    const history = await this.rolex!.direct<Array<{ migration_id: string }>>(
-      "!prototype.migration-history",
-      { prototypeId: protoId }
-    );
+    const response = await this.rolex!.rpc({
+      jsonrpc: "2.0",
+      method: "prototype.migration-history",
+      params: { prototypeId: protoId },
+      id: null,
+    });
+    const history = response.result;
     const found = Array.isArray(history)
-      ? history.some((h) => h.migration_id === migrationId)
+      ? history.some((h: any) => h.migration_id === migrationId)
       : String(history).includes(migrationId);
     assert.ok(found, `Migration "${migrationId}" not found in history for "${protoId}"`);
   }
@@ -90,10 +104,13 @@ Then(
 Then(
   "migration count of {string} should be {int}",
   async function (this: BddWorld, protoId: string, count: number) {
-    const history = await this.rolex!.direct<Array<{ migration_id: string }>>(
-      "!prototype.migration-history",
-      { prototypeId: protoId }
-    );
+    const response = await this.rolex!.rpc({
+      jsonrpc: "2.0",
+      method: "prototype.migration-history",
+      params: { prototypeId: protoId },
+      id: null,
+    });
+    const history = response.result;
     const actual = Array.isArray(history) ? history.length : 0;
     assert.equal(actual, count, `Expected ${count} migrations but got ${actual}`);
   }

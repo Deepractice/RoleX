@@ -7,8 +7,8 @@ import { localPlatform } from "@rolexjs/local-platform";
 import { createRoleX } from "../src/index.js";
 import { describe as renderDescribe, hint as renderHint, renderState } from "../src/render.js";
 
-async function setup() {
-  return await createRoleX(localPlatform({ dataDir: null }));
+function setup() {
+  return createRoleX({ platform: localPlatform({ dataDir: null }) });
 }
 
 // ================================================================
@@ -17,15 +17,14 @@ async function setup() {
 
 describe("use dispatch", () => {
   test("!society.born creates individual", async () => {
-    const rolex = await setup();
-    const r = await rolex.direct<CommandResult>(
-      "!society.born",
-      {
-        content: "Feature: Sean",
-        id: "sean",
-      },
-      { raw: true }
-    );
+    const rolex = setup();
+    const response = await rolex.rpc<CommandResult>({
+      jsonrpc: "2.0",
+      method: "society.born",
+      params: { content: "Feature: Sean", id: "sean" },
+      id: null,
+    });
+    const r = response.result!;
     expect(r.state.name).toBe("individual");
     expect(r.state.id).toBe("sean");
     expect(r.process).toBe("born");
@@ -34,38 +33,54 @@ describe("use dispatch", () => {
   });
 
   test("chained operations via use", async () => {
-    const rolex = await setup();
-    await rolex.direct("!society.born", { id: "sean" });
-    await rolex.direct("!role.want", { individual: "sean", goal: "Feature: Auth", id: "g1" });
-    const r = await rolex.direct<CommandResult>(
-      "!role.plan",
-      {
-        goal: "g1",
-        plan: "Feature: JWT",
-        id: "p1",
-      },
-      { raw: true }
-    );
+    const rolex = setup();
+    await rolex.society.born({ id: "sean" });
+    await rolex.rpc({
+      jsonrpc: "2.0",
+      method: "role.want",
+      params: { individual: "sean", goal: "Feature: Auth", id: "g1" },
+      id: null,
+    });
+    const response = await rolex.rpc<CommandResult>({
+      jsonrpc: "2.0",
+      method: "role.plan",
+      params: { goal: "g1", plan: "Feature: JWT", id: "p1" },
+      id: null,
+    });
+    const r = response.result!;
     expect(r.state.name).toBe("plan");
   });
 
-  test("!census.list renders Markdown via CensusRenderer", async () => {
-    const rolex = await setup();
-    await rolex.direct("!society.born", { id: "sean" });
-    await rolex.direct("!society.found", { id: "dp" });
-    const result = await rolex.direct<string>("!census.list");
-    expect(result).toContain("sean");
-    expect(result).toContain("dp");
+  test("census.list returns world state with children", async () => {
+    const rolex = setup();
+    await rolex.society.born({ id: "sean" });
+    await rolex.society.found({ id: "dp" });
+    const result = await rolex.census.list();
+    const ids = result.state.children?.map((c: any) => c.id) ?? [];
+    expect(ids).toContain("sean");
+    expect(ids).toContain("dp");
   });
 
   test("throws on unknown command", async () => {
-    const rolex = await setup();
-    expect(rolex.direct("!foo.bar")).rejects.toThrow();
+    const rolex = setup();
+    const response = await rolex.rpc({
+      jsonrpc: "2.0",
+      method: "foo.bar",
+      params: {},
+      id: null,
+    });
+    expect(response.error).toBeDefined();
   });
 
   test("throws on unknown method", async () => {
-    const rolex = await setup();
-    expect(rolex.direct("!org.nope")).rejects.toThrow();
+    const rolex = setup();
+    const response = await rolex.rpc({
+      jsonrpc: "2.0",
+      method: "org.nope",
+      params: {},
+      id: null,
+    });
+    expect(response.error).toBeDefined();
   });
 });
 
@@ -75,23 +90,23 @@ describe("use dispatch", () => {
 
 describe("activate", () => {
   test("returns Role with id and project renders state", async () => {
-    const rolex = await setup();
-    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
-    const role = await rolex.activate("sean");
+    const rolex = setup();
+    await rolex.society.born({ content: "Feature: Sean", id: "sean" });
+    const role = await rolex.role.activate({ individual: "sean" });
     expect(role.id).toBe("sean");
     const output = await role.project();
     expect(output).toContain("[individual]");
   });
 
   test("throws on non-existent individual", async () => {
-    const rolex = await setup();
-    expect(rolex.activate("nobody")).rejects.toThrow('"nobody" not found');
+    const rolex = setup();
+    expect(rolex.role.activate({ individual: "nobody" })).rejects.toThrow('"nobody" not found');
   });
 
   test("Role.want/plan/todo/finish work through Role API", async () => {
-    const rolex = await setup();
-    await rolex.direct("!society.born", { id: "sean" });
-    const role = await rolex.activate("sean");
+    const rolex = setup();
+    await rolex.society.born({ id: "sean" });
+    const role = await rolex.role.activate({ individual: "sean" });
 
     const wantR = await role.want("Feature: Auth", "auth");
     expect(wantR).toContain('Goal "auth" declared.');
@@ -111,9 +126,9 @@ describe("activate", () => {
   });
 
   test("focus rejects non-goal ids", async () => {
-    const rolex = await setup();
-    await rolex.direct("!society.born", { id: "sean" });
-    const role = await rolex.activate("sean");
+    const rolex = setup();
+    await rolex.society.born({ id: "sean" });
+    const role = await rolex.role.activate({ individual: "sean" });
     await role.want("Feature: Auth", "auth");
     await role.plan("Feature: JWT", "jwt");
     await expect(role.focus("jwt")).rejects.toThrow(
@@ -122,9 +137,9 @@ describe("activate", () => {
   });
 
   test("Role.use delegates to Rolex.direct", async () => {
-    const rolex = await setup();
-    await rolex.direct("!society.born", { id: "sean" });
-    const role = await rolex.activate("sean");
+    const rolex = setup();
+    await rolex.society.born({ id: "sean" });
+    const role = await rolex.role.activate({ individual: "sean" });
     const r = await role.use<string>("!society.found", { content: "Feature: DP", id: "dp" });
     expect(r).toContain("dp");
   });
@@ -136,8 +151,14 @@ describe("activate", () => {
 
 describe("render", () => {
   test("describe generates text with name", async () => {
-    const rolex = await setup();
-    const r = await rolex.direct<CommandResult>("!society.born", { id: "sean" }, { raw: true });
+    const rolex = setup();
+    const response = await rolex.rpc<CommandResult>({
+      jsonrpc: "2.0",
+      method: "society.born",
+      params: { id: "sean" },
+      id: null,
+    });
+    const r = response.result!;
     const text = renderDescribe("born", "sean", r.state);
     expect(text).toContain("sean");
   });
@@ -148,28 +169,48 @@ describe("render", () => {
   });
 
   test("renderState renders individual with heading", async () => {
-    const rolex = await setup();
-    const r = await rolex.direct<CommandResult>(
-      "!society.born",
-      {
-        content: "Feature: I am Sean\n  An AI role.",
-        id: "sean",
-      },
-      { raw: true }
-    );
+    const rolex = setup();
+    const response = await rolex.rpc<CommandResult>({
+      jsonrpc: "2.0",
+      method: "society.born",
+      params: { content: "Feature: I am Sean\n  An AI role.", id: "sean" },
+      id: null,
+    });
+    const r = response.result!;
     const md = renderState(r.state);
     expect(md).toContain("# [individual]");
     expect(md).toContain("Feature: I am Sean");
   });
 
   test("renderState renders nested structure", async () => {
-    const rolex = await setup();
-    await rolex.direct("!society.born", { id: "sean" });
-    await rolex.direct("!role.want", { individual: "sean", goal: "Feature: Build auth", id: "g1" });
-    await rolex.direct("!role.plan", { goal: "g1", plan: "Feature: JWT plan", id: "p1" });
-    await rolex.direct("!role.todo", { plan: "p1", task: "Feature: Login endpoint", id: "t1" });
+    const rolex = setup();
+    await rolex.society.born({ id: "sean" });
+    await rolex.rpc({
+      jsonrpc: "2.0",
+      method: "role.want",
+      params: { individual: "sean", goal: "Feature: Build auth", id: "g1" },
+      id: null,
+    });
+    await rolex.rpc({
+      jsonrpc: "2.0",
+      method: "role.plan",
+      params: { goal: "g1", plan: "Feature: JWT plan", id: "p1" },
+      id: null,
+    });
+    await rolex.rpc({
+      jsonrpc: "2.0",
+      method: "role.todo",
+      params: { plan: "p1", task: "Feature: Login endpoint", id: "t1" },
+      id: null,
+    });
     // Get goal state via focus (returns projected state)
-    const r = await rolex.direct<CommandResult>("!role.focus", { goal: "g1" }, { raw: true });
+    const response = await rolex.rpc<CommandResult>({
+      jsonrpc: "2.0",
+      method: "role.focus",
+      params: { goal: "g1" },
+      id: null,
+    });
+    const r = response.result!;
     const md = renderState(r.state);
     expect(md).toContain("# [goal]");
     expect(md).toContain("## [plan]");
@@ -207,17 +248,21 @@ describe("render", () => {
 
 describe("gherkin validation", () => {
   test("rejects non-Gherkin input", async () => {
-    const rolex = await setup();
-    expect(
-      rolex.direct("!society.born", { content: "not gherkin", id: "test-bad" })
-    ).rejects.toThrow("Invalid Gherkin");
+    const rolex = setup();
+    const response = await rolex.rpc({
+      jsonrpc: "2.0",
+      method: "society.born",
+      params: { content: "not gherkin", id: "test-bad" },
+      id: null,
+    });
+    expect(response.error).toBeDefined();
+    expect(response.error!.message).toContain("Invalid Gherkin");
   });
 
   test("accepts valid Gherkin", async () => {
-    const rolex = await setup();
-    await expect(
-      rolex.direct("!society.born", { content: "Feature: Sean", id: "test-good" })
-    ).resolves.toBeDefined();
+    const rolex = setup();
+    const result = await rolex.society.born({ content: "Feature: Sean", id: "test-good" });
+    expect(result).toBeDefined();
   });
 });
 
@@ -232,34 +277,38 @@ describe("persistent mode", () => {
     if (existsSync(testDir)) rmSync(testDir, { recursive: true });
   });
 
-  async function persistentSetup() {
-    return await createRoleX(localPlatform({ dataDir: testDir, resourceDir: null }));
+  function persistentSetup() {
+    return createRoleX({ platform: localPlatform({ dataDir: testDir, resourceDir: null }) });
   }
 
   test("born → retire round-trip", async () => {
-    const rolex = await persistentSetup();
-    await rolex.direct("!society.born", { content: "Feature: Test", id: "test-ind" });
-    const r = await rolex.direct<CommandResult>(
-      "!society.retire",
-      { individual: "test-ind" },
-      { raw: true }
-    );
+    const rolex = persistentSetup();
+    await rolex.society.born({ content: "Feature: Test", id: "test-ind" });
+    const response = await rolex.rpc<CommandResult>({
+      jsonrpc: "2.0",
+      method: "society.retire",
+      params: { individual: "test-ind" },
+      id: null,
+    });
+    const r = response.result!;
     expect(r.state.name).toBe("individual");
     expect(r.process).toBe("retire");
   });
 
   test("archived entity survives cross-instance reload", async () => {
-    const rolex1 = await persistentSetup();
-    await rolex1.direct("!society.born", { content: "Feature: Test", id: "test-ind" });
-    await rolex1.direct("!society.retire", { individual: "test-ind" });
+    const rolex1 = persistentSetup();
+    await rolex1.society.born({ content: "Feature: Test", id: "test-ind" });
+    await rolex1.society.retire({ individual: "test-ind" });
 
-    const rolex2 = await persistentSetup();
+    const rolex2 = persistentSetup();
     // rehire should find the archived entity
-    const r = await rolex2.direct<CommandResult>(
-      "!society.rehire",
-      { individual: "test-ind" },
-      { raw: true }
-    );
+    const response = await rolex2.rpc<CommandResult>({
+      jsonrpc: "2.0",
+      method: "society.rehire",
+      params: { individual: "test-ind" },
+      id: null,
+    });
+    const r = response.result!;
     expect(r.state.name).toBe("individual");
   });
 });

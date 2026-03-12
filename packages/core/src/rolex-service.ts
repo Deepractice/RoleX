@@ -68,6 +68,11 @@ export class RoleXService implements RoleX {
   /** Cached Role instances — one per individual. */
   private readonly roles = new Map<string, Role>();
 
+  /** Expose commands for the RPC handler. */
+  get commandMap(): Commands {
+    return this.commands;
+  }
+
   /** Permission registry — maps relation names to permissions. */
   private readonly permissions = new PermissionRegistry()
     .register("crowned", sovereignPermissions)
@@ -75,11 +80,15 @@ export class RoleXService implements RoleX {
     .register("maintained-by", projectMaintainerPermissions)
     .register("own", productOwnerPermissions);
 
-  private constructor(platform: Platform, renderer: Renderer) {
+  private constructor(
+    platform: Platform,
+    renderer: Renderer,
+    prototypes?: readonly PrototypeData[]
+  ) {
     this.repo = platform.repository;
     this.rt = this.repo.runtime;
     this.initializer = platform.initializer;
-    this.prototypes = platform.prototypes ?? [];
+    this.prototypes = prototypes ?? [];
     this.renderer = renderer;
 
     if (platform.resourcexProvider) {
@@ -96,8 +105,12 @@ export class RoleXService implements RoleX {
     }
   }
 
-  static async create(platform: Platform, renderer: Renderer): Promise<RoleXService> {
-    const service = new RoleXService(platform, renderer);
+  static async create(
+    platform: Platform,
+    renderer: Renderer,
+    prototypes?: readonly PrototypeData[]
+  ): Promise<RoleXService> {
+    const service = new RoleXService(platform, renderer, prototypes);
     await service.init();
     return service;
   }

@@ -8,15 +8,15 @@
 import { beforeEach, describe, expect, it } from "bun:test";
 import type { CommandResult } from "@rolexjs/core";
 import { localPlatform } from "@rolexjs/local-platform";
-import { createRoleX, type RoleX } from "rolexjs";
+import { createRoleX, type RoleXBuilder } from "rolexjs";
 import { render } from "../../../packages/rolexjs/src/render.js";
 import { McpState } from "../src/state.js";
 
-let rolex: RoleX;
+let rolex: RoleXBuilder;
 let state: McpState;
 
-beforeEach(async () => {
-  rolex = await createRoleX(localPlatform({ dataDir: null }));
+beforeEach(() => {
+  rolex = createRoleX({ platform: localPlatform({ dataDir: null }) });
   state = new McpState();
 });
 
@@ -30,8 +30,8 @@ describe("requireRole", () => {
   });
 
   it("returns role after activation", async () => {
-    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
-    const role = await rolex.activate("sean");
+    await rolex.society.born({ content: "Feature: Sean", id: "sean" });
+    const role = await rolex.role.activate({ individual: "sean" });
     state.role = role;
     expect(state.requireRole()).toBe(role);
     expect(state.requireRole().id).toBe("sean");
@@ -44,14 +44,11 @@ describe("requireRole", () => {
 
 describe("render", () => {
   it("includes status + hint + projection", async () => {
-    const result = await rolex.direct<CommandResult>(
-      "!society.born",
-      {
-        content: "Feature: Sean",
-        id: "sean",
-      },
-      { raw: true }
-    );
+    const result = await rolex.society.born<CommandResult>({
+      content: "Feature: Sean",
+      id: "sean",
+      raw: true,
+    });
     const output = render({
       process: "born",
       name: "Sean",
@@ -67,14 +64,11 @@ describe("render", () => {
   });
 
   it("includes cognitive hint when provided", async () => {
-    const result = await rolex.direct<CommandResult>(
-      "!society.born",
-      {
-        content: "Feature: Sean",
-        id: "sean",
-      },
-      { raw: true }
-    );
+    const result = await rolex.society.born<CommandResult>({
+      content: "Feature: Sean",
+      id: "sean",
+      raw: true,
+    });
     const output = render({
       process: "born",
       name: "Sean",
@@ -86,8 +80,8 @@ describe("render", () => {
   });
 
   it("Role methods return rendered 3-layer output", async () => {
-    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
-    const role = await rolex.activate("sean");
+    await rolex.society.born({ content: "Feature: Sean", id: "sean" });
+    const role = await rolex.role.activate({ individual: "sean" });
 
     const output = await role.want("Feature: Test", "test-goal");
     // Layer 1: Status
@@ -105,8 +99,8 @@ describe("render", () => {
 
 describe("full execution flow", () => {
   it("completes want → plan → todo → finish → reflect → realize through Role API", async () => {
-    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
-    const role = await rolex.activate("sean");
+    await rolex.society.born({ content: "Feature: Sean", id: "sean" });
+    const role = await rolex.role.activate({ individual: "sean" });
     state.role = role;
 
     // Want
@@ -158,8 +152,8 @@ describe("full execution flow", () => {
 
 describe("focus", () => {
   it("switches focused goal via Role", async () => {
-    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
-    const role = await rolex.activate("sean");
+    await rolex.society.born({ content: "Feature: Sean", id: "sean" });
+    const role = await rolex.role.activate({ individual: "sean" });
     state.role = role;
 
     await role.want("Feature: Goal A", "goal-a");
@@ -180,8 +174,8 @@ describe("focus", () => {
 
 describe("selective cognition", () => {
   it("tracks multiple encounters, reflect consumes selectively", async () => {
-    await rolex.direct("!society.born", { content: "Feature: Sean", id: "sean" });
-    const role = await rolex.activate("sean");
+    await rolex.society.born({ content: "Feature: Sean", id: "sean" });
+    const role = await rolex.role.activate({ individual: "sean" });
     state.role = role;
 
     await role.want("Feature: Auth", "auth");

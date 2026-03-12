@@ -34,7 +34,7 @@ In a society, people have identities, join organizations, hold positions, accumu
 
 Everything is expressed in **Gherkin** `.feature` format — human-readable, structured, versionable.
 
-## Quick Start
+## Quick Start — MCP
 
 Install the MCP server, connect it to your AI client, and say **"activate nuwa"** — she will guide you from there.
 
@@ -158,161 +158,117 @@ Add to Zed's `settings.json`:
 
 </details>
 
+## Quick Start — API
+
+For building your own agent runtime, CLI, or platform integration:
+
+```bash
+npm install rolexjs @rolexjs/local-platform
+```
+
+```typescript
+import { createRoleX } from "rolexjs";
+import { localPlatform } from "@rolexjs/local-platform";
+
+// Create — synchronous, initialization is lazy
+const rx = createRoleX({ platform: localPlatform() });
+
+// Activate a role
+const role = await rx.role.activate({ individual: "nuwa" });
+
+// Typed namespace API — 9 namespaces
+await rx.society.born({ id: "alice", content: "Feature: Alice\n  A frontend engineer." });
+await rx.org.hire({ org: "deepractice", individual: "alice" });
+await rx.position.appoint({ position: "frontend-lead", individual: "alice" });
+
+// Role operations — goals, plans, tasks, cognition
+await role.want("Feature: Ship v2\n  Scenario: Launch\n    Given all tests pass", "ship-v2");
+await role.plan("Feature: Phase 1\n  Scenario: Setup CI", "setup-ci");
+await role.todo("Feature: Add lint step\n  Scenario: Biome runs on PR", "add-lint");
+await role.finish("add-lint");
+
+// JSON-RPC 2.0 — universal dispatch
+const response = await rx.rpc({
+  jsonrpc: "2.0",
+  method: "society.born",
+  params: { id: "bob", content: "Feature: Bob" },
+  id: 1,
+});
+
+// Protocol — tool schemas + world instructions for any channel adapter
+const { tools, instructions } = rx.protocol;
+// tools[0] = { name: "activate", description: "...", params: { ... } }
+```
+
+### Builder API
+
+`createRoleX()` returns a `RoleXBuilder` — a synchronous builder with lazy initialization. The first async call triggers init (genesis prototype, world bootstrap).
+
+**9 typed namespaces:**
+
+| Namespace | Purpose |
+|-----------|---------|
+| `rx.society` | Individuals & organizations — born, retire, teach, train, found, dissolve |
+| `rx.org` | Membership & governance — charter, hire, fire, establish, abolish |
+| `rx.position` | Roles & duties — charge, require, appoint, dismiss |
+| `rx.project` | Project management — scope, milestone, deliver, wiki |
+| `rx.product` | Product lifecycle — strategy, spec, release, channel |
+| `rx.census` | World queries — list all entities |
+| `rx.issue` | Issue tracking — publish, comment, assign, label |
+| `rx.resource` | Resource management — add, push, pull, search |
+| `rx.role` | Role operations — activate, inspect, survey |
+
+**Universal dispatch:**
+
+```typescript
+// JSON-RPC 2.0 — same format works locally or over the wire
+await rx.rpc({ jsonrpc: "2.0", method: "org.hire", params: { org: "acme", individual: "alice" }, id: 1 });
+```
+
+**Protocol — self-describing tool schemas:**
+
+```typescript
+// Build any channel adapter (MCP, REST, CLI, A2A) from rx.protocol
+for (const tool of rx.protocol.tools) {
+  register(tool.name, tool.description, tool.params);
+}
+```
+
 ## How It Works
 
-**You don't need to learn any commands.** Just install the MCP server and talk to your AI naturally — "create an organization", "set a goal", "what have I learned?". The AI knows which tools to call.
+### The Doing Cycle
 
-Everything below is what happens **under the hood**. RoleX provides MCP tools that the AI calls autonomously. Understanding the mechanism helps you get more out of it, but operating it is the AI's job, not yours.
-
-The tools fall into two categories:
-
-- **Direct tools** — the AI calls them by name (e.g. `activate`, `want`, `plan`). These are daily operations.
-- **The `use` tool** — a unified dispatch for world management, written as `!namespace.method` (e.g. `!org.found`, `!census.list`). This is the admin layer.
-
-The following sections walk through each system in the order an agent encounters them.
-
----
-
-### 1. The World — Society Structure
-
-Before an agent can act, a world must exist. RoleX models a **society** with four entity types:
-
-```
-Society
-├── Individual      # An agent with identity, goals, and knowledge
-├── Organization    # Groups individuals via membership
-├── Position        # Defines roles with duties and required skills
-└── Past            # Archive for retired/dissolved entities
-```
-
-All world management goes through the `use` tool:
-
-**Individual** — agent lifecycle
-
-| Command | What it does |
-|---------|-------------|
-| `!individual.born` | Create an individual |
-| `!individual.teach` | Inject a principle (knowledge) |
-| `!individual.train` | Inject a procedure (skill) |
-| `!individual.retire` | Archive an individual |
-
-**Organization** — group structure
-
-| Command | What it does |
-|---------|-------------|
-| `!org.found` | Create an organization |
-| `!org.charter` | Define mission and governance |
-| `!org.hire` / `!org.fire` | Add or remove members |
-| `!org.dissolve` | Archive an organization |
-
-**Position** — roles and responsibilities
-
-| Command | What it does |
-|---------|-------------|
-| `!position.establish` | Create a position |
-| `!position.charge` | Assign a duty |
-| `!position.require` | Declare a required skill — auto-trained on appointment |
-| `!position.appoint` / `!position.dismiss` | Assign or remove an individual |
-| `!position.abolish` | Archive a position |
-
-**Census** — query the world
-
-| Command | What it does |
-|---------|-------------|
-| `!census.list` | List all individuals, organizations, positions |
-| `!census.list { type: "..." }` | Filter by type: `individual`, `organization`, `position`, `past` |
-
----
-
-### 2. Execution — The Doing Cycle
-
-Once activated, an agent pursues goals through a structured lifecycle. These are **direct tools** the agent calls by name:
+An activated agent pursues goals through a structured lifecycle:
 
 ```
 activate → want → plan → todo → finish → complete / abandon
 ```
 
-| Tool | What it does |
-|------|-------------|
-| `activate` | Enter a role — load identity, goals, knowledge |
-| `focus` | View or switch the current goal |
-| `want` | Declare a goal with success criteria |
-| `plan` | Break a goal into phases (supports sequential and fallback strategies) |
-| `todo` | Create a concrete task under a plan |
-| `finish` | Mark a task done, optionally record what happened |
-| `complete` | Mark a plan done — strategy succeeded |
-| `abandon` | Drop a plan — strategy failed, but learning is captured |
+Goals are declared with `want`, broken into plans with `plan`, and executed as tasks with `todo`. Finishing a task creates an **encounter** — a raw record of what happened.
 
----
+### The Learning Cycle
 
-### 3. Cognition — The Learning Cycle
-
-Execution produces **encounters** — raw records of what happened. The cognition system transforms these into structured knowledge. These are also **direct tools**:
+Encounters feed the cognition system:
 
 ```
 encounter → reflect → experience → realize / master → principle / procedure
 ```
 
-| Tool | What it does |
-|------|-------------|
-| `reflect` | Digest encounters into experience — pattern recognition |
-| `realize` | Distill experience into a principle — a transferable truth |
-| `master` | Distill experience into a procedure — a reusable skill |
-| `forget` | Remove outdated knowledge |
+`reflect` digests encounters into experience. `realize` distills experience into transferable **principles**. `master` codifies experience into reusable **procedures** (skills). This is how agents grow — knowledge from one project applies to the next.
 
-This is how an agent grows. A principle learned from one project applies to the next. A procedure mastered once can be reused forever.
+### Skills — Progressive Disclosure
 
----
+Agents can't load every skill into context at once. RoleX uses three layers:
 
-### 4. Skills — Progressive Disclosure
-
-An agent can't load every skill into context at once. RoleX uses a three-layer progressive disclosure model:
-
-| Layer | Loaded when | What it contains |
-|-------|-------------|-----------------|
+| Layer | Loaded when | Contains |
+|-------|-------------|----------|
 | **Procedure** | Always (at activate) | Metadata — what the skill is, when to use it |
-| **Skill** | On demand via `skill(locator)` | Full instructions — step-by-step how to do it |
+| **Skill** | On demand via `skill(locator)` | Full instructions — how to do it |
 | **Resource** | On demand via `use(locator)` | External content — templates, data, tools |
 
-The `skill` and `use` tools are **direct tools** for loading content. When `use` receives a locator *without* the `!` prefix, it loads a resource from [ResourceX](https://github.com/Deepractice/ResourceX) instead of dispatching a command.
+### Gherkin — The Universal Language
 
----
-
-### 5. Resources — Agent Capital
-
-Resources are the **means of production** for AI agents — skills, prototypes, and knowledge packages that can be accumulated, shared, and reused across agents and teams.
-
-Powered by [ResourceX](https://github.com/Deepractice/ResourceX), the resource system covers the full lifecycle through the `use` tool:
-
-**Production** — create and package
-
-| Command | What it does |
-|---------|-------------|
-| `!resource.add` | Register a local resource |
-| `!prototype.summon` | Pull and register a prototype from source |
-| `!prototype.banish` | Unregister a prototype |
-
-**Distribution** — share and consume
-
-| Command | What it does |
-|---------|-------------|
-| `!resource.push` | Publish a resource to a registry |
-| `!resource.pull` | Download a resource from a registry |
-| `!resource.search` | Search available resources |
-
-**Inspection**
-
-| Command | What it does |
-|---------|-------------|
-| `!resource.info` | View resource metadata |
-
-This is how agent knowledge scales beyond a single individual — skills authored once can be distributed to any agent through prototypes and registries.
-
----
-
-## Gherkin — The Universal Language
-
-Everything in RoleX is expressed as Gherkin Features:
+Everything in RoleX is expressed as Gherkin Features — goals, plans, tasks, principles, procedures, encounters, experiences. Human-readable, structured, composable.
 
 ```gherkin
 Feature: Sean
@@ -323,34 +279,21 @@ Feature: Sean
     And I specialize in systems design
 ```
 
-Goals, plans, tasks, principles, procedures, encounters, experiences — all Gherkin. This means:
-
-- **Human-readable** — anyone can understand an agent's state
-- **Structured** — parseable, diffable, versionable
-- **Composable** — Features compose naturally into larger systems
-
 ## Storage
 
-RoleX persists everything in SQLite at `~/.deepractice/rolex/`:
-
-```
-~/.deepractice/rolex/
-├── rolex.db          # SQLite — single source of truth
-├── prototype.json    # Prototype registry
-└── context/          # Role context (focused goal/plan per role)
-```
+RoleX persists everything in a single SQLite database at `~/.deepractice/rolex/rolex.db`.
 
 ## Packages
 
 | Package | Description |
 |---------|-------------|
-| `rolexjs` | Core API — Rolex class, namespaces, rendering |
+| `rolexjs` | Main entry — builder API, namespaces, rendering, genesis built-in |
 | `@rolexjs/mcp-server` | MCP server for AI clients |
-| `@rolexjs/core` | Core types, structures, platform interface |
-| `@rolexjs/system` | Runtime interface, state merging, prototype |
+| `@rolexjs/core` | Core types, commands, JSON-RPC, protocol schema |
+| `@rolexjs/genesis` | Foundational world prototype (Nuwa sovereign) |
+| `@rolexjs/system` | Runtime interface, state merging |
 | `@rolexjs/parser` | Gherkin parser |
-| `@rolexjs/local-platform` | SQLite-backed runtime implementation |
-| `@rolexjs/cli` | Command-line interface |
+| `@rolexjs/local-platform` | SQLite-backed platform implementation |
 
 ---
 

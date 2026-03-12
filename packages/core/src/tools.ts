@@ -2,11 +2,10 @@
  * RoleX tool definitions — the single source of truth for all tool schemas.
  *
  * Channel-agnostic: MCP, CLI, REST, A2A each convert to their own format.
- * Description for each tool comes from descriptions/processes via detail().
- * This file only defines the parameter schema.
+ * Each ToolDef is self-contained: name + description + params.
  */
 
-import { world } from "./descriptions/index.js";
+import { processes, world } from "./descriptions/index.js";
 import type { ToolDef } from "./schema.js";
 
 /**
@@ -16,7 +15,7 @@ import type { ToolDef } from "./schema.js";
  * to know what tools exist and what instructions to present.
  */
 export interface Protocol {
-  /** All tool definitions with parameter schemas. */
+  /** All tool definitions — self-contained with description + parameter schemas. */
   tools: ToolDef[];
   /** World-level instructions — the cognitive framework for AI roles. */
   instructions: string;
@@ -24,22 +23,28 @@ export interface Protocol {
 
 const worldInstructions: string = Object.values(world).join("\n\n");
 
+/** Shorthand — look up process description, default to empty string. */
+const d = (name: string): string => processes[name] ?? "";
+
 const tools: ToolDef[] = [
   // --- Top-level perception ---
   {
     name: "activate",
+    description: d("activate"),
     params: {
       roleId: { type: "string", required: true, description: "Role name to activate" },
     },
   },
   {
     name: "inspect",
+    description: d("inspect"),
     params: {
       id: { type: "string", required: true, description: "Node id to inspect (any node type)" },
     },
   },
   {
     name: "survey",
+    description: d("survey"),
     params: {
       type: {
         type: "string",
@@ -50,6 +55,7 @@ const tools: ToolDef[] = [
   },
   {
     name: "focus",
+    description: d("focus"),
     params: {
       id: {
         type: "string",
@@ -62,6 +68,7 @@ const tools: ToolDef[] = [
   // --- Execution ---
   {
     name: "want",
+    description: d("want"),
     params: {
       id: { type: "string", required: true, description: "Goal id (used for focus/reference)" },
       goal: {
@@ -73,6 +80,7 @@ const tools: ToolDef[] = [
   },
   {
     name: "plan",
+    description: d("plan"),
     params: {
       id: {
         type: "string",
@@ -98,6 +106,7 @@ const tools: ToolDef[] = [
   },
   {
     name: "todo",
+    description: d("todo"),
     params: {
       id: { type: "string", required: true, description: "Task id (used for finish/reference)" },
       task: {
@@ -109,6 +118,7 @@ const tools: ToolDef[] = [
   },
   {
     name: "finish",
+    description: d("finish"),
     params: {
       id: { type: "string", required: true, description: "Task id to finish" },
       encounter: {
@@ -120,6 +130,7 @@ const tools: ToolDef[] = [
   },
   {
     name: "complete",
+    description: d("complete"),
     params: {
       id: {
         type: "string",
@@ -135,6 +146,7 @@ const tools: ToolDef[] = [
   },
   {
     name: "abandon",
+    description: d("abandon"),
     params: {
       id: {
         type: "string",
@@ -152,6 +164,7 @@ const tools: ToolDef[] = [
   // --- Cognition ---
   {
     name: "reflect",
+    description: d("reflect"),
     params: {
       ids: {
         type: "string[]",
@@ -172,6 +185,7 @@ const tools: ToolDef[] = [
   },
   {
     name: "realize",
+    description: d("realize"),
     params: {
       ids: {
         type: "string[]",
@@ -192,6 +206,7 @@ const tools: ToolDef[] = [
   },
   {
     name: "master",
+    description: d("master"),
     params: {
       ids: {
         type: "string[]",
@@ -214,6 +229,7 @@ const tools: ToolDef[] = [
   // --- Knowledge ---
   {
     name: "forget",
+    description: d("forget"),
     params: {
       id: {
         type: "string",
@@ -224,6 +240,7 @@ const tools: ToolDef[] = [
   },
   {
     name: "skill",
+    description: d("skill"),
     params: {
       locator: {
         type: "string",
@@ -236,6 +253,7 @@ const tools: ToolDef[] = [
   // --- Use / Direct ---
   {
     name: "use",
+    description: d("use"),
     params: {
       command: {
         type: "string",
@@ -252,6 +270,7 @@ const tools: ToolDef[] = [
   },
   {
     name: "direct",
+    description: d("direct"),
     params: {
       command: {
         type: "string",
