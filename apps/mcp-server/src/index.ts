@@ -89,11 +89,11 @@ type ToolExecutor = (params: Record<string, unknown>) => Promise<string>;
 
 const executors: Record<string, ToolExecutor> = {
   async inspect({ id }) {
-    return await rolex.inspect({ id: id as string });
+    return (await rolex.inspect({ id: id as string })) as string;
   },
 
   async survey({ type }) {
-    return await rolex.survey(type ? { type: type as string } : undefined);
+    return (await rolex.survey(type ? { type: type as string } : undefined)) as string;
   },
 
   async activate({ roleId }) {

@@ -11,7 +11,7 @@
  *   - Dispatch direct commands
  */
 
-import type { Initializer, Runtime, Structure } from "@rolexjs/system";
+import type { Initializer, Runtime, State, Structure } from "@rolexjs/system";
 import { createIssueX, type IssueX } from "issuexjs";
 import type { ResourceX } from "resourcexjs";
 import { createResourceX, setProvider } from "resourcexjs";
@@ -38,8 +38,8 @@ import * as C from "./structures.js";
 
 export interface RoleX {
   activate(individual: string): Promise<Role>;
-  inspect(id: string): Promise<string>;
-  survey(type?: string): Promise<string>;
+  inspect(id: string, options?: { raw?: boolean }): Promise<string | State>;
+  survey(type?: string, options?: { raw?: boolean }): Promise<string | readonly State[]>;
   direct<T = unknown>(
     locator: string,
     args?: Record<string, unknown>,
@@ -231,10 +231,11 @@ export class RoleXService implements RoleX {
   //  inspect — project any node's subtree
   // ================================================================
 
-  async inspect(id: string): Promise<string> {
+  async inspect(id: string, options?: { raw?: boolean }): Promise<string | State> {
     const node = await this.find(id);
     if (!node) throw new Error(`"${id}" not found.`);
     const state = await this.project(node);
+    if (options?.raw) return state;
     const result: CommandResult = { state, process: "inspect" };
     return this.renderer.render("inspect", result);
   }
@@ -243,7 +244,7 @@ export class RoleXService implements RoleX {
   //  survey — world-level overview
   // ================================================================
 
-  async survey(type?: string): Promise<string> {
+  async survey(type?: string, options?: { raw?: boolean }): Promise<string | readonly State[]> {
     const target = type === "past" ? this.past : this.society;
     const state = await this.project(target);
     const children = state.children ?? [];
@@ -251,6 +252,7 @@ export class RoleXService implements RoleX {
       type === "past"
         ? children
         : children.filter((c) => (type ? c.name === type : c.name !== "past"));
+    if (options?.raw) return filtered;
     const result: CommandResult = { state: { ...state, children: filtered }, process: "list" };
     return this.renderer.render("survey.list", result);
   }

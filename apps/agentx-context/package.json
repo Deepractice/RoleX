@@ -1,0 +1,50 @@
+{
+  "name": "@rolexjs/agentx-context",
+  "version": "0.1.0",
+  "description": "RoleX ContextProvider for AgentX — cognitive context bridge",
+  "keywords": [
+    "rolex",
+    "agentx",
+    "context",
+    "cognition"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Deepractice/RoleX.git",
+    "directory": "apps/agentx-context"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "rolexjs": "workspace:*",
+    "commonxjs": "^0.1.1"
+  },
+  "peerDependencies": {
+    "agentxjs": ">=2.6.0"
+  },
+  "devDependencies": {
+    "agentxjs": "link:agentxjs"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

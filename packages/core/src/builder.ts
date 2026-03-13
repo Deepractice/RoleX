@@ -7,6 +7,7 @@
  *   await rx.society.born({ id: "alice", content: "Feature: Alice" });
  */
 
+import type { State } from "@rolexjs/system";
 import type {
   Caller,
   IndividualNamespace,
@@ -61,9 +62,9 @@ export interface RoleXBuilder {
   readonly resource: ResourceNamespace;
 
   /** Inspect any node's full state — world-level observation. */
-  inspect(params: { id: string }): Promise<string>;
+  inspect(params: { id: string; raw?: boolean }): Promise<string | State>;
   /** Survey the world — list individuals, organizations, positions. */
-  survey(params?: { type?: string }): Promise<string>;
+  survey(params?: { type?: string; raw?: boolean }): Promise<string | readonly State[]>;
 
   /** Tool schemas + world instructions — the unified contract for any channel adapter. */
   readonly protocol: Protocol;
@@ -109,10 +110,14 @@ export function createBuilder(config: BuilderConfig): RoleXBuilder {
               return service.activate(params.individual as string);
             },
             inspect: async (params) => {
-              return service.inspect(params.id as string);
+              return service.inspect(params.id as string, {
+                raw: params.raw as boolean | undefined,
+              });
             },
             survey: async (params) => {
-              return service.survey(params.type as string | undefined);
+              return service.survey(params.type as string | undefined, {
+                raw: params.raw as boolean | undefined,
+              });
             },
           },
         });
@@ -174,11 +179,11 @@ export function createBuilder(config: BuilderConfig): RoleXBuilder {
       return _resource;
     },
 
-    async inspect({ id }: { id: string }) {
-      return call("inspect", { id });
+    async inspect({ id, raw }: { id: string; raw?: boolean }) {
+      return call("inspect", { id, raw });
     },
 
-    async survey(params?: { type?: string }) {
+    async survey(params?: { type?: string; raw?: boolean }) {
       return call("survey", params);
     },
 
