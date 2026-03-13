@@ -42,7 +42,7 @@
     "agentxjs": ">=2.6.0"
   },
   "devDependencies": {
-    "agentxjs": "link:agentxjs"
+    "agentxjs": "^2.8.0"
   },
   "publishConfig": {
     "access": "public"

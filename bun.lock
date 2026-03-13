@@ -35,7 +35,7 @@
         "rolexjs": "workspace:*",
       },
       "devDependencies": {
-        "agentxjs": "link:agentxjs",
+        "agentxjs": "^2.8.0",
       },
       "peerDependencies": {
         "agentxjs": ">=2.6.0",
@@ -133,7 +133,7 @@
     "resourcexjs": "^2.14.0",
   },
   "packages": {
-    "@agentxjs/core": ["@agentxjs/core@2.7.0", "", { "dependencies": { "commonxjs": "^0.1.1", "jsonrpc-lite": "2.2.0", "rolexjs": "1.5.0-dev-20260312103329", "rxjs": "^7.8.2" } }, "sha512-KGheAhPI77LberrTR9qI0sMBbpHh+pGFEgaA/Vx94LzMMWhQIbb5lzQyYi8k+faxaiYEfIA5WrXn076hOEaz0g=="],
+    "@agentxjs/core": ["@agentxjs/core@2.8.0", "", { "dependencies": { "commonxjs": "^0.1.1", "jsonrpc-lite": "2.2.0", "rxjs": "^7.8.2" } }, "sha512-Vnz/ip63ZNbeVHiXJzvE+5MzmmKs5Sau1fnuGvv6hklZP90t4kAd+BI5cF6L+3CWF7Vt/7bG9Iby+9l+9kWAOA=="],
 
     "@anthropic-ai/sandbox-runtime": ["@anthropic-ai/sandbox-runtime@0.0.32", "", { "dependencies": { "@pondwader/socks5-server": "^1.0.10", "@types/lodash-es": "^4.17.12", "commander": "^12.1.0", "lodash-es": "^4.17.22", "shell-quote": "^1.8.3", "zod": "^3.24.1" }, "bin": { "srt": "dist/cli.js" } }, "sha512-+mQDTTxBc72W2xpsRHamruom5Xdo8vswTRlKlEtlhMbYemQgqLdQpULHi33dalTkvbbHmwgugLfQ82IZUzqT4w=="],
 
@@ -499,7 +499,7 @@
 
     "acorn": ["acorn@8.16.0", "", { "bin": { "acorn": "bin/acorn" } }, "sha512-UVJyE9MttOsBQIDKw1skb9nAwQuR5wuGD3+82K6JgJlm/Y+KI92oNsMNGZCYdDsVtRHSak0pcV5Dno5+4jh9sw=="],
 
-    "agentxjs": ["agentxjs@link:agentxjs", {}],
+    "agentxjs": ["agentxjs@2.8.0", "", { "dependencies": { "@agentxjs/core": "^2.8.0", "@deepracticex/id": "^0.2.0", "@deepracticex/logger": "^1.2.0" } }, "sha512-1cel5U+U0DAu69C3Ny7XOiD3Fi2TRz9SgSefmpDsvtsRnEo1tm7a91FyRBlUrpZMO40CPbI4QgiyqZhnUdb0KQ=="],
 
     "ajv": ["ajv@8.18.0", "", { "dependencies": { "fast-deep-equal": "^3.1.3", "fast-uri": "^3.0.1", "json-schema-traverse": "^1.0.0", "require-from-string": "^2.0.2" } }, "sha512-PlXPeEWMXMZ7sPYOHqmDyCJzcfNrUr3fGNKtezX14ykXOEIvyK81d+qydx89KY5O71FKMPaQ2vBfBFI5NHR63A=="],
 
@@ -1175,8 +1175,6 @@
 
     "zod-to-json-schema": ["zod-to-json-schema@3.25.1", "", { "peerDependencies": { "zod": "^3.25 || ^4" } }, "sha512-pM/SU9d3YAggzi6MtR4h7ruuQlqKtad8e9S0fmxcMi+ueAK5Korys/aWcV9LIIHTVbj01NdzxcnXSN+O74ZIVA=="],
 
-    "@agentxjs/core/rolexjs": ["rolexjs@1.5.0-dev-20260312103329", "", { "dependencies": { "@rolexjs/core": "1.5.0-dev-20260312103329", "@rolexjs/genesis": "1.5.0-dev-20260312103329", "@rolexjs/parser": "1.5.0-dev-20260312103329", "@rolexjs/system": "1.5.0-dev-20260312103329", "issuexjs": "^0.2.0", "resourcexjs": "^2.14.0" } }, "sha512-spsiRc27lxlrMFiFDDxjEJFAAMsdKTlpVCIrrDHZovzpxP+CI2ss2pl4yQQGEsLYcbkiam4x3ObvS63oFBlK0A=="],
-
     "@anthropic-ai/sandbox-runtime/commander": ["commander@12.1.0", "", {}, "sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA=="],
 
     "@deepracticex/bdd/@cucumber/gherkin": ["@cucumber/gherkin@31.0.0", "https://registry.npmmirror.com/@cucumber/gherkin/-/gherkin-31.0.0.tgz", { "dependencies": { "@cucumber/messages": ">=19.1.4 <=26" } }, "sha512-wlZfdPif7JpBWJdqvHk1Mkr21L5vl4EfxVUOS4JinWGf3FLRV6IKUekBv5bb5VX79fkDcfDvESzcQ8WQc07Wgw=="],
@@ -1196,8 +1194,6 @@
     "@modelcontextprotocol/sdk/zod": ["zod@4.3.6", "", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
 
     "@resourcexjs/core/zod": ["zod@4.3.6", "", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
-
-    "@rolexjs/agentx-context/agentxjs": ["agentxjs@2.7.0", "", { "dependencies": { "@agentxjs/core": "^2.7.0", "@deepracticex/id": "^0.2.0", "@deepracticex/logger": "^1.2.0" } }, "sha512-v/yBvt6T7QHVD+ASi22z2rFejCpYehl8ajRbWCxV9SVgwHszNWqg9e3mYuu5Op0sFN7POtZJtcMpmsR3IteCEw=="],
 
     "@rolexjs/bdd/@deepracticex/bdd": ["@deepracticex/bdd@0.3.0", "", { "dependencies": { "@cucumber/cucumber-expressions": "^18.0.1", "@cucumber/gherkin": "^31.0.0", "@cucumber/messages": "^27.2.0" } }, "sha512-JNljvjAJIZknE8MBjzLfhPr/WRGe/hz6d+nYaEY7TqPVtWiXRPnN2iT8vP7DqTdDqIOw6B5NiUHh8g+V5Ffy+A=="],
 
@@ -1236,14 +1232,6 @@
     "tsup/esbuild": ["esbuild@0.27.3", "", { "optionalDependencies": { "@esbuild/aix-ppc64": "0.27.3", "@esbuild/android-arm": "0.27.3", "@esbuild/android-arm64": "0.27.3", "@esbuild/android-x64": "0.27.3", "@esbuild/darwin-arm64": "0.27.3", "@esbuild/darwin-x64": "0.27.3", "@esbuild/freebsd-arm64": "0.27.3", "@esbuild/freebsd-x64": "0.27.3", "@esbuild/linux-arm": "0.27.3", "@esbuild/linux-arm64": "0.27.3", "@esbuild/linux-ia32": "0.27.3", "@esbuild/linux-loong64": "0.27.3", "@esbuild/linux-mips64el": "0.27.3", "@esbuild/linux-ppc64": "0.27.3", "@esbuild/linux-riscv64": "0.27.3", "@esbuild/linux-s390x": "0.27.3", "@esbuild/linux-x64": "0.27.3", "@esbuild/netbsd-arm64": "0.27.3", "@esbuild/netbsd-x64": "0.27.3", "@esbuild/openbsd-arm64": "0.27.3", "@esbuild/openbsd-x64": "0.27.3", "@esbuild/openharmony-arm64": "0.27.3", "@esbuild/sunos-x64": "0.27.3", "@esbuild/win32-arm64": "0.27.3", "@esbuild/win32-ia32": "0.27.3", "@esbuild/win32-x64": "0.27.3" }, "bin": { "esbuild": "bin/esbuild" } }, "sha512-8VwMnyGCONIs6cWue2IdpHxHnAjzxnw2Zr7MkVxB2vjmQ2ivqGFb4LEG3SMnv0Gb2F/G/2yA8zUaiL1gywDCCg=="],
 
     "tsup/tinyexec": ["tinyexec@0.3.2", "", {}, "sha512-KQQR9yN7R5+OSwaK0XQoj22pwHoTlgYqmUscPYoknOoWCWfj/5/ABTMRi69FrKU5ffPVh5QcFikpWJI/P1ocHA=="],
-
-    "@agentxjs/core/rolexjs/@rolexjs/core": ["@rolexjs/core@1.5.0-dev-20260312103329", "", { "dependencies": { "@issuexjs/core": "^0.2.0", "@resourcexjs/core": "^2.14.0", "@rolexjs/parser": "1.5.0-dev-20260312103329", "@rolexjs/system": "1.5.0-dev-20260312103329", "issuexjs": "^0.2.0", "resourcexjs": "^2.14.0" } }, "sha512-T6lmP9pSpUH0LKmI/SHTEDa/fd4JGF0VS9HrmaGPsCTyv5dq772vX40qWVx3AYgWIfs4jTAoYYErczYuXx4KZw=="],
-
-    "@agentxjs/core/rolexjs/@rolexjs/genesis": ["@rolexjs/genesis@1.5.0-dev-20260312103329", "", { "dependencies": { "@rolexjs/core": "1.5.0-dev-20260312103329" } }, "sha512-PS3Nf9qWsEYUPSgqru4Bi8Tr+0TrB3Fk1F3Qdz54000UxxmFMW+fJQ1DsNsfHSem/GqDkG/604Bn6LZvjPDEeQ=="],
-
-    "@agentxjs/core/rolexjs/@rolexjs/parser": ["@rolexjs/parser@1.5.0-dev-20260312103329", "", { "dependencies": { "@cucumber/gherkin": "^38.0.0", "@cucumber/messages": "^32.0.0" } }, "sha512-8LaS8HrOa5aeSyuoabxyWk5aIaedfciQYgXEGLkDVDVwe66Lh0z5dlk02oB6DEOU/LU4B+dh4kk1MkeKMXrGKQ=="],
-
-    "@agentxjs/core/rolexjs/@rolexjs/system": ["@rolexjs/system@1.5.0-dev-20260312103329", "", {}, "sha512-nmA5ngzBLpHaJ08Ln7feEdB6UD2xZVc7l8A94+wbuDv6oPj0pS2U+sayoDapJfwijawFO0C7BBn9oVxwh0jIww=="],
 
     "@deepracticex/bdd/@cucumber/gherkin/@cucumber/messages": ["@cucumber/messages@26.0.1", "https://registry.npmmirror.com/@cucumber/messages/-/messages-26.0.1.tgz", { "dependencies": { "@types/uuid": "10.0.0", "class-transformer": "0.5.1", "reflect-metadata": "0.2.2", "uuid": "10.0.0" } }, "sha512-DIxSg+ZGariumO+Lq6bn4kOUIUET83A4umrnWmidjGFl8XxkBieUZtsmNbLYgH/gnsmP07EfxxdTr0hOchV1Sg=="],
 
