@@ -1,7 +1,6 @@
 ---
 "@rolexjs/core": minor
 "rolexjs": minor
-"@rolexjs/mcp-server": minor
 ---
 
 feat: product created via project.produce with bidirectional relation
