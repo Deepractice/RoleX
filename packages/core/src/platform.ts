@@ -12,7 +12,6 @@
  */
 
 import type { IssueXProvider } from "@issuexjs/core";
-import type { CustomExecutor, ResourceXProvider } from "@resourcexjs/core";
 import type { Initializer, Runtime } from "@rolexjs/system";
 
 /** Serializable context data for persistence. */
@@ -90,13 +89,7 @@ export interface Platform {
   /** Unified data access layer — graph, prototypes, contexts. */
   readonly repository: RoleXRepository;
 
-  /** ResourceX provider — injected storage backend for resource management. */
-  readonly resourcexProvider?: ResourceXProvider;
-
-  /** Custom executor for ResourceX resolver execution (e.g., QuickJS Wasm for Workers). */
-  readonly resourcexExecutor?: CustomExecutor;
-
-  /** IssueX provider — injected storage backend for issue tracking. */
+  /** IssueX provider — will be removed when issue is internalized to graph (Phase 2). */
   readonly issuexProvider?: IssueXProvider;
 
   /** Initializer — bootstrap the world on first run. */

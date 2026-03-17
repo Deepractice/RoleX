@@ -197,12 +197,3 @@ export const roleForget = def(
   },
   ["id", "individual"]
 );
-
-export const roleSkill = def(
-  "role",
-  "skill",
-  {
-    locator: { type: "string", required: true, description: "ResourceX locator for the skill" },
-  },
-  ["locator"]
-);

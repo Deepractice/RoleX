@@ -176,7 +176,6 @@ export type {
   PositionNamespace,
   ProductNamespace,
   ProjectNamespace,
-  ResourceNamespace,
   SocietyNamespace,
 } from "./namespaces.js";
 

@@ -13,8 +13,6 @@
 
 import type { Initializer, Runtime, State, Structure } from "@rolexjs/system";
 import { createIssueX, type IssueX } from "issuexjs";
-import type { ResourceX } from "resourcexjs";
-import { createResourceX, setProvider } from "resourcexjs";
 import { applyPrototype } from "./apply.js";
 import type { CommandResult, Commands } from "./commands/index.js";
 import { createCommands } from "./commands/index.js";
@@ -55,7 +53,6 @@ export class RoleXService implements RoleX {
   private rt: Runtime;
   private commands!: Commands;
   private project!: Projection;
-  private resourcex?: ResourceX;
   private issuex?: IssueX;
   private repo: RoleXRepository;
   private readonly initializer?: Initializer;
@@ -90,15 +87,6 @@ export class RoleXService implements RoleX {
     this.initializer = platform.initializer;
     this.prototypes = prototypes ?? [];
     this.renderer = renderer;
-
-    if (platform.resourcexProvider) {
-      setProvider(platform.resourcexProvider);
-      this.resourcex = createResourceX(
-        platform.resourcexExecutor
-          ? { isolator: "custom", executor: platform.resourcexExecutor }
-          : undefined
-      );
-    }
 
     if (platform.issuexProvider) {
       this.issuex = createIssueX({ provider: platform.issuexProvider });
@@ -138,11 +126,8 @@ export class RoleXService implements RoleX {
       },
       find: (id: string) => this.find(id),
       project: this.project,
-      resourcex: this.resourcex,
       issuex: this.issuex,
       prototype: this.repo.prototype,
-      direct: (locator: string, args?: Record<string, unknown>) =>
-        this.direct(locator, args, { raw: true }),
     });
 
     await this.initializer?.bootstrap();
@@ -177,7 +162,6 @@ export class RoleXService implements RoleX {
       commands: this.commands,
       renderer: this.renderer,
       onSave: (snapshot: RoleSnapshot) => this.saveSnapshot(snapshot),
-      direct: <T>(locator: string, args?: Record<string, unknown>) => this.direct<T>(locator, args),
     });
 
     role.hydrate(state);
@@ -267,26 +251,22 @@ export class RoleXService implements RoleX {
     options?: { raw?: boolean }
   ): Promise<T> {
     const shouldRender = !options?.raw;
-    if (locator.startsWith("!")) {
-      const command = locator.slice(1);
-      const fn = this.commands[command];
-      if (!fn) {
-        const hint = directives["identity-ethics"]?.["on-unknown-command"] ?? "";
-        throw new Error(
-          `Unknown command "${locator}".\n\n` +
-            "You may be guessing the command name. " +
-            "Load the relevant skill first with skill(locator) to learn the correct syntax.\n\n" +
-            hint
-        );
-      }
-      const result = await fn(...toArgs(command, args ?? {}));
-      if (shouldRender && isCommandResult(result)) {
-        return this.renderer.render(command, result) as T;
-      }
-      return result as T;
+    const command = locator.startsWith("!") ? locator.slice(1) : locator;
+    const fn = this.commands[command];
+    if (!fn) {
+      const hint = directives["identity-ethics"]?.["on-unknown-command"] ?? "";
+      throw new Error(
+        `Unknown command "${locator}".\n\n` +
+          "You may be guessing the command name. " +
+          "Load the relevant skill first with skill(locator) to learn the correct syntax.\n\n" +
+          hint
+      );
     }
-    if (!this.resourcex) throw new Error("ResourceX is not available.");
-    return this.resourcex.ingest<T>(locator, args);
+    const result = await fn(...toArgs(command, args ?? {}));
+    if (shouldRender && isCommandResult(result)) {
+      return this.renderer.render(command, result) as T;
+    }
+    return result as T;
   }
 
   // ================================================================

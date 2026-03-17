@@ -16,7 +16,6 @@ import type {
   PositionNamespace,
   ProductNamespace,
   ProjectNamespace,
-  ResourceNamespace,
   SocietyNamespace,
 } from "./namespaces.js";
 import {
@@ -26,7 +25,6 @@ import {
   createPositionNamespace,
   createProductNamespace,
   createProjectNamespace,
-  createResourceNamespace,
   createSocietyNamespace,
 } from "./namespaces.js";
 import type { Platform, PrototypeData } from "./platform.js";
@@ -58,8 +56,6 @@ export interface RoleXBuilder {
   readonly product: ProductNamespace;
   /** Issue tracking integration. */
   readonly issue: IssueNamespace;
-  /** Resource management integration. */
-  readonly resource: ResourceNamespace;
 
   /** Inspect any node's full state — world-level observation. */
   inspect(params: { id: string; raw?: boolean }): Promise<string | State>;
@@ -151,8 +147,6 @@ export function createBuilder(config: BuilderConfig): RoleXBuilder {
   const _project = createProjectNamespace(call);
   const _product = createProductNamespace(call);
   const _issue = createIssueNamespace(call);
-  const _resource = createResourceNamespace(call);
-
   return {
     get society() {
       return _society;
@@ -174,9 +168,6 @@ export function createBuilder(config: BuilderConfig): RoleXBuilder {
     },
     get issue() {
       return _issue;
-    },
-    get resource() {
-      return _resource;
     },
 
     async inspect({ id, raw }: { id: string; raw?: boolean }) {

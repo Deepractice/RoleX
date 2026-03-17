@@ -7,7 +7,6 @@
  */
 
 import type { Comment, Issue } from "issuexjs";
-import type { Resource, RXM } from "resourcexjs";
 import type { CommandResult } from "./commands/types.js";
 import type { Role } from "./role-model.js";
 
@@ -235,33 +234,5 @@ export function createIssueNamespace(call: Caller): IssueNamespace {
     comments: (p) => call("issue.comments", p),
     label: (p) => call("issue.label", p),
     unlabel: (p) => call("issue.unlabel", p),
-  };
-}
-
-// ================================================================
-//  Resource
-// ================================================================
-
-export interface ResourceNamespace {
-  add(params: { path: string }): Promise<Resource>;
-  search(params?: { query?: string }): Promise<string[]>;
-  has(params: { locator: string }): Promise<boolean>;
-  info(params: { locator: string }): Promise<Resource>;
-  remove(params: { locator: string }): Promise<undefined>;
-  push(params: { locator: string; registry?: string }): Promise<RXM>;
-  pull(params: { locator: string; registry?: string }): Promise<undefined>;
-  clearCache(params?: { registry?: string }): Promise<undefined>;
-}
-
-export function createResourceNamespace(call: Caller): ResourceNamespace {
-  return {
-    add: (p) => call("resource.add", p),
-    search: (p) => call("resource.search", p),
-    has: (p) => call("resource.has", p),
-    info: (p) => call("resource.info", p),
-    remove: (p) => call("resource.remove", p),
-    push: (p) => call("resource.push", p),
-    pull: (p) => call("resource.pull", p),
-    clearCache: (p) => call("resource.clearCache", p),
   };
 }

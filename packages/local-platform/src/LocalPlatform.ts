@@ -13,7 +13,6 @@ import { join } from "node:path";
 import { drizzle } from "@deepracticex/drizzle";
 import { openDatabase } from "@deepracticex/sqlite";
 import { NodeProvider as IssueXNodeProvider } from "@issuexjs/node";
-import { NodeProvider } from "@resourcexjs/node-provider";
 import type { Platform } from "@rolexjs/core";
 import type { Initializer } from "@rolexjs/system";
 import { SqliteRepository } from "./SqliteRepository.js";
@@ -23,8 +22,6 @@ import { SqliteRepository } from "./SqliteRepository.js";
 export interface LocalPlatformConfig {
   /** Directory for persistent storage. Defaults to ~/.deepractice/rolex. Set to null for in-memory only. */
   dataDir?: string | null;
-  /** Directory for ResourceX storage. Defaults to ~/.deepractice/resourcex. Set to null to disable. */
-  resourceDir?: string | null;
 }
 
 // ===== Factory =====
@@ -56,11 +53,7 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
 
   const repository = new SqliteRepository(db);
 
-  // ===== ResourceX Provider =====
-
-  const resourcexProvider = config.resourceDir !== null ? new NodeProvider() : undefined;
-
-  // ===== IssueX Provider =====
+  // ===== IssueX Provider (will be removed in Phase 2 when issue is internalized) =====
 
   const issuexProvider = new IssueXNodeProvider({
     db: {
@@ -84,7 +77,6 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
 
   return {
     repository,
-    resourcexProvider,
     issuexProvider,
     initializer,
   };

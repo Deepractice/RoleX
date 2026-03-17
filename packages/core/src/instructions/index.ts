@@ -56,16 +56,6 @@ import {
 } from "./project.js";
 
 import {
-  resourceAdd,
-  resourceClearCache,
-  resourceHas,
-  resourceInfo,
-  resourcePull,
-  resourcePush,
-  resourceRemove,
-  resourceSearch,
-} from "./resource.js";
-import {
   roleAbandon,
   roleActivate,
   roleComplete,
@@ -76,7 +66,6 @@ import {
   rolePlan,
   roleRealize,
   roleReflect,
-  roleSkill,
   roleTodo,
   roleWant,
 } from "./role.js";
@@ -151,7 +140,6 @@ export const instructions: Record<string, InstructionDef> = {
   "role.realize": roleRealize,
   "role.master": roleMaster,
   "role.forget": roleForget,
-  "role.skill": roleSkill,
 
   // org
   "org.charter": orgCharter,
@@ -200,16 +188,6 @@ export const instructions: Record<string, InstructionDef> = {
 
   // prototype
   "prototype.evict": prototypeEvict,
-
-  // resource
-  "resource.add": resourceAdd,
-  "resource.search": resourceSearch,
-  "resource.has": resourceHas,
-  "resource.info": resourceInfo,
-  "resource.remove": resourceRemove,
-  "resource.push": resourcePush,
-  "resource.pull": resourcePull,
-  "resource.clearCache": resourceClearCache,
 
   // issue
   "issue.publish": issuePublish,

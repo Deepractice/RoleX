@@ -159,13 +159,6 @@ export class RolexContext implements Context {
         }
         return response.result;
       }
-      case "use": {
-        if (!this.role) {
-          throw new Error("No role activated. Call activate first.");
-        }
-        const command = args.command as string;
-        return this.role.use(command, args.args as Record<string, unknown> | undefined);
-      }
     }
 
     // Role-level tools — dispatch via instruction schema

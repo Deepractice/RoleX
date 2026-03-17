@@ -40,10 +40,6 @@ export interface RoleDeps {
   commands: Commands;
   renderer: Renderer;
   onSave(snapshot: RoleSnapshot): void | Promise<void>;
-  /** Direct execution — for `use` method. Provided by RoleXService. */
-  direct?<T>(locator: string, args?: Record<string, unknown>): Promise<T>;
-  /** Post-process `use` results (e.g., issue rendering). Provided by upper layer. */
-  transformUseResult?<T>(locator: string, result: T): Promise<T>;
 }
 
 // ================================================================
@@ -359,31 +355,6 @@ export class Role {
     this.experienceIds.delete(nodeId);
     await this.save();
     return this.fmt("role.forget", result);
-  }
-
-  // ================================================================
-  //  Skills
-  // ================================================================
-
-  /** Skill: load full skill content by locator. */
-  async skill(locator: string): Promise<string> {
-    return await this.deps.commands["role.skill"](locator);
-  }
-
-  // ================================================================
-  //  Use — subjective execution
-  // ================================================================
-
-  /** Use: subjective execution — `!ns.method` or ResourceX locator. */
-  async use<T = unknown>(locator: string, args?: Record<string, unknown>): Promise<T> {
-    if (!this.deps.direct) {
-      throw new Error("Direct execution is not available on this Role instance.");
-    }
-    const result = await this.deps.direct<T>(locator, args);
-    if (this.deps.transformUseResult) {
-      return this.deps.transformUseResult<T>(locator, result);
-    }
-    return result;
   }
 
   // ================================================================

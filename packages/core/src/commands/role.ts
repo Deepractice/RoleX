@@ -7,40 +7,6 @@ import type { Helpers } from "./helpers.js";
 import type { CommandContext, CommandResult } from "./types.js";
 
 // ================================================================
-//  Private helpers (only used by role.skill)
-// ================================================================
-
-function formatRXM(rxm: any): string {
-  const lines: string[] = [`--- RXM: ${rxm.locator} ---`];
-  const def = rxm.definition;
-  if (def) {
-    if (def.author) lines.push(`Author: ${def.author}`);
-    if (def.description) lines.push(`Description: ${def.description}`);
-  }
-  const source = rxm.source;
-  if (source?.files) {
-    lines.push("Files:");
-    lines.push(renderFileTree(source.files, "  "));
-  }
-  lines.push("---");
-  return lines.join("\n");
-}
-
-function renderFileTree(files: Record<string, any>, indent = ""): string {
-  const lines: string[] = [];
-  for (const [name, value] of Object.entries(files)) {
-    if (value && typeof value === "object" && !("size" in value)) {
-      lines.push(`${indent}${name}`);
-      lines.push(renderFileTree(value, `${indent}  `));
-    } else {
-      const size = value?.size ? ` (${value.size} bytes)` : "";
-      lines.push(`${indent}${name}${size}`);
-    }
-  }
-  return lines.filter(Boolean).join("\n");
-}
-
-// ================================================================
 //  Role commands
 // ================================================================
 
@@ -49,7 +15,7 @@ export function roleCommands(
   helpers: Helpers
 ): Record<string, (...args: any[]) => any> {
   const { rt, resolve } = ctx;
-  const { ok, validateGherkin, removeExisting, requireResourceX } = helpers;
+  const { ok, validateGherkin, removeExisting } = helpers;
 
   return {
     // ---- Role: focus ----
@@ -206,20 +172,6 @@ export function roleCommands(
       const node = await resolve(nodeId);
       await rt.remove(node);
       return { state: { ...node, children: [] }, process: "forget" };
-    },
-
-    // ---- Role: skill ----
-
-    async "role.skill"(locator: string): Promise<string> {
-      const rx = requireResourceX();
-      const content = await rx.ingest<string>(locator);
-      const text = typeof content === "string" ? content : JSON.stringify(content, null, 2);
-      try {
-        const rxm = await rx.info(locator);
-        return `${formatRXM(rxm)}\n\n${text}`;
-      } catch {
-        return text;
-      }
     },
   };
 }

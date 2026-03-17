@@ -14,7 +14,6 @@ import { issueCommands } from "./issue.js";
 import { positionCommands } from "./position.js";
 import { productCommands } from "./product.js";
 import { projectCommands } from "./project.js";
-import { resourceCommands } from "./resource.js";
 import { roleCommands } from "./role.js";
 import { societyCommands } from "./society.js";
 import { surveyCommands } from "./survey.js";
@@ -31,7 +30,6 @@ export function createCommands(ctx: CommandContext): Commands {
     ...projectCommands(ctx, helpers),
     ...productCommands(ctx, helpers),
     ...surveyCommands(ctx, helpers),
-    ...resourceCommands(ctx, helpers),
     ...issueCommands(ctx, helpers),
   };
 }

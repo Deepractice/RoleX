@@ -9,7 +9,6 @@
       "@rolexjs/local-platform",
       "@rolexjs/genesis",
       "rolexjs",
-      "@rolexjs/mcp-server",
       "@rolexjs/system",
       "@rolexjs/agentx-context"
     ]

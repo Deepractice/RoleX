@@ -4,7 +4,6 @@
 
 import type { Runtime, State, Structure } from "@rolexjs/system";
 import type { Comment, Issue, IssueX } from "issuexjs";
-import type { Resource, ResourceX, RXM } from "resourcexjs";
 import type { PrototypeRepository } from "../platform.js";
 import type { Projection } from "../projection.js";
 
@@ -24,10 +23,8 @@ export interface CommandContext {
   resolve(id: string): Structure | Promise<Structure>;
   find(id: string): (Structure | null) | Promise<Structure | null>;
   project: Projection;
-  resourcex?: ResourceX;
   issuex?: IssueX;
   prototype?: PrototypeRepository;
-  direct?(locator: string, args?: Record<string, unknown>): Promise<unknown>;
 }
 
 /**
@@ -63,9 +60,6 @@ export interface CommandResultMap {
 
   // ---- Role: knowledge ----
   "role.forget": CommandResult;
-
-  // ---- Role: skill ----
-  "role.skill": string;
 
   // ---- Project ----
   "project.scope": CommandResult;
@@ -127,16 +121,6 @@ export interface CommandResultMap {
   "issue.comments": Comment[];
   "issue.label": Issue | null;
   "issue.unlabel": Issue | null;
-
-  // ---- Resource ----
-  "resource.add": Resource;
-  "resource.search": string[];
-  "resource.has": boolean;
-  "resource.info": Resource;
-  "resource.remove": undefined;
-  "resource.push": RXM;
-  "resource.pull": undefined;
-  "resource.clearCache": undefined;
 }
 
 export type Commands = Record<string, (...args: any[]) => any>;

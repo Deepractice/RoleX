@@ -238,36 +238,7 @@ const tools: ToolDef[] = [
       },
     },
   },
-  {
-    name: "skill",
-    description: d("skill"),
-    params: {
-      locator: {
-        type: "string",
-        required: true,
-        description: "ResourceX locator for the skill (e.g. deepractice/role-management)",
-      },
-    },
-  },
-
-  // --- Use / Direct ---
-  {
-    name: "use",
-    description: d("use"),
-    params: {
-      command: {
-        type: "string",
-        required: true,
-        description: "!namespace.method for RoleX commands, or a ResourceX locator for resources",
-      },
-      args: {
-        type: "record",
-        required: false,
-        description:
-          "Named arguments object for the command. Pass all parameters as key-value pairs in this object (e.g. id, content, org, individual). Must be a JSON object, not a string. Load the relevant skill first to learn what args to pass.",
-      },
-    },
-  },
+  // --- Direct ---
   {
     name: "direct",
     description: d("direct"),
@@ -275,13 +246,13 @@ const tools: ToolDef[] = [
       command: {
         type: "string",
         required: true,
-        description: "!namespace.method for RoleX commands, or a ResourceX locator for resources",
+        description: "namespace.method for RoleX commands (e.g. society.born, org.hire)",
       },
       args: {
         type: "record",
         required: false,
         description:
-          "Named arguments object for the command. Pass all parameters as key-value pairs in this object (e.g. id, content, type). Must be a JSON object, not a string. Load the relevant skill first to learn what args to pass.",
+          "Named arguments object for the command. Pass all parameters as key-value pairs in this object (e.g. id, content, org, individual). Must be a JSON object, not a string.",
       },
     },
   },
