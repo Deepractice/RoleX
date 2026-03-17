@@ -147,3 +147,15 @@ export const strategy = structure("strategy", "Product strategy — how to win",
 export const spec = structure("spec", "Product behavior contract — BDD specification", product);
 export const release = structure("release", "Product version release", product);
 export const channel = structure("channel", "Product distribution channel", product);
+
+// ================================================================
+//  Issue — collaboration primitive
+// ================================================================
+
+export const issue = structure("issue", "A collaboration topic requiring attention", society, [
+  relation("authored-by", "Who created this issue", individual),
+  relation("assigned-to", "Who is responsible for this issue", individual),
+]);
+export const comment = structure("comment", "A discussion entry on an issue", issue, [
+  relation("authored-by", "Who wrote this comment", individual),
+]);

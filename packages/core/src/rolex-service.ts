@@ -12,7 +12,6 @@
  */
 
 import type { Initializer, Runtime, State, Structure } from "@rolexjs/system";
-import { createIssueX, type IssueX } from "issuexjs";
 import { applyPrototype } from "./apply.js";
 import type { CommandResult, Commands } from "./commands/index.js";
 import { createCommands } from "./commands/index.js";
@@ -53,7 +52,6 @@ export class RoleXService implements RoleX {
   private rt: Runtime;
   private commands!: Commands;
   private project!: Projection;
-  private issuex?: IssueX;
   private repo: RoleXRepository;
   private readonly initializer?: Initializer;
   private readonly renderer: Renderer;
@@ -87,10 +85,6 @@ export class RoleXService implements RoleX {
     this.initializer = platform.initializer;
     this.prototypes = prototypes ?? [];
     this.renderer = renderer;
-
-    if (platform.issuexProvider) {
-      this.issuex = createIssueX({ provider: platform.issuexProvider });
-    }
   }
 
   static async create(
@@ -126,7 +120,6 @@ export class RoleXService implements RoleX {
       },
       find: (id: string) => this.find(id),
       project: this.project,
-      issuex: this.issuex,
       prototype: this.repo.prototype,
     });
 

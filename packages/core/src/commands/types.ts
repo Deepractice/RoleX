@@ -3,7 +3,6 @@
  */
 
 import type { Runtime, State, Structure } from "@rolexjs/system";
-import type { Comment, Issue, IssueX } from "issuexjs";
 import type { PrototypeRepository } from "../platform.js";
 import type { Projection } from "../projection.js";
 
@@ -23,7 +22,6 @@ export interface CommandContext {
   resolve(id: string): Structure | Promise<Structure>;
   find(id: string): (Structure | null) | Promise<Structure | null>;
   project: Projection;
-  issuex?: IssueX;
   prototype?: PrototypeRepository;
 }
 
@@ -110,17 +108,17 @@ export interface CommandResultMap {
   "survey.list": CommandResult;
 
   // ---- Issue ----
-  "issue.publish": Issue;
-  "issue.get": Issue | null;
-  "issue.list": Issue[];
-  "issue.update": Issue;
-  "issue.close": Issue;
-  "issue.reopen": Issue;
-  "issue.assign": Issue;
-  "issue.comment": Comment;
-  "issue.comments": Comment[];
-  "issue.label": Issue | null;
-  "issue.unlabel": Issue | null;
+  "issue.publish": CommandResult;
+  "issue.get": CommandResult;
+  "issue.list": CommandResult;
+  "issue.update": CommandResult;
+  "issue.close": CommandResult;
+  "issue.reopen": CommandResult;
+  "issue.assign": CommandResult;
+  "issue.comment": CommandResult;
+  "issue.comments": CommandResult;
+  "issue.label": CommandResult;
+  "issue.unlabel": CommandResult;
 }
 
 export type Commands = Record<string, (...args: any[]) => any>;

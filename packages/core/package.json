@@ -38,10 +38,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@issuexjs/core": "^0.2.0",
     "@rolexjs/parser": "workspace:*",
-    "@rolexjs/system": "workspace:*",
-    "issuexjs": "^0.2.0"
+    "@rolexjs/system": "workspace:*"
   },
   "devDependencies": {},
   "publishConfig": {

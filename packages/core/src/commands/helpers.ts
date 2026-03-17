@@ -5,7 +5,6 @@
 import { parse } from "@rolexjs/parser";
 import type { State, Structure } from "@rolexjs/system";
 import { structure } from "@rolexjs/system";
-import type { IssueX } from "issuexjs";
 import * as C from "../structures.js";
 import type { CommandContext, CommandResult } from "./types.js";
 
@@ -18,7 +17,6 @@ export interface Helpers {
   archive(node: Structure, process: string): Promise<CommandResult>;
   validateGherkin(source?: string): void;
   removeExisting(parent: Structure, id: string): Promise<void>;
-  requireIssueX(): IssueX;
 }
 
 // ================================================================
@@ -45,7 +43,7 @@ function findInState(state: State, target: string): Structure | null {
 // ================================================================
 
 export function createHelpers(ctx: CommandContext): Helpers {
-  const { rt, project, issuex } = ctx;
+  const { rt, project } = ctx;
 
   async function ok(node: Structure, process: string): Promise<CommandResult> {
     return { state: await project(node), process };
@@ -73,10 +71,5 @@ export function createHelpers(ctx: CommandContext): Helpers {
     if (existing) await rt.remove(existing);
   }
 
-  function requireIssueX(): IssueX {
-    if (!issuex) throw new Error("IssueX is not available.");
-    return issuex;
-  }
-
-  return { ok, archive, validateGherkin, removeExisting, requireIssueX };
+  return { ok, archive, validateGherkin, removeExisting };
 }

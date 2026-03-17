@@ -57,6 +57,7 @@ export {
   channel,
   // Organization
   charter,
+  comment,
   // Project
   deliverable,
   duty,
@@ -69,6 +70,8 @@ export {
   identity,
   // Level 1
   individual,
+  // Issue
+  issue,
   // Project
   milestone,
   // Individual — Knowledge

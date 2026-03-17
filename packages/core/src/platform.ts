@@ -11,7 +11,6 @@
  * (ResourceX, bootstrap config) to form a complete runtime environment.
  */
 
-import type { IssueXProvider } from "@issuexjs/core";
 import type { Initializer, Runtime } from "@rolexjs/system";
 
 /** Serializable context data for persistence. */
@@ -88,9 +87,6 @@ export interface RoleXRepository {
 export interface Platform {
   /** Unified data access layer — graph, prototypes, contexts. */
   readonly repository: RoleXRepository;
-
-  /** IssueX provider — will be removed when issue is internalized to graph (Phase 2). */
-  readonly issuexProvider?: IssueXProvider;
 
   /** Initializer — bootstrap the world on first run. */
   readonly initializer?: Initializer;

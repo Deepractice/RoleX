@@ -1,16 +1,68 @@
 /**
  * Commands — issue.* commands.
+ *
+ * Issues are graph nodes under society, with comments as child nodes.
+ * Status is expressed via tags (#open / #closed).
+ * Author and assignee are links to individual nodes.
  */
 
-import type { Comment, Issue } from "issuexjs";
+import type { State, Structure } from "@rolexjs/system";
+import * as C from "../structures.js";
 import type { Helpers } from "./helpers.js";
-import type { CommandContext } from "./types.js";
+import type { CommandContext, CommandResult } from "./types.js";
+
+// ================================================================
+//  Issue number counter
+// ================================================================
+
+/** Track the next issue number per runtime instance. */
+let nextIssueNumber = 0;
+
+/** Scan existing issues to find the max number. */
+function initCounter(children: readonly State[]): void {
+  let max = 0;
+  for (const child of children) {
+    if (child.name === "issue" && child.id) {
+      const match = child.id.match(/^issue-(\d+)$/);
+      if (match) {
+        const n = parseInt(match[1], 10);
+        if (n > max) max = n;
+      }
+    }
+  }
+  nextIssueNumber = max;
+}
+
+function allocateNumber(): number {
+  return ++nextIssueNumber;
+}
+
+// ================================================================
+//  Issue commands
+// ================================================================
 
 export function issueCommands(
-  _ctx: CommandContext,
+  ctx: CommandContext,
   helpers: Helpers
 ): Record<string, (...args: any[]) => any> {
-  const { requireIssueX } = helpers;
+  const { rt, society, resolve, project } = ctx;
+  const { ok } = helpers;
+
+  // Lazy-init counter on first issue command
+  let counterInitialized = false;
+  async function ensureCounter(): Promise<void> {
+    if (counterInitialized) return;
+    const state = await rt.project(society);
+    initCounter(state.children ?? []);
+    counterInitialized = true;
+  }
+
+  /** Find an issue node by number (issue-{N} id pattern). */
+  async function findIssue(number: number): Promise<Structure> {
+    const id = `issue-${number}`;
+    const node = await resolve(id);
+    return node;
+  }
 
   return {
     async "issue.publish"(
@@ -18,29 +70,47 @@ export function issueCommands(
       body: string,
       author: string,
       assignee?: string
-    ): Promise<Issue> {
-      const ix = requireIssueX();
-      return ix.createIssue({ title, body, author, assignee });
+    ): Promise<CommandResult> {
+      await ensureCounter();
+      const number = allocateNumber();
+      const id = `issue-${number}`;
+      const node = await rt.create(society, C.issue, body, id, [title]);
+      await rt.tag(node, "open");
+
+      // Link author
+      const authorNode = await resolve(author);
+      await rt.link(node, authorNode, "authored-by", "author-of");
+
+      // Link assignee if provided
+      if (assignee) {
+        const assigneeNode = await resolve(assignee);
+        await rt.link(node, assigneeNode, "assigned-to", "assigned");
+      }
+
+      return ok(node, "publish");
     },
 
-    async "issue.get"(number: number): Promise<Issue | null> {
-      return requireIssueX().getIssueByNumber(number);
+    async "issue.get"(number: number): Promise<CommandResult> {
+      const node = await findIssue(number);
+      return ok(node, "get");
     },
 
     async "issue.list"(
       status?: string,
-      author?: string,
-      assignee?: string,
-      label?: string
-    ): Promise<Issue[]> {
-      const filter: Record<string, string> = {};
-      if (status) filter.status = status;
-      if (author) filter.author = author;
-      if (assignee) filter.assignee = assignee;
-      if (label) filter.label = label;
-      return requireIssueX().listIssues(
-        Object.keys(filter).length > 0 ? (filter as any) : undefined
-      );
+      _author?: string,
+      _assignee?: string,
+      _label?: string
+    ): Promise<CommandResult> {
+      const state = await project(society);
+      const issues = (state.children ?? []).filter((c) => {
+        if (c.name !== "issue") return false;
+        if (status && c.tag !== status) return false;
+        return true;
+      });
+      return {
+        state: { ...state, children: issues },
+        process: "list",
+      };
     },
 
     async "issue.update"(
@@ -48,71 +118,105 @@ export function issueCommands(
       title?: string,
       body?: string,
       assignee?: string
-    ): Promise<Issue> {
-      const ix = requireIssueX();
-      const issue = await ix.getIssueByNumber(number);
-      if (!issue) throw new Error(`Issue #${number} not found.`);
-      const patch: Record<string, unknown> = {};
-      if (title !== undefined) patch.title = title;
-      if (body !== undefined) patch.body = body;
-      if (assignee !== undefined) patch.assignee = assignee;
-      return ix.updateIssue(issue.id, patch);
+    ): Promise<CommandResult> {
+      const node = await findIssue(number);
+
+      // Update title (alias) and body (information) by removing and recreating
+      // For now, we update via transform if needed
+      if (body !== undefined || title !== undefined) {
+        // We need to work with what the runtime provides
+        // Transform preserves subtree but updates information
+        const target = C.issue;
+        if (body !== undefined) {
+          await rt.transform(node, target, body);
+        }
+      }
+
+      if (assignee !== undefined) {
+        // Unlink existing assignee, link new one
+        const state = await rt.project(node);
+        const existingAssignee = state.links?.find((l) => l.relation === "assigned-to");
+        if (existingAssignee) {
+          await rt.unlink(node, existingAssignee.target, "assigned-to", "assigned");
+        }
+        if (assignee) {
+          const assigneeNode = await resolve(assignee);
+          await rt.link(node, assigneeNode, "assigned-to", "assigned");
+        }
+      }
+
+      return ok(node, "update");
     },
 
-    async "issue.close"(number: number): Promise<Issue> {
-      const ix = requireIssueX();
-      const issue = await ix.getIssueByNumber(number);
-      if (!issue) throw new Error(`Issue #${number} not found.`);
-      return ix.closeIssue(issue.id);
+    async "issue.close"(number: number): Promise<CommandResult> {
+      const node = await findIssue(number);
+      await rt.tag(node, "closed");
+      return ok(node, "close");
     },
 
-    async "issue.reopen"(number: number): Promise<Issue> {
-      const ix = requireIssueX();
-      const issue = await ix.getIssueByNumber(number);
-      if (!issue) throw new Error(`Issue #${number} not found.`);
-      return ix.reopenIssue(issue.id);
+    async "issue.reopen"(number: number): Promise<CommandResult> {
+      const node = await findIssue(number);
+      await rt.tag(node, "open");
+      return ok(node, "reopen");
     },
 
-    async "issue.assign"(number: number, assignee: string): Promise<Issue> {
-      const ix = requireIssueX();
-      const issue = await ix.getIssueByNumber(number);
-      if (!issue) throw new Error(`Issue #${number} not found.`);
-      return ix.updateIssue(issue.id, { assignee });
+    async "issue.assign"(number: number, assignee: string): Promise<CommandResult> {
+      const node = await findIssue(number);
+
+      // Unlink existing assignee
+      const state = await rt.project(node);
+      const existingAssignee = state.links?.find((l) => l.relation === "assigned-to");
+      if (existingAssignee) {
+        await rt.unlink(node, existingAssignee.target, "assigned-to", "assigned");
+      }
+
+      // Link new assignee
+      const assigneeNode = await resolve(assignee);
+      await rt.link(node, assigneeNode, "assigned-to", "assigned");
+
+      return ok(node, "assign");
     },
 
-    async "issue.comment"(number: number, body: string, author: string): Promise<Comment> {
-      const ix = requireIssueX();
-      const issue = await ix.getIssueByNumber(number);
-      if (!issue) throw new Error(`Issue #${number} not found.`);
-      return ix.createComment(issue.id, body, author);
+    async "issue.comment"(number: number, body: string, author: string): Promise<CommandResult> {
+      const issueNode = await findIssue(number);
+      const commentNode = await rt.create(issueNode, C.comment, body);
+
+      // Link comment author
+      const authorNode = await resolve(author);
+      await rt.link(commentNode, authorNode, "authored-by", "author-of");
+
+      return ok(commentNode, "comment");
     },
 
-    async "issue.comments"(number: number): Promise<Comment[]> {
-      const ix = requireIssueX();
-      const issue = await ix.getIssueByNumber(number);
-      if (!issue) throw new Error(`Issue #${number} not found.`);
-      return ix.listComments(issue.id);
+    async "issue.comments"(number: number): Promise<CommandResult> {
+      const issueNode = await findIssue(number);
+      const state = await project(issueNode);
+      const comments = (state.children ?? []).filter((c) => c.name === "comment");
+      return {
+        state: { ...state, children: comments },
+        process: "comments",
+      };
     },
 
-    async "issue.label"(number: number, label: string): Promise<Issue | null> {
-      const ix = requireIssueX();
-      const issue = await ix.getIssueByNumber(number);
-      if (!issue) throw new Error(`Issue #${number} not found.`);
-      // Find or create label by name
-      let labelObj = await ix.getLabelByName(label);
-      if (!labelObj) labelObj = await ix.createLabel({ name: label });
-      await ix.addLabel(issue.id, labelObj.id);
-      return ix.getIssueByNumber(number);
+    async "issue.label"(number: number, label: string): Promise<CommandResult> {
+      // Labels are stored as tags — but tag is single-valued
+      // For now, append to existing tag with comma separation
+      const node = await findIssue(number);
+      const state = await rt.project(node);
+      const currentTag = state.tag ?? "open";
+      if (!currentTag.includes(label)) {
+        await rt.tag(node, `${currentTag},${label}`);
+      }
+      return ok(node, "label");
     },
 
-    async "issue.unlabel"(number: number, label: string): Promise<Issue | null> {
-      const ix = requireIssueX();
-      const issue = await ix.getIssueByNumber(number);
-      if (!issue) throw new Error(`Issue #${number} not found.`);
-      const labelObj = await ix.getLabelByName(label);
-      if (!labelObj) throw new Error(`Label "${label}" not found.`);
-      await ix.removeLabel(issue.id, labelObj.id);
-      return ix.getIssueByNumber(number);
+    async "issue.unlabel"(number: number, label: string): Promise<CommandResult> {
+      const node = await findIssue(number);
+      const state = await rt.project(node);
+      const currentTag = state.tag ?? "";
+      const tags = currentTag.split(",").filter((t) => t !== label);
+      await rt.tag(node, tags.join(",") || "open");
+      return ok(node, "unlabel");
     },
   };
 }

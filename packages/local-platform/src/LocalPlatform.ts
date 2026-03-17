@@ -12,7 +12,6 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { drizzle } from "@deepracticex/drizzle";
 import { openDatabase } from "@deepracticex/sqlite";
-import { NodeProvider as IssueXNodeProvider } from "@issuexjs/node";
 import type { Platform } from "@rolexjs/core";
 import type { Initializer } from "@rolexjs/system";
 import { SqliteRepository } from "./SqliteRepository.js";
@@ -53,22 +52,6 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
 
   const repository = new SqliteRepository(db);
 
-  // ===== IssueX Provider (will be removed in Phase 2 when issue is internalized) =====
-
-  const issuexProvider = new IssueXNodeProvider({
-    db: {
-      run(sql: string, ...params: unknown[]) {
-        rawDb.prepare(sql).run(...params);
-      },
-      get<T = unknown>(sql: string, ...params: unknown[]): T | null {
-        return rawDb.prepare(sql).get(...params) as T | null;
-      },
-      all<T = unknown>(sql: string, ...params: unknown[]): T[] {
-        return rawDb.prepare(sql).all(...params) as T[];
-      },
-    },
-  });
-
   // ===== Initializer =====
 
   const initializer: Initializer = {
@@ -77,7 +60,6 @@ export function localPlatform(config: LocalPlatformConfig = {}): Platform {
 
   return {
     repository,
-    issuexProvider,
     initializer,
   };
 }

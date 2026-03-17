@@ -6,7 +6,6 @@
  * and return typed results.
  */
 
-import type { Comment, Issue } from "issuexjs";
 import type { CommandResult } from "./commands/types.js";
 import type { Role } from "./role-model.js";
 
@@ -198,27 +197,27 @@ export interface IssueNamespace {
     body: string;
     author: string;
     assignee?: string;
-  }): Promise<Issue>;
-  get(params: { number: number }): Promise<Issue | null>;
+  }): Promise<CommandResult>;
+  get(params: { number: number }): Promise<CommandResult>;
   list(params?: {
     status?: string;
     author?: string;
     assignee?: string;
     label?: string;
-  }): Promise<Issue[]>;
+  }): Promise<CommandResult>;
   update(params: {
     number: number;
     title?: string;
     body?: string;
     assignee?: string;
-  }): Promise<Issue>;
-  close(params: { number: number }): Promise<Issue>;
-  reopen(params: { number: number }): Promise<Issue>;
-  assign(params: { number: number; assignee: string }): Promise<Issue>;
-  comment(params: { number: number; body: string; author: string }): Promise<Comment>;
-  comments(params: { number: number }): Promise<Comment[]>;
-  label(params: { number: number; label: string }): Promise<Issue | null>;
-  unlabel(params: { number: number; label: string }): Promise<Issue | null>;
+  }): Promise<CommandResult>;
+  close(params: { number: number }): Promise<CommandResult>;
+  reopen(params: { number: number }): Promise<CommandResult>;
+  assign(params: { number: number; assignee: string }): Promise<CommandResult>;
+  comment(params: { number: number; body: string; author: string }): Promise<CommandResult>;
+  comments(params: { number: number }): Promise<CommandResult>;
+  label(params: { number: number; label: string }): Promise<CommandResult>;
+  unlabel(params: { number: number; label: string }): Promise<CommandResult>;
 }
 
 export function createIssueNamespace(call: Caller): IssueNamespace {
