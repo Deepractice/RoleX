@@ -90,14 +90,26 @@ describe("SQLite Runtime", () => {
     expect(state.links).toBeUndefined();
   });
 
-  test("tag node", async () => {
+  test("addTag and removeTag", async () => {
     const { rt } = setup();
     const society = await rt.create(null, C.society);
     const goal = await rt.create(society, C.goal, "Feature: Test", "test-goal");
-    await rt.tag(goal, "done");
+    await rt.addTag(goal, "done");
 
-    const state = await rt.project(goal);
-    expect(state.tag).toBe("done");
+    let state = await rt.project(goal);
+    expect(state.tags).toEqual(["done"]);
+
+    await rt.addTag(goal, "urgent");
+    state = await rt.project(goal);
+    expect(state.tags).toEqual(["done", "urgent"]);
+
+    await rt.removeTag(goal, "done");
+    state = await rt.project(goal);
+    expect(state.tags).toEqual(["urgent"]);
+
+    await rt.removeTag(goal, "urgent");
+    state = await rt.project(goal);
+    expect(state.tags).toBeUndefined();
   });
 
   test("roots returns only root nodes", async () => {

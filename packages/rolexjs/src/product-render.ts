@@ -29,10 +29,10 @@ export type ProductAction =
 export function renderProduct(state: State): string {
   const lines: string[] = [];
   const id = state.id ?? "(no id)";
-  const tag = state.tag ? ` #${state.tag}` : "";
+  const tagPart = state.tags?.length ? ` ${state.tags.map((t) => `#${t}`).join(" ")}` : "";
 
   // Title
-  lines.push(`# ${id}${tag}`);
+  lines.push(`# ${id}${tagPart}`);
 
   // Feature body (vision)
   if (state.information) {
@@ -83,9 +83,9 @@ export function renderProduct(state: State): string {
     lines.push("");
     lines.push("## Releases");
     for (const r of releases) {
-      const tag = r.tag ? ` #${r.tag}` : "";
+      const rTag = r.tags?.length ? ` ${r.tags.map((t) => `#${t}`).join(" ")}` : "";
       const title = r.id ?? extractFeatureTitle(r.information);
-      lines.push(`- ${title}${tag}`);
+      lines.push(`- ${title}${rTag}`);
     }
   }
 

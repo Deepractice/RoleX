@@ -62,8 +62,8 @@ export interface Structure {
   /** Relations to other structure types (cross-branch links). */
   readonly relations?: readonly Relation[];
 
-  /** Generic label (e.g., "done", "abandoned"). */
-  readonly tag?: string;
+  /** Labels (e.g., ["done"], ["open", "bug"]). */
+  readonly tags?: readonly string[];
 }
 
 // ===== Constructors =====

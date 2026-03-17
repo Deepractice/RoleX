@@ -35,7 +35,7 @@ function toStructure(row: typeof nodes.$inferSelect): Structure {
     description: row.description ?? "",
     parent: null, // Runtime doesn't use parent as Structure; tree is via parentRef
     ...(row.information ? { information: row.information } : {}),
-    ...(row.tag ? { tag: row.tag } : {}),
+    ...(row.tag ? { tags: JSON.parse(row.tag) } : {}),
   };
 }
 
@@ -212,11 +212,30 @@ export function createSqliteRuntime(db: DB): Runtime {
         .run();
     },
 
-    async tag(node, tagValue) {
+    async addTag(node, tag) {
       if (!node.ref) throw new Error("Node has no ref");
       const row = db.select().from(nodes).where(eq(nodes.ref, node.ref)).get();
       if (!row) throw new Error(`Node not found: ${node.ref}`);
-      db.update(nodes).set({ tag: tagValue }).where(eq(nodes.ref, node.ref)).run();
+      const current: string[] = row.tag ? JSON.parse(row.tag) : [];
+      if (!current.includes(tag)) {
+        current.push(tag);
+        db.update(nodes)
+          .set({ tag: JSON.stringify(current) })
+          .where(eq(nodes.ref, node.ref))
+          .run();
+      }
+    },
+
+    async removeTag(node, tag) {
+      if (!node.ref) throw new Error("Node has no ref");
+      const row = db.select().from(nodes).where(eq(nodes.ref, node.ref)).get();
+      if (!row) throw new Error(`Node not found: ${node.ref}`);
+      const current: string[] = row.tag ? JSON.parse(row.tag) : [];
+      const filtered = current.filter((t) => t !== tag);
+      db.update(nodes)
+        .set({ tag: filtered.length > 0 ? JSON.stringify(filtered) : null })
+        .where(eq(nodes.ref, node.ref))
+        .run();
     },
 
     async project(node) {

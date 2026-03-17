@@ -31,10 +31,10 @@ export type ProjectAction =
 export function renderProject(state: State): string {
   const lines: string[] = [];
   const id = state.id ?? "(no id)";
-  const tag = state.tag ? ` #${state.tag}` : "";
+  const tagPart = state.tags?.length ? ` ${state.tags.map((t) => `#${t}`).join(" ")}` : "";
 
   // Title
-  lines.push(`# ${id}${tag}`);
+  lines.push(`# ${id}${tagPart}`);
 
   // Feature body
   if (state.information) {
@@ -76,10 +76,10 @@ export function renderProject(state: State): string {
     lines.push("");
     lines.push("## Milestones");
     for (const m of milestones) {
-      const tag = m.tag ? ` #${m.tag}` : "";
-      const marker = m.tag === "done" ? "[x]" : "[ ]";
+      const mTag = m.tags?.length ? ` ${m.tags.map((t) => `#${t}`).join(" ")}` : "";
+      const marker = m.tags?.includes("done") ? "[x]" : "[ ]";
       const title = extractFeatureTitle(m.information);
-      lines.push(`- ${marker} ${m.id ?? title}${tag}`);
+      lines.push(`- ${marker} ${m.id ?? title}${mTag}`);
       if (m.information && m.id) {
         const desc = extractFeatureTitle(m.information);
         if (desc && desc !== m.id) lines.push(`  ${desc}`);

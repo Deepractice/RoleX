@@ -217,7 +217,7 @@ export function renderState(state: State, depth = 1, options?: RenderStateOption
   // Heading: [name] (id) {origin} #tag [progress]
   const idPart = state.id ? ` (${state.id})` : "";
   const originPart = state.origin ? ` {${state.origin}}` : "";
-  const tagPart = state.tag ? ` #${state.tag}` : "";
+  const tagPart = state.tags?.length ? ` ${state.tags.map((t) => `#${t}`).join(" ")}` : "";
   const progressPart = state.name === "goal" ? goalProgress(state) : "";
   lines.push(`${heading} [${state.name}]${idPart}${originPart}${tagPart}${progressPart}`);
 
@@ -242,7 +242,9 @@ export function renderState(state: State, depth = 1, options?: RenderStateOption
     const expanded = allCompact ? [] : state.links.filter((l) => !compactRelations.has(l.relation));
     for (const link of compact) {
       const targetId = link.target.id ? ` (${link.target.id})` : "";
-      const targetTag = link.target.tag ? ` #${link.target.tag}` : "";
+      const targetTag = link.target.tags?.length
+        ? ` ${link.target.tags.map((t) => `#${t}`).join(" ")}`
+        : "";
       lines.push(`> ${link.relation}: [${link.target.name}]${targetId}${targetTag}`);
     }
     if (expanded.length > 0) {
@@ -361,10 +363,10 @@ function goalProgress(goal: State): string {
   function walk(node: State): void {
     if (node.name === "plan") {
       plans++;
-      if (node.tag === "done" || node.tag === "abandoned") plansDone++;
+      if (node.tags?.includes("done") || node.tags?.includes("abandoned")) plansDone++;
     } else if (node.name === "task") {
       tasks++;
-      if (node.tag === "done") tasksDone++;
+      if (node.tags?.includes("done")) tasksDone++;
     }
     for (const child of node.children ?? []) walk(child);
   }

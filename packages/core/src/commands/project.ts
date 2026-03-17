@@ -32,7 +32,7 @@ export function projectCommands(
 
     async "project.achieve"(milestone: string): Promise<CommandResult> {
       const node = await resolve(milestone);
-      await rt.tag(node, "done");
+      await rt.addTag(node, "done");
       return ok(node, "achieve");
     },
 

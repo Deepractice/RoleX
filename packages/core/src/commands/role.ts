@@ -69,7 +69,7 @@ export function roleCommands(
     ): Promise<CommandResult> {
       validateGherkin(encounter);
       const taskNode = await resolve(task);
-      await rt.tag(taskNode, "done");
+      await rt.addTag(taskNode, "done");
       if (encounter) {
         const encId = taskNode.id ? `${taskNode.id}-finished` : undefined;
         const enc = await rt.create(await resolve(individual), C.encounter, encounter, encId);
@@ -85,7 +85,7 @@ export function roleCommands(
     ): Promise<CommandResult> {
       validateGherkin(encounter);
       const planNode = await resolve(plan);
-      await rt.tag(planNode, "done");
+      await rt.addTag(planNode, "done");
       const encId = planNode.id ? `${planNode.id}-completed` : undefined;
       const enc = await rt.create(await resolve(individual), C.encounter, encounter, encId);
       return ok(enc, "complete");
@@ -98,7 +98,7 @@ export function roleCommands(
     ): Promise<CommandResult> {
       validateGherkin(encounter);
       const planNode = await resolve(plan);
-      await rt.tag(planNode, "abandoned");
+      await rt.addTag(planNode, "abandoned");
       const encId = planNode.id ? `${planNode.id}-abandoned` : undefined;
       const enc = await rt.create(await resolve(individual), C.encounter, encounter, encId);
       return ok(enc, "abandon");

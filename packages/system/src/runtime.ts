@@ -39,8 +39,11 @@ export interface Runtime {
   /** Remove a bidirectional cross-branch relation between two nodes. */
   unlink(from: Structure, to: Structure, relation: string, reverse: string): Promise<void>;
 
-  /** Set a tag on a node (e.g., "done", "abandoned"). */
-  tag(node: Structure, tag: string): Promise<void>;
+  /** Add a tag to a node (e.g., "done", "bug"). Idempotent. */
+  addTag(node: Structure, tag: string): Promise<void>;
+
+  /** Remove a tag from a node. No-op if tag not present. */
+  removeTag(node: Structure, tag: string): Promise<void>;
 
   /** Project the current state of a node and its subtree (including links). */
   project(node: Structure): Promise<State>;
@@ -260,11 +263,23 @@ export const createRuntime = (): Runtime => {
       }
     },
 
-    async tag(node, tagValue) {
+    async addTag(node, tag) {
       if (!node.ref) throw new Error("Node has no ref");
       const treeNode = nodes.get(node.ref);
       if (!treeNode) throw new Error(`Node not found: ${node.ref}`);
-      (treeNode.node as any).tag = tagValue;
+      const current = (treeNode.node as any).tags ?? [];
+      if (!current.includes(tag)) {
+        (treeNode.node as any).tags = [...current, tag];
+      }
+    },
+
+    async removeTag(node, tag) {
+      if (!node.ref) throw new Error("Node has no ref");
+      const treeNode = nodes.get(node.ref);
+      if (!treeNode) throw new Error(`Node not found: ${node.ref}`);
+      const current = (treeNode.node as any).tags ?? [];
+      const filtered = current.filter((t: string) => t !== tag);
+      (treeNode.node as any).tags = filtered.length > 0 ? filtered : undefined;
     },
 
     async project(node) {

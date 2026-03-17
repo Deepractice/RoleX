@@ -75,7 +75,7 @@ export function issueCommands(
       const number = allocateNumber();
       const id = `issue-${number}`;
       const node = await rt.create(society, C.issue, body, id, [title]);
-      await rt.tag(node, "open");
+      await rt.addTag(node, "open");
 
       // Link author
       const authorNode = await resolve(author);
@@ -104,7 +104,7 @@ export function issueCommands(
       const state = await project(society);
       const issues = (state.children ?? []).filter((c) => {
         if (c.name !== "issue") return false;
-        if (status && c.tag !== status) return false;
+        if (status && !c.tags?.includes(status)) return false;
         return true;
       });
       return {
@@ -150,13 +150,15 @@ export function issueCommands(
 
     async "issue.close"(number: number): Promise<CommandResult> {
       const node = await findIssue(number);
-      await rt.tag(node, "closed");
+      await rt.removeTag(node, "open");
+      await rt.addTag(node, "closed");
       return ok(node, "close");
     },
 
     async "issue.reopen"(number: number): Promise<CommandResult> {
       const node = await findIssue(number);
-      await rt.tag(node, "open");
+      await rt.removeTag(node, "closed");
+      await rt.addTag(node, "open");
       return ok(node, "reopen");
     },
 
@@ -199,23 +201,14 @@ export function issueCommands(
     },
 
     async "issue.label"(number: number, label: string): Promise<CommandResult> {
-      // Labels are stored as tags — but tag is single-valued
-      // For now, append to existing tag with comma separation
       const node = await findIssue(number);
-      const state = await rt.project(node);
-      const currentTag = state.tag ?? "open";
-      if (!currentTag.includes(label)) {
-        await rt.tag(node, `${currentTag},${label}`);
-      }
+      await rt.addTag(node, label);
       return ok(node, "label");
     },
 
     async "issue.unlabel"(number: number, label: string): Promise<CommandResult> {
       const node = await findIssue(number);
-      const state = await rt.project(node);
-      const currentTag = state.tag ?? "";
-      const tags = currentTag.split(",").filter((t) => t !== label);
-      await rt.tag(node, tags.join(",") || "open");
+      await rt.removeTag(node, label);
       return ok(node, "unlabel");
     },
   };

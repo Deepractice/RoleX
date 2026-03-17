@@ -29,7 +29,7 @@ export class SurveyRenderer implements Renderer {
   private renderFlat(items: readonly State[]): string {
     const lines: string[] = [];
     for (const item of items) {
-      const tag = item.tag ? ` #${item.tag}` : "";
+      const tag = item.tags?.length ? ` ${item.tags.map((t) => `#${t}`).join(" ")}` : "";
       const alias =
         Array.isArray(item.alias) && item.alias.length ? ` (${item.alias.join(", ")})` : "";
       lines.push(`${item.id ?? "(no id)"}${alias}${tag}`);
@@ -59,7 +59,7 @@ export class SurveyRenderer implements Renderer {
     for (const org of orgs) {
       const alias =
         Array.isArray(org.alias) && org.alias.length ? ` (${org.alias.join(", ")})` : "";
-      const tag = org.tag ? ` #${org.tag}` : "";
+      const tag = org.tags?.length ? ` ${org.tags.map((t) => `#${t}`).join(" ")}` : "";
       lines.push(`${org.id}${alias}${tag}`);
 
       // Projects owned by this org
@@ -69,7 +69,7 @@ export class SurveyRenderer implements Renderer {
           Array.isArray(p.target.alias) && p.target.alias.length
             ? ` (${p.target.alias.join(", ")})`
             : "";
-        const pTag = p.target.tag ? ` #${p.target.tag}` : "";
+        const pTag = p.target.tags?.length ? ` ${p.target.tags.map((t) => `#${t}`).join(" ")}` : "";
         lines.push(`  📦 ${p.target.id ?? "(no id)"}${pAlias}${pTag}`);
       }
 
@@ -84,7 +84,7 @@ export class SurveyRenderer implements Renderer {
           Array.isArray(m.target.alias) && m.target.alias.length
             ? ` (${m.target.alias.join(", ")})`
             : "";
-        const mTag = m.target.tag ? ` #${m.target.tag}` : "";
+        const mTag = m.target.tags?.length ? ` ${m.target.tags.map((t) => `#${t}`).join(" ")}` : "";
         const posLabels = individualPositions.get(m.target.id ?? "");
         const posStr = posLabels?.length ? ` — ${posLabels.join(", ")}` : "";
         lines.push(`  ${m.target.id}${mAlias}${mTag}${posStr}`);
@@ -99,7 +99,7 @@ export class SurveyRenderer implements Renderer {
       for (const ind of unaffiliated) {
         const alias =
           Array.isArray(ind.alias) && ind.alias.length ? ` (${ind.alias.join(", ")})` : "";
-        const tag = ind.tag ? ` #${ind.tag}` : "";
+        const tag = ind.tags?.length ? ` ${ind.tags.map((t) => `#${t}`).join(" ")}` : "";
         const posLabels = individualPositions.get(ind.id ?? "");
         const posStr = posLabels?.length ? ` — ${posLabels.join(", ")}` : "";
         lines.push(`  ${ind.id}${alias}${tag}${posStr}`);
