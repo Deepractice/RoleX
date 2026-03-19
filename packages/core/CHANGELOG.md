@@ -1,5 +1,109 @@
 # @rolexjs/core
 
+## 1.5.0
+
+### Minor Changes
+
+- 58bcb9b: Add @rolexjs/agentx-context package and survey/inspect raw mode
+
+  - New package `@rolexjs/agentx-context`: RoleX ContextProvider bridge for AgentX runtime
+    - RolexContext implements AgentX Context interface (schema, project, capabilities)
+    - RolexContextProvider implements AgentX ContextProvider factory
+    - Decouples RoleX from AgentX — AgentX no longer depends on rolexjs
+  - Add `raw` option to `survey()` and `inspect()` API
+    - `survey({ type: "individual", raw: true })` returns `State[]` (structured JSON)
+    - `inspect({ id: "nuwa", raw: true })` returns `State` (structured JSON)
+    - Without `raw`, behavior unchanged (returns rendered text)
+
+- 96967bc: Refactor to builder pattern with JSON-RPC 2.0 unified dispatch
+
+  - Replace async factory with synchronous `createRoleX()` builder — lazy initialization on first call
+  - Add 9 typed namespace APIs: society, org, position, project, product, survey, issue, resource, role
+  - Add JSON-RPC 2.0 dispatch via `rx.rpc()` — uniform message format for cloud platform decoupling
+  - Add `rx.protocol` — self-describing tool schemas (name + description + params) for any channel adapter
+  - Inline description into `ToolDef` — no more separate `detail()` lookup
+  - Move genesis from platform config to built-in — `createRoleX({ platform })` auto-applies genesis
+  - Remove `prototypes` from Platform interface — Platform is now pure infrastructure
+
+- 2886169: Add inspect and survey as top-level perception tools
+
+  - `inspect(id)`: project any node's full subtree, works on any node type
+  - `survey(type?)`: world-level overview replacing census via direct
+  - Extract `projectById` as shared structural primitive in RoleXService
+  - Add InspectRenderer for generic node tree rendering
+  - Replace census.feature with survey.feature
+  - Fix gen-descriptions to quote hyphenated object keys
+
+- 3f082fe: feat: internalize issue into graph — remove IssueX dependency
+
+  Issues are now first-class graph nodes under society, no longer stored in external IssueX.
+
+  - Add `issue` and `comment` structure types with author/assignee relations
+  - Rewrite all issue.\* commands to use graph operations (rt.create, rt.tag, rt.link)
+  - Issue status uses tags (#open / #closed), number uses auto-increment id pattern
+  - Comments are child nodes of issues, authors linked via relations
+  - Remove all IssueX dependencies (@issuexjs/core, issuexjs, @issuexjs/node)
+  - Remove issue-render.ts — issues now return CommandResult through standard renderer
+  - Remove outdated prototype migration BDD tests (relied on unregistered RPC methods)
+  - Platform interface fully simplified: only repository + initializer remain
+
+- 2494ba2: feat: multi-layer permission system and namespace redesign
+
+  - Rename `individual.*` and `org.found/dissolve` commands to `society.*` namespace
+  - Add 4-layer permission system: sovereign, org-admin, project-maintainer, product-owner
+  - PermissionRegistry maps reverse relation names to permission arrays, injected at projection time
+  - New commands: `org.admin/unadmin`, `project.maintain/unmaintain`
+  - Add `.feature` description files with Parameters scenarios for all commands
+  - V5 migration: make Nuwa an independent sovereign individual, dissolve rolex org
+  - compactRelations updated to include new reverse relations (administer, maintained-by, own)
+
+- b8a5ca6: feat: product created via project.produce with bidirectional relation
+
+  Product is no longer created independently — it is produced from a project.
+  Adds bidirectional relation: project → product (production) and product → project (origin).
+  Removes product.create command and publish lifecycle process.
+
+- 3516193: feat: purify RoleX — remove ResourceX, use, skill, and MCP server
+
+  RoleX becomes a pure concept space. External tool execution moves to AgentX.
+
+  - Remove `resource.*` commands, instructions, and namespace
+  - Remove `use` tool (subjective execution) — `direct` covers world commands
+  - Remove `skill` tool — skill loading moves to AgentX capability layer
+  - Remove `@rolexjs/mcp-server` — channel adapter no longer maintained
+  - Remove `resourcexProvider` and `resourcexExecutor` from Platform
+  - Remove `Role.use()`, `Role.skill()`, and related deps (direct, transformUseResult)
+  - Simplify `direct` method — no longer falls back to ResourceX
+  - Clean up resourcexjs dependencies from core and local-platform
+  - IssueX retained temporarily (will be internalized to graph in Phase 2)
+
+- 8c1db15: feat: multi-value tags — `tag: string` → `tags: string[]`
+
+  Structure.tag (single string) is replaced by Structure.tags (string array).
+  Runtime.tag() is replaced by Runtime.addTag() and Runtime.removeTag().
+
+  - Structure interface: `tag?: string` → `tags?: readonly string[]`
+  - Runtime: `tag(node, tag)` → `addTag(node, tag)` + `removeTag(node, tag)`
+  - Storage: DB column stays as `tag TEXT`, stores JSON array
+  - All renderers updated to render multiple tags as `#tag1 #tag2`
+  - Issue labels now use addTag/removeTag natively (no more comma-separated hack)
+  - Goal/plan/task status tags (done, abandoned) work unchanged
+
+### Patch Changes
+
+- 997e1d5: fix: defensive parsing for args serialized as JSON string by AI models
+- d5ee5ab: refactor: lift compactRelations and projection logic from platform to core
+
+  - Remove duplicated compactRelations from in-memory runtime and SQLite runtime
+  - Add `compactState` post-processing in core's RoleXService (raw → compact → enrich)
+  - Runtime.project() now returns raw trees; all business logic applied uniformly in core
+  - Fixes online society service returning explosively large output (117K chars)
+
+- Updated dependencies [d5ee5ab]
+- Updated dependencies [8c1db15]
+  - @rolexjs/system@1.5.0
+  - @rolexjs/parser@1.5.0
+
 ## 1.4.0
 
 ### Minor Changes

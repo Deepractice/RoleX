@@ -1,5 +1,92 @@
 # rolexjs
 
+## 1.5.0
+
+### Minor Changes
+
+- 58bcb9b: Add @rolexjs/agentx-context package and survey/inspect raw mode
+
+  - New package `@rolexjs/agentx-context`: RoleX ContextProvider bridge for AgentX runtime
+    - RolexContext implements AgentX Context interface (schema, project, capabilities)
+    - RolexContextProvider implements AgentX ContextProvider factory
+    - Decouples RoleX from AgentX — AgentX no longer depends on rolexjs
+  - Add `raw` option to `survey()` and `inspect()` API
+    - `survey({ type: "individual", raw: true })` returns `State[]` (structured JSON)
+    - `inspect({ id: "nuwa", raw: true })` returns `State` (structured JSON)
+    - Without `raw`, behavior unchanged (returns rendered text)
+
+- 96967bc: Refactor to builder pattern with JSON-RPC 2.0 unified dispatch
+
+  - Replace async factory with synchronous `createRoleX()` builder — lazy initialization on first call
+  - Add 9 typed namespace APIs: society, org, position, project, product, survey, issue, resource, role
+  - Add JSON-RPC 2.0 dispatch via `rx.rpc()` — uniform message format for cloud platform decoupling
+  - Add `rx.protocol` — self-describing tool schemas (name + description + params) for any channel adapter
+  - Inline description into `ToolDef` — no more separate `detail()` lookup
+  - Move genesis from platform config to built-in — `createRoleX({ platform })` auto-applies genesis
+  - Remove `prototypes` from Platform interface — Platform is now pure infrastructure
+
+- 2886169: Add inspect and survey as top-level perception tools
+
+  - `inspect(id)`: project any node's full subtree, works on any node type
+  - `survey(type?)`: world-level overview replacing census via direct
+  - Extract `projectById` as shared structural primitive in RoleXService
+  - Add InspectRenderer for generic node tree rendering
+  - Replace census.feature with survey.feature
+  - Fix gen-descriptions to quote hyphenated object keys
+
+- 2494ba2: feat: multi-layer permission system and namespace redesign
+
+  - Rename `individual.*` and `org.found/dissolve` commands to `society.*` namespace
+  - Add 4-layer permission system: sovereign, org-admin, project-maintainer, product-owner
+  - PermissionRegistry maps reverse relation names to permission arrays, injected at projection time
+  - New commands: `org.admin/unadmin`, `project.maintain/unmaintain`
+  - Add `.feature` description files with Parameters scenarios for all commands
+  - V5 migration: make Nuwa an independent sovereign individual, dissolve rolex org
+  - compactRelations updated to include new reverse relations (administer, maintained-by, own)
+
+- b8a5ca6: feat: product created via project.produce with bidirectional relation
+
+  Product is no longer created independently — it is produced from a project.
+  Adds bidirectional relation: project → product (production) and product → project (origin).
+  Removes product.create command and publish lifecycle process.
+
+- 8c1db15: feat: multi-value tags — `tag: string` → `tags: string[]`
+
+  Structure.tag (single string) is replaced by Structure.tags (string array).
+  Runtime.tag() is replaced by Runtime.addTag() and Runtime.removeTag().
+
+  - Structure interface: `tag?: string` → `tags?: readonly string[]`
+  - Runtime: `tag(node, tag)` → `addTag(node, tag)` + `removeTag(node, tag)`
+  - Storage: DB column stays as `tag TEXT`, stores JSON array
+  - All renderers updated to render multiple tags as `#tag1 #tag2`
+  - Issue labels now use addTag/removeTag natively (no more comma-separated hack)
+  - Goal/plan/task status tags (done, abandoned) work unchanged
+
+### Patch Changes
+
+- d5ee5ab: refactor: lift compactRelations and projection logic from platform to core
+
+  - Remove duplicated compactRelations from in-memory runtime and SQLite runtime
+  - Add `compactState` post-processing in core's RoleXService (raw → compact → enrich)
+  - Runtime.project() now returns raw trees; all business logic applied uniformly in core
+  - Fixes online society service returning explosively large output (117K chars)
+
+- Updated dependencies [58bcb9b]
+- Updated dependencies [96967bc]
+- Updated dependencies [997e1d5]
+- Updated dependencies [05a2791]
+- Updated dependencies [2886169]
+- Updated dependencies [3f082fe]
+- Updated dependencies [d5ee5ab]
+- Updated dependencies [2494ba2]
+- Updated dependencies [b8a5ca6]
+- Updated dependencies [3516193]
+- Updated dependencies [8c1db15]
+  - @rolexjs/core@1.5.0
+  - @rolexjs/genesis@1.5.0
+  - @rolexjs/system@1.5.0
+  - @rolexjs/parser@1.5.0
+
 ## 1.4.0
 
 ### Minor Changes
