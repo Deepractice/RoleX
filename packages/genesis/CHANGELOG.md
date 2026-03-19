@@ -1,5 +1,44 @@
 # @rolexjs/genesis
 
+## 1.5.0
+
+### Minor Changes
+
+- 96967bc: Refactor to builder pattern with JSON-RPC 2.0 unified dispatch
+
+  - Replace async factory with synchronous `createRoleX()` builder — lazy initialization on first call
+  - Add 9 typed namespace APIs: society, org, position, project, product, survey, issue, resource, role
+  - Add JSON-RPC 2.0 dispatch via `rx.rpc()` — uniform message format for cloud platform decoupling
+  - Add `rx.protocol` — self-describing tool schemas (name + description + params) for any channel adapter
+  - Inline description into `ToolDef` — no more separate `detail()` lookup
+  - Move genesis from platform config to built-in — `createRoleX({ platform })` auto-applies genesis
+  - Remove `prototypes` from Platform interface — Platform is now pure infrastructure
+
+- 2494ba2: feat: multi-layer permission system and namespace redesign
+
+  - Rename `individual.*` and `org.found/dissolve` commands to `society.*` namespace
+  - Add 4-layer permission system: sovereign, org-admin, project-maintainer, product-owner
+  - PermissionRegistry maps reverse relation names to permission arrays, injected at projection time
+  - New commands: `org.admin/unadmin`, `project.maintain/unmaintain`
+  - Add `.feature` description files with Parameters scenarios for all commands
+  - V5 migration: make Nuwa an independent sovereign individual, dissolve rolex org
+  - compactRelations updated to include new reverse relations (administer, maintained-by, own)
+
+### Patch Changes
+
+- 05a2791: fix: update genesis migrations to use new command namespaces
+- Updated dependencies [58bcb9b]
+- Updated dependencies [96967bc]
+- Updated dependencies [997e1d5]
+- Updated dependencies [2886169]
+- Updated dependencies [3f082fe]
+- Updated dependencies [d5ee5ab]
+- Updated dependencies [2494ba2]
+- Updated dependencies [b8a5ca6]
+- Updated dependencies [3516193]
+- Updated dependencies [8c1db15]
+  - @rolexjs/core@1.5.0
+
 ## 1.4.0
 
 ### Minor Changes

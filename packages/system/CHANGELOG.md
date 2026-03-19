@@ -1,5 +1,30 @@
 # @rolexjs/system
 
+## 1.5.0
+
+### Minor Changes
+
+- 8c1db15: feat: multi-value tags — `tag: string` → `tags: string[]`
+
+  Structure.tag (single string) is replaced by Structure.tags (string array).
+  Runtime.tag() is replaced by Runtime.addTag() and Runtime.removeTag().
+
+  - Structure interface: `tag?: string` → `tags?: readonly string[]`
+  - Runtime: `tag(node, tag)` → `addTag(node, tag)` + `removeTag(node, tag)`
+  - Storage: DB column stays as `tag TEXT`, stores JSON array
+  - All renderers updated to render multiple tags as `#tag1 #tag2`
+  - Issue labels now use addTag/removeTag natively (no more comma-separated hack)
+  - Goal/plan/task status tags (done, abandoned) work unchanged
+
+### Patch Changes
+
+- d5ee5ab: refactor: lift compactRelations and projection logic from platform to core
+
+  - Remove duplicated compactRelations from in-memory runtime and SQLite runtime
+  - Add `compactState` post-processing in core's RoleXService (raw → compact → enrich)
+  - Runtime.project() now returns raw trees; all business logic applied uniformly in core
+  - Fixes online society service returning explosively large output (117K chars)
+
 ## 1.4.0
 
 ## 1.3.0

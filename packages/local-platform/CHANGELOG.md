@@ -1,5 +1,80 @@
 # @rolexjs/local-platform
 
+## 1.5.0
+
+### Minor Changes
+
+- 96967bc: Refactor to builder pattern with JSON-RPC 2.0 unified dispatch
+
+  - Replace async factory with synchronous `createRoleX()` builder — lazy initialization on first call
+  - Add 9 typed namespace APIs: society, org, position, project, product, survey, issue, resource, role
+  - Add JSON-RPC 2.0 dispatch via `rx.rpc()` — uniform message format for cloud platform decoupling
+  - Add `rx.protocol` — self-describing tool schemas (name + description + params) for any channel adapter
+  - Inline description into `ToolDef` — no more separate `detail()` lookup
+  - Move genesis from platform config to built-in — `createRoleX({ platform })` auto-applies genesis
+  - Remove `prototypes` from Platform interface — Platform is now pure infrastructure
+
+- 3f082fe: feat: internalize issue into graph — remove IssueX dependency
+
+  Issues are now first-class graph nodes under society, no longer stored in external IssueX.
+
+  - Add `issue` and `comment` structure types with author/assignee relations
+  - Rewrite all issue.\* commands to use graph operations (rt.create, rt.tag, rt.link)
+  - Issue status uses tags (#open / #closed), number uses auto-increment id pattern
+  - Comments are child nodes of issues, authors linked via relations
+  - Remove all IssueX dependencies (@issuexjs/core, issuexjs, @issuexjs/node)
+  - Remove issue-render.ts — issues now return CommandResult through standard renderer
+  - Remove outdated prototype migration BDD tests (relied on unregistered RPC methods)
+  - Platform interface fully simplified: only repository + initializer remain
+
+- 3516193: feat: purify RoleX — remove ResourceX, use, skill, and MCP server
+
+  RoleX becomes a pure concept space. External tool execution moves to AgentX.
+
+  - Remove `resource.*` commands, instructions, and namespace
+  - Remove `use` tool (subjective execution) — `direct` covers world commands
+  - Remove `skill` tool — skill loading moves to AgentX capability layer
+  - Remove `@rolexjs/mcp-server` — channel adapter no longer maintained
+  - Remove `resourcexProvider` and `resourcexExecutor` from Platform
+  - Remove `Role.use()`, `Role.skill()`, and related deps (direct, transformUseResult)
+  - Simplify `direct` method — no longer falls back to ResourceX
+  - Clean up resourcexjs dependencies from core and local-platform
+  - IssueX retained temporarily (will be internalized to graph in Phase 2)
+
+- 8c1db15: feat: multi-value tags — `tag: string` → `tags: string[]`
+
+  Structure.tag (single string) is replaced by Structure.tags (string array).
+  Runtime.tag() is replaced by Runtime.addTag() and Runtime.removeTag().
+
+  - Structure interface: `tag?: string` → `tags?: readonly string[]`
+  - Runtime: `tag(node, tag)` → `addTag(node, tag)` + `removeTag(node, tag)`
+  - Storage: DB column stays as `tag TEXT`, stores JSON array
+  - All renderers updated to render multiple tags as `#tag1 #tag2`
+  - Issue labels now use addTag/removeTag natively (no more comma-separated hack)
+  - Goal/plan/task status tags (done, abandoned) work unchanged
+
+### Patch Changes
+
+- d5ee5ab: refactor: lift compactRelations and projection logic from platform to core
+
+  - Remove duplicated compactRelations from in-memory runtime and SQLite runtime
+  - Add `compactState` post-processing in core's RoleXService (raw → compact → enrich)
+  - Runtime.project() now returns raw trees; all business logic applied uniformly in core
+  - Fixes online society service returning explosively large output (117K chars)
+
+- Updated dependencies [58bcb9b]
+- Updated dependencies [96967bc]
+- Updated dependencies [997e1d5]
+- Updated dependencies [2886169]
+- Updated dependencies [3f082fe]
+- Updated dependencies [d5ee5ab]
+- Updated dependencies [2494ba2]
+- Updated dependencies [b8a5ca6]
+- Updated dependencies [3516193]
+- Updated dependencies [8c1db15]
+  - @rolexjs/core@1.5.0
+  - @rolexjs/system@1.5.0
+
 ## 1.4.0
 
 ### Minor Changes
