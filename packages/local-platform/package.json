@@ -1,6 +1,6 @@
 {
   "name": "@rolexjs/local-platform",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "description": "Local filesystem Platform for RoleX — stores roles in .rolex/ directories",
   "type": "module",
   "main": "./dist/index.js",

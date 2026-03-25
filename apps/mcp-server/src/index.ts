@@ -314,6 +314,4 @@ server.addPrompt({
 
 // ========== Start ==========
 
-server.start({
-  transportType: "stdio",
-});
+export { server, ensureInit };

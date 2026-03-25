@@ -1,6 +1,6 @@
 {
   "name": "@rolexjs/mcp-server",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "description": "MCP server for Rolex — expose RDD role management as MCP tools",
   "keywords": [
     "rolex",
@@ -22,7 +22,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "rolex-mcp": "./dist/index.js"
+    "rolex-mcp": "./dist/cli.js"
   },
   "exports": {
     ".": {
