@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "rolex": {
+      "command": "bunx",
+      "args": ["-y", "@rolexjs/mcp-server@1.6.0"],
+      "env": {}
+    }
+  }
+}

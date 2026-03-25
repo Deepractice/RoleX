@@ -1,6 +1,6 @@
 {
   "name": "@rolexjs/mcp-server",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "MCP server for Rolex — expose RDD role management as MCP tools",
   "keywords": [
     "rolex",
@@ -41,10 +41,10 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "rolexjs": "workspace:~",
-    "@rolexjs/local-platform": "workspace:~",
     "@rolexjs/genesis": "workspace:~",
-    "fastmcp": "^3.0.0",
+    "@rolexjs/local-platform": "workspace:~",
+    "fastmcp": "^3.34.0",
+    "rolexjs": "workspace:~",
     "zod": "^3.25.0"
   },
   "devDependencies": {

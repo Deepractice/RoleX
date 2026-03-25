@@ -267,6 +267,37 @@ server.addTool({
   },
 });
 
+// ========== Compatibility: declare empty resources/prompts capabilities ==========
+// Some MCP clients (e.g. Antigravity) probe resources/list and prompts/list
+// after initialize. FastMCP only declares these capabilities when items exist.
+// Register a dummy resource then remove it — forces capability declaration.
+
+server.addResource({
+  uri: "rolex://noop",
+  name: "_noop",
+  description: "",
+  async load() {
+    return { text: "" };
+  },
+});
+
+server.addResourceTemplate({
+  uriTemplate: "rolex://noop/{id}",
+  name: "_noop_tpl",
+  description: "",
+  async load() {
+    return { text: "" };
+  },
+});
+
+server.addPrompt({
+  name: "_noop",
+  description: "",
+  async load() {
+    return "";
+  },
+});
+
 // ========== Start ==========
 
 server.start({
