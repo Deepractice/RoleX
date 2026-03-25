@@ -285,6 +285,7 @@ server.addResourceTemplate({
   uriTemplate: "rolex://noop/{id}",
   name: "_noop_tpl",
   description: "",
+  arguments: [{ name: "id", description: "", required: false }],
   async load() {
     return { text: "" };
   },
