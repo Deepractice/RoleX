@@ -1,6 +1,6 @@
 {
   "name": "@rolexjs/core",
-  "version": "1.3.0",
+  "version": "1.6.0",
   "description": "RoleX Core - AI Agent Role Management Framework",
   "keywords": [
     "rolex",
@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@issuexjs/core": "^0.2.0",
-    "@rolexjs/system": "workspace:*",
+    "@rolexjs/system": "workspace:~",
     "@resourcexjs/core": "^2.14.0"
   },
   "devDependencies": {},
