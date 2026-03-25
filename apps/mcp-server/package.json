@@ -1,6 +1,6 @@
 {
   "name": "@rolexjs/mcp-server",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "description": "MCP server for Rolex — expose RDD role management as MCP tools",
   "keywords": [
     "rolex",

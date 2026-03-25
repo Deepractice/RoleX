@@ -13,14 +13,25 @@ import { z } from "zod";
 import { instructions } from "./instructions.js";
 import { McpState } from "./state.js";
 
-// ========== Setup ==========
+// ========== Setup (lazy init — server must start before rolex bootstraps) ==========
 
-const rolex = await createRoleX(
-  localPlatform({
-    bootstrap: ["npm:@rolexjs/genesis"],
-  })
-);
-await rolex.genesis();
+let rolex: Awaited<ReturnType<typeof createRoleX>>;
+let initPromise: Promise<void> | null = null;
+
+function ensureInit(): Promise<void> {
+  if (!initPromise) {
+    initPromise = (async () => {
+      rolex = await createRoleX(
+        localPlatform({
+          bootstrap: ["npm:@rolexjs/genesis"],
+        })
+      );
+      await rolex.genesis();
+    })();
+  }
+  return initPromise;
+}
+
 const state = new McpState();
 
 // ========== Server ==========
@@ -40,6 +51,7 @@ server.addTool({
     roleId: z.string().describe("Role name to activate"),
   }),
   execute: async ({ roleId }) => {
+    await ensureInit();
     try {
       const role = await rolex.activate(roleId);
       state.role = role;
@@ -254,6 +266,7 @@ server.addTool({
     args: z.record(z.unknown()).optional().describe("Named arguments for the command or resource"),
   }),
   execute: async ({ locator, args }) => {
+    await ensureInit();
     const result = await rolex.direct(locator, args);
     if (result == null) return `${locator} done.`;
     if (typeof result === "string") return result;
